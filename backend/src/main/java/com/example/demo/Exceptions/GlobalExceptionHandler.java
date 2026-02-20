@@ -6,6 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -69,6 +70,20 @@ public class GlobalExceptionHandler {
         errorResponse.put("date", new Date());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> httpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        ErrorResponse message = new ErrorResponse("Invalid request body: " + ex.getMessage(), HttpStatus.BAD_REQUEST.value(), new Date());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ResponseEntity<ErrorResponse> globalExceptionHandler(Exception ex) {
+        ErrorResponse message = new ErrorResponse("Internal server error: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value(), new Date());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(message);
     }
 
 }
