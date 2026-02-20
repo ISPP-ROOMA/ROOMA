@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: demo
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/springbootdb}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    show-sql: true
+
+    hibernate:
+      ddl-auto: create-drop
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  expiration-at: ${JWT_EXPIRATION_AT:900000}
+  expiration-rt: ${JWT_EXPIRATION_RT:604800000}
+  secret-key: ${JWT_SECRET_KEY:q5X1xZK8F0z+Y3nZ8KpZ9+0rK0z8ZKJ4dZpZq8W1k3M=}

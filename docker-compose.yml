@@ -1,0 +1,54 @@
+services:
+  pg_db:
+    image: postgres:18-alpine
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=user
+      - POSTGRES_DB=test
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  backend:
+    depends_on:
+      pg_db:
+        condition: service_healthy
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile.dev
+    restart: always
+    ports:
+      - 8080:8080
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://pg_db:5432/test
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=user
+      - SPRING_PROFILES_ACTIVE=dev
+    volumes:
+      - ./backend/src:/app/src 
+
+  frontend:
+    depends_on:
+      - backend
+    build:
+      context: ./frontend
+      dockerfile: docker/Dockerfile.dev
+    restart: always
+    ports:
+      - 5173:5173
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  pg_data:

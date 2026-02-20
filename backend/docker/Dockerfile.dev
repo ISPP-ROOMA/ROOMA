@@ -1,0 +1,17 @@
+FROM eclipse-temurin:25-jdk-alpine-3.23
+
+WORKDIR /app
+
+COPY pom.xml .
+
+COPY mvnw .
+
+COPY .mvn .mvn
+
+RUN ./mvnw dependency:go-offline
+
+COPY src src
+
+EXPOSE 8080
+
+CMD ["./mvnw", "spring-boot:run"]
