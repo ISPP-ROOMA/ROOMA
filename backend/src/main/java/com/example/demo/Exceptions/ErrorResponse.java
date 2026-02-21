@@ -8,3 +8,6 @@ public record ErrorResponse(
         Date date
 ) {
 }
+
+
+

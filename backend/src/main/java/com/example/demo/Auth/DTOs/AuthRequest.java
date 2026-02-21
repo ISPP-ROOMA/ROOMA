@@ -10,3 +10,6 @@ public record AuthRequest(
         @NotBlank                String deviceId
 ) {
 }
+
+
+
