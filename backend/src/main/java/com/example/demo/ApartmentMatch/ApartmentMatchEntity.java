@@ -13,16 +13,13 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.FutureOrPresent;
-import lombok.Getter;
-import lombok.Setter;
 
 @Entity
-@Getter
-@Setter
 @Table(name = "apartment_matches")
 public class ApartmentMatchEntity {
 
@@ -43,11 +40,11 @@ public class ApartmentMatchEntity {
     @FutureOrPresent
     private LocalDateTime matchDate;
 
-    @Column(nullable = false)
+    @JoinColumn(name = "candidate_id")
     @ManyToOne
     private UserEntity candidate;
     
-    @Column(nullable = false)
+    @JoinColumn(name = "apartment_id")
     @ManyToOne
     private ApartmentEntity apartment;
 
@@ -65,6 +62,62 @@ public class ApartmentMatchEntity {
         this.matchDate = matchDate;
         this.candidate = candidate;
         this.apartment = apartment;
-    }       
+    }
+    
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public Boolean getCandidateInterest() {
+        return candidateInterest;
+    }
+
+    public void setCandidateInterest(Boolean candidateInterest) {
+        this.candidateInterest = candidateInterest;
+    }
+
+    public Boolean getLandlordInterest() {
+        return landlordInterest;
+    }
+
+    public void setLandlordInterest(Boolean landlordInterest) {
+        this.landlordInterest = landlordInterest;
+    }
+
+    public LocalDateTime getMatchDate() {
+        return matchDate;
+    }
+
+    public void setMatchDate(LocalDateTime matchDate) {
+        this.matchDate = matchDate;
+    }
+
+    public UserEntity getCandidate() {
+        return candidate;
+    }
+
+    public void setCandidate(UserEntity candidate) {
+        this.candidate = candidate;
+    }
+
+    public ApartmentEntity getApartment() {
+        return apartment;
+    }
+
+    public void setApartment(ApartmentEntity apartment) {
+        this.apartment = apartment;
+    }
+
+    public MatchStatus getMatchStatus() {
+        return matchStatus;
+    }
+
+    public void setMatchStatus(MatchStatus matchStatus) {
+        this.matchStatus = matchStatus;
+    }
 
 }
