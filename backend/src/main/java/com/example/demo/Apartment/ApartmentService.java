@@ -1,10 +1,11 @@
 package com.example.demo.Apartment;
 
-import com.example.demo.Exceptions.ResourceNotFoundException;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.example.demo.Exceptions.ResourceNotFoundException;
 
 @Service
 public class ApartmentService {
@@ -51,6 +52,11 @@ public class ApartmentService {
             throw new ResourceNotFoundException("Apartment not found");
         }
         apartmentsRepository.deleteById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ApartmentEntity> search(String ubication, Double minPrice, Double maxPrice, String state) {
+        return apartmentsRepository.search(ubication, minPrice, maxPrice, state);
     }
 
 }

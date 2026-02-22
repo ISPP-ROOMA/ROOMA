@@ -1,13 +1,21 @@
 package com.example.demo.Apartment;
 
-import com.example.demo.Apartment.DTOs.UpdateApartment;
-import com.example.demo.Apartment.DTOs.ApartmentDTO;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.example.demo.Apartment.DTOs.ApartmentDTO;
+import com.example.demo.Apartment.DTOs.UpdateApartment;
 
 @RestController
 @RequestMapping("/api/apartments")
@@ -39,7 +47,8 @@ public class ApartmentController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApartmentEntity> updateApartment(@PathVariable Integer id, @RequestBody UpdateApartment apartments) {
+    public ResponseEntity<ApartmentEntity> updateApartment(@PathVariable Integer id,
+            @RequestBody UpdateApartment apartments) {
         ApartmentEntity apartmentsToUpdate = new ApartmentEntity();
         apartmentsToUpdate.setTitle(apartments.title());
         apartmentsToUpdate.setDescription(apartments.description());
@@ -59,5 +68,18 @@ public class ApartmentController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ApartmentDTO>> searchApartments(
+            @RequestParam(required = false) String ubication,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String state) {
+
+        List<ApartmentEntity> apartments = apartmentsService.search(ubication, minPrice, maxPrice, state);
+        List<ApartmentDTO> apartmentDTOs = ApartmentDTO.fromApartmentEntityList(apartments);
+
+        return ResponseEntity.ok(apartmentDTOs);
     }
 }
