@@ -54,6 +54,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> badRequestException(BadRequestException ex) {
+        ErrorResponse message = new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), new Date());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     public ResponseEntity<Map<String, Object>> methodArgumentNotValidException(MethodArgumentNotValidException ex) {
@@ -87,3 +95,6 @@ public class GlobalExceptionHandler {
     }
 
 }
+
+
+

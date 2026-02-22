@@ -12,3 +12,6 @@ public record UpdateUser(
         @NotNull Role role
 ) {
 }
+
+
+
