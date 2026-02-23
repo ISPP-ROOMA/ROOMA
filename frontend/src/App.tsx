@@ -11,6 +11,7 @@ import User from './pages/admin/User'
 import { useEffect } from 'react'
 import { refreshToken } from './service/auth.service'
 import Register from './pages/Register'
+import PropertyDetails from './pages/PropertyDetails'
 
 function App() {
 
@@ -59,6 +60,7 @@ function App() {
       <main className='mx-auto min-h-dvh flex flex-col'>
         <Routes>
           <Route path='/' element={<Home />} />
+          <Route path='/properties/:id' element={<PropertyDetails />} />
           {adminRoutes}
           {customerRoutes}
           {privateRoutes}
