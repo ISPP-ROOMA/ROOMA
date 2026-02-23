@@ -85,8 +85,8 @@ public class ApartmentMatchService {
             apartmentMatch.setLandlordInterest(interest);
         }
 
-        if(apartmentMatch.getMatchStatus() == MatchStatus.MATCH || apartmentMatch.getMatchStatus() == MatchStatus.SUCCESSFUL) {
-            throw new ConflictException("Cannot change interest on a match that is already active or successful");
+        if(apartmentMatch.getMatchStatus() == MatchStatus.MATCH || apartmentMatch.getMatchStatus() == MatchStatus.SUCCESSFUL || apartmentMatch.getMatchStatus() == MatchStatus.CANCELED) {
+            throw new ConflictException("Cannot change interest on a match that is already matched, successful or canceled");
         } else {
             if (Boolean.TRUE.equals(apartmentMatch.getCandidateInterest()) && 
                 Boolean.TRUE.equals(apartmentMatch.getLandlordInterest())) {
@@ -178,15 +178,15 @@ public class ApartmentMatchService {
     }
 
     @Transactional
-    public ApartmentMatchEntity rejectMatch(Integer matchId) {
+    public ApartmentMatchEntity cancellMatch(Integer matchId) {
         ApartmentMatchEntity match = apartmentMatchRepository.findById(matchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
         if (match.getMatchStatus() == MatchStatus.SUCCESSFUL) {
-            throw new ConflictException("Cannot reject a match that has already been finalized as successful");
-        } else if (match.getMatchStatus() == MatchStatus.REJECTED) {
-            throw new ConflictException("Match is already rejected");
+            throw new ConflictException("Cannot cancel a match that has already been finalized as successful");
+        } else if (match.getMatchStatus() == MatchStatus.CANCELED) {
+            throw new ConflictException("Match is already canceled");
         }
-        match.setMatchStatus(MatchStatus.REJECTED);
+        match.setMatchStatus(MatchStatus.CANCELED);
         apartmentMatchRepository.save(match);
         return match;
     }

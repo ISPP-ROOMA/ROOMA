@@ -98,10 +98,10 @@ public class ApartmentMatchController {
         }
     }
 
-    @PatchMapping("/apartment/{apartmentId}/status/rejected")
-    public ResponseEntity<ApartmentMatchDTO> rejectApartmentMatch(@PathVariable Integer apartmentMatchId) {
+    @PatchMapping("/apartment/{apartmentId}/status/canceled")
+    public ResponseEntity<ApartmentMatchDTO> cancelApartmentMatch(@PathVariable Integer apartmentMatchId) {
         try {
-            ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.rejectMatch(apartmentMatchId));
+            ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.cancellMatch(apartmentMatchId));
             return ResponseEntity.ok(apartmentMatch);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();

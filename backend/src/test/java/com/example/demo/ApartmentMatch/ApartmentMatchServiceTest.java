@@ -259,6 +259,33 @@ public class ApartmentMatchServiceTest {
     }
 
     @Test
+    public void testProcessSwipe_SecondInteraction_MatchAlreadyCanceled_Throws() {
+        Integer candidateId = 4;
+        Integer apartmentId = 5;
+
+        UserEntity user = new UserEntity();
+        user.setId(candidateId);
+        ApartmentEntity apt = new ApartmentEntity();
+        apt.setId(apartmentId);
+        apt.setState(ApartmentState.ACTIVE);
+
+        ApartmentMatchEntity existing = new ApartmentMatchEntity();
+        existing.setCandidateInterest(null);
+        existing.setLandlordInterest(false);
+        existing.setMatchStatus(MatchStatus.CANCELED);
+        existing.setCandidate(user);
+        existing.setApartment(apt);
+
+        when(userService.findById(candidateId)).thenReturn(user);
+        when(apartmentService.findById(apartmentId)).thenReturn(apt);
+        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.of(existing));
+
+        assertThrows(ConflictException.class, () -> {
+            apartmentMatchService.processSwipe(candidateId, apartmentId, true, true);
+        });
+    }
+
+    @Test
     public void testProcessSwipe_DuplicateInteraction_Throws() {
         Integer candidateId = 5;
         Integer apartmentId = 6;
@@ -458,7 +485,7 @@ public class ApartmentMatchServiceTest {
     }
 
     @Test
-    public void testRejectMatch_RejectsMatch() {
+    public void testCancelMatch_CancelsMatch() {
         Integer matchId = 9;
         ApartmentMatchEntity m = new ApartmentMatchEntity();
         m.setMatchStatus(MatchStatus.ACTIVE);
@@ -466,26 +493,26 @@ public class ApartmentMatchServiceTest {
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
         when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(i -> i.getArgument(0));
 
-        ApartmentMatchEntity res = apartmentMatchService.rejectMatch(matchId);
+        ApartmentMatchEntity res = apartmentMatchService.cancellMatch(matchId);
 
-        assertEquals(MatchStatus.REJECTED, res.getMatchStatus());
+        assertEquals(MatchStatus.CANCELED, res.getMatchStatus());
     }
 
     @Test
-    public void testRejectMatch_AlreadySuccessful_Throws() {
+    public void testCancelMatch_AlreadyCanceled_Throws() {
         Integer matchId = 9;
         ApartmentMatchEntity m = new ApartmentMatchEntity();
-        m.setMatchStatus(MatchStatus.SUCCESSFUL);
+        m.setMatchStatus(MatchStatus.CANCELED);
 
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
 
         assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.rejectMatch(matchId);
+            apartmentMatchService.cancellMatch(matchId);
         });
     }
 
     @Test
-    public void testRejectMatch_AlreadyRejected_Throws() {
+    public void testCancelMatch_AlreadyRejected_Throws() {
         Integer matchId = 9;
         ApartmentMatchEntity m = new ApartmentMatchEntity();
         m.setMatchStatus(MatchStatus.REJECTED);
@@ -493,7 +520,7 @@ public class ApartmentMatchServiceTest {
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
 
         assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.rejectMatch(matchId);
+            apartmentMatchService.cancellMatch(matchId);
         });
     }
 
