@@ -2,7 +2,7 @@ package com.example.demo.Apartment.DTOs;
 
 import jakarta.validation.constraints.NotNull;
 
-public record createApartment(
+public record CreateApartment(
         @NotNull String title,
         @NotNull String description,
         @NotNull Double price,

@@ -1,6 +1,6 @@
-package com.example.demo.Vivienda.DTOs;
+package com.example.demo.MemberApartment.DTOs;
 
-import com.example.demo.Vivienda.ReglaViviendaEntity;
+import com.example.demo.MemberApartment.ReglaViviendaEntity;
 
 public record ReglaViviendaDTO(
         Integer viviendaId,
@@ -17,7 +17,3 @@ public record ReglaViviendaDTO(
         );
     }
 }
-
-
-
-

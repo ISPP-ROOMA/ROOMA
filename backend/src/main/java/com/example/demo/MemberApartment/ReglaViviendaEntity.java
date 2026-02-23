@@ -1,4 +1,6 @@
-package com.example.demo.Vivienda;
+package com.example.demo.MemberApartment;
+
+import com.example.demo.Apartment.ApartmentEntity;
 
 import jakarta.persistence.*;
 
@@ -13,7 +15,7 @@ public class ReglaViviendaEntity {
 
     @OneToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "vivienda_id", nullable = false, unique = true)
-    private ViviendaEntity vivienda;
+    private ApartmentEntity vivienda;
 
     @Column(nullable = false)
     private boolean permiteMascotas;
@@ -35,11 +37,11 @@ public class ReglaViviendaEntity {
         this.id = id;
     }
 
-    public ViviendaEntity getVivienda() {
+    public ApartmentEntity getVivienda() {
         return vivienda;
     }
 
-    public void setVivienda(ViviendaEntity vivienda) {
+    public void setVivienda(ApartmentEntity vivienda) {
         this.vivienda = vivienda;
     }
 

@@ -1,4 +1,4 @@
-package com.example.demo.Vivienda.DTOs;
+package com.example.demo.MemberApartment.DTOs;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -8,7 +8,3 @@ public record UpdateReglaVivienda(
         @NotNull Boolean fiestasPermitidas
 ) {
 }
-
-
-
-
