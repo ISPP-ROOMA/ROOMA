@@ -2,6 +2,7 @@ package com.example.demo.Apartment;
 
 import com.example.demo.Apartment.DTOs.UpdateApartment;
 import com.example.demo.Apartment.DTOs.ApartmentDTO;
+import com.example.demo.Apartment.DTOs.CreateApartment;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,22 +33,16 @@ public class ApartmentController {
     }
 
     @PostMapping
-    public ResponseEntity<ApartmentEntity> createApartment(@RequestBody ApartmentEntity apartments) {
-        ApartmentEntity createdApartment = apartmentsService.save(apartments);
+    public ResponseEntity<ApartmentEntity> createApartment(@RequestBody CreateApartment apartments) {
+        
+        ApartmentEntity createdApartment = apartmentsService.save(CreateApartment.fromDTO(apartments));
 
         return new ResponseEntity<>(createdApartment, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApartmentEntity> updateApartment(@PathVariable Integer id, @RequestBody UpdateApartment apartments) {
-        ApartmentEntity apartmentsToUpdate = new ApartmentEntity();
-        apartmentsToUpdate.setTitle(apartments.title());
-        apartmentsToUpdate.setDescription(apartments.description());
-        apartmentsToUpdate.setPrice(apartments.price());
-        apartmentsToUpdate.setBills(apartments.bills());
-        apartmentsToUpdate.setUbication(apartments.ubication());
-        apartmentsToUpdate.setState(apartments.state());
-        ApartmentEntity updatedApartment = apartmentsService.update(id, apartmentsToUpdate);
+    public ResponseEntity<ApartmentEntity> updateApartment(@PathVariable Integer id, @RequestBody UpdateApartment apartment) {
+        ApartmentEntity updatedApartment = apartmentsService.update(id, UpdateApartment.fromDTO(apartment));
         return ResponseEntity.ok(updatedApartment);
     }
 

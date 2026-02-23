@@ -23,7 +23,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody AuthRequest request, HttpServletResponse response) {
-        AuthResult registerRes = authService.register(request.email(), request.password(), request.deviceId());
+        AuthResult registerRes = authService.register(request.email(), request.password(), request.deviceId(), request.role());
         Cookie cookie = new Cookie("refresh_token", registerRes.refreshToken());
         cookie.setMaxAge(secondsExpirationRt);
         cookie.setSecure(false);

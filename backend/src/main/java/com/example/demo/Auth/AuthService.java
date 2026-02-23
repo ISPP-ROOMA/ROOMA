@@ -31,17 +31,21 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthResult register(String email, String password, String deviceId) {
+    public AuthResult register(String email, String password, String deviceId, Role role) {
         Optional<UserEntity> existingUser = userService.findByEmail(email);
 
         if (existingUser.isPresent()) {
             throw new UserExistsException("User already exists");
         }
 
+        if (role == Role.ADMIN) {
+            throw new InvalidRoleException("Cannot register as admin");
+        }
+
         UserEntity newUser = new UserEntity();
         newUser.setEmail(email);
         newUser.setPassword(passwordEncoder.encode(password));
-        newUser.setRole(Role.USER);
+        newUser.setRole(role);
         userService.save(newUser);
 
         String accessToken = jwtService.generateAccessTokenFromEmail(newUser.getEmail());

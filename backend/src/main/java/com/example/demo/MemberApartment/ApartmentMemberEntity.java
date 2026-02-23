@@ -25,10 +25,10 @@ public class ApartmentMemberEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MemberRole role; // Cambiado de 'rol' a 'role'
+    private MemberRole role;
 
     @Column(nullable = false)
-    private LocalDate joinDate; // Cambiado de 'fechaIngreso' a 'joinDate'
+    private LocalDate joinDate;
 
     public ApartmentMemberEntity() {
     }

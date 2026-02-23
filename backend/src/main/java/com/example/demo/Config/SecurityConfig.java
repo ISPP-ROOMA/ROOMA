@@ -47,10 +47,10 @@ public class SecurityConfig {
                                 "/v3/api-docs",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        .requestMatchers("/api/users/profile").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/users/profile").hasAnyRole("TENANT", "LANDLORD", "ADMIN")
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/apartments/**").permitAll()
-                        .requestMatchers("/api/viviendas/**").permitAll()
+                        .requestMatchers("/api/apartments/**").hasRole("LANDLORD")
+                        .requestMatchers("/api/apartaments/").hasRole("LANDLORD")
                         .anyRequest().authenticated()
                 );
 

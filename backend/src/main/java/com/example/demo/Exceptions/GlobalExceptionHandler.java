@@ -14,6 +14,14 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(InvalidRoleException.class)
+    @ResponseStatus(value = HttpStatus.FORBIDDEN)
+    public ResponseEntity<ErrorResponse> invalidRoleException(InvalidRoleException ex) {
+        ErrorResponse message = new ErrorResponse(ex.getMessage(), HttpStatus.FORBIDDEN.value(), new Date());
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(message);
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
     public ResponseEntity<ErrorResponse> resourceNotFoundException(ResourceNotFoundException ex) {
