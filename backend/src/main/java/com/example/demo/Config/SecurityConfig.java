@@ -6,6 +6,7 @@ import com.example.demo.Jwt.JwtAuthenticationFilter;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -50,7 +51,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/profile").hasAnyRole("TENANT", "LANDLORD", "ADMIN")
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/apartments/**").hasRole("LANDLORD")
-                        .requestMatchers("/api/apartaments/").hasRole("LANDLORD")
+                        .requestMatchers(HttpMethod.POST, "/api/apartments/**").hasRole("LANDLORD")
+                        .requestMatchers(HttpMethod.PUT, "/api/apartments/**").hasRole("LANDLORD")
+                        .requestMatchers(HttpMethod.DELETE, "/api/apartments/**").hasRole("LANDLORD")
                         .anyRequest().authenticated()
                 );
 
