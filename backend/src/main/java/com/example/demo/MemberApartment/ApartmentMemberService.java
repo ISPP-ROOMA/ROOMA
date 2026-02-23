@@ -4,8 +4,11 @@ import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentRepository;
 import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
+import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserRepository;
+import com.example.demo.User.UserService;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,13 +21,16 @@ public class ApartmentMemberService {
     private final ApartmentMemberRepository apartmentMemberRepository;
     private final ApartmentRepository apartmentRepository;
     private final UserRepository userRepository;
+    private final UserService userService;
 
     public ApartmentMemberService(ApartmentMemberRepository apartmentMemberRepository,
                                  ApartmentRepository apartmentRepository,
-                                 UserRepository userRepository) {
+                                 UserRepository userRepository,
+                                 UserService userService) {
         this.apartmentMemberRepository = apartmentMemberRepository;
         this.apartmentRepository = apartmentRepository;
         this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     @Transactional
@@ -48,13 +54,36 @@ public class ApartmentMemberService {
         return apartmentMemberRepository.save(member);
     }
 
-    @Transactional(readOnly = true)
+@Transactional(readOnly = true)
     public List<ApartmentMemberEntity> listMembers(Integer apartmentId) {
-        if (!apartmentRepository.existsById(apartmentId)) {
-            throw new ResourceNotFoundException("Apartment not found");
+
+        ApartmentEntity apartment = apartmentRepository.findById(apartmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
+
+        UserEntity currentUser = userService.findByEmail(userService.findCurrentUser())
+                .orElseThrow(() -> new ResourceNotFoundException("Current user not found"));
+
+        boolean isOwner = apartment.getUser() != null && 
+                          apartment.getUser().getId().equals(currentUser.getId());
+
+        List<ApartmentMemberEntity> members = apartmentMemberRepository.findByApartmentId(apartmentId);
+
+        boolean isMember = members.stream()
+                .anyMatch(m -> m.getUser() != null && m.getUser().getId().equals(currentUser.getId()));
+
+        boolean isAdmin = currentUser.getRole().equals(Role.ADMIN);
+
+        if (!isOwner && !isMember && !isAdmin) {
+            throw new BadRequestException("User is not the owner nor a member of this apartment");
         }
-        return apartmentMemberRepository.findByApartmentId(apartmentId);
+
+        if (members.isEmpty()) {
+            throw new ResourceNotFoundException("No members found in the apartment");
+        }
+
+        return members;
     }
+
 
     @Transactional
     public ApartmentMemberEntity updateRole(Integer apartmentId, Integer memberId, MemberRole role) {
