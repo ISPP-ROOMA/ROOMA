@@ -48,9 +48,9 @@ public class SecurityConfig {
                                 "/v3/api-docs",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        .requestMatchers("/api/users/profile").hasAnyRole("TENANT", "LANDLORD", "ADMIN")
+                        .requestMatchers("/api/users/profile").authenticated()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/apartments/**").hasRole("LANDLORD")
+                        .requestMatchers(HttpMethod.GET, "/api/apartments/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/apartments/**").hasRole("LANDLORD")
                         .requestMatchers(HttpMethod.PUT, "/api/apartments/**").hasRole("LANDLORD")
                         .requestMatchers(HttpMethod.DELETE, "/api/apartments/**").hasRole("LANDLORD")

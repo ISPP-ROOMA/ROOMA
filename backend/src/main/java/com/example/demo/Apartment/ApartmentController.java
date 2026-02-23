@@ -6,6 +6,7 @@ import com.example.demo.Apartment.DTOs.CreateApartment;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,6 +30,13 @@ public class ApartmentController {
     @GetMapping("/{id}")
     public ResponseEntity<ApartmentEntity> getApartmentById(@PathVariable Integer id) {
         ApartmentEntity apartments = apartmentsService.findById(id);
+        return ResponseEntity.ok(apartments);
+    }
+
+    @PreAuthorize("hasRole('LANDLORD')")
+    @GetMapping("/my")
+    public ResponseEntity<List<ApartmentDTO>> getMyApartments() {
+        List<ApartmentDTO> apartments = ApartmentDTO.fromApartmentEntityList(apartmentsService.findMyApartments());
         return ResponseEntity.ok(apartments);
     }
 

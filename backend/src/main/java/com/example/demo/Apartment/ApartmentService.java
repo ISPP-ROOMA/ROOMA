@@ -46,6 +46,17 @@ public class ApartmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
     }
 
+    public List<ApartmentEntity> findMyApartments() {
+        String username = userService.findCurrentUser();
+        Optional<UserEntity> user = userService.findByEmail(username);
+
+        if (user.isEmpty()) {
+            throw new ResourceNotFoundException("User not found");
+        }
+
+        return apartmentsRepository.findAllByUserId(user.get().getId());
+    }
+
     @Transactional
     public ApartmentEntity update(Integer id, ApartmentEntity apartments) {
         ApartmentEntity existingApartment = findById(id);
