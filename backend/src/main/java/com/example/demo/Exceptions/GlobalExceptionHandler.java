@@ -54,6 +54,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
 
+    @ExceptionHandler(ConflictException.class)
+    @ResponseStatus(value = HttpStatus.CONFLICT)
+    public ResponseEntity<ErrorResponse> conflictException(ConflictException ex) {
+        ErrorResponse message = new ErrorResponse(ex.getMessage(), HttpStatus.CONFLICT.value(), new Date());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     public ResponseEntity<Map<String, Object>> methodArgumentNotValidException(MethodArgumentNotValidException ex) {
