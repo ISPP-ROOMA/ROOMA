@@ -11,6 +11,7 @@ import User from './pages/admin/User'
 import { useEffect } from 'react'
 import { refreshToken } from './service/auth.service'
 import Register from './pages/Register'
+import { ToastProvider } from './context/ToastContext'
 
 function App() {
 
@@ -54,19 +55,21 @@ function App() {
   }
 
   return (
-    <div>
-      <Navbar />
-      <main className='mx-auto min-h-dvh flex flex-col'>
-        <Routes>
-          <Route path='/' element={<Home />} />
-          {adminRoutes}
-          {customerRoutes}
-          {privateRoutes}
-          {publicRoutes}
-        </Routes>
-      </main>
-      <Footer />
-    </div>
+    <ToastProvider>
+      <div>
+        <Navbar />
+        <main className='mx-auto min-h-dvh flex flex-col'>
+          <Routes>
+            <Route path='/' element={<Home />} />
+            {adminRoutes}
+            {customerRoutes}
+            {privateRoutes}
+            {publicRoutes}
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </ToastProvider>
   )
 }
 
