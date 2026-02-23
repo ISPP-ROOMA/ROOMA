@@ -77,25 +77,23 @@ public class ApartmentMatchService {
             return apartmentMatchRepository.save(apartmentMatch);
         }
         
-        checkNoDuplicateInteraction(apartmentMatch, isCandidateAction, interest);
-
-        if(isCandidateAction){
+        checkNoDuplicateInteraction(apartmentMatch, isCandidateAction);
+        if (apartmentMatch.getMatchStatus() == MatchStatus.MATCH
+                || apartmentMatch.getMatchStatus() == MatchStatus.SUCCESSFUL
+                || apartmentMatch.getMatchStatus() == MatchStatus.CANCELED) {
+            throw new ConflictException("Cannot change interest on a match that is already matched, successful or canceled");
+        }
+        if (isCandidateAction) {
             apartmentMatch.setCandidateInterest(interest);
         } else {
             apartmentMatch.setLandlordInterest(interest);
         }
-
-        if(apartmentMatch.getMatchStatus() == MatchStatus.MATCH || apartmentMatch.getMatchStatus() == MatchStatus.SUCCESSFUL || apartmentMatch.getMatchStatus() == MatchStatus.CANCELED) {
-            throw new ConflictException("Cannot change interest on a match that is already matched, successful or canceled");
-        } else {
-            if (Boolean.TRUE.equals(apartmentMatch.getCandidateInterest()) && 
+        if (Boolean.TRUE.equals(apartmentMatch.getCandidateInterest()) && 
                 Boolean.TRUE.equals(apartmentMatch.getLandlordInterest())) {
-                
-                apartmentMatch.setMatchStatus(MatchStatus.MATCH);
-
-            } else{
-                apartmentMatch.setMatchStatus(MatchStatus.REJECTED);
-            }
+            
+            apartmentMatch.setMatchStatus(MatchStatus.MATCH);
+        } else {
+            apartmentMatch.setMatchStatus(MatchStatus.REJECTED);
         }
 
         return apartmentMatchRepository.save(apartmentMatch);
@@ -123,7 +121,7 @@ public class ApartmentMatchService {
         return newMatch;
     }
 
-    public void checkNoDuplicateInteraction(ApartmentMatchEntity apartmentMatchEntity, boolean isCandidateAction, boolean interest) {
+    public void checkNoDuplicateInteraction(ApartmentMatchEntity apartmentMatchEntity, boolean isCandidateAction) {
         if (apartmentMatchEntity.getCandidateInterest() != null && isCandidateAction) {
             throw new ConflictException("Candidate has already swiped on this apartment");
         }
@@ -176,7 +174,7 @@ public class ApartmentMatchService {
     }
 
     @Transactional
-    public ApartmentMatchEntity cancellMatch(Integer matchId) {
+    public ApartmentMatchEntity cancelMatch(Integer matchId) {
         ApartmentMatchEntity match = apartmentMatchRepository.findById(matchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
         if (match.getMatchStatus() == MatchStatus.SUCCESSFUL) {

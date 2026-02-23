@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchDTO;
 import com.example.demo.User.UserEntity;
-import com.example.demo.User.UserService;
 
 @RestController
 @RequestMapping("/api/apartments-matches")
@@ -24,7 +23,7 @@ public class ApartmentMatchController {
 
     private final ApartmentMatchService apartmentMatchService;
 
-    public ApartmentMatchController(ApartmentMatchService apartmentMatchService, UserService userService) {
+    public ApartmentMatchController(ApartmentMatchService apartmentMatchService) {
         this.apartmentMatchService = apartmentMatchService;
     }
 
@@ -60,51 +59,35 @@ public class ApartmentMatchController {
 
     @DeleteMapping("/apartment/{apartmentId}")
     public ResponseEntity<Void> finalizeMatchProcess(@PathVariable Integer apartmentId) {
-        try {
-            apartmentMatchService.finalizeMatchProcess(apartmentId);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        apartmentMatchService.finalizeMatchProcess(apartmentId);
+        return ResponseEntity.noContent().build();
     }
-
     @PostMapping("/swipe/candidate/{candidateId}/apartment/{apartmentId}/action/{isCandidateAction}")
     public ResponseEntity<?> processSwipe(@PathVariable Integer candidateId, @PathVariable Integer apartmentId, 
         @PathVariable boolean isCandidateAction, @RequestBody boolean interest, @AuthenticationPrincipal UserEntity authenticatedUser) {
-        try {
-            if (authenticatedUser == null || !authenticatedUser.getId().equals(candidateId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only perform swipe actions for your own user");
-            }
-
-            // Hay que añadir tambien una verificacion para comprobar que la vivienda es del usuario que realiza la acción de swip
-
-
-            // Si el usuario autenticado es el candidato y además es el arrendador, debe de devolver un 403 Forbidden, ya que no puede realizar acciones de swipe sobre un apartamento que él mismo ha publicado
-
-            ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.processSwipe(candidateId, apartmentId, isCandidateAction, interest));
-            return ResponseEntity.ok(apartmentMatch);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+        if (authenticatedUser == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You must be authenticated to perform swipe actions");
         }
+        if (authenticatedUser == null || !authenticatedUser.getId().equals(candidateId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only perform swipe actions for your own user");
+        }
+        // Hay que añadir tambien una verificacion para comprobar que la vivienda es del usuario que realiza la acción de swip
+
+        // Si el usuario autenticado es el candidato y además es el arrendador, debe de devolver un 403 Forbidden, ya que no puede realizar acciones de swipe sobre un apartamento que él mismo ha publicado
+
+        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.processSwipe(candidateId, apartmentId, isCandidateAction, interest));
+        return ResponseEntity.ok(apartmentMatch);
     }
 
-    @PatchMapping("/apartment/{apartmentId}/status/successful")
+    @PatchMapping("/apartmentMatch/{apartmentMatchId}/status/successful")
     public ResponseEntity<ApartmentMatchDTO> updateApartmentMatchStatus(@PathVariable Integer apartmentMatchId) {
-        try {
-            ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.successfulMatch(apartmentMatchId));
-            return ResponseEntity.ok(apartmentMatch);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.successfulMatch(apartmentMatchId));
+        return ResponseEntity.ok(apartmentMatch);
     }
 
-    @PatchMapping("/apartment/{apartmentId}/status/canceled")
+    @PatchMapping("/apartmentMatch/{apartmentMatchId}/status/canceled")
     public ResponseEntity<ApartmentMatchDTO> cancelApartmentMatch(@PathVariable Integer apartmentMatchId) {
-        try {
-            ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.cancellMatch(apartmentMatchId));
-            return ResponseEntity.ok(apartmentMatch);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.cancelMatch(apartmentMatchId));
+        return ResponseEntity.ok(apartmentMatch);
     } 
 }

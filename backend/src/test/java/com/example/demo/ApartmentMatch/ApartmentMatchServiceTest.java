@@ -493,7 +493,7 @@ public class ApartmentMatchServiceTest {
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
         when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(i -> i.getArgument(0));
 
-        ApartmentMatchEntity res = apartmentMatchService.cancellMatch(matchId);
+        ApartmentMatchEntity res = apartmentMatchService.cancelMatch(matchId);
 
         assertEquals(MatchStatus.CANCELED, res.getMatchStatus());
     }
@@ -507,7 +507,7 @@ public class ApartmentMatchServiceTest {
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
 
         assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.cancellMatch(matchId);
+            apartmentMatchService.cancelMatch(matchId);
         });
     }
 
@@ -520,7 +520,7 @@ public class ApartmentMatchServiceTest {
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
 
         assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.cancellMatch(matchId);
+            apartmentMatchService.cancelMatch(matchId);
         });
     }
 
@@ -533,7 +533,7 @@ public class ApartmentMatchServiceTest {
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
 
         assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.cancellMatch(matchId);
+            apartmentMatchService.cancelMatch(matchId);
         });
     }
 
@@ -546,7 +546,7 @@ public class ApartmentMatchServiceTest {
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
 
         assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.cancellMatch(matchId);
+            apartmentMatchService.cancelMatch(matchId);
         });
     }
 
