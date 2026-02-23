@@ -93,9 +93,7 @@ public class ApartmentMatchService {
                 
                 apartmentMatch.setMatchStatus(MatchStatus.MATCH);
 
-            } else if (Boolean.FALSE.equals(apartmentMatch.getCandidateInterest()) || 
-                    Boolean.FALSE.equals(apartmentMatch.getLandlordInterest())) {
-                
+            } else{
                 apartmentMatch.setMatchStatus(MatchStatus.REJECTED);
             }
         }
@@ -185,6 +183,8 @@ public class ApartmentMatchService {
             throw new ConflictException("Cannot cancel a match that has already been finalized as successful");
         } else if (match.getMatchStatus() == MatchStatus.CANCELED) {
             throw new ConflictException("Match is already canceled");
+        } else if (match.getMatchStatus() == MatchStatus.REJECTED || match.getMatchStatus() == MatchStatus.ACTIVE) {
+            throw new ConflictException("Only matches with status MATCH can be canceled");
         }
         match.setMatchStatus(MatchStatus.CANCELED);
         apartmentMatchRepository.save(match);

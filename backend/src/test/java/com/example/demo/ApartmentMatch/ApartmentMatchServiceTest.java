@@ -488,7 +488,7 @@ public class ApartmentMatchServiceTest {
     public void testCancelMatch_CancelsMatch() {
         Integer matchId = 9;
         ApartmentMatchEntity m = new ApartmentMatchEntity();
-        m.setMatchStatus(MatchStatus.ACTIVE);
+        m.setMatchStatus(MatchStatus.MATCH);
 
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
         when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(i -> i.getArgument(0));
@@ -516,6 +516,32 @@ public class ApartmentMatchServiceTest {
         Integer matchId = 9;
         ApartmentMatchEntity m = new ApartmentMatchEntity();
         m.setMatchStatus(MatchStatus.REJECTED);
+
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
+
+        assertThrows(ConflictException.class, () -> {
+            apartmentMatchService.cancellMatch(matchId);
+        });
+    }
+
+    @Test
+    public void testCancelMatch_AlreadyActive_Throws() {
+        Integer matchId = 9;
+        ApartmentMatchEntity m = new ApartmentMatchEntity();
+        m.setMatchStatus(MatchStatus.ACTIVE);
+
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
+
+        assertThrows(ConflictException.class, () -> {
+            apartmentMatchService.cancellMatch(matchId);
+        });
+    }
+
+    @Test
+    public void testCancelMatch_AlreadySuccessful_Throws() {
+        Integer matchId = 9;
+        ApartmentMatchEntity m = new ApartmentMatchEntity();
+        m.setMatchStatus(MatchStatus.SUCCESSFUL);
 
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
 
