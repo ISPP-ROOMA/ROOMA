@@ -72,10 +72,12 @@ public class ApartmentMatchController {
     public ResponseEntity<?> processSwipe(@PathVariable Integer candidateId, @PathVariable Integer apartmentId, 
         @PathVariable boolean isCandidateAction, @RequestBody boolean interest, @AuthenticationPrincipal UserEntity authenticatedUser) {
         try {
-            // Hay que añadir tambien una verificacion para comprobar que la vivienda es del usuario que realiza la acción de swip
             if (authenticatedUser == null || !authenticatedUser.getId().equals(candidateId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only perform swipe actions for your own user");
             }
+
+            // Hay que añadir tambien una verificacion para comprobar que la vivienda es del usuario que realiza la acción de swip
+
 
             // Si el usuario autenticado es el candidato y además es el arrendador, debe de devolver un 403 Forbidden, ya que no puede realizar acciones de swipe sobre un apartamento que él mismo ha publicado
 
@@ -104,12 +106,5 @@ public class ApartmentMatchController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
-    }
-
-    
-
-
-
-
-    
+    } 
 }

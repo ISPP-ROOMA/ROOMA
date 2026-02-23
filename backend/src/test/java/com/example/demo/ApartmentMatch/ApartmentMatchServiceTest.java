@@ -16,6 +16,8 @@ import java.util.Optional;
 
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentState;
+import com.example.demo.Exceptions.ConflictException;
+import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
@@ -203,7 +205,7 @@ public class ApartmentMatchServiceTest {
     }
 
     @Test
-    public void testProcessSwipe_SecondInteraction_MatchAlreadyRejected_Throws() {
+    public void testProcessSwipe_SecondInteraction_MatchAlreadyMatched_Throws() {
         Integer candidateId = 4;
         Integer apartmentId = 5;
 
@@ -216,7 +218,7 @@ public class ApartmentMatchServiceTest {
         ApartmentMatchEntity existing = new ApartmentMatchEntity();
         existing.setCandidateInterest(null);
         existing.setLandlordInterest(false);
-        existing.setMatchStatus(MatchStatus.REJECTED);
+        existing.setMatchStatus(MatchStatus.MATCH);
         existing.setCandidate(user);
         existing.setApartment(apt);
 
@@ -224,11 +226,36 @@ public class ApartmentMatchServiceTest {
         when(apartmentService.findById(apartmentId)).thenReturn(apt);
         when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.of(existing));
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+        assertThrows(ConflictException.class, () -> {
             apartmentMatchService.processSwipe(candidateId, apartmentId, true, true);
         });
+    }
 
-        assertTrue(ex.getMessage().toLowerCase().contains("match is not active"));
+    @Test
+    public void testProcessSwipe_SecondInteraction_MatchAlreadySuccessful_Throws() {
+        Integer candidateId = 4;
+        Integer apartmentId = 5;
+
+        UserEntity user = new UserEntity();
+        user.setId(candidateId);
+        ApartmentEntity apt = new ApartmentEntity();
+        apt.setId(apartmentId);
+        apt.setState(ApartmentState.ACTIVE);
+
+        ApartmentMatchEntity existing = new ApartmentMatchEntity();
+        existing.setCandidateInterest(null);
+        existing.setLandlordInterest(true);
+        existing.setMatchStatus(MatchStatus.SUCCESSFUL);
+        existing.setCandidate(user);
+        existing.setApartment(apt);
+
+        when(userService.findById(candidateId)).thenReturn(user);
+        when(apartmentService.findById(apartmentId)).thenReturn(apt);
+        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.of(existing));
+
+        assertThrows(ConflictException.class, () -> {
+            apartmentMatchService.processSwipe(candidateId, apartmentId, true, false);
+        });
     }
 
     @Test
@@ -253,11 +280,36 @@ public class ApartmentMatchServiceTest {
         when(apartmentService.findById(apartmentId)).thenReturn(apt);
         when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.of(existing));
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+        assertThrows(ConflictException.class, () -> {
             apartmentMatchService.processSwipe(candidateId, apartmentId, true, true);
         });
+    }
 
-        assertTrue(ex.getMessage().toLowerCase().contains("already swiped") || ex.getMessage().toLowerCase().contains("already"));
+    @Test
+    public void testProcessSwipe_DuplicateInteraction2_Throws() {
+        Integer candidateId = 5;
+        Integer apartmentId = 6;
+
+        UserEntity user = new UserEntity();
+        user.setId(candidateId);
+        ApartmentEntity apt = new ApartmentEntity();
+        apt.setId(apartmentId);
+        apt.setState(ApartmentState.ACTIVE);
+
+        ApartmentMatchEntity existing = new ApartmentMatchEntity();
+        existing.setCandidateInterest(null);
+        existing.setLandlordInterest(true);
+        existing.setMatchStatus(MatchStatus.ACTIVE);
+        existing.setCandidate(user);
+        existing.setApartment(apt);
+
+        when(userService.findById(candidateId)).thenReturn(user);
+        when(apartmentService.findById(apartmentId)).thenReturn(apt);
+        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.of(existing));
+
+        assertThrows(ConflictException.class, () -> {
+            apartmentMatchService.processSwipe(candidateId, apartmentId, false, true);
+        });
     }
 
     @Test
@@ -273,11 +325,9 @@ public class ApartmentMatchServiceTest {
 
         when(userService.findById(candidateId)).thenReturn(user);
         when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+        assertThrows(ConflictException.class, () -> {
             apartmentMatchService.processSwipe(candidateId, apartmentId, true, true);
         });
-        assertTrue(ex.getMessage().toLowerCase().contains("not active") || ex.getMessage().toLowerCase().contains("not active"));
-
     }
 
     @Test
@@ -286,10 +336,9 @@ public class ApartmentMatchServiceTest {
         Integer apartmentId = 8;
 
         when(userService.findById(candidateId)).thenReturn(null);
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+        assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMatchService.processSwipe(candidateId, apartmentId, true, true);
         });
-        assertTrue(ex.getMessage().toLowerCase().contains("candidate not found"));
     }
 
     @Test
@@ -302,10 +351,9 @@ public class ApartmentMatchServiceTest {
 
         when(userService.findById(candidateId)).thenReturn(user);
         when(apartmentService.findById(apartmentId)).thenReturn(null);
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+        assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMatchService.processSwipe(candidateId, apartmentId, true, true);
         });
-        assertTrue(ex.getMessage().toLowerCase().contains("apartment not found"));
     }  
 
     @Test
@@ -339,11 +387,9 @@ public class ApartmentMatchServiceTest {
 
         when(apartmentService.findById(apartmentId)).thenReturn(apt);
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+        assertThrows(ConflictException.class, () -> {
             apartmentMatchService.finalizeMatchProcess(apartmentId);
         });
-
-        assertTrue(ex.getMessage().toLowerCase().contains("only apartments that are not matching can be finalized"));
     }
 
     @Test
@@ -351,10 +397,9 @@ public class ApartmentMatchServiceTest {
         Integer apartmentId = 9;
 
         when(apartmentService.findById(apartmentId)).thenReturn(null);
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+        assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMatchService.finalizeMatchProcess(apartmentId);
         });
-        assertTrue(ex.getMessage().toLowerCase().contains("apartment not found"));
     }
 
     @Test
@@ -366,10 +411,9 @@ public class ApartmentMatchServiceTest {
 
         when(apartmentService.findById(apartmentId)).thenReturn(apt);
         when(apartmentMatchRepository.findByApartmentId(apartmentId)).thenReturn(Arrays.asList());
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+        assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMatchService.finalizeMatchProcess(apartmentId);
         });
-        assertTrue(ex.getMessage().toLowerCase().contains("no matches found"));
     }
 
 
@@ -395,11 +439,9 @@ public class ApartmentMatchServiceTest {
 
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+        assertThrows(ConflictException.class, () -> {
             apartmentMatchService.successfulMatch(matchId);
         });
-
-        assertTrue(ex.getMessage().toLowerCase().contains("already finalized as successful"));
     }
 
     @Test
@@ -410,11 +452,9 @@ public class ApartmentMatchServiceTest {
 
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+        assertThrows(ConflictException.class, () -> {
             apartmentMatchService.successfulMatch(matchId);
         });
-
-        assertTrue(ex.getMessage().toLowerCase().contains("only matches with status match can be finalized as successful"));
     }
 
     @Test
@@ -439,11 +479,9 @@ public class ApartmentMatchServiceTest {
 
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+        assertThrows(ConflictException.class, () -> {
             apartmentMatchService.rejectMatch(matchId);
         });
-
-        assertTrue(ex.getMessage().toLowerCase().contains("cannot reject a match that has already been finalized as successful"));
     }
 
     @Test
@@ -454,11 +492,9 @@ public class ApartmentMatchServiceTest {
 
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+        assertThrows(ConflictException.class, () -> {
             apartmentMatchService.rejectMatch(matchId);
         });
-
-        assertTrue(ex.getMessage().toLowerCase().contains("match is already rejected"));
     }
 
     @Test
@@ -516,7 +552,7 @@ public class ApartmentMatchServiceTest {
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.empty());
 
        
-        assertThrows(RuntimeException.class, () -> {
+        assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMatchService.findApartmentMatchById(matchId);
         });
     }
@@ -551,7 +587,7 @@ public class ApartmentMatchServiceTest {
         Integer apartmentId = 15;
         when(userService.findById(candidateId)).thenReturn(new UserEntity());
         when(apartmentService.findById(apartmentId)).thenReturn(null);
-        assertThrows(RuntimeException.class, () -> {
+        assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMatchService.findApartmentMatchByCandidateAndApartment(candidateId, apartmentId);
         });
     }
@@ -561,7 +597,7 @@ public class ApartmentMatchServiceTest {
         Integer candidateId = 16;
         Integer apartmentId = 17;
         when(userService.findById(candidateId)).thenReturn(null);
-        assertThrows(RuntimeException.class, () -> {
+        assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMatchService.findApartmentMatchByCandidateAndApartment(candidateId, apartmentId);
         });
     }
@@ -579,7 +615,7 @@ public class ApartmentMatchServiceTest {
         when(userService.findById(candidateId)).thenReturn(user);
         when(apartmentService.findById(apartmentId)).thenReturn(apt);
         when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> {
+        assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMatchService.findApartmentMatchByCandidateAndApartment(candidateId, apartmentId);
         });
     }
