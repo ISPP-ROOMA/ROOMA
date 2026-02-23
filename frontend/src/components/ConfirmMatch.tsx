@@ -17,10 +17,9 @@ export const ConfirmMatch = () =>{
         
         setIsOpen(true);
     
-    }, 2000);
+        }, 2000);
     
-    return() => clearTimeout(timer)
-
+        return() => clearTimeout(timer);
     }, []);
 
     
