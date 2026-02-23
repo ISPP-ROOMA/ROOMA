@@ -1,6 +1,5 @@
 package com.example.demo.Apartment;
 
-
 import jakarta.persistence.*;
 
 @Entity
@@ -30,12 +29,13 @@ public class ApartmentEntity {
     private String ubication;
 
     @Column(nullable = false)
-    private String state;
+    @Enumerated(EnumType.STRING)
+    private ApartmentState state;
 
     public ApartmentEntity() {
     }
 
-    public ApartmentEntity(Integer id, String title, String description, Double price, String bills, String ubication, String state) {
+    public ApartmentEntity(Integer id, String title, String description, Double price, String bills, String ubication, ApartmentState state) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -93,11 +93,11 @@ public class ApartmentEntity {
         this.ubication = ubication;
     }
 
-    public String getState() {
+    public ApartmentState getState() {
         return state;
     }
 
-    public void setState(String state) {
+    public void setState(ApartmentState state) {
         this.state = state;
     }
 }
