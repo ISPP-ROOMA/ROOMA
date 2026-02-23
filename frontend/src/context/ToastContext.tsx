@@ -22,7 +22,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, []);
 
     const showToast = useCallback((message: string, type: ToastType = 'info', duration: number = 3000) => {
-        const id = Math.random().toString(36).substring(2, 9);
+        // Usamos la API nativa y segura del navegador en lugar de Math.random()
+        const id = crypto.randomUUID();
+        
         setToasts((currentToasts) => [...currentToasts, { id, message, type }]);
 
         if (duration > 0) {
