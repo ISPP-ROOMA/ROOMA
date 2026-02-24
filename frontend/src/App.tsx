@@ -79,7 +79,6 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           {adminRoutes}
-          {customerRoutes}
           {privateRoutes}
           {publicRoutes}
         </Routes>

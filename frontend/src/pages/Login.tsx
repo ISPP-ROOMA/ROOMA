@@ -7,9 +7,7 @@ import { getDeviceId, loginUser } from '../service/auth.service'
 import { useAuthStore } from '../store/authStore'
 
 const schema = z.object({
-  email: z.email('Invalid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  deviceId: z.string().optional(),
+  email: z.email('Invalid email'),password: z.string().min(6, 'Password must be at least 6 characters'),deviceId: z.string().optional(),
 })
 
 type LoginFormData = z.infer<typeof schema>
