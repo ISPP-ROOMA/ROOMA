@@ -17,7 +17,6 @@ import PublishFlowContainer from './pages/apartments/publish/PublishFlowContaine
 import BrowseApartments from './pages/apartments/BrowseApartments'
 
 function App() {
-
   const { token, role } = useAuthStore()
 
   useEffect(() => {
@@ -26,16 +25,29 @@ function App() {
 
   let publicRoutes = <></>
   let privateRoutes = <></>
-  let landlordRoutes = <></>
-  let tenantRoutes = <></>
+  let customerRoutes = <></>
   let adminRoutes = <></>
 
   switch (role) {
-    case "ADMIN":
+    case 'ADMIN':
       adminRoutes = (
         <>
-          <Route path='/users' element={<PrivateRoute><Users /></PrivateRoute>} />
-          <Route path='/users/:id' element={<PrivateRoute><User /></PrivateRoute>} />
+          <Route
+            path="/users"
+            element={
+              <PrivateRoute>
+                <Users />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/users/:id"
+            element={
+              <PrivateRoute>
+                <User />
+              </PrivateRoute>
+            }
+          />
         </>
       )
       break
@@ -63,14 +75,21 @@ function App() {
   if (!token) {
     publicRoutes = (
       <>
-        <Route path='/login' element={<Login />} />
-        <Route path='/register' element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
       </>
     )
   } else {
     privateRoutes = (
       <>
-        <Route path='/profile' element={<PrivateRoute><Profile /></PrivateRoute>} />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
       </>
     )
   }
@@ -78,12 +97,11 @@ function App() {
   return (
     <div>
       <Navbar />
-      <main className='mx-auto min-h-dvh flex flex-col'>
+      <main className="mx-auto min-h-dvh flex flex-col">
         <Routes>
-          <Route path='/' element={<Home />} />
+          <Route path="/" element={<Home />} />
           {adminRoutes}
-          {landlordRoutes}
-          {tenantRoutes}
+          {customerRoutes}
           {privateRoutes}
           {publicRoutes}
         </Routes>

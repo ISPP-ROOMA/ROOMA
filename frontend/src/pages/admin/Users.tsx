@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { getUsers } from "../../service/users.service"
-import type { User, UsersResponse } from "../../service/users.service"
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { getUsers } from '../../service/users.service'
+import type { User, UsersResponse } from '../../service/users.service'
 
 export default function Users() {
   const navigate = useNavigate()
@@ -18,7 +18,7 @@ export default function Users() {
         if (!currentPage) {
           currentPage = 1
         }
-        const res = await getUsers(currentPage) as UsersResponse
+        const res = (await getUsers(currentPage)) as UsersResponse
         setUsers(res.users || [])
         setPage(res.page)
         setTotalPages(res.totalPages)
@@ -42,7 +42,8 @@ export default function Users() {
   }
 
   if (isLoading) return <p className="text-center mt-10 text-gray-500">Cargando usuarios...</p>
-  if (!users.length) return <p className="text-center mt-10 text-red-500">No se encontraron usuarios.</p>
+  if (!users.length)
+    return <p className="text-center mt-10 text-red-500">No se encontraron usuarios.</p>
 
   return (
     <div className="p-6 min-h-[70vh]">
@@ -77,9 +78,15 @@ export default function Users() {
       </div>
 
       <div className="flex justify-center mt-6 gap-4">
-        <button className="btn" onClick={prevPage} disabled={page <= 1}>Prev</button>
-        <div className="flex items-center px-4">{page}/{totalPages}</div>
-        <button className="btn" onClick={nextPage} disabled={page === totalPages}>Next</button>
+        <button className="btn" onClick={prevPage} disabled={page <= 1}>
+          Prev
+        </button>
+        <div className="flex items-center px-4">
+          {page}/{totalPages}
+        </div>
+        <button className="btn" onClick={nextPage} disabled={page === totalPages}>
+          Next
+        </button>
       </div>
     </div>
   )

@@ -1,14 +1,15 @@
-import { useState } from "react"
-import { useNavigate, Link } from "react-router-dom"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { getDeviceId, loginUser } from "../service/auth.service"
-import { useAuthStore } from "../store/authStore"
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { getDeviceId, loginUser } from '../service/auth.service'
+import { useAuthStore } from '../store/authStore'
 
 const schema = z.object({
-  email: z.email('Email no válido'),
-  password: z.string().min(4, 'La contraseña debe tener al menos 4 caracteres'),
+  email: z.email('Invalid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  deviceId: z.string().optional(),
 })
 
 type LoginFormData = z.infer<typeof schema>
@@ -18,18 +19,17 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
     resolver: zodResolver(schema),
   })
 
   const onSubmit = async (data: LoginFormData) => {
     const deviceId = getDeviceId()
-    const res = await loginUser({
-      email: data.email,
-      password: data.password,
-      deviceId,
-      role: 'TENANT', // Backend requires role but login ignores it
-    })
+    const res = await loginUser({ email: data.email, password: data.password, deviceId: deviceId })
     if (res.error) {
       setError(res.error)
       return
@@ -40,11 +40,7 @@ export default function Login() {
       role: res.role,
     })
 
-    if (res.role === 'LANDLORD') {
-      navigate("/apartments")
-    } else {
-      navigate("/")
-    }
+    navigate('/')
   }
 
   const togglePassword = () => {
@@ -59,24 +55,42 @@ export default function Login() {
 
           <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
             <div className="form-control">
-              <label className="label"><span className="label-text">Email</span></label>
-              <input {...register("email")} id="email" type="text" placeholder="tu@email.com" className="input input-bordered w-full" />
+              <label className="label">
+                <span className="label-text">Email</span>
+              </label>
+              <input
+                {...register('email')}
+                id="email"
+                type="text"
+                className="input input-bordered w-full"
+              />
               {errors.email && <p className="text-error text-sm mt-1">{errors.email.message}</p>}
             </div>
 
             <div className="form-control">
-              <label className="label"><span className="label-text">Contraseña</span></label>
-              <input {...register("password")} id="password" type={isPasswordVisible ? 'text' : 'password'} className="input input-bordered w-full" />
-              {errors.password && <p className="text-error text-sm mt-1">{errors.password.message}</p>}
+              <label className="label">
+                <span className="label-text">Password</span>
+              </label>
+              <input
+                {...register('password')}
+                id="password"
+                type={isPasswordVisible ? 'text' : 'password'}
+                className="input input-bordered w-full"
+              />
+              {errors.password && (
+                <p className="text-error text-sm mt-1">{errors.password.message}</p>
+              )}
             </div>
 
             {error && <p className="text-error text-center">{error}</p>}
 
             <div className="flex items-center justify-between">
-              <button type="button" onClick={togglePassword} className="btn btn-link btn-sm px-0">
+              <button type="button" onClick={togglePassword} className="btn btn-link">
                 {isPasswordVisible ? 'Ocultar contraseña' : 'Ver contraseña'}
               </button>
-              <button type="submit" className="btn btn-primary">Entrar</button>
+              <button type="submit" className="btn btn-primary">
+                Login
+              </button>
             </div>
 
             <p className="text-center text-sm text-gray-500">

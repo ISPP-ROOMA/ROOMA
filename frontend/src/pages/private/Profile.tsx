@@ -10,23 +10,22 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 export default function Profile() {
-    const [userData, setUserData] = useState<User | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
+  const [userData, setUserData] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-    useEffect(() => {
-        const profile = async () => {
-            try {
-                const res = await getUserProfile()
-                setUserData(res || null)
-
-            } catch (error) {
-                console.error(error)
-            } finally {
-                setIsLoading(false)
-            }
-        }
-        profile()
-    }, [])
+  useEffect(() => {
+    const profile = async () => {
+      try {
+        const res = await getUserProfile()
+        setUserData(res || null)
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    profile()
+  }, [])
 
     if (isLoading) return <p className="text-center mt-10 text-gray-500">Cargando...</p>
 

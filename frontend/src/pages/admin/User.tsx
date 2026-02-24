@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { getUser, updateUser } from "../../service/users.service"
+import { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { getUser, updateUser } from '../../service/users.service'
 
 const schema = z.object({
     email: z.email("Email no válido"),
@@ -17,19 +17,24 @@ const schema = z.object({
 type UserFormData = z.infer<typeof schema>
 
 export default function User() {
-    const { id } = useParams<{ id?: string }>()
-    const navigate = useNavigate()
-    const [error, setError] = useState<string | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
+  const { id } = useParams<{ id?: string }>()
+  const navigate = useNavigate()
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-    const { register, handleSubmit, formState: { errors }, reset } = useForm<UserFormData>({
-        resolver: zodResolver(schema),
-    })
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<UserFormData>({
+    resolver: zodResolver(schema),
+  })
 
-    useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const res = await getUser(id!)
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await getUser(id!)
 
                 reset({
                     email: res?.email || '',
@@ -43,25 +48,25 @@ export default function User() {
             }
         }
 
-        fetchUser()
-    }, [id, reset])
+    fetchUser()
+  }, [id, reset])
 
-    const onSubmit = async (data: UserFormData) => {
-        const res = await updateUser(id!, data)
+  const onSubmit = async (data: UserFormData) => {
+    const res = await updateUser(id!, data)
 
-        console.log(res)
+    console.log(res)
 
-        if (res.error) {
-            setError(res.error)
-            return
-        }
-
-        navigate("/users")
+    if (res.error) {
+      setError(res.error)
+      return
     }
 
-    if (isLoading) {
-        return <p className="text-center mt-10">Cargando usuario...</p>
-    }
+    navigate('/users')
+  }
+
+  if (isLoading) {
+    return <p className="text-center mt-10">Cargando usuario...</p>
+  }
 
     return (
         <div className="flex items-center justify-center mt-6 p-4">
@@ -92,7 +97,7 @@ export default function User() {
                             {errors.password && <p className="text-error text-sm mt-1">{errors.password.message}</p>}
                         </div>
 
-                        {error && <p className="text-error text-center">{error}</p>}
+            {error && <p className="text-error text-center">{error}</p>}
 
                         <div className="flex justify-between items-center">
                             <button type="button" onClick={() => navigate("/users")} className="btn">Cancelar</button>

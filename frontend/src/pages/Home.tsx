@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom"
-import { useAuthStore } from "../store/authStore"
+import { Link } from 'react-router-dom'
+import { useAuthStore } from '../store/authStore'
 
 export default function Home() {
 
