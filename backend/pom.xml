@@ -47,6 +47,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>3.0.0</version>
+		</dependency>
 
 		<dependency>
     		<groupId>org.springframework.boot</groupId>
@@ -97,22 +102,22 @@
 				<groupId>org.graalvm.buildtools</groupId>
 				<artifactId>native-maven-plugin</artifactId>
 			</plugin>
+			<plugin>
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>9.2.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<failBuildOnCVSS>7</failBuildOnCVSS>
+				</configuration>
+			</plugin>
 		</plugins>
-		<plugin>
-			<groupId>org.owasp</groupId>
-			<artifactId>dependency-check-maven</artifactId>
-			<version>9.2.0</version>
-			<executions>
-				<execution>
-					<goals>
-						<goal>check</goal>
-					</goals>
-				</execution>
-			</executions>
-			<configuration>
-				<failBuildOnCVSS>7</failBuildOnCVSS>
-			</configuration>
-		</plugin>
 	</build>
 
 </project>
