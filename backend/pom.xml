@@ -98,6 +98,21 @@
 				<artifactId>native-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
+		<plugin>
+			<groupId>org.owasp</groupId>
+			<artifactId>dependency-check-maven</artifactId>
+			<version>9.2.0</version>
+			<executions>
+				<execution>
+					<goals>
+						<goal>check</goal>
+					</goals>
+				</execution>
+			</executions>
+			<configuration>
+				<failBuildOnCVSS>7</failBuildOnCVSS>
+			</configuration>
+		</plugin>
 	</build>
 
 </project>
