@@ -55,6 +55,7 @@ export const refreshToken = async (): Promise<AuthResponse | undefined> => {
     useAuthStore.getState().login({
       token: response.data.token,
       role: response.data.role,
+      userId: response.data.userId,
     })
     return response.data
   } catch (error) {

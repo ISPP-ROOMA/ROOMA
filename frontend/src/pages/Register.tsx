@@ -41,7 +41,7 @@ export default function Register() {
       return
     }
 
-    useAuthStore.getState().login({ token: res.token, role: res.role })
+    useAuthStore.getState().login({ token: res.token, role: res.role, userId: res.userId })
 
     navigate('/home')
   }
