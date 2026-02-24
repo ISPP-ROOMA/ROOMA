@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import Navbar from './components/Navbar'
 import Login from './pages/Login'
@@ -11,8 +11,10 @@ import User from './pages/admin/User'
 import { useEffect } from 'react'
 import { refreshToken } from './service/auth.service'
 import Register from './pages/Register'
+import MyRequests from './pages/private/MyRequests'
 
 function App() {
+  const location = useLocation()
 
   const { token, role } = useAuthStore()
 
@@ -49,13 +51,16 @@ function App() {
     privateRoutes = (
       <>
         <Route path='/profile' element={<PrivateRoute><Profile /></PrivateRoute>} />
+        <Route path='/mis-solicitudes' element={<PrivateRoute><MyRequests /></PrivateRoute>} />
       </>
     )
   }
 
+  const usesMobileLayout = location.pathname === '/mis-solicitudes'
+
   return (
     <div>
-      <Navbar />
+      {!usesMobileLayout && <Navbar />}
       <main className='mx-auto min-h-dvh flex flex-col'>
         <Routes>
           <Route path='/' element={<Home />} />
@@ -65,7 +70,7 @@ function App() {
           {publicRoutes}
         </Routes>
       </main>
-      <Footer />
+      {!usesMobileLayout && <Footer />}
     </div>
   )
 }

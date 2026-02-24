@@ -45,6 +45,7 @@ export default function Navbar() {
   } else {
     privateRoutes = (
       <>
+        <NavLink className="p-2" to="/mis-solicitudes">Mis solicitudes</NavLink>
         <NavLink className="p-2" to="/profile">Profile</NavLink>
         <button onClick={handleLogout} className="p-2 text-white">
           Logout
