@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - feat/**
-      - trunk-x
+      - trunk-**
       - trunk
       - main
   pull_request:
