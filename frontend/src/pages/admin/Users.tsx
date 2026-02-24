@@ -53,7 +53,6 @@ export default function Users() {
           <thead>
             <tr>
               <th>#</th>
-              <th>Nombre</th>
               <th>Email</th>
               <th>Rol</th>
               <th>Acciones</th>
@@ -63,14 +62,13 @@ export default function Users() {
             {users.map((user, index) => (
               <tr key={user.id}>
                 <th>{index + 1}</th>
-                <td>{user.name}</td>
                 <td>{user.email}</td>
                 <td>
-                  <div className={`badge ${user.role === 'ADMIN' ? 'badge-primary' : 'badge-outline'}`}>{user.role}</div>
+                  <div className={`badge ${user.role === 'ADMIN' ? 'badge-primary' : user.role === 'LANDLORD' ? 'badge-secondary' : 'badge-outline'}`}>{user.role}</div>
                 </td>
                 <td className="flex gap-2">
-                  <button onClick={() => navigate(`/users/${user.id}`)} className="btn btn-sm btn-warning">Edit</button>
-                  <button className="btn btn-sm btn-error">Delete</button>
+                  <button onClick={() => navigate(`/users/${user.id}`)} className="btn btn-sm btn-warning">Editar</button>
+                  <button className="btn btn-sm btn-error">Eliminar</button>
                 </td>
               </tr>
             ))}

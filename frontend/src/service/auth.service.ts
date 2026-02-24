@@ -5,11 +5,11 @@ export interface LoginData {
   email: string
   password: string
   deviceId?: string
+  role?: 'TENANT' | 'LANDLORD'
 }
 
 export interface AuthResponse {
   token: string
-  userId: string | number
   role: string
   error?: string
 }
@@ -33,7 +33,7 @@ export const registerUser = async (loginData: LoginData): Promise<AuthResponse> 
         return response.data
     } catch (error) {
         console.error(error)
-        return {error: 'Invalid credentials', token: '', userId: '', role: '' }
+        return {error: 'Invalid credentials', token: '', role: '' }
     }
 }
 
@@ -43,7 +43,7 @@ export const loginUser = async (loginData: LoginData): Promise<AuthResponse> => 
         return response.data
     } catch (error) {
         console.error(error)
-        return {error: 'Invalid credentials', token: '', userId: '', role: '' }
+        return {error: 'Invalid credentials', token: '', role: '' }
     }
 }
 
