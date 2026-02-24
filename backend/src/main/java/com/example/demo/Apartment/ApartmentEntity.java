@@ -27,8 +27,7 @@ public class ApartmentEntity {
 
     @Column(nullable = false)
     private String ubication;
-
-    @Column(nullable = false)
+  
     @Enumerated(EnumType.STRING)
     private ApartmentState state;
 

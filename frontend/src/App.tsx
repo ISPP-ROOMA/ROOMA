@@ -12,6 +12,8 @@ import { useEffect } from 'react'
 import { refreshToken } from './service/auth.service'
 import Register from './pages/Register'
 import MyRequests from './pages/private/MyRequests'
+import PropertyDetails from './pages/PropertyDetails'
+import { ToastProvider } from './context/ToastContext'
 
 function App() {
   const location = useLocation()
@@ -59,19 +61,23 @@ function App() {
   const usesMobileLayout = location.pathname === '/mis-solicitudes'
 
   return (
-    <div>
-      {!usesMobileLayout && <Navbar />}
-      <main className='mx-auto min-h-dvh flex flex-col'>
-        <Routes>
-          <Route path='/' element={<Home />} />
-          {adminRoutes}
-          {customerRoutes}
-          {privateRoutes}
-          {publicRoutes}
-        </Routes>
-      </main>
-      {!usesMobileLayout && <Footer />}
-    </div>
+
+    <ToastProvider>
+      <div>
+        {!usesMobileLayout && <Navbar />}
+        <main className='mx-auto min-h-dvh flex flex-col'>
+          <Routes>
+            <Route path='/' element={<Home />} />
+            <Route path='/properties/:id' element={<PropertyDetails />} />
+            {adminRoutes}
+            {customerRoutes}
+            {privateRoutes}
+            {publicRoutes}
+          </Routes>
+        </main>
+        {!usesMobileLayout && <Footer />}
+      </div>
+    </ToastProvider>
   )
 }
 
