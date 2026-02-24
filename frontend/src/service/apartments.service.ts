@@ -1,4 +1,4 @@
-import { api } from "./api"
+import { api } from './api'
 
 export interface Apartment {
   id: number
@@ -56,7 +56,10 @@ export const createApartment = async (data: CreateApartmentPayload): Promise<Apa
   return response.data
 }
 
-export const updateApartment = async (id: number, data: UpdateApartmentPayload): Promise<Apartment> => {
+export const updateApartment = async (
+  id: number,
+  data: UpdateApartmentPayload
+): Promise<Apartment> => {
   const response = await api.put<Apartment>(`/apartments/${id}`, data)
   return response.data
 }

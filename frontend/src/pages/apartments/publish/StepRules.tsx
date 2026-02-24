@@ -1,8 +1,9 @@
-const WRAPPER_CLASS = "flex flex-col items-center justify-center py-16 text-center gap-5"
-const ICON_ROW_CLASS = "flex items-center gap-4"
-const ICON_WRAPPER_CLASS = "w-16 h-16 rounded-full bg-base-300/60 flex items-center justify-center"
-const BADGE_CLASS = "badge badge-lg bg-primary/10 text-primary border-0 font-semibold tracking-wide text-xs uppercase px-4 py-3"
-const DESCRIPTION_CLASS = "text-sm text-base-content/50 mt-1 max-w-sm mx-auto leading-relaxed"
+const WRAPPER_CLASS = 'flex flex-col items-center justify-center py-16 text-center gap-5'
+const ICON_ROW_CLASS = 'flex items-center gap-4'
+const ICON_WRAPPER_CLASS = 'w-16 h-16 rounded-full bg-base-300/60 flex items-center justify-center'
+const BADGE_CLASS =
+  'badge badge-lg bg-primary/10 text-primary border-0 font-semibold tracking-wide text-xs uppercase px-4 py-3'
+const DESCRIPTION_CLASS = 'text-sm text-base-content/50 mt-1 max-w-sm mx-auto leading-relaxed'
 
 export default function StepRules() {
   return (
@@ -53,14 +54,13 @@ export default function StepRules() {
         </div>
       </div>
 
-      <span className={BADGE_CLASS}>
-        En desarrollo
-      </span>
+      <span className={BADGE_CLASS}>En desarrollo</span>
 
       <div>
         <h3 className="text-lg font-bold text-base-content">Reglas y matching inteligente</h3>
         <p className={DESCRIPTION_CLASS}>
-          La configuración de reglas de convivencia y el algoritmo de matching inteligente estarán disponibles pronto.
+          La configuración de reglas de convivencia y el algoritmo de matching inteligente estarán
+          disponibles pronto.
         </p>
       </div>
     </div>

@@ -1,25 +1,28 @@
-import type { ChangeEvent } from "react"
-import type { PublishFormData } from "./publishForm"
+import type { ChangeEvent } from 'react'
+import type { PublishFormData } from './publishForm'
 
 const BARRIOS = [
-  "Triana",
-  "Macarena",
-  "Nervión",
-  "Centro",
-  "Los Remedios",
-  "Santa Cruz",
-  "San Bernardo",
-  "La Cartuja",
+  'Triana',
+  'Macarena',
+  'Nervión',
+  'Centro',
+  'Los Remedios',
+  'Santa Cruz',
+  'San Bernardo',
+  'La Cartuja',
 ]
 
-const WRAPPER_CLASS = "flex flex-col gap-6"
-const MAP_CLASS = "relative w-full aspect-[16/10] bg-base-300/60 rounded-2xl flex items-center justify-center overflow-hidden"
-const GRID_CLASS = "absolute inset-0 opacity-10"
-const LOCATION_BUTTON_CLASS = "flex items-center gap-2 text-primary font-semibold text-sm self-start hover:opacity-80 transition"
-const STREET_INPUT_CLASS = "input input-bordered w-full pl-11 rounded-xl bg-base-100 focus:outline-primary"
-const CHIP_BASE_CLASS = "px-4 py-2 rounded-full text-sm font-medium transition-all"
-const CHIP_ACTIVE_CLASS = "bg-primary text-primary-content shadow-sm"
-const CHIP_INACTIVE_CLASS = "bg-base-300/60 text-base-content/70 hover:bg-base-300"
+const WRAPPER_CLASS = 'flex flex-col gap-6'
+const MAP_CLASS =
+  'relative w-full aspect-[16/10] bg-base-300/60 rounded-2xl flex items-center justify-center overflow-hidden'
+const GRID_CLASS = 'absolute inset-0 opacity-10'
+const LOCATION_BUTTON_CLASS =
+  'flex items-center gap-2 text-primary font-semibold text-sm self-start hover:opacity-80 transition'
+const STREET_INPUT_CLASS =
+  'input input-bordered w-full pl-11 rounded-xl bg-base-100 focus:outline-primary'
+const CHIP_BASE_CLASS = 'px-4 py-2 rounded-full text-sm font-medium transition-all'
+const CHIP_ACTIVE_CLASS = 'bg-primary text-primary-content shadow-sm'
+const CHIP_INACTIVE_CLASS = 'bg-base-300/60 text-base-content/70 hover:bg-base-300'
 
 interface Props {
   data: PublishFormData
@@ -69,10 +72,7 @@ export default function StepLocation({ data, updateFields }: Props) {
         </svg>
       </div>
 
-      <button
-        type="button"
-        className={LOCATION_BUTTON_CLASS}
-      >
+      <button type="button" className={LOCATION_BUTTON_CLASS}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-5 w-5"
@@ -97,7 +97,9 @@ export default function StepLocation({ data, updateFields }: Props) {
       </button>
 
       <div>
-        <label className="text-sm font-semibold text-base-content block mb-1.5">Calle y número</label>
+        <label className="text-sm font-semibold text-base-content block mb-1.5">
+          Calle y número
+        </label>
         <div className="relative">
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
             <svg
@@ -136,11 +138,7 @@ export default function StepLocation({ data, updateFields }: Props) {
                 type="button"
                 onClick={() => handleNeighborhoodSelect(barrio)}
                 className={`${CHIP_BASE_CLASS}
-                  ${
-                    isActive
-                      ? CHIP_ACTIVE_CLASS
-                      : CHIP_INACTIVE_CLASS
-                  }`}
+                  ${isActive ? CHIP_ACTIVE_CLASS : CHIP_INACTIVE_CLASS}`}
               >
                 {barrio}
               </button>

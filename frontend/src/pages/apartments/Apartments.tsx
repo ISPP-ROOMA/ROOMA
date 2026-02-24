@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { getMyApartments, type Apartment, updateApartment } from "../../service/apartments.service"
-import PropertyCard from "../../components/PropertyCard"
-import { useAuthStore } from "../../store/authStore"
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { getMyApartments, type Apartment, updateApartment } from '../../service/apartments.service'
+import PropertyCard from '../../components/PropertyCard'
+import { useAuthStore } from '../../store/authStore'
 
-const HEADER_CLASS = "bg-base-100 px-6 pt-8 pb-6 md:px-12"
-const CTA_CLASS = "mt-5 w-full flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3.5 rounded-full shadow-md transition text-base"
-const MAIN_CLASS = "px-6 md:px-12 py-8 max-w-7xl mx-auto"
-const GRID_CLASS = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+const HEADER_CLASS = 'bg-base-100 px-6 pt-8 pb-6 md:px-12'
+const CTA_CLASS =
+  'mt-5 w-full flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3.5 rounded-full shadow-md transition text-base'
+const MAIN_CLASS = 'px-6 md:px-12 py-8 max-w-7xl mx-auto'
+const GRID_CLASS = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8'
 
 export default function Apartments() {
   const navigate = useNavigate()
@@ -20,7 +21,7 @@ export default function Apartments() {
   const handlePublishNavigation = () => navigate('/apartments/publish')
 
   const toggleApartmentState = async (apartment: Apartment) => {
-    const nextState = apartment.state === "available" ? "paused" : "available"
+    const nextState = apartment.state === 'available' ? 'paused' : 'available'
 
     setApartments((prev) =>
       prev.map((item) => (item.id === apartment.id ? { ...item, state: nextState } : item))
@@ -48,7 +49,7 @@ export default function Apartments() {
   useEffect(() => {
     if (!token) {
       setIsLoading(false)
-      navigate("/login")
+      navigate('/login')
       return
     }
 
@@ -97,9 +98,9 @@ export default function Apartments() {
           title={apt.title}
           price={apt.price}
           photoCount={0}
-          status={apt.state === "available" ? "active" : "paused"}
+          status={apt.state === 'available' ? 'active' : 'paused'}
           stats={{ requests: 0, matches: 0 }}
-          onEdit={() => console.log("edit", apt.id)}
+          onEdit={() => console.log('edit', apt.id)}
           onPause={() => toggleApartmentState(apt)}
         />
       ))}
@@ -113,10 +114,7 @@ export default function Apartments() {
           <h1 className="text-3xl font-bold text-base-content">Mis Inmuebles</h1>
           <p className="text-gray-400 mt-1 text-sm">Gestiona tu cartera de propiedades</p>
 
-          <button
-            onClick={handlePublishNavigation}
-            className={CTA_CLASS}
-          >
+          <button onClick={handlePublishNavigation} className={CTA_CLASS}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5"
@@ -124,7 +122,12 @@ export default function Apartments() {
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
             </svg>
             Publicar nuevo inmueble
           </button>

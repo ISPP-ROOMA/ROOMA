@@ -8,42 +8,42 @@ export interface PublishFormData {
 }
 
 export const STEP_TITLES = [
-  "¿Dónde está ubicado el piso?",
-  "Precio y disponibilidad",
-  "Fotos y detalles",
-  "Reglas y Perfil Ideal",
+  '¿Dónde está ubicado el piso?',
+  'Precio y disponibilidad',
+  'Fotos y detalles',
+  'Reglas y Perfil Ideal',
 ]
 
 export const TOTAL_STEPS = STEP_TITLES.length
 
 export const INITIAL_PUBLISH_FORM_DATA: PublishFormData = {
-  street: "",
-  neighborhood: "",
-  priceInput: "450",
+  street: '',
+  neighborhood: '',
+  priceInput: '450',
   deposit: 1,
-  availableDate: "",
+  availableDate: '',
   includedBills: [],
 }
 
 export const parsePrice = (value: string): number => {
   if (!value.trim()) return 0
-  const parsed = Number(value.replace(",", "."))
+  const parsed = Number(value.replace(',', '.'))
   if (Number.isNaN(parsed)) return 0
   const clamped = Math.min(Math.max(parsed, 0), 99999)
   return Math.round(clamped * 100) / 100
 }
 
 export const normalizePriceInput = (value: string): string | null => {
-  const raw = value.replace(",", ".")
+  const raw = value.replace(',', '.')
   if (!/^\d*(\.\d{0,2})?$/.test(raw)) return null
-  if (raw === "") return ""
+  if (raw === '') return ''
 
-  const [intPart = "", decimalPart] = raw.split(".")
-  let normalizedInt = intPart.replace(/^0+(?=\d)/, "")
-  if (normalizedInt === "") normalizedInt = "0"
+  const [intPart = '', decimalPart] = raw.split('.')
+  let normalizedInt = intPart.replace(/^0+(?=\d)/, '')
+  if (normalizedInt === '') normalizedInt = '0'
 
   if (Number(normalizedInt) > 99999) {
-    normalizedInt = "99999"
+    normalizedInt = '99999'
   }
 
   return decimalPart !== undefined ? `${normalizedInt}.${decimalPart}` : normalizedInt
@@ -63,5 +63,5 @@ export const isPublishStepValid = (step: number, data: PublishFormData): boolean
 
 export const formatPrice = (value: string): string => {
   const parsed = parsePrice(value)
-  return parsed.toLocaleString("es-ES", { maximumFractionDigits: 2 })
+  return parsed.toLocaleString('es-ES', { maximumFractionDigits: 2 })
 }

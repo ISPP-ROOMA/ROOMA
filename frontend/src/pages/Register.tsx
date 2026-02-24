@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { getDeviceId, registerUser } from '../service/auth.service'
@@ -22,14 +22,14 @@ export default function Register() {
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors },
+    control,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
   })
 
-  const selectedRole = watch('role')
+  const selectedRole = useWatch({ control, name: 'role' })
 
   const onSubmit = async (data: RegisterFormData) => {
     const deviceId = getDeviceId()

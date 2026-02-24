@@ -1,17 +1,21 @@
-import { useNavigate } from "react-router-dom"
+import { useNavigate } from 'react-router-dom'
 
-const CARD_CLASS = "bg-base-100 rounded-3xl shadow-md overflow-hidden flex flex-col"
-const IMAGE_WRAPPER_CLASS = "relative h-48 w-full bg-gray-200"
-const IMAGE_FALLBACK_CLASS = "h-full w-full flex items-center justify-center bg-gray-100"
-const STATUS_BADGE_CLASS = "absolute top-3 left-3 flex items-center gap-1.5 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold text-gray-700 shadow-sm"
-const PHOTO_BADGE_CLASS = "absolute bottom-3 right-3 flex items-center gap-1 bg-black/50 backdrop-blur px-2.5 py-1 rounded-full text-xs text-white"
-const CONTENT_CLASS = "flex flex-col gap-3 p-5 flex-1"
-const ACTION_BUTTON_CLASS = "flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-300 text-sm text-gray-600 hover:bg-gray-100 transition"
-const VIEW_BUTTON_CLASS = "ml-auto flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 transition"
+const CARD_CLASS = 'bg-base-100 rounded-3xl shadow-md overflow-hidden flex flex-col'
+const IMAGE_WRAPPER_CLASS = 'relative h-48 w-full bg-gray-200'
+const IMAGE_FALLBACK_CLASS = 'h-full w-full flex items-center justify-center bg-gray-100'
+const STATUS_BADGE_CLASS =
+  'absolute top-3 left-3 flex items-center gap-1.5 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold text-gray-700 shadow-sm'
+const PHOTO_BADGE_CLASS =
+  'absolute bottom-3 right-3 flex items-center gap-1 bg-black/50 backdrop-blur px-2.5 py-1 rounded-full text-xs text-white'
+const CONTENT_CLASS = 'flex flex-col gap-3 p-5 flex-1'
+const ACTION_BUTTON_CLASS =
+  'flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-300 text-sm text-gray-600 hover:bg-gray-100 transition'
+const VIEW_BUTTON_CLASS =
+  'ml-auto flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 transition'
 
 const STATUS_CONFIG = {
-  active: { label: "ACTIVO", dotClass: "bg-emerald-500" },
-  paused: { label: "PAUSADO", dotClass: "bg-gray-400" },
+  active: { label: 'ACTIVO', dotClass: 'bg-emerald-500' },
+  paused: { label: 'PAUSADO', dotClass: 'bg-gray-400' },
 } as const
 
 export interface PropertyCardProps {
@@ -22,7 +26,7 @@ export interface PropertyCardProps {
   period?: string
   imageUrl?: string
   photoCount: number
-  status: "active" | "paused"
+  status: 'active' | 'paused'
   stats: {
     requests: number
     matches: number
@@ -35,8 +39,8 @@ export default function PropertyCard({
   id,
   title,
   price,
-  currency = "€",
-  period = "mes",
+  currency = '€',
+  period = 'mes',
   imageUrl,
   photoCount,
   status,
@@ -47,18 +51,14 @@ export default function PropertyCard({
   const navigate = useNavigate()
   const { label: statusLabel, dotClass: statusDotClass } = STATUS_CONFIG[status]
 
-  const pauseLabel = status === "active" ? "Pausar" : "Reanudar"
+  const pauseLabel = status === 'active' ? 'Pausar' : 'Reanudar'
   const goToDetail = () => navigate(`/apartments/${id}`)
 
   return (
     <div className={CARD_CLASS}>
       <div className={IMAGE_WRAPPER_CLASS}>
         {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={title}
-            className="h-full w-full object-cover"
-          />
+          <img src={imageUrl} alt={title} className="h-full w-full object-cover" />
         ) : (
           <div className={IMAGE_FALLBACK_CLASS}>
             <svg
@@ -131,24 +131,17 @@ export default function PropertyCard({
 
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-base-200 rounded-2xl flex flex-col items-center justify-center py-4">
-            <span className="text-2xl font-bold text-base-content">
-              {stats.requests}
-            </span>
+            <span className="text-2xl font-bold text-base-content">{stats.requests}</span>
             <span className="text-xs opacity-60 mt-0.5">Solicitudes</span>
           </div>
           <div className="bg-base-200 rounded-2xl flex flex-col items-center justify-center py-4">
-            <span className="text-2xl font-bold text-base-content">
-              {stats.matches}
-            </span>
+            <span className="text-2xl font-bold text-base-content">{stats.matches}</span>
             <span className="text-xs opacity-60 mt-0.5">Matches</span>
           </div>
         </div>
 
         <div className="flex items-center gap-2 mt-auto pt-2">
-          <button
-            onClick={onEdit}
-            className={ACTION_BUTTON_CLASS}
-          >
+          <button onClick={onEdit} className={ACTION_BUTTON_CLASS}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4"
@@ -166,11 +159,8 @@ export default function PropertyCard({
             Editar
           </button>
 
-          <button
-            onClick={onPause}
-            className={ACTION_BUTTON_CLASS}
-          >
-            {status === "active" ? (
+          <button onClick={onPause} className={ACTION_BUTTON_CLASS}>
+            {status === 'active' ? (
               <>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -209,11 +199,7 @@ export default function PropertyCard({
             )}
           </button>
 
-          <button
-            onClick={goToDetail}
-            className={VIEW_BUTTON_CLASS}
-            title="Ver detalle"
-          >
+          <button onClick={goToDetail} className={VIEW_BUTTON_CLASS} title="Ver detalle">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5"
