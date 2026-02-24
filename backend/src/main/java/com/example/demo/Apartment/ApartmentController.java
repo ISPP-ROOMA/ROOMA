@@ -1,21 +1,16 @@
 package com.example.demo.Apartment;
 
+import com.example.demo.Apartment.DTOs.UpdateApartment;
+import com.example.demo.Apartment.DTOs.ApartmentDTO;
+import com.example.demo.Apartment.DTOs.CreateApartment;
+
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
-import com.example.demo.Apartment.DTOs.ApartmentDTO;
-import com.example.demo.Apartment.DTOs.UpdateApartment;
 
 @RestController
 @RequestMapping("/api/apartments")
@@ -39,24 +34,24 @@ public class ApartmentController {
         return ResponseEntity.ok(apartments);
     }
 
+    @PreAuthorize("hasRole('LANDLORD')")
+    @GetMapping("/my")
+    public ResponseEntity<List<ApartmentDTO>> getMyApartments() {
+        List<ApartmentDTO> apartments = ApartmentDTO.fromApartmentEntityList(apartmentsService.findMyApartments());
+        return ResponseEntity.ok(apartments);
+    }
+
     @PostMapping
-    public ResponseEntity<ApartmentEntity> createApartment(@RequestBody ApartmentEntity apartments) {
-        ApartmentEntity createdApartment = apartmentsService.save(apartments);
+    public ResponseEntity<ApartmentEntity> createApartment(@RequestBody CreateApartment apartments) {
+        
+        ApartmentEntity createdApartment = apartmentsService.save(CreateApartment.fromDTO(apartments));
 
         return new ResponseEntity<>(createdApartment, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApartmentEntity> updateApartment(@PathVariable Integer id,
-            @RequestBody UpdateApartment apartments) {
-        ApartmentEntity apartmentsToUpdate = new ApartmentEntity();
-        apartmentsToUpdate.setTitle(apartments.title());
-        apartmentsToUpdate.setDescription(apartments.description());
-        apartmentsToUpdate.setPrice(apartments.price());
-        apartmentsToUpdate.setBills(apartments.bills());
-        apartmentsToUpdate.setUbication(apartments.ubication());
-        apartmentsToUpdate.setState(apartments.state());
-        ApartmentEntity updatedApartment = apartmentsService.update(id, apartmentsToUpdate);
+    public ResponseEntity<ApartmentEntity> updateApartment(@PathVariable Integer id, @RequestBody UpdateApartment apartment) {
+        ApartmentEntity updatedApartment = apartmentsService.update(id, UpdateApartment.fromDTO(apartment));
         return ResponseEntity.ok(updatedApartment);
     }
 

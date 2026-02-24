@@ -1,6 +1,6 @@
-import { NavLink, useNavigate } from "react-router-dom"
-import { useAuthStore } from "../store/authStore"
-import { logout } from "../service/auth.service"
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuthStore } from '../store/authStore'
+import { logout } from '../service/auth.service'
 
 export default function Navbar() {
   const navigate = useNavigate()
@@ -17,17 +17,21 @@ export default function Navbar() {
   let adminRoutes = <></>
 
   switch (role) {
-    case "ADMIN":
+    case 'ADMIN':
       adminRoutes = (
         <>
-          <NavLink className="p-2" to="/users">Users</NavLink>
+          <NavLink className="p-2" to="/users">
+            Users
+          </NavLink>
         </>
       )
       break
-    case "CUSTOMER":
+    case 'CUSTOMER':
       customerRoutes = (
         <>
-          <NavLink className="p-2" to="/reservations">Reservations</NavLink>
+          <NavLink className="p-2" to="/reservations">
+            Reservations
+          </NavLink>
         </>
       )
       break
@@ -38,8 +42,12 @@ export default function Navbar() {
   if (!token) {
     publicRoutes = (
       <>
-        <NavLink className="p-2" to="/login">Login</NavLink>
-        <NavLink className="p-2" to="/register">Register</NavLink>
+        <NavLink className="p-2" to="/login">
+          Login
+        </NavLink>
+        <NavLink className="p-2" to="/register">
+          Register
+        </NavLink>
       </>
     )
   } else {
@@ -57,11 +65,15 @@ export default function Navbar() {
   return (
     <div className="navbar bg-base-100 shadow sticky top-0 z-50">
       <div className="navbar-start">
-        <NavLink to="/" className="btn btn-ghost normal-case text-xl">Enterprise</NavLink>
+        <NavLink to="/" className="btn btn-ghost normal-case text-xl">
+          Enterprise
+        </NavLink>
       </div>
       <div className="navbar-center hidden lg:flex">
         <div className="menu menu-horizontal px-1">
-          <NavLink className="btn btn-ghost" to="/">Home</NavLink>
+          <NavLink className="btn btn-ghost" to="/">
+            Home
+          </NavLink>
           {adminRoutes}
           {customerRoutes}
         </div>

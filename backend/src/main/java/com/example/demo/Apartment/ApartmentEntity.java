@@ -1,5 +1,8 @@
 package com.example.demo.Apartment;
 
+
+import com.example.demo.User.UserEntity;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -31,17 +34,21 @@ public class ApartmentEntity {
     @Enumerated(EnumType.STRING)
     private ApartmentState state;
 
+    @ManyToOne(optional = true, fetch = FetchType.EAGER)
+    private UserEntity user;
+
     public ApartmentEntity() {
     }
 
-    public ApartmentEntity(Integer id, String title, String description, Double price, String bills, String ubication, ApartmentState state) {
-        this.id = id;
+    public ApartmentEntity(String title, String description, Double price, String bills, String ubication, ApartmentState state,
+            UserEntity user) {
         this.title = title;
         this.description = description;
         this.price = price;
         this.bills = bills;
         this.ubication = ubication;
         this.state = state;
+        this.user = user;
     }
 
     public Integer getId() {
@@ -99,4 +106,15 @@ public class ApartmentEntity {
     public void setState(ApartmentState state) {
         this.state = state;
     }
+
+    public UserEntity getUser() {
+        return user;
+    }
+
+    public void setUser(UserEntity user) {
+        this.user = user;
+    }
+
+    
+    
 }

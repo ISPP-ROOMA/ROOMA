@@ -6,3 +6,6 @@ public record AuthResult(
         String role
 ) {
 }
+
+
+

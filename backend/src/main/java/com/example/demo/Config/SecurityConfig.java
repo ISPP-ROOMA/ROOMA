@@ -6,6 +6,7 @@ import com.example.demo.Jwt.JwtAuthenticationFilter;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -41,9 +42,18 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/users/profile").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**"
+                        ).permitAll()
+                        .requestMatchers("/api/users/profile").authenticated()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/apartments/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/apartments/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/apartments/**").hasRole("LANDLORD")
+                        .requestMatchers(HttpMethod.PUT, "/api/apartments/**").hasRole("LANDLORD")
+                        .requestMatchers(HttpMethod.DELETE, "/api/apartments/**").hasRole("LANDLORD")
                         .anyRequest().authenticated()
                 );
 
@@ -54,3 +64,6 @@ public class SecurityConfig {
 
 
 }
+
+
+

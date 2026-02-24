@@ -14,6 +14,14 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(InvalidRoleException.class)
+    @ResponseStatus(value = HttpStatus.FORBIDDEN)
+    public ResponseEntity<ErrorResponse> invalidRoleException(InvalidRoleException ex) {
+        ErrorResponse message = new ErrorResponse(ex.getMessage(), HttpStatus.FORBIDDEN.value(), new Date());
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(message);
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
     public ResponseEntity<ErrorResponse> resourceNotFoundException(ResourceNotFoundException ex) {
@@ -61,6 +69,14 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
+    
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> badRequestException(BadRequestException ex) {
+        ErrorResponse message = new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), new Date());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
@@ -95,3 +111,6 @@ public class GlobalExceptionHandler {
     }
 
 }
+
+
+

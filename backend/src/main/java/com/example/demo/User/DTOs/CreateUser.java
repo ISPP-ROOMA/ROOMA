@@ -12,3 +12,6 @@ public record CreateUser(
         @NotNull                Role   role
 ) {
 }
+
+
+
