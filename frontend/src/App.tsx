@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import Home from './pages/Home'
 import Navbar from './components/Navbar'
@@ -8,91 +9,28 @@ import PrivateRoute from './components/PrivateRoute'
 import { useAuthStore } from './store/authStore'
 import Users from './pages/admin/Users'
 import User from './pages/admin/User'
-import { useEffect } from 'react'
-import { refreshToken } from './service/auth.service'
+import { hasSessionHint, refreshToken } from './service/auth.service'
 import Register from './pages/Register'
 import Apartments from './pages/apartments/Apartments'
 import ApartmentDetail from './pages/apartments/ApartmentDetail'
 import PublishFlowContainer from './pages/apartments/publish/PublishFlowContainer'
-import BrowseApartments from './pages/apartments/BrowseApartments'
 
 function App() {
   const { token, role } = useAuthStore()
+  const didTryRefresh = useRef(false)
 
   useEffect(() => {
+    if (didTryRefresh.current) {
+      return
+    }
+
+    if (token || !hasSessionHint()) {
+      return
+    }
+
+    didTryRefresh.current = true
     refreshToken()
-  }, [])
-
-  let publicRoutes = <></>
-  let privateRoutes = <></>
-  let customerRoutes = <></>
-  let adminRoutes = <></>
-
-  switch (role) {
-    case 'ADMIN':
-      adminRoutes = (
-        <>
-          <Route
-            path="/users"
-            element={
-              <PrivateRoute>
-                <Users />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/users/:id"
-            element={
-              <PrivateRoute>
-                <User />
-              </PrivateRoute>
-            }
-          />
-        </>
-      )
-      break
-    case "LANDLORD":
-      landlordRoutes = (
-        <>
-          <Route path='/apartments' element={<PrivateRoute><Apartments /></PrivateRoute>} />
-          <Route path='/apartments/publish' element={<PrivateRoute><PublishFlowContainer /></PrivateRoute>} />
-          <Route path='/apartments/:id' element={<PrivateRoute><ApartmentDetail /></PrivateRoute>} />
-        </>
-      )
-      break
-    case "TENANT":
-      tenantRoutes = (
-        <>
-          <Route path='/explore' element={<PrivateRoute><BrowseApartments /></PrivateRoute>} />
-          <Route path='/apartments/:id' element={<PrivateRoute><ApartmentDetail /></PrivateRoute>} />
-        </>
-      )
-      break
-    default:
-      break
-  }
-
-  if (!token) {
-    publicRoutes = (
-      <>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-      </>
-    )
-  } else {
-    privateRoutes = (
-      <>
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute>
-              <Profile />
-            </PrivateRoute>
-          }
-        />
-      </>
-    )
-  }
+  }, [token])
 
   return (
     <div>
@@ -100,10 +38,73 @@ function App() {
       <main className="mx-auto min-h-dvh flex flex-col">
         <Routes>
           <Route path="/" element={<Home />} />
-          {adminRoutes}
-          {customerRoutes}
-          {privateRoutes}
-          {publicRoutes}
+
+          {!token && <Route path="/login" element={<Login />} />}
+          {!token && <Route path="/register" element={<Register />} />}
+
+          {token && (
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute>
+                  <Profile />
+                </PrivateRoute>
+              }
+            />
+          )}
+
+          {role === 'ADMIN' && (
+            <>
+              <Route
+                path="/users"
+                element={
+                  <PrivateRoute>
+                    <Users />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/users/:id"
+                element={
+                  <PrivateRoute>
+                    <User />
+                  </PrivateRoute>
+                }
+              />
+            </>
+          )}
+
+          {role === 'LANDLORD' && (
+            <>
+              <Route
+                path="/apartments/my"
+                element={
+                  <PrivateRoute allowedRoles={['LANDLORD']}>
+                    <Apartments />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/apartments/publish"
+                element={
+                  <PrivateRoute allowedRoles={['LANDLORD']}>
+                    <PublishFlowContainer />
+                  </PrivateRoute>
+                }
+              />
+            </>
+          )}
+
+          {role === 'LANDLORD' && (
+            <Route
+              path="/apartments/:id"
+              element={
+                <PrivateRoute allowedRoles={['LANDLORD']}>
+                  <ApartmentDetail />
+                </PrivateRoute>
+              }
+            />
+          )}
         </Routes>
       </main>
       <Footer />

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react"
-import { useParams, Link } from "react-router-dom"
-import { getApartment, type Apartment } from "../../service/apartments.service"
+import { useEffect, useState } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import { getApartment, type Apartment } from '../../service/apartments.service'
 
 export default function ApartmentDetail() {
   const { id } = useParams()
@@ -9,9 +9,19 @@ export default function ApartmentDetail() {
 
   useEffect(() => {
     const fetch = async () => {
-      if (!id) return
+      if (!id) {
+        setIsLoading(false)
+        return
+      }
+
+      const apartmentId = Number(id)
+      if (!Number.isFinite(apartmentId)) {
+        setIsLoading(false)
+        return
+      }
+
       try {
-        const data = await getApartment(Number(id))
+        const data = await getApartment(apartmentId)
         if (data) setApartment(data)
       } catch (error) {
         console.error(error)
@@ -32,14 +42,24 @@ export default function ApartmentDetail() {
         <p className="text-gray-600 mb-4">{apartment.description}</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <div><strong>Precio:</strong> {apartment.price} €/mes</div>
-          <div><strong>Ubicación:</strong> {apartment.ubication}</div>
-          <div><strong>Gastos:</strong> {apartment.bills || 'No especificados'}</div>
-          <div><strong>Estado:</strong> {apartment.state}</div>
+          <div>
+            <strong>Precio:</strong> {apartment.price} €/mes
+          </div>
+          <div>
+            <strong>Ubicación:</strong> {apartment.ubication}
+          </div>
+          <div>
+            <strong>Gastos:</strong> {apartment.bills || 'No especificados'}
+          </div>
+          <div>
+            <strong>Estado:</strong> {apartment.state}
+          </div>
         </div>
 
         <div className="flex gap-2">
-          <Link to="/apartments" className="btn btn-ghost">Volver</Link>
+          <Link to="/apartments/my" className="btn btn-ghost">
+            Volver
+          </Link>
         </div>
       </div>
     </div>

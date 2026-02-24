@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -8,8 +8,7 @@ import { useAuthStore } from '../store/authStore'
 
 const schema = z.object({
   email: z.email('Invalid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  deviceId: z.string().optional(),
+  password: z.string().min(4, 'Password must be at least 4 characters'),
 })
 
 type LoginFormData = z.infer<typeof schema>
@@ -28,10 +27,17 @@ export default function Login() {
   })
 
   const onSubmit = async (data: LoginFormData) => {
+    setError(null)
     const deviceId = getDeviceId()
-    const res = await loginUser({ email: data.email, password: data.password, deviceId: deviceId })
-    if (res.error) {
-      setError(res.error)
+    const res = await loginUser({
+      email: data.email,
+      password: data.password,
+      deviceId,
+      role: 'TENANT',
+    })
+
+    if (res.error || !res.token) {
+      setError(res.error ?? 'Invalid credentials')
       return
     }
 
@@ -40,11 +46,12 @@ export default function Login() {
       role: res.role,
     })
 
-    navigate('/')
-  }
+    if (res.role === 'LANDLORD') {
+      navigate('/apartments/my')
+      return
+    }
 
-  const togglePassword = () => {
-    setIsPasswordVisible(!isPasswordVisible)
+    navigate('/')
   }
 
   return (
@@ -82,10 +89,14 @@ export default function Login() {
               )}
             </div>
 
-            {error && <p className="text-error text-center">{error}</p>}
+            {error && <p className="text-error text-sm text-center">{error}</p>}
 
-            <div className="flex items-center justify-between">
-              <button type="button" onClick={togglePassword} className="btn btn-link">
+            <div className="flex justify-between items-center">
+              <button
+                type="button"
+                onClick={() => setIsPasswordVisible((prev) => !prev)}
+                className="btn btn-link px-0"
+              >
                 {isPasswordVisible ? 'Ocultar contraseña' : 'Ver contraseña'}
               </button>
               <button type="submit" className="btn btn-primary">
@@ -94,7 +105,10 @@ export default function Login() {
             </div>
 
             <p className="text-center text-sm text-gray-500">
-              ¿No tienes cuenta? <Link to="/register" className="link link-primary">Regístrate</Link>
+              ¿No tienes cuenta?{' '}
+              <Link to="/register" className="link link-primary">
+                Regístrate
+              </Link>
             </p>
           </form>
         </div>

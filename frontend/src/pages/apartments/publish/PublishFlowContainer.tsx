@@ -1,11 +1,11 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { createApartment } from "../../../service/apartments.service"
-import { useAuthStore } from "../../../store/authStore"
-import StepLocation from "./StepLocation"
-import StepPricing from "./StepPricing"
-import StepPhotos from "./StepPhotos"
-import StepRules from "./StepRules"
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { createApartment } from '../../../service/apartments.service'
+import { useAuthStore } from '../../../store/authStore'
+import StepLocation from './StepLocation'
+import StepPricing from './StepPricing'
+import StepPhotos from './StepPhotos'
+import StepRules from './StepRules'
 import {
   formatPrice,
   INITIAL_PUBLISH_FORM_DATA,
@@ -14,22 +14,24 @@ import {
   STEP_TITLES,
   TOTAL_STEPS,
   type PublishFormData,
-} from "./publishForm"
+} from './publishForm'
 
-const WRAPPER_CLASS = "min-h-dvh bg-base-200/40 flex flex-col"
-const HEADER_CLASS = "bg-base-100 shadow-sm sticky top-0 z-30"
-const HEADER_INNER_CLASS = "max-w-2xl mx-auto px-5 pt-5 pb-4 flex flex-col gap-3"
-const TOP_ROW_CLASS = "flex items-center gap-4"
-const BACK_BUTTON_CLASS = "p-1.5 rounded-full hover:bg-base-200 transition"
-const STEP_META_CLASS = "text-xs font-semibold tracking-widest text-gray-400 uppercase"
-const STEP_TITLE_CLASS = "text-lg font-bold text-base-content leading-tight mt-0.5"
-const PROGRESS_TRACK_CLASS = "w-full h-1.5 bg-base-300 rounded-full overflow-hidden"
-const PROGRESS_BAR_CLASS = "h-full bg-primary rounded-full transition-all duration-500 ease-out"
-const CONTENT_CLASS = "flex-1 overflow-y-auto px-5 py-6 max-w-2xl mx-auto w-full"
-const FOOTER_CLASS = "bg-base-100 border-t border-base-300 sticky bottom-0 z-30"
-const FOOTER_INNER_CLASS = "max-w-2xl mx-auto px-5 py-4 flex items-center gap-4"
-const PRICE_HINT_CLASS = "text-xs font-bold text-base-content/60 uppercase tracking-wide whitespace-nowrap"
-const CONTINUE_BUTTON_CLASS = "flex-1 btn bg-primary hover:bg-primary/90 text-primary-content font-semibold text-base py-3.5 rounded-full shadow-md border-0 disabled:opacity-40 disabled:cursor-not-allowed"
+const WRAPPER_CLASS = 'min-h-dvh bg-base-200/40 flex flex-col'
+const HEADER_CLASS = 'bg-base-100 shadow-sm sticky top-0 z-30'
+const HEADER_INNER_CLASS = 'max-w-2xl mx-auto px-5 pt-5 pb-4 flex flex-col gap-3'
+const TOP_ROW_CLASS = 'flex items-center gap-4'
+const BACK_BUTTON_CLASS = 'p-1.5 rounded-full hover:bg-base-200 transition'
+const STEP_META_CLASS = 'text-xs font-semibold tracking-widest text-gray-400 uppercase'
+const STEP_TITLE_CLASS = 'text-lg font-bold text-base-content leading-tight mt-0.5'
+const PROGRESS_TRACK_CLASS = 'w-full h-1.5 bg-base-300 rounded-full overflow-hidden'
+const PROGRESS_BAR_CLASS = 'h-full bg-primary rounded-full transition-all duration-500 ease-out'
+const CONTENT_CLASS = 'flex-1 overflow-y-auto px-5 py-6 max-w-2xl mx-auto w-full'
+const FOOTER_CLASS = 'bg-base-100 border-t border-base-300 sticky bottom-0 z-30'
+const FOOTER_INNER_CLASS = 'max-w-2xl mx-auto px-5 py-4 flex items-center gap-4'
+const PRICE_HINT_CLASS =
+  'text-xs font-bold text-base-content/60 uppercase tracking-wide whitespace-nowrap'
+const CONTINUE_BUTTON_CLASS =
+  'flex-1 btn bg-primary hover:bg-primary/90 text-primary-content font-semibold text-base py-3.5 rounded-full shadow-md border-0 disabled:opacity-40 disabled:cursor-not-allowed'
 
 export default function PublishFlowContainer() {
   const navigate = useNavigate()
@@ -54,33 +56,33 @@ export default function PublishFlowContainer() {
     }
 
     if (!token) {
-      navigate("/login")
+      navigate('/login')
       return
     }
 
     try {
       const billsText = formData.includedBills.length
-        ? formData.includedBills.join(", ")
-        : "No incluidos"
+        ? formData.includedBills.join(', ')
+        : 'No incluidos'
 
       await createApartment({
-        title: `Piso en ${formData.neighborhood || "Sin barrio"}`,
-        description: `Disponible desde ${formData.availableDate || "fecha por definir"}. Fianza: ${formData.deposit} mes(es).`,
+        title: `Piso en ${formData.neighborhood || 'Sin barrio'}`,
+        description: `Disponible desde ${formData.availableDate || 'fecha por definir'}. Fianza: ${formData.deposit} mes(es).`,
         price: parsedPrice,
         bills: billsText,
-        ubication: formData.street || "Sin dirección",
-        state: "available",
+        ubication: formData.street || 'Sin dirección',
+        state: 'available',
       })
 
-      navigate("/apartments")
+      navigate('/apartments/my')
     } catch (err) {
-      console.error("Error creating apartment", err)
+      console.error('Error creating apartment', err)
     }
   }
 
   const handleBack = () => {
     if (currentStep === 0) {
-      navigate("/apartments")
+      navigate('/apartments/my')
     } else {
       setCurrentStep((s) => s - 1)
     }
@@ -100,11 +102,7 @@ export default function PublishFlowContainer() {
       <header className={HEADER_CLASS}>
         <div className={HEADER_INNER_CLASS}>
           <div className={TOP_ROW_CLASS}>
-            <button
-              onClick={handleBack}
-              className={BACK_BUTTON_CLASS}
-              aria-label="Volver"
-            >
+            <button onClick={handleBack} className={BACK_BUTTON_CLASS} aria-label="Volver">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 text-base-content"
@@ -112,47 +110,39 @@ export default function PublishFlowContainer() {
                 viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
 
             <div className="flex-1 text-center">
               <p className={STEP_META_CLASS}>{stepIndicator}</p>
-              <h2 className={STEP_TITLE_CLASS}>
-                {STEP_TITLES[currentStep]}
-              </h2>
+              <h2 className={STEP_TITLE_CLASS}>{STEP_TITLES[currentStep]}</h2>
             </div>
 
             <div className="w-8" />
           </div>
 
           <div className={PROGRESS_TRACK_CLASS}>
-            <div
-              className={PROGRESS_BAR_CLASS}
-              style={{ width: `${progress}%` }}
-            />
+            <div className={PROGRESS_BAR_CLASS} style={{ width: `${progress}%` }} />
           </div>
         </div>
       </header>
 
-      <section className={CONTENT_CLASS}>
-        {stepContent}
-      </section>
+      <section className={CONTENT_CLASS}>{stepContent}</section>
 
       <footer className={FOOTER_CLASS}>
         <div className={FOOTER_INNER_CLASS}>
           {currentStep === 1 && (
-            <p className={PRICE_HINT_CLASS}>
-              Estimado {formatPrice(formData.priceInput)}€ / mes
-            </p>
+            <p className={PRICE_HINT_CLASS}>Estimado {formatPrice(formData.priceInput)}€ / mes</p>
           )}
 
-          <button
-            onClick={handleNext}
-            disabled={!canContinue}
-            className={CONTINUE_BUTTON_CLASS}
-          >
-            {isLastStep ? "Finalizar" : "Siguiente"}
+          <button onClick={handleNext} disabled={!canContinue} className={CONTINUE_BUTTON_CLASS}>
+            {isLastStep ? 'Finalizar' : 'Siguiente'}
           </button>
         </div>
       </footer>

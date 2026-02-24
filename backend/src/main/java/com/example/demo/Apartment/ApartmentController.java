@@ -27,16 +27,16 @@ public class ApartmentController {
         return ResponseEntity.ok(apartments);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApartmentEntity> getApartmentById(@PathVariable Integer id) {
-        ApartmentEntity apartments = apartmentsService.findById(id);
-        return ResponseEntity.ok(apartments);
-    }
-
     @PreAuthorize("hasRole('LANDLORD')")
     @GetMapping("/my")
     public ResponseEntity<List<ApartmentDTO>> getMyApartments() {
         List<ApartmentDTO> apartments = ApartmentDTO.fromApartmentEntityList(apartmentsService.findMyApartments());
+        return ResponseEntity.ok(apartments);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApartmentEntity> getApartmentById(@PathVariable Integer id) {
+        ApartmentEntity apartments = apartmentsService.findById(id);
         return ResponseEntity.ok(apartments);
     }
 

@@ -26,15 +26,20 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosRequestConfig
 
-    if (originalRequest?.url?.includes('/refresh')) {
+    if (
+      originalRequest?.url?.includes('/refresh') ||
+      originalRequest?.url?.includes('/login') ||
+      originalRequest?.url?.includes('/register')
+    ) {
       return Promise.reject(error)
     }
 
     if (error.response?.status === 401 && !originalRequest?._retry) {
       originalRequest._retry = true
-      console.log('refresco automático')
-      await refreshToken()
-      console.log('Se ha refrescado el token')
+      const refreshed = await refreshToken()
+      if (!refreshed?.token) {
+        return Promise.reject(error)
+      }
       return api(originalRequest)
     }
     return Promise.reject(error)
