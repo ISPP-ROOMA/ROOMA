@@ -36,9 +36,14 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('backend/pom.xml') }}
 
       - name: Run tests + dependency-check
+        if: github.ref == 'refs/heads/main'
         run: ./mvnw clean verify
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+      
+      - name: Run tests (without dependency-check)
+        if: github.ref != 'refs/heads/main'
+        run: ./mvnw clean test
 
   frontend:
     runs-on: windows-latest
