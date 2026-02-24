@@ -2,12 +2,13 @@ package com.example.demo.Apartment;
 
 import java.util.List;
 import java.util.Optional;
-import com.example.demo.Exceptions.ResourceNotFoundException;
-import com.example.demo.User.UserEntity;
-import com.example.demo.User.UserService;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.example.demo.Exceptions.ResourceNotFoundException;
+import com.example.demo.User.UserEntity;
+import com.example.demo.User.UserService;
 
 @Service
 public class ApartmentService {
@@ -66,6 +67,7 @@ public class ApartmentService {
         existingApartment.setBills(apartments.getBills());
         existingApartment.setUbication(apartments.getUbication());
         existingApartment.setState(apartments.getState());
+        existingApartment.setImageUrl(apartments.getImageUrl());
 
         return apartmentsRepository.save(existingApartment);
     }
