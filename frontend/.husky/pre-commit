@@ -1,2 +1,3 @@
 #!/bin/sh
-npx lint-staged
+cd "$(dirname "$0")/.."
+npm run precommit
