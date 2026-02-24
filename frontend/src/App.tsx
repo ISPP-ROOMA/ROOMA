@@ -11,6 +11,10 @@ import User from './pages/admin/User'
 import { useEffect } from 'react'
 import { refreshToken } from './service/auth.service'
 import Register from './pages/Register'
+import Apartments from './pages/apartments/Apartments'
+import ApartmentDetail from './pages/apartments/ApartmentDetail'
+import PublishFlowContainer from './pages/apartments/publish/PublishFlowContainer'
+import BrowseApartments from './pages/apartments/BrowseApartments'
 
 function App() {
 
@@ -22,7 +26,8 @@ function App() {
 
   let publicRoutes = <></>
   let privateRoutes = <></>
-  let customerRoutes = <></>
+  let landlordRoutes = <></>
+  let tenantRoutes = <></>
   let adminRoutes = <></>
 
   switch (role) {
@@ -31,6 +36,23 @@ function App() {
         <>
           <Route path='/users' element={<PrivateRoute><Users /></PrivateRoute>} />
           <Route path='/users/:id' element={<PrivateRoute><User /></PrivateRoute>} />
+        </>
+      )
+      break
+    case "LANDLORD":
+      landlordRoutes = (
+        <>
+          <Route path='/apartments' element={<PrivateRoute><Apartments /></PrivateRoute>} />
+          <Route path='/apartments/publish' element={<PrivateRoute><PublishFlowContainer /></PrivateRoute>} />
+          <Route path='/apartments/:id' element={<PrivateRoute><ApartmentDetail /></PrivateRoute>} />
+        </>
+      )
+      break
+    case "TENANT":
+      tenantRoutes = (
+        <>
+          <Route path='/explore' element={<PrivateRoute><BrowseApartments /></PrivateRoute>} />
+          <Route path='/apartments/:id' element={<PrivateRoute><ApartmentDetail /></PrivateRoute>} />
         </>
       )
       break
@@ -60,7 +82,8 @@ function App() {
         <Routes>
           <Route path='/' element={<Home />} />
           {adminRoutes}
-          {customerRoutes}
+          {landlordRoutes}
+          {tenantRoutes}
           {privateRoutes}
           {publicRoutes}
         </Routes>

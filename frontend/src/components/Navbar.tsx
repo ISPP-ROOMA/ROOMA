@@ -13,21 +13,29 @@ export default function Navbar() {
 
   let publicRoutes = <></>
   let privateRoutes = <></>
-  let customerRoutes = <></>
+  let landlordRoutes = <></>
+  let tenantRoutes = <></>
   let adminRoutes = <></>
 
   switch (role) {
     case "ADMIN":
       adminRoutes = (
         <>
-          <NavLink className="p-2" to="/users">Users</NavLink>
+          <NavLink className="btn btn-ghost" to="/users">Usuarios</NavLink>
         </>
       )
       break
-    case "CUSTOMER":
-      customerRoutes = (
+    case "LANDLORD":
+      landlordRoutes = (
         <>
-          <NavLink className="p-2" to="/reservations">Reservations</NavLink>
+          <NavLink className="btn btn-ghost" to="/apartments">Mis Inmuebles</NavLink>
+        </>
+      )
+      break
+    case "TENANT":
+      tenantRoutes = (
+        <>
+          <NavLink className="btn btn-ghost" to="/explore">Explorar pisos</NavLink>
         </>
       )
       break
@@ -45,7 +53,12 @@ export default function Navbar() {
   } else {
     privateRoutes = (
       <>
-        <NavLink className="p-2" to="/profile">Profile</NavLink>
+        <NavLink className="p-2" to="/profile">Perfil</NavLink>
+        {role && (
+          <span className="badge badge-outline badge-sm self-center">
+            {role === 'LANDLORD' ? 'Propietario' : role === 'TENANT' ? 'Inquilino' : role}
+          </span>
+        )}
         <button onClick={handleLogout} className="p-2 text-white">
           Logout
         </button>
@@ -56,13 +69,14 @@ export default function Navbar() {
   return (
     <div className="navbar bg-base-100 shadow sticky top-0 z-50">
       <div className="navbar-start">
-        <NavLink to="/" className="btn btn-ghost normal-case text-xl">Enterprise</NavLink>
+        <NavLink to="/" className="btn btn-ghost normal-case text-xl">Rooma</NavLink>
       </div>
       <div className="navbar-center hidden lg:flex">
         <div className="menu menu-horizontal px-1">
           <NavLink className="btn btn-ghost" to="/">Home</NavLink>
           {adminRoutes}
-          {customerRoutes}
+          {landlordRoutes}
+          {tenantRoutes}
         </div>
       </div>
       <div className="navbar-end">
