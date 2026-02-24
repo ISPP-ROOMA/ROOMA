@@ -1,5 +1,5 @@
+import { useMemo, useState } from "react"
 import { Link, useParams } from "react-router-dom"
-import { useMemo } from "react"
 
 type Occupant = {
   name: string
@@ -64,9 +64,9 @@ export default function PropertyDetails() {
     }
   }, [id])
 
-  const isLoading = false
-  const hasError = false
-  const isPrivacyUnlocked = false
+  const [isLoading] = useState(false)
+  const [hasError] = useState(false)
+  const [isPrivacyUnlocked] = useState(false)
   const images = property.images ?? []
   const occupants = property.occupants ?? []
   const amenities = property.amenities ?? []
