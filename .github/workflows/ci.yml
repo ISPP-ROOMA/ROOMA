@@ -37,7 +37,8 @@ jobs:
 
       - name: Run tests + dependency-check
         run: ./mvnw clean verify
-
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
   frontend:
     runs-on: windows-latest
@@ -63,7 +64,7 @@ jobs:
         run: npm run lint
 
       - name: Run tests
-        run: npm run test -- --watchAll=false
+        run: npm run test 
 
       - name: NPM audit
         run: npm audit --audit-level=high
