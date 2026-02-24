@@ -5,6 +5,7 @@ export interface LoginData {
   email: string
   password: string
   deviceId?: string
+  role?: string
 }
 
 export interface AuthResponse {
