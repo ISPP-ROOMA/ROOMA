@@ -1,4 +1,4 @@
-import { create } from "zustand"
+import { create } from 'zustand'
 
 interface LoginData {
   token: string
@@ -13,21 +13,21 @@ interface AuthStore {
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
-    token: null,
-    userId: null,
-    role: null,
+  token: null,
+  userId: null,
+  role: null,
 
-    login: (data: LoginData) => {
-        set({
-            token: data.token,
-            role: data.role,
-        })
-    },
+  login: (data: LoginData) => {
+    set({
+      token: data.token,
+      role: data.role,
+    })
+  },
 
-    logout: () => {
-        set({
-            token: null,
-            role: null,
-        })
-    }
+  logout: () => {
+    set({
+      token: null,
+      role: null,
+    })
+  },
 }))
