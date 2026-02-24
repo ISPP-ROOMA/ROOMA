@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getUsers } from '../../service/users.service'
-import type { User, UsersResponse } from '../../service/users.service'
+import { getUsers } from '../../service/users.service.js'
+import type { User, UsersResponse } from '../../service/users.service.js'
 
 export default function Users() {
   const navigate = useNavigate()
@@ -73,7 +73,9 @@ export default function Users() {
                 </td>
                 <td className="flex gap-2">
                   <button
-                    onClick={() => navigate(`/users/${user.id}`)}
+                    onClick={() => {
+                      navigate(`/users/${user.id}`)
+                    }}
                     className="btn btn-sm btn-warning"
                   >
                     Editar

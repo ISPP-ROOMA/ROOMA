@@ -6,9 +6,10 @@ export default function Navbar() {
   const navigate = useNavigate()
   const { token, role } = useAuthStore()
 
-  const handleLogout = async () => {
-    await logout()
-    navigate('/login')
+  const handleLogout = () => {
+    logout()
+      .then(() => navigate('/login'))
+      .catch((err) => console.error('Logout failed', err))
   }
 
   return (

@@ -18,7 +18,9 @@ export default function Apartments() {
 
   const hasApartments = apartments.length > 0
 
-  const handlePublishNavigation = () => navigate('/apartments/publish')
+  const handlePublishNavigation = () => {
+    navigate('/apartments/publish')
+  }
 
   const toggleApartmentState = async (apartment: Apartment) => {
     const nextState = apartment.state === 'available' ? 'paused' : 'available'
@@ -100,7 +102,9 @@ export default function Apartments() {
           photoCount={0}
           status={apt.state === 'available' ? 'active' : 'paused'}
           stats={{ requests: 0, matches: 0 }}
-          onEdit={() => console.log('edit', apt.id)}
+          onEdit={() => {
+            console.log('edit', apt.id)
+          }}
           onPause={() => toggleApartmentState(apt)}
         />
       ))}

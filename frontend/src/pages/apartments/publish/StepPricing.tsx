@@ -56,7 +56,9 @@ export default function StepPricing({ data, updateFields }: Props) {
             type="text"
             inputMode="decimal"
             value={data.priceInput}
-            onChange={(e) => handlePriceChange(e.target.value)}
+            onChange={(e) => {
+              handlePriceChange(e.target.value)
+            }}
             placeholder="450"
             className={PRICE_INPUT_CLASS}
           />
@@ -89,7 +91,9 @@ export default function StepPricing({ data, updateFields }: Props) {
         <input
           type="date"
           value={data.availableDate}
-          onChange={(e) => updateFields({ availableDate: e.target.value })}
+          onChange={(e) => {
+            updateFields({ availableDate: e.target.value })
+          }}
           className={DATE_INPUT_CLASS}
         />
       </div>
@@ -105,7 +109,9 @@ export default function StepPricing({ data, updateFields }: Props) {
               <button
                 key={key}
                 type="button"
-                onClick={() => toggleBill(key)}
+                onClick={() => {
+                  toggleBill(key)
+                }}
                 className={`${BILL_CHIP_BASE_CLASS}
                   ${isActive ? BILL_CHIP_ACTIVE_CLASS : BILL_CHIP_INACTIVE_CLASS}`}
               >

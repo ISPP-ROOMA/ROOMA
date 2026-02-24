@@ -13,11 +13,6 @@ const ACTION_BUTTON_CLASS =
 const VIEW_BUTTON_CLASS =
   'ml-auto flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 transition'
 
-const STATUS_CONFIG = {
-  active: { label: 'ACTIVO', dotClass: 'bg-emerald-500' },
-  paused: { label: 'PAUSADO', dotClass: 'bg-gray-400' },
-} as const
-
 export interface PropertyCardProps {
   id: number
   title: string
@@ -49,10 +44,22 @@ export default function PropertyCard({
   onPause,
 }: PropertyCardProps) {
   const navigate = useNavigate()
-  const { label: statusLabel, dotClass: statusDotClass } = STATUS_CONFIG[status]
+
+  const getStatusConfig = () => {
+    switch (status) {
+      case 'active':
+        return { label: 'ACTIVO', dotClass: 'bg-emerald-500' }
+      case 'paused':
+        return { label: 'PAUSADO', dotClass: 'bg-gray-400' }
+    }
+  }
+
+  const { label: statusLabel, dotClass: statusDotClass } = getStatusConfig()
 
   const pauseLabel = status === 'active' ? 'Pausar' : 'Reanudar'
-  const goToDetail = () => navigate(`/apartments/${id}`)
+  const goToDetail = () => {
+    navigate(`/apartments/${id}`)
+  }
 
   return (
     <div className={CARD_CLASS}>

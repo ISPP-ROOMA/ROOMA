@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { getUser, updateUser } from '../../service/users.service'
+import { getUser, updateUser } from '../../service/users.service.js'
 
 const schema = z.object({
   email: z.email('Email no válido'),
@@ -127,7 +127,13 @@ export default function User() {
             {error && <p className="text-error text-center">{error}</p>}
 
             <div className="flex justify-between items-center">
-              <button type="button" onClick={() => navigate('/users')} className="btn">
+              <button
+                type="button"
+                onClick={() => {
+                  navigate('/users')
+                }}
+                className="btn"
+              >
                 Cancelar
               </button>
               <button className="btn btn-primary" type="submit">

@@ -136,7 +136,9 @@ export default function StepLocation({ data, updateFields }: Props) {
               <button
                 key={barrio}
                 type="button"
-                onClick={() => handleNeighborhoodSelect(barrio)}
+                onClick={() => {
+                  handleNeighborhoodSelect(barrio)
+                }}
                 className={`${CHIP_BASE_CLASS}
                   ${isActive ? CHIP_ACTIVE_CLASS : CHIP_INACTIVE_CLASS}`}
               >

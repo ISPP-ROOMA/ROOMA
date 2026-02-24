@@ -11,7 +11,6 @@ import {
   INITIAL_PUBLISH_FORM_DATA,
   isPublishStepValid,
   parsePrice,
-  STEP_TITLES,
   TOTAL_STEPS,
   type PublishFormData,
 } from './publishForm'
@@ -88,12 +87,38 @@ export default function PublishFlowContainer() {
     }
   }
 
-  const stepContent = [
-    <StepLocation key="location" data={formData} updateFields={updateFields} />,
-    <StepPricing key="pricing" data={formData} updateFields={updateFields} />,
-    <StepPhotos key="photos" />,
-    <StepRules key="rules" />,
-  ][currentStep]
+  const getStepTitle = () => {
+    switch (currentStep) {
+      case 0:
+        return '¿Dónde está ubicado el piso?'
+      case 1:
+        return 'Precio y disponibilidad'
+      case 2:
+        return 'Fotos y detalles'
+      case 3:
+        return 'Reglas y Perfil Ideal'
+      default:
+        return ''
+    }
+  }
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 0:
+        return <StepLocation data={formData} updateFields={updateFields} />
+      case 1:
+        return <StepPricing data={formData} updateFields={updateFields} />
+      case 2:
+        return <StepPhotos />
+      case 3:
+        return <StepRules />
+      default:
+        return null
+    }
+  }
+
+  const stepContent = renderStep()
+  const stepTitle = getStepTitle()
 
   const stepIndicator = `Paso ${currentStep + 1} de ${TOTAL_STEPS}`
 
@@ -121,7 +146,7 @@ export default function PublishFlowContainer() {
 
             <div className="flex-1 text-center">
               <p className={STEP_META_CLASS}>{stepIndicator}</p>
-              <h2 className={STEP_TITLE_CLASS}>{STEP_TITLES[currentStep]}</h2>
+              <h2 className={STEP_TITLE_CLASS}>{stepTitle}</h2>
             </div>
 
             <div className="w-8" />
@@ -141,7 +166,11 @@ export default function PublishFlowContainer() {
             <p className={PRICE_HINT_CLASS}>Estimado {formatPrice(formData.priceInput)}€ / mes</p>
           )}
 
-          <button onClick={handleNext} disabled={!canContinue} className={CONTINUE_BUTTON_CLASS}>
+          <button
+            onClick={() => handleNext()}
+            disabled={!canContinue}
+            className={CONTINUE_BUTTON_CLASS}
+          >
             {isLastStep ? 'Finalizar' : 'Siguiente'}
           </button>
         </div>
