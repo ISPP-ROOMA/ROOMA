@@ -26,9 +26,9 @@ export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: Swi
     x,
     [-100, 0, 100],
     [
-      'linear-gradient(180deg, rgba(239, 68, 68, 0.4) 0%, rgba(0,0,0,0) 100%)', // Red for Dislike
+      'linear-gradient(180deg, rgba(239, 68, 68, 0.4) 0%, rgba(0,0,0,0) 100%)',
       'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 100%)',
-      'linear-gradient(180deg, rgba(34, 197, 94, 0.4) 0%, rgba(0,0,0,0) 100%)', // Green for Like
+      'linear-gradient(180deg, rgba(34, 197, 94, 0.4) 0%, rgba(0,0,0,0) 100%)',
     ]
   )
 

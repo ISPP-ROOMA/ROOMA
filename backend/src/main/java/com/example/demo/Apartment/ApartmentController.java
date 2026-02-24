@@ -95,7 +95,7 @@ public class ApartmentController {
             @RequestParam(required = false) String ubication,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
-            @RequestParam(required = false) String state) {
+            @RequestParam(required = false) ApartmentState state) {
 
         List<ApartmentEntity> apartmentsEntityList = apartmentsService.search(ubication, minPrice, maxPrice, state);
         List<ApartmentDTO> apartmentDTOs = apartmentsEntityList.stream()

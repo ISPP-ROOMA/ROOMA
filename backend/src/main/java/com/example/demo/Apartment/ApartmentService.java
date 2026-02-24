@@ -81,7 +81,7 @@ public class ApartmentService {
     }
 
     @Transactional(readOnly = true)
-    public List<ApartmentEntity> search(String ubication, Double minPrice, Double maxPrice, String state) {
+    public List<ApartmentEntity> search(String ubication, Double minPrice, Double maxPrice, ApartmentState state) {
         return apartmentsRepository.search(ubication, minPrice, maxPrice, state);
     }
 
