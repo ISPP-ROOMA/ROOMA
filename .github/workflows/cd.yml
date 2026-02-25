@@ -1,0 +1,155 @@
+name: Rooma CD Pipeline PRO
+
+on:
+  push:
+    branches:
+      - trunk
+
+  pull_request:
+    branches:
+      - trunk
+      - main
+    types:
+      - closed
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_BACKEND: ${{ github.repository }}/backend
+  IMAGE_FRONTEND: ${{ github.repository }}/frontend
+
+jobs:
+  build-images:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true && github.base_ref == 'main'
+
+    outputs:
+      release_tag: ${{ steps.get_tag.outputs.release_tag }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Obtener tag desde título PR
+        id: get_tag
+        run: |
+          TAG=$(echo "${{ github.event.pull_request.title }}" | tr ' ' '-' )
+          echo "release_tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Login GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Backend
+        run: |
+          docker build -t ghcr.io/${{ env.IMAGE_BACKEND }}:${{ steps.get_tag.outputs.release_tag }} ./backend
+          docker push ghcr.io/${{ env.IMAGE_BACKEND }}:${{ steps.get_tag.outputs.release_tag }}
+
+      - name: Build & Push Frontend
+        run: |
+          docker build -t ghcr.io/${{ env.IMAGE_FRONTEND }}:${{ steps.get_tag.outputs.release_tag }} ./frontend
+          docker push ghcr.io/${{ env.IMAGE_FRONTEND }}:${{ steps.get_tag.outputs.release_tag }}
+
+  deploy-entrega:
+    runs-on: ubuntu-latest
+    needs: build-images
+    if: github.event.pull_request.merged == true && github.base_ref == 'main'
+
+    steps:
+      - name: Generar password aleatoria
+        id: gen_pass
+        run: |
+          PASS=$(openssl rand -base64 12)
+          echo "db_pass=$PASS" >> $GITHUB_OUTPUT
+
+      - name: Crear base de datos
+        run: |
+          curl -X POST https://api.alwaysdata.com/v1/databases \
+          -H "Authorization: Bearer ${{ secrets.ALWAYSDATA_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+                "name": "rooma_${{ needs.build-images.outputs.release_tag }}",
+                "type": "postgresql"
+              }'
+
+      - name: Crear usuario DB
+        run: |
+          curl -X POST https://api.alwaysdata.com/v1/database-users \
+          -H "Authorization: Bearer ${{ secrets.ALWAYSDATA_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+                "username": "rooma_${{ needs.build-images.outputs.release_tag }}",
+                "password": "${{ steps.gen_pass.outputs.db_pass }}"
+              }'
+
+      - name: Crear servicio backend Render
+        id: render_create
+        run: |
+          RESPONSE=$(curl -s -X POST https://api.render.com/v1/services \
+          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+                "type": "web_service",
+                "name": "rooma-${{ needs.build-images.outputs.release_tag }}",
+                "image": {
+                  "url": "ghcr.io/${{ env.IMAGE_BACKEND }}:${{ needs.build-images.outputs.release_tag }}"
+                },
+                "envVars": [
+                  {
+                    "key": "SPRING_DATASOURCE_URL",
+                    "value": "jdbc:postgresql://${{ secrets.ALWAYSDATA_HOST }}/rooma_${{ needs.build-images.outputs.release_tag }}"
+                  },
+                  {
+                    "key": "SPRING_DATASOURCE_USERNAME",
+                    "value": "rooma_${{ needs.build-images.outputs.release_tag }}"
+                  },
+                  {
+                    "key": "SPRING_DATASOURCE_PASSWORD",
+                    "value": "${{ steps.gen_pass.outputs.db_pass }}"
+                  }
+                ]
+              }')
+
+          SERVICE_ID=$(echo $RESPONSE | jq -r '.id')
+          echo "service_id=$SERVICE_ID" >> $GITHUB_OUTPUT
+
+      - name: Esperar a que Render esté listo
+        run: |
+          STATUS="building"
+          while [ "$STATUS" != "live" ]; do
+            sleep 15
+            STATUS=$(curl -s https://api.render.com/v1/services/${{ steps.render_create.outputs.service_id }} \
+              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.service.status')
+            echo "Estado actual: $STATUS"
+          done
+
+      - name: Deploy frontend
+        run: |
+          npm install -g vercel
+          vercel --prod \
+                 --name rooma-${{ needs.build-images.outputs.release_tag }} \
+                 --token ${{ secrets.VERCEL_TOKEN }} \
+                 --build-env VITE_API_URL=https://rooma-${{ needs.build-images.outputs.release_tag }}.onrender.com \
+                 --confirm
+
+  deploy-dev:
+    runs-on: ubuntu-latest
+    if: |
+      github.ref == 'refs/heads/trunk' ||
+      (github.event.pull_request.merged == true && github.base_ref == 'trunk')
+
+    steps:
+
+      - name: Redeploy backend Render
+        run: |
+          curl -X POST https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys \
+          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
+
+      - name: Deploy frontend Vercel
+        run: |
+          npm install -g vercel
+          vercel --prod \
+                 --token ${{ secrets.VERCEL_TOKEN }} \
+                 --build-env VITE_API_URL=${{ secrets.DEV_BACKEND_URL }} \
+                 --confirm
