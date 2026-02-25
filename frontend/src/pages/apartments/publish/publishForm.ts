@@ -5,6 +5,7 @@ export interface PublishFormData {
   deposit: number
   availableDate: string
   includedBills: string[]
+  images: File[]
 }
 
 export const STEP_TITLES = [
@@ -23,6 +24,7 @@ export const INITIAL_PUBLISH_FORM_DATA: PublishFormData = {
   deposit: 1,
   availableDate: '',
   includedBills: [],
+  images: []
 }
 
 export const parsePrice = (value: string): number => {
