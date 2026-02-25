@@ -1,6 +1,10 @@
-import axios, { AxiosError, type AxiosResponse } from "axios"
-import { useAuthStore } from "../store/authStore"
-import { refreshToken } from "./auth.service"
+import axios, { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
+import { useAuthStore } from '../store/authStore'
+import { refreshToken } from './auth.service'
+
+interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean
+}
 
 const API_BASE = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:8080'
 
@@ -20,17 +24,17 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as any
+    const originalRequest = error.config as CustomAxiosRequestConfig
 
-    if (originalRequest?.url?.includes("/refresh")) {
+    if (originalRequest?.url?.includes('/refresh')) {
       return Promise.reject(error)
     }
 
     if (error.response?.status === 401 && !originalRequest?._retry) {
       originalRequest._retry = true
-      console.log("refresco automático")
-      await refreshToken() 
-      console.log("Se ha refrescado el token")
+      console.log('refresco automático')
+      await refreshToken()
+      console.log('Se ha refrescado el token')
       return api(originalRequest)
     }
     return Promise.reject(error)

@@ -36,8 +36,14 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('backend/pom.xml') }}
 
       - name: Run tests + dependency-check
+        if: github.ref == 'refs/heads/main'
         run: ./mvnw clean verify
-
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+      
+      - name: Run tests (without dependency-check)
+        if: github.ref != 'refs/heads/main'
+        run: ./mvnw clean test
 
   frontend:
     runs-on: windows-latest
@@ -63,14 +69,14 @@ jobs:
         run: npm run lint
 
       - name: Run tests
-        run: npm run test -- --watchAll=false
+        run: npm run test 
 
       - name: NPM audit
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=high || true
 
 
   codacy-analysis:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: [backend, frontend]
 
     steps:

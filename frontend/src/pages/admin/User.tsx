@@ -1,113 +1,157 @@
-import { useEffect, useState } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { getUser, updateUser } from "../../service/users.service"
+import { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { getUser, updateUser } from '../../service/users.service'
 
 const schema = z.object({
-    name: z.string().min(2, "Name must have at least two characters"),
-    email: z.email("Invalid email"),
-    role: z.enum(["ADMIN", "CUSTOMER"]).catch("CUSTOMER"),
-    password: z.string().optional().or(z.literal("")).refine(
-        (val) => !val || val.length >= 4,
-        { message: "Password must have at leats 4 characters" }
-    )
+  name: z.string().min(2, 'Name must have at least two characters'),
+  email: z.email('Invalid email'),
+  role: z.enum(['ADMIN', 'CUSTOMER']).catch('CUSTOMER'),
+  password: z
+    .string()
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => !val || val.length >= 4, {
+      message: 'Password must have at leats 4 characters',
+    }),
 })
 
 type UserFormData = z.infer<typeof schema>
 
 export default function User() {
-    const { id } = useParams<{ id?: string }>()
-    const navigate = useNavigate()
-    const [error, setError] = useState<string | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
+  const { id } = useParams<{ id?: string }>()
+  const navigate = useNavigate()
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-    const { register, handleSubmit, formState: { errors }, reset } = useForm<UserFormData>({
-        resolver: zodResolver(schema),
-    })
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<UserFormData>({
+    resolver: zodResolver(schema),
+  })
 
-    useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const res = await getUser(id!)
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await getUser(id!)
 
-                reset({
-                    name: res?.name || '',
-                    email: res?.email || '',
-                    role: (res?.role || 'CUSTOMER') as 'ADMIN' | 'CUSTOMER',
-                    password: ""
-                })
-            } catch {
-                setError("Error al cargar el usuario")
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        fetchUser()
-    }, [id, reset])
-
-    const onSubmit = async (data: UserFormData) => {
-        const res = await updateUser(id!, data)
-
-        console.log(res)
-
-        if (res.error) {
-            setError(res.error)
-            return
-        }
-
-        navigate("/users")
+        reset({
+          name: res?.name || '',
+          email: res?.email || '',
+          role: (res?.role || 'CUSTOMER') as 'ADMIN' | 'CUSTOMER',
+          password: '',
+        })
+      } catch {
+        setError('Error al cargar el usuario')
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    if (isLoading) {
-        return <p className="text-center mt-10">Cargando usuario...</p>
+    fetchUser()
+  }, [id, reset])
+
+  const onSubmit = async (data: UserFormData) => {
+    const res = await updateUser(id!, data)
+
+    console.log(res)
+
+    if (res.error) {
+      setError(res.error)
+      return
     }
 
-    return (
-        <div className="flex items-center justify-center mt-6 p-4">
-            <div className="card w-full max-w-md bg-base-100 shadow">
-                <div className="card-body">
-                    <h2 className="card-title justify-center">Edit User</h2>
+    navigate('/users')
+  }
 
-                    <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-                        <div className="form-control">
-                            <label className="label"><span className="label-text">Name</span></label>
-                            <input {...register("name")} id="name" type="text" className="input input-bordered w-full" required />
-                            {errors.name && <p className="text-error text-sm mt-1">{errors.name.message}</p>}
-                        </div>
+  if (isLoading) {
+    return <p className="text-center mt-10">Cargando usuario...</p>
+  }
 
-                        <div className="form-control">
-                            <label className="label"><span className="label-text">Email</span></label>
-                            <input {...register("email")} id="email" type="email" className="input input-bordered w-full" required />
-                            {errors.email && <p className="text-error text-sm mt-1">{errors.email.message}</p>}
-                        </div>
+  return (
+    <div className="flex items-center justify-center mt-6 p-4">
+      <div className="card w-full max-w-md bg-base-100 shadow">
+        <div className="card-body">
+          <h2 className="card-title justify-center">Edit User</h2>
 
-                        <div className="form-control">
-                            <label className="label"><span className="label-text">Rol</span></label>
-                            <select {...register("role")} id="role" className="select select-bordered w-full" required>
-                                <option value="CUSTOMER">CUSTOMER</option>
-                                <option value="ADMIN">ADMIN</option>
-                            </select>
-                            {errors.role && <p className="text-error text-sm mt-1">{errors.role.message}</p>}
-                        </div>
-
-                        <div className="form-control">
-                            <label className="label"><span className="label-text">Password</span></label>
-                            <input {...register("password")} id="password" type="password" className="input input-bordered w-full" />
-                            {errors.password && <p className="text-error text-sm mt-1">{errors.password.message}</p>}
-                        </div>
-
-                        {error && <p className="text-error text-center">{error}</p>}
-
-                        <div className="flex justify-between items-center">
-                            <button type="button" onClick={() => navigate("/users")} className="btn">Cancel</button>
-                            <button className="btn btn-primary" type="submit">Save</button>
-                        </div>
-                    </form>
-                </div>
+          <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Name</span>
+              </label>
+              <input
+                {...register('name')}
+                id="name"
+                type="text"
+                className="input input-bordered w-full"
+                required
+              />
+              {errors.name && <p className="text-error text-sm mt-1">{errors.name.message}</p>}
             </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Email</span>
+              </label>
+              <input
+                {...register('email')}
+                id="email"
+                type="email"
+                className="input input-bordered w-full"
+                required
+              />
+              {errors.email && <p className="text-error text-sm mt-1">{errors.email.message}</p>}
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Rol</span>
+              </label>
+              <select
+                {...register('role')}
+                id="role"
+                className="select select-bordered w-full"
+                required
+              >
+                <option value="CUSTOMER">CUSTOMER</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+              {errors.role && <p className="text-error text-sm mt-1">{errors.role.message}</p>}
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Password</span>
+              </label>
+              <input
+                {...register('password')}
+                id="password"
+                type="password"
+                className="input input-bordered w-full"
+              />
+              {errors.password && (
+                <p className="text-error text-sm mt-1">{errors.password.message}</p>
+              )}
+            </div>
+
+            {error && <p className="text-error text-center">{error}</p>}
+
+            <div className="flex justify-between items-center">
+              <button type="button" onClick={() => navigate('/users')} className="btn">
+                Cancel
+              </button>
+              <button className="btn btn-primary" type="submit">
+                Save
+              </button>
+            </div>
+          </form>
         </div>
-    )
+      </div>
+    </div>
+  )
 }
