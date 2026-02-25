@@ -1,6 +1,8 @@
 package com.example.demo.Apartment;
 
 import com.example.demo.Apartment.DTOs.UpdateApartment;
+import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
+import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
 import com.example.demo.Apartment.DTOs.ApartmentDTO;
 import com.example.demo.Apartment.DTOs.CreateApartment;
 
@@ -9,7 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/apartments")
@@ -17,8 +21,11 @@ public class ApartmentController {
 
     private final ApartmentService apartmentsService;
 
-    public ApartmentController(ApartmentService apartmentsService) {
+    private final ApartmentPhotoService apartmentPhotoService;
+
+    public ApartmentController(ApartmentService apartmentsService, ApartmentPhotoService apartmentPhotoService) {
         this.apartmentsService = apartmentsService;
+        this.apartmentPhotoService = apartmentPhotoService;
     }
 
     @GetMapping
@@ -62,5 +69,17 @@ public class ApartmentController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping("/{id}/photos")
+    public ResponseEntity<?> getApartmentAndPhotos(@PathVariable Integer id) {
+        ApartmentEntity apartment = apartmentsService.findById(id);
+        List<ApartmentPhotoEntity> images = apartmentPhotoService.findPhotosByApartmentId(id);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("apartment", apartment);
+        response.put("images", images);
+
+        return ResponseEntity.ok(response);
     }
 }
