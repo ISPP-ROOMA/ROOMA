@@ -1,10 +1,12 @@
-name: Rooma CD Pipeline PRO
+name: CD
 
 on:
   workflow_run:
     workflows: ["CI"]
-    types:
-      - completed
+    types: [completed]
+    branches:
+      - main
+      - trunk
   push:
     branches:
       - trunk
@@ -120,13 +122,20 @@ jobs:
 
       - name: Esperar a que Render esté listo
         run: |
+          MAX_ATTEMPTS=40   # 40 x 15s = 10 minutos máximo
+          ATTEMPT=0
           STATUS="building"
-          while [ "$STATUS" != "live" ]; do
+          while [ "$STATUS" != "live" ] && [ "$STATUS" != "failed" ] && [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
             sleep 15
+            ATTEMPT=$((ATTEMPT+1))
             STATUS=$(curl -s https://api.render.com/v1/services/${{ steps.render_create.outputs.service_id }} \
               -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.service.status')
-            echo "Estado actual: $STATUS"
+            echo "Intento $ATTEMPT - Estado actual: $STATUS"
           done
+          if [ "$STATUS" = "failed" ]; then
+            echo "Render deployment failed"
+            exit 1
+          fi
 
       - name: Deploy frontend
         run: |
@@ -153,14 +162,25 @@ jobs:
 
       - name: Esperar a backend Render
         run: |
+          MAX_ATTEMPTS=40   # 40 x 15s = 10 minutos máximo
+          ATTEMPT=0
           STATUS="building"
-          while [ "$STATUS" != "live" ]; do
+          while [ "$STATUS" != "live" ] && [ "$STATUS" != "failed" ] && [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
             sleep 15
+            ATTEMPT=$((ATTEMPT+1))
             STATUS=$(curl -s https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }} \
               -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.service.status')
-            echo "Estado actual: $STATUS"
+            echo "Intento $ATTEMPT - Estado actual: $STATUS"
           done
+          if [ "$STATUS" = "failed" ]; then
+            echo "Render deployment failed"
+            exit 1
+          fi
 
+          if [ "$STATUS" != "live" ]; then
+            echo "Timeout waiting for Render"
+            exit 1
+          fi
       - name: Deploy frontend Vercel
         run: |
           cd frontend
