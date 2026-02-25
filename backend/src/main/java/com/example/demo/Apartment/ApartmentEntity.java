@@ -1,6 +1,9 @@
 package com.example.demo.Apartment;
 
 
+import java.util.List;
+
+import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
 import com.example.demo.User.UserEntity;
 
 import jakarta.persistence.*;
@@ -15,6 +18,9 @@ public class ApartmentEntity {
             initialValue = 100)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "apartments_seq")
     private Integer id;
+
+    @OneToMany(mappedBy = "apartment", fetch = FetchType.EAGER)
+    private List<ApartmentPhotoEntity> photos;
 
     @Column(nullable = false)
     private String title;
@@ -115,6 +121,12 @@ public class ApartmentEntity {
         this.user = user;
     }
 
-    
-    
+    public List<ApartmentPhotoEntity> getPhotos() {
+        return photos;
+    }
+
+    public void setPhotos(List<ApartmentPhotoEntity> photos) {
+        this.photos = photos;
+    }
+
 }
