@@ -1,6 +1,10 @@
 name: Rooma CD Pipeline PRO
 
 on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
   push:
     branches:
       - trunk
@@ -126,12 +130,13 @@ jobs:
 
       - name: Deploy frontend
         run: |
+          cd frontend
           npm install -g vercel
           vercel --prod \
                  --name rooma-${{ needs.build-images.outputs.release_tag }} \
                  --token ${{ secrets.VERCEL_TOKEN }} \
                  --build-env VITE_API_URL=https://rooma-${{ needs.build-images.outputs.release_tag }}.onrender.com \
-                 --confirm
+                 --yes
 
   deploy-dev:
     runs-on: ubuntu-latest
@@ -146,10 +151,21 @@ jobs:
           curl -X POST https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys \
           -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
 
+      - name: Esperar a backend Render
+        run: |
+          STATUS="building"
+          while [ "$STATUS" != "live" ]; do
+            sleep 15
+            STATUS=$(curl -s https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }} \
+              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.service.status')
+            echo "Estado actual: $STATUS"
+          done
+
       - name: Deploy frontend Vercel
         run: |
+          cd frontend
           npm install -g vercel
           vercel --prod \
                  --token ${{ secrets.VERCEL_TOKEN }} \
                  --build-env VITE_API_URL=${{ secrets.DEV_BACKEND_URL }} \
-                 --confirm
+                 --yes
