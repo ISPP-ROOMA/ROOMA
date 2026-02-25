@@ -103,16 +103,20 @@ jobs:
                 },
                 "envVars": [
                   {
-                    "key": "SPRING_DATASOURCE_URL",
+                    "key": "DB_URL",
                     "value": "jdbc:postgresql://${{ secrets.ALWAYSDATA_HOST }}/rooma_${{ needs.build-images.outputs.release_tag }}"
                   },
                   {
-                    "key": "SPRING_DATASOURCE_USERNAME",
+                    "key": "DB_USER",
                     "value": "rooma_${{ needs.build-images.outputs.release_tag }}"
                   },
                   {
-                    "key": "SPRING_DATASOURCE_PASSWORD",
+                    "key": "DB_PASS",
                     "value": "${{ steps.gen_pass.outputs.db_pass }}"
+                  },
+                  {
+                    "key": "JWT_SECRET",
+                    "value": "${{ secrets.JWT_SECRET }}"
                   }
                 ]
               }')
@@ -168,11 +172,10 @@ jobs:
           while [ "$STATUS" != "live" ] && [ "$STATUS" != "failed" ] && [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
             sleep 15
             ATTEMPT=$((ATTEMPT+1))
-            STATUS=$(curl -s https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }} \
-              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.status')
-            RESPONSE=$(curl -s https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }} \
-            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}")
-            echo "$RESPONSE"
+            STATUS=$(curl -s https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys \
+              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+              | jq -r '.[0].status')
+
             echo "Intento $ATTEMPT - Estado actual: $STATUS"
           done
           if [ "$STATUS" = "failed" ]; then
