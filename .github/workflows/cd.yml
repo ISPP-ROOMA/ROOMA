@@ -169,7 +169,10 @@ jobs:
             sleep 15
             ATTEMPT=$((ATTEMPT+1))
             STATUS=$(curl -s https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }} \
-              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.service.status')
+              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.status')
+            RESPONSE=$(curl -s https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }} \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}")
+            echo "$RESPONSE"
             echo "Intento $ATTEMPT - Estado actual: $STATUS"
           done
           if [ "$STATUS" = "failed" ]; then
