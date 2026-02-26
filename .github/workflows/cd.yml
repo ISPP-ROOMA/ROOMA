@@ -26,7 +26,7 @@ env:
 jobs:
   build-images:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true && github.base_ref == 'main'
+    if: github.event.pull_request.merged == true && github.base_ref == 'main' || github.ref == 'refs/heads/feature/ci/cd'
 
     outputs:
       release_tag: ${{ steps.get_tag.outputs.release_tag }}
@@ -34,18 +34,40 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Obtener tag desde título PR
+      - name: Obtener nombre de instancia
         id: get_tag
         run: |
-          TAG=$(echo "${{ github.event.pull_request.title }}" | tr ' ' '-' )
+          # 1. Obtenemos el cuerpo de la PR
+          PR_BODY="${{ github.event.pull_request.body }}"
+          
+          # 2. Buscamos la línea "Deploy-Name: palabra", ignorando mayúsculas/minúsculas
+          # awk '{print $2}' coge la segunda palabra (el nombre en sí)
+          # tr -d '\r' limpia posibles saltos de línea raros
+          TAG=$(echo "$PR_BODY" | grep -i '^Deploy-Name:' | awk '{print $2}' | tr -d '\r' | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9-')
+          
+          # 3. Si la variable TAG está vacía (alguien olvidó poner el Deploy-Name)
+          if [ -z "$TAG" ]; then
+            echo "⚠️ No se encontró 'Deploy-Name:' en la PR. Usando el título como fallback."
+            # Intentamos usar el título de la PR
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            
+            if [ -n "$PR_TITLE" ]; then
+              TAG=$(echo "$PR_TITLE" | tr ' ' '-' | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9-')
+            else
+              # Si tampoco hay título (porque es un push directo), usamos un nombre por defecto
+              TAG="prueba-cicd-$(date +%s)"
+            fi
+          fi
+          
+          echo "La instancia se llamará: $TAG"
           echo "release_tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Login GHCR
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_PAT }}
 
       - name: Build & Push Backend
         run: |
@@ -60,9 +82,12 @@ jobs:
   deploy-entrega:
     runs-on: ubuntu-latest
     needs: build-images
-    if: github.event.pull_request.merged == true && github.base_ref == 'main'
+    if: github.event.pull_request.merged == true && github.base_ref == 'main' || github.ref == 'refs/heads/feature/ci/cd'
 
     steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
       - name: Generar password aleatoria
         id: gen_pass
         run: |
@@ -117,6 +142,10 @@ jobs:
                   {
                     "key": "JWT_SECRET",
                     "value": "${{ secrets.JWT_SECRET }}"
+                  },  
+                  {
+                    "key": "SPRING_PROFILES_ACTIVE",
+                    "value": "prod"
                   }
                 ]
               }')
@@ -129,16 +158,20 @@ jobs:
           MAX_ATTEMPTS=40   # 40 x 15s = 10 minutos máximo
           ATTEMPT=0
           STATUS="building"
-          sleep 5
+          sleep 10
           while [ "$STATUS" != "live" ] && [ "$STATUS" != "failed" ] && [ "$STATUS" != "canceled" ] && [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
             sleep 15
             ATTEMPT=$((ATTEMPT+1))
-            STATUS=$(curl -s https://api.render.com/v1/services/${{ steps.render_create.outputs.service_id }} \
-              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.service.status')
+            STATUS=$(curl -s https://api.render.com/v1/services/${{ steps.render_create.outputs.service_id }}/deploys \
+              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.[0].deploy.status')
             echo "Intento $ATTEMPT - Estado actual: $STATUS"
           done
-          if [ "$STATUS" = "failed" ]; then
+          if [ "$STATUS" = "failed" ] || [ "$STATUS" = "canceled" ]; then
             echo "Render deployment failed"
+            exit 1
+          fi
+          if [ "$STATUS" != "live" ]; then
+            echo "Timeout waiting for Render"
             exit 1
           fi
 
@@ -150,14 +183,14 @@ jobs:
                  --name rooma-${{ needs.build-images.outputs.release_tag }} \
                  --token ${{ secrets.VERCEL_TOKEN }} \
                  --build-env VITE_API_URL=https://rooma-${{ needs.build-images.outputs.release_tag }}.onrender.com \
+                 --build-env HUSKY=0 \
                  --yes
 
   deploy-dev:
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/trunk' ||
-      (github.event.pull_request.merged == true && github.base_ref == 'trunk') ||
-      github.ref == 'refs/heads/feature/ci/cd'
+      (github.event.pull_request.merged == true && github.base_ref == 'trunk')
 
     steps:
 
