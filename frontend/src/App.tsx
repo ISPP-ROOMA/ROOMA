@@ -20,8 +20,9 @@ import LeaveReview from './pages/private/LeaveReview'
 
 function App() {
   const location = useLocation()
-
   const { token, role } = useAuthStore()
+
+  const [show_reviews_alert, setShowReviewsAlert] = useState(false)
 
   const [pendingContract, setPendingContract] = useState<{
     contractId: number
@@ -34,48 +35,39 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (token) {
+    if (token && show_reviews_alert) {
       void getPendingReviews()
         .then((data) => {
-          if (data.length > 0) {
+          if (data && data.length > 0) {
             setPendingContract(data[0])
           }
         })
         .catch(console.error)
     }
-  }, [token])
+  }, [token, show_reviews_alert])
 
   let publicRoutes = <></>
   let privateRoutes = <></>
-  const customerRoutes = <></>
-  let adminRoutes = <></>
-
-  switch (role) {
-    case 'ADMIN':
-      adminRoutes = (
-        <>
-          <Route
-            path="/users"
-            element={
-              <PrivateRoute>
-                <Users />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/users/:id"
-            element={
-              <PrivateRoute>
-                <User />
-              </PrivateRoute>
-            }
-          />
-        </>
-      )
-      break
-    default:
-      break
-  }
+  const adminRoutes = (
+    <>
+      <Route
+        path="/users"
+        element={
+          <PrivateRoute>
+            <Users />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/users/:id"
+        element={
+          <PrivateRoute>
+            <User />
+          </PrivateRoute>
+        }
+      />
+    </>
+  )
 
   if (!token) {
     publicRoutes = (
@@ -119,19 +111,26 @@ function App() {
 
   return (
     <ToastProvider>
-      <div>
-        {!usesMobileLayout && <Navbar />}
-        <main className="mx-auto min-h-dvh flex flex-col">
+      <div className="flex flex-col min-h-screen">
+        {!usesMobileLayout && (
+          <Navbar
+            show_reviews_alert={show_reviews_alert}
+            setShowReviewsAlert={setShowReviewsAlert}
+          />
+        )}
+
+        <main className="mx-auto flex-grow w-full">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/properties/:id" element={<PropertyDetails />} />
-            {adminRoutes}
-            {customerRoutes}
+            {role === 'ADMIN' && adminRoutes}
             {privateRoutes}
             {publicRoutes}
           </Routes>
         </main>
+
         {!usesMobileLayout && <Footer />}
+
         <ReviewModal
           contract={pendingContract}
           onClose={() => {
