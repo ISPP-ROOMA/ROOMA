@@ -37,7 +37,7 @@ function App() {
     if (token) {
       void getPendingReviews()
         .then((data) => {
-          if (data && data.length > 0) {
+          if (data.length > 0) {
             setPendingContract(data[0])
           }
         })
