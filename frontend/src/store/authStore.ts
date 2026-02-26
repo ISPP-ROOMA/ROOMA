@@ -3,11 +3,13 @@ import { create } from 'zustand'
 interface LoginData {
   token: string
   role: string
+  userId: string | number
 }
 
 interface AuthStore {
   token: string | null
   role: string | null
+  userId: string | number | null
   login: (data: LoginData) => void
   logout: () => void
 }
@@ -20,6 +22,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({
       token: data.token,
       role: data.role,
+      userId: data.userId,
     })
   },
 
@@ -27,6 +30,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({
       token: null,
       role: null,
+      userId: null,
     })
   },
 }))

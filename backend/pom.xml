@@ -98,7 +98,7 @@
 		</dependency>
 
 	</dependencies>
-
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -108,6 +108,23 @@
 			<plugin>
 				<groupId>org.graalvm.buildtools</groupId>
 				<artifactId>native-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>9.2.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+					<nvdApiDelay>8000</nvdApiDelay>
+					<failBuildOnCVSS>7</failBuildOnCVSS>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

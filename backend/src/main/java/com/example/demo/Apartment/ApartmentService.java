@@ -5,13 +5,16 @@ import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
+import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Optional;
+import com.example.demo.Exceptions.ResourceNotFoundException;
+import com.example.demo.User.UserEntity;
+import com.example.demo.User.UserService;
 
 @Service
 public class ApartmentService {
@@ -81,6 +84,7 @@ public class ApartmentService {
         existingApartment.setBills(apartments.getBills());
         existingApartment.setUbication(apartments.getUbication());
         existingApartment.setState(apartments.getState());
+        existingApartment.setImageUrl(apartments.getImageUrl());
 
         return apartmentsRepository.save(existingApartment);
     }
@@ -91,6 +95,11 @@ public class ApartmentService {
             throw new ResourceNotFoundException("Apartment not found");
         }
         apartmentsRepository.deleteById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ApartmentEntity> search(String ubication, Double minPrice, Double maxPrice, ApartmentState state) {
+        return apartmentsRepository.search(ubication, minPrice, maxPrice, state);
     }
 
 }

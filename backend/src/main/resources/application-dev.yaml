@@ -13,7 +13,12 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:user}
     driver-class-name: org.postgresql.Driver
 
+  sql:
+    init:
+      mode: always
+
   jpa:
+    defer-datasource-initialization: true
     show-sql: true
 
     hibernate:

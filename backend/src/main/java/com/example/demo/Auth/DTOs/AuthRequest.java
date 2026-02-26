@@ -14,6 +14,3 @@ public record AuthRequest(
         @NotNull                 Role role
 ) {
 }
-
-
-

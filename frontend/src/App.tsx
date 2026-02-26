@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import Navbar from './components/Navbar'
 import Login from './pages/Login'
@@ -14,10 +14,28 @@ import Register from './pages/Register'
 import Apartments from './pages/apartments/Apartments'
 import ApartmentDetail from './pages/apartments/ApartmentDetail'
 import PublishFlowContainer from './pages/apartments/publish/PublishFlowContainer'
+import { useEffect, useState } from 'react'
+import { refreshToken } from './service/auth.service'
+import Register from './pages/Register'
+import MyRequests from './pages/private/MyRequests'
+import PropertyDetails from './pages/PropertyDetails'
+import { ToastProvider } from './context/ToastContext'
+import ReviewModal from './components/ReviewModal'
+import { getPendingReviews } from './service/review.service'
+import LeaveReview from './pages/private/LeaveReview'
 
 function App() {
+  const location = useLocation()
   const { token, role } = useAuthStore()
   const didTryRefresh = useRef(false)
+
+  const [show_reviews_alert, setShowReviewsAlert] = useState(false)
+
+  const [pendingContract, setPendingContract] = useState<{
+    contractId: number
+    apartmentAddress: string
+    endDate: string
+  } | null>(null)
 
   useEffect(() => {
     if (didTryRefresh.current) {
@@ -31,6 +49,81 @@ function App() {
     didTryRefresh.current = true
     refreshToken()
   }, [token])
+
+  useEffect(() => {
+    if (token && show_reviews_alert) {
+      void getPendingReviews()
+        .then((data) => {
+          if (data && data.length > 0) {
+            setPendingContract(data[0])
+          }
+        })
+        .catch(console.error)
+    }
+  }, [token, show_reviews_alert])
+
+  let publicRoutes = <></>
+  let privateRoutes = <></>
+  const adminRoutes = (
+    <>
+      <Route
+        path="/users"
+        element={
+          <PrivateRoute>
+            <Users />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/users/:id"
+        element={
+          <PrivateRoute>
+            <User />
+          </PrivateRoute>
+        }
+      />
+    </>
+  )
+
+  if (!token) {
+    publicRoutes = (
+      <>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </>
+    )
+  } else {
+    privateRoutes = (
+      <>
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/mis-solicitudes"
+          element={
+            <PrivateRoute>
+              <MyRequests />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/reviews/new/:contractId"
+          element={
+            <PrivateRoute>
+              <LeaveReview />
+            </PrivateRoute>
+          }
+        />
+      </>
+    )
+  }
+
+  const usesMobileLayout = location.pathname === '/mis-solicitudes'
 
   return (
     <div>
@@ -109,6 +202,35 @@ function App() {
       </main>
       <Footer />
     </div>
+    <ToastProvider>
+      <div className="flex flex-col min-h-screen">
+        {!usesMobileLayout && (
+          <Navbar
+            show_reviews_alert={show_reviews_alert}
+            setShowReviewsAlert={setShowReviewsAlert}
+          />
+        )}
+
+        <main className="mx-auto flex-grow w-full">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/properties/:id" element={<PropertyDetails />} />
+            {role === 'ADMIN' && adminRoutes}
+            {privateRoutes}
+            {publicRoutes}
+          </Routes>
+        </main>
+
+        {!usesMobileLayout && <Footer />}
+
+        <ReviewModal
+          contract={pendingContract}
+          onClose={() => {
+            setPendingContract(null)
+          }}
+        />
+      </div>
+    </ToastProvider>
   )
 }
 

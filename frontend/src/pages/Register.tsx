@@ -1,8 +1,8 @@
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { getDeviceId, registerUser } from '../service/auth.service'
 import { useAuthStore } from '../store/authStore'
 
@@ -160,6 +160,25 @@ export default function Register() {
               {errors.password && (
                 <p className="text-error text-sm mt-1">{errors.password.message}</p>
               )}
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Role</span>
+              </label>
+              <select
+                {...register('role')}
+                id="role"
+                className="select select-bordered w-full"
+                defaultValue=""
+              >
+                <option value="" disabled>
+                  Selecciona un rol
+                </option>
+                <option value="TENANT">Inquilino (TENANT)</option>
+                <option value="LANDLORD">Arrendador (LANDLORD)</option>
+              </select>
+              {errors.role && <p className="text-error text-sm mt-1">{errors.role.message}</p>}
             </div>
 
             {error && <p className="text-error text-center">{error}</p>}
