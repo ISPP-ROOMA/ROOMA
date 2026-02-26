@@ -99,9 +99,16 @@ jobs:
           PASS=$(openssl rand -base64 12)
           echo "db_pass=$PASS" >> $GITHUB_OUTPUT
 
+      - name: Preparar nombres de imagen en minúsculas
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          
+          echo "IMAGE_BACKEND=$REPO_LOWER/backend" >> $GITHUB_ENV
+          echo "IMAGE_FRONTEND=$REPO_LOWER/frontend" >> $GITHUB_ENV
+
       - name: Crear base de datos
         run: |
-          curl -X POST https://api.alwaysdata.com/v1/databases \
+          curl -s -X POST "https://api.alwaysdata.com/v1/account/${{ secrets.ALWAYSDATA_ACCOUNT_ID }}/database/" \
           -H "Authorization: Bearer ${{ secrets.ALWAYSDATA_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
@@ -111,12 +118,13 @@ jobs:
 
       - name: Crear usuario DB
         run: |
-          curl -X POST https://api.alwaysdata.com/v1/database-users \
+          curl -s -X POST "https://api.alwaysdata.com/v1/account/${{ secrets.ALWAYSDATA_ACCOUNT_ID }}/database-user/" \
           -H "Authorization: Bearer ${{ secrets.ALWAYSDATA_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
                 "username": "rooma_${{ needs.build-images.outputs.release_tag }}",
-                "password": "${{ steps.gen_pass.outputs.db_pass }}"
+                "password": "${{ steps.gen_pass.outputs.db_pass }}",
+                "databases": ["rooma_${{ needs.build-images.outputs.release_tag }}"]
               }'
 
       - name: Crear servicio backend Render
@@ -128,6 +136,9 @@ jobs:
           -d '{
                 "type": "web_service",
                 "name": "rooma-${{ needs.build-images.outputs.release_tag }}",
+                "ownerId": "${{ secrets.RENDER_OWNER_ID }}",
+                "repo": "",
+                "autoDeploy": "no",
                 "image": {
                   "url": "ghcr.io/${{ env.IMAGE_BACKEND }}:${{ needs.build-images.outputs.release_tag }}"
                 },
@@ -152,7 +163,12 @@ jobs:
                     "key": "SPRING_PROFILES_ACTIVE",
                     "value": "prod"
                   }
-                ]
+                ],
+                "serviceDetails": {
+                  "pullRequestPreviewsEnabled": "no",
+                  "plan": "free",
+                  "region": "frankfurt"
+                }
               }')
 
           SERVICE_ID=$(echo $RESPONSE | jq -r '.id')
