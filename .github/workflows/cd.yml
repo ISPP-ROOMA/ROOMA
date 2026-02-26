@@ -20,8 +20,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_BACKEND: ${{ github.repository }}/backend
-  IMAGE_FRONTEND: ${{ github.repository }}/frontend
 
 jobs:
   build-images:
@@ -33,6 +31,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
+      - name: Preparar nombres de imagen en minúsculas
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          
+          echo "IMAGE_BACKEND=$REPO_LOWER/backend" >> $GITHUB_ENV
+          echo "IMAGE_FRONTEND=$REPO_LOWER/frontend" >> $GITHUB_ENV
 
       - name: Obtener nombre de instancia
         id: get_tag
