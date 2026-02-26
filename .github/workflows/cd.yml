@@ -7,11 +7,10 @@ on:
     branches:
       - main
       - trunk
-      - feature/ci/cd
   push:
     branches:
       - trunk
-
+      - feature/ci/cd
   pull_request:
     branches:
       - trunk
