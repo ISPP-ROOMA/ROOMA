@@ -76,12 +76,12 @@ jobs:
 
       - name: Build & Push Backend
         run: |
-          docker build -t ghcr.io/${{ env.IMAGE_BACKEND }}:${{ steps.get_tag.outputs.release_tag }} ./backend
+          docker build -f ./backend/Dockerfile.prod -t ghcr.io/${{ env.IMAGE_BACKEND }}:${{ steps.get_tag.outputs.release_tag }} ./backend
           docker push ghcr.io/${{ env.IMAGE_BACKEND }}:${{ steps.get_tag.outputs.release_tag }}
 
       - name: Build & Push Frontend
         run: |
-          docker build -t ghcr.io/${{ env.IMAGE_FRONTEND }}:${{ steps.get_tag.outputs.release_tag }} ./frontend
+          docker build -f ./frontend/Dockerfile -t ghcr.io/${{ env.IMAGE_FRONTEND }}:${{ steps.get_tag.outputs.release_tag }} ./frontend
           docker push ghcr.io/${{ env.IMAGE_FRONTEND }}:${{ steps.get_tag.outputs.release_tag }}
 
   deploy-entrega:
