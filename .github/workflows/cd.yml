@@ -118,24 +118,22 @@ jobs:
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://api.alwaysdata.com/v1/account/${{ secrets.ALWAYSDATA_ACCOUNT_ID }}/database/" \
           -u "${{ secrets.ALWAYSDATA_TOKEN }}:" \
           -H "Content-Type: application/json" \
-          -d "{\"name\": \"rooma_${{ needs.build-images.outputs.release_tag }}\", \"type\": \"postgresql\"}")
+          -d "{"name": "rooma_${{ needs.build-images.outputs.release_tag }}", "type": "postgresql"}")
           
           echo "Respuesta de Alwaysdata:"
           echo "$RESPONSE"
 
       - name: Crear base de datos
         run: |
-          curl -s -X POST "https://api.alwaysdata.com/v1/account/${{ secrets.ALWAYSDATA_ACCOUNT_ID }}/database/" \
+          DATA='{"name": "rooma_${{ needs.build-images.outputs.release_tag }}", "type": "postgresql"}'
+          curl -v -X POST "https://api.alwaysdata.com/v1/account/${{ secrets.ALWAYSDATA_ACCOUNT_ID }}/database/" \
           -u "${{ secrets.ALWAYSDATA_TOKEN }}:" \
           -H "Content-Type: application/json" \
-          -d '{
-                "name": "rooma_${{ needs.build-images.outputs.release_tag }}",
-                "type": "postgresql"
-              }'
+          -d "$DATA"
 
       - name: Crear usuario DB
         run: |
-          curl -s -X POST "https://api.alwaysdata.com/v1/account/${{ secrets.ALWAYSDATA_ACCOUNT_ID }}/database-user/" \
+          curl -v -X POST "https://api.alwaysdata.com/v1/account/${{ secrets.ALWAYSDATA_ACCOUNT_ID }}/database-user/" \
           -u "${{ secrets.ALWAYSDATA_TOKEN }}:" \
           -H "Content-Type: application/json" \
           -d '{
