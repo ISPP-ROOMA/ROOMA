@@ -7,9 +7,11 @@ import SwipeableCard from '../components/SwipeableCard'
 import type { ApartmentDTO } from '../service/apartment.service'
 import { searchApartments, swipeApartment } from '../service/apartment.service'
 import { useAuthStore } from '../store/authStore'
+import { useToast } from '../hooks/useToast'
 
 export default function Home() {
   const { token, userId, role } = useAuthStore()
+  const { showToast } = useToast()
   const [apartments, setApartments] = useState<ApartmentDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedApartment, setSelectedApartment] = useState<ApartmentDTO | null>(null)
@@ -43,6 +45,9 @@ export default function Home() {
     try {
       if (userId) {
         await swipeApartment(Number(userId), apartmentId, interest)
+        if (interest) {
+          showToast('¡Solicitud enviada correctamente!', 'success')
+        }
       }
     } catch (error) {
       console.error('Failed to register swipe', error)
