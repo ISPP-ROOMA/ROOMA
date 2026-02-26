@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import Navbar from './components/Navbar'
@@ -10,12 +10,9 @@ import { useAuthStore } from './store/authStore'
 import Users from './pages/admin/Users'
 import User from './pages/admin/User'
 import { hasSessionHint, refreshToken } from './service/auth.service'
-import Register from './pages/Register'
 import Apartments from './pages/apartments/Apartments'
 import ApartmentDetail from './pages/apartments/ApartmentDetail'
 import PublishFlowContainer from './pages/apartments/publish/PublishFlowContainer'
-import { useEffect, useState } from 'react'
-import { refreshToken } from './service/auth.service'
 import Register from './pages/Register'
 import MyRequests from './pages/private/MyRequests'
 import PropertyDetails from './pages/PropertyDetails'
@@ -126,82 +123,6 @@ function App() {
   const usesMobileLayout = location.pathname === '/mis-solicitudes'
 
   return (
-    <div>
-      <Navbar />
-      <main className="mx-auto min-h-dvh flex flex-col">
-        <Routes>
-          <Route path="/" element={<Home />} />
-
-          {!token && <Route path="/login" element={<Login />} />}
-          {!token && <Route path="/register" element={<Register />} />}
-
-          {token && (
-            <Route
-              path="/profile"
-              element={
-                <PrivateRoute>
-                  <Profile />
-                </PrivateRoute>
-              }
-            />
-          )}
-
-          {role === 'ADMIN' && (
-            <>
-              <Route
-                path="/users"
-                element={
-                  <PrivateRoute>
-                    <Users />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/users/:id"
-                element={
-                  <PrivateRoute>
-                    <User />
-                  </PrivateRoute>
-                }
-              />
-            </>
-          )}
-
-          {role === 'LANDLORD' && (
-            <>
-              <Route
-                path="/apartments/my"
-                element={
-                  <PrivateRoute allowedRoles={['LANDLORD']}>
-                    <Apartments />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/apartments/publish"
-                element={
-                  <PrivateRoute allowedRoles={['LANDLORD']}>
-                    <PublishFlowContainer />
-                  </PrivateRoute>
-                }
-              />
-            </>
-          )}
-
-          {role === 'LANDLORD' && (
-            <Route
-              path="/apartments/:id"
-              element={
-                <PrivateRoute allowedRoles={['LANDLORD']}>
-                  <ApartmentDetail />
-                </PrivateRoute>
-              }
-            />
-          )}
-        </Routes>
-      </main>
-      <Footer />
-    </div>
     <ToastProvider>
       <div className="flex flex-col min-h-screen">
         {!usesMobileLayout && (
@@ -215,14 +136,87 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/properties/:id" element={<PropertyDetails />} />
-            {role === 'ADMIN' && adminRoutes}
+
+            {!token && (
+              <>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+              </>
+            )}
+
+            {token && (
+              <Route
+                path="/profile"
+                element={
+                  <PrivateRoute>
+                    <Profile />
+                  </PrivateRoute>
+                }
+              />
+            )}
+
+            {role === 'ADMIN' && (
+              <>
+                <Route
+                  path="/users"
+                  element={
+                    <PrivateRoute allowedRoles={['ADMIN']}>
+                      <Users />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/users/:id"
+                  element={
+                    <PrivateRoute allowedRoles={['ADMIN']}>
+                      <User />
+                    </PrivateRoute>
+                  }
+                />
+                {adminRoutes} {/* Inyectamos si existen rutas adicionales de trunk */}
+              </>
+            )}
+
+            {/* Rutas de Landlord (Dueño) */}
+            {role === 'LANDLORD' && (
+              <>
+                <Route
+                  path="/apartments/my"
+                  element={
+                    <PrivateRoute allowedRoles={['LANDLORD']}>
+                      <Apartments />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/apartments/publish"
+                  element={
+                    <PrivateRoute allowedRoles={['LANDLORD']}>
+                      <PublishFlowContainer />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/apartments/:id"
+                  element={
+                    <PrivateRoute allowedRoles={['LANDLORD']}>
+                      <ApartmentDetail />
+                    </PrivateRoute>
+                  }
+                />
+              </>
+            )}
+
+            {/* Otras rutas inyectadas de trunk */}
             {privateRoutes}
             {publicRoutes}
           </Routes>
         </main>
 
+        {/* Footer solo si no es móvil */}
         {!usesMobileLayout && <Footer />}
 
+        {/* Modales globales */}
         <ReviewModal
           contract={pendingContract}
           onClose={() => {
