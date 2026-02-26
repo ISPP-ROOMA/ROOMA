@@ -99,6 +99,7 @@ export default function Apartments() {
           id={apt.id}
           title={apt.title}
           price={apt.price}
+          coverImageUrl={apt.coverImageUrl}
           photoCount={0}
           status={apt.state === 'available' ? 'active' : 'paused'}
           stats={{ requests: 0, matches: 0 }}
