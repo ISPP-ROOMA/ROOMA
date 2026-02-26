@@ -75,6 +75,7 @@ export const logout = async (): Promise<void> => {
 export interface ValidateResponse {
   valid: boolean
   message?: string
+  authenticated: boolean
 }
 
 export const validateToken = async (): Promise<ValidateResponse | undefined> => {

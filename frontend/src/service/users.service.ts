@@ -2,7 +2,8 @@ import axios from 'axios'
 import { api } from './api'
 
 export interface User {
-  id: string | number
+  id?: string | number
+  name: string
   email: string
   role: string
 }
