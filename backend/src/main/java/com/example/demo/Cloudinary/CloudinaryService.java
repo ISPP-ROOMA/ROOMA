@@ -26,12 +26,15 @@ public class CloudinaryService {
         this.cloudinary = new Cloudinary(config);
     }
 
-    public Map upload(MultipartFile multipartFile, String folder) throws IOException {
-        Map params = ObjectUtils.asMap(
+    public Map<String, Object> upload(MultipartFile multipartFile, String folder) throws IOException {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> params = ObjectUtils.asMap(
             "folder", "rooma/" + folder,
             "resource_type", "image"
         );
-        return cloudinary.uploader().upload(multipartFile.getBytes(), params);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> result = cloudinary.uploader().upload(multipartFile.getBytes(), params);
+        return result;
     }
 
     public void deleteByPublicId(String publicId) throws IOException {
