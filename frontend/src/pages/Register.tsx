@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
+import { z } from 'zod'
 import { getDeviceId, registerUser } from '../service/auth.service'
 import { useAuthStore } from '../store/authStore'
 
@@ -10,6 +10,9 @@ const registerSchema = z.object({
   email: z.email('Invalid email'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   deviceId: z.string().optional(),
+  role: z.enum(['TENANT', 'LANDLORD'], {
+    message: 'Please select a valid role',
+  }),
 })
 
 type RegisterFormData = z.infer<typeof registerSchema>
@@ -31,13 +34,14 @@ export default function Register() {
       email: data.email,
       password: data.password,
       deviceId: deviceId,
+      role: data.role,
     })
     if (res.error) {
       setError(res.error)
       return
     }
 
-    useAuthStore.getState().login({ token: res.token, role: res.role })
+    useAuthStore.getState().login({ token: res.token, role: res.role, userId: res.userId })
 
     navigate('/home')
   }
@@ -79,6 +83,25 @@ export default function Register() {
               {errors.password && (
                 <p className="text-error text-sm mt-1">{errors.password.message}</p>
               )}
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Role</span>
+              </label>
+              <select
+                {...register('role')}
+                id="role"
+                className="select select-bordered w-full"
+                defaultValue=""
+              >
+                <option value="" disabled>
+                  Selecciona un rol
+                </option>
+                <option value="TENANT">Inquilino (TENANT)</option>
+                <option value="LANDLORD">Arrendador (LANDLORD)</option>
+              </select>
+              {errors.role && <p className="text-error text-sm mt-1">{errors.role.message}</p>}
             </div>
 
             {error && <p className="text-error text-center">{error}</p>}

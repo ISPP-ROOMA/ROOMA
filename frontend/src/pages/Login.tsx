@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
+import { z } from 'zod'
 import { getDeviceId, loginUser } from '../service/auth.service'
 import { useAuthStore } from '../store/authStore'
 
@@ -38,6 +38,7 @@ export default function Login() {
     useAuthStore.getState().login({
       token: res.token,
       role: res.role,
+      userId: res.userId,
     })
 
     navigate('/')
