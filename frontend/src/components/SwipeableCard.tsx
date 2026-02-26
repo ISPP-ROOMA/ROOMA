@@ -32,6 +32,7 @@ export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: Swi
     ]
   )
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDragEnd = async (_: any, info: any) => {
     if (info.offset.x > 100) {
       setExitX(1000)

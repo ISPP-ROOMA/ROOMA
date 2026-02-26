@@ -58,7 +58,7 @@ export const swipeApartment = async (
   candidateId: number,
   apartmentId: number,
   interest: boolean
-): Promise<any> => {
+): Promise<unknown> => {
   try {
     const response = await api.post(
       `/apartments-matches/swipe/candidate/${candidateId}/apartment/${apartmentId}/action/true`,
