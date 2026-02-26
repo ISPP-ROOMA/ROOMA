@@ -2,14 +2,10 @@ package com.example.demo.Apartment.DTOs;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentState;
 import com.example.demo.MemberApartment.DTOs.ApartmentMemberDTO;
 
-/**
- * DTO principal de la rama TRUNK
- */
 public record ApartmentDTO(
     Integer id, 
     String title, 
@@ -54,45 +50,5 @@ public record ApartmentDTO(
         return apartments.stream()
                 .map(ApartmentDTO::fromApartmentEntity)
                 .toList();
-    }
-}
-
-/**
- * DTO temporal de la rama TRUNK-2
- * Sin "public" para que coexista en este archivo durante el merge
- */
-record ApartmentDTO2(
-    Integer id, 
-    String title, 
-    String description, 
-    Double price, 
-    String bills, 
-    String ubication,
-    String state, 
-    String coverImageUrl
-) {
-
-    public static ApartmentDTO2 fromApartmentEntity(ApartmentEntity apartment) {
-        String coverImageUrl = apartment.getPhotos() == null
-            ? null
-            : apartment.getPhotos().stream()
-                .filter(p -> p.getOrden() != null && p.getOrden().equals(1))
-                .map(p -> p.getUrl())
-                .findFirst()
-                .orElseGet(() -> apartment.getPhotos().stream()
-                    .map(p -> p.getUrl())
-                    .findFirst()
-                    .orElse(null));
-
-        return new ApartmentDTO2(
-            apartment.getId(), 
-            apartment.getTitle(), 
-            apartment.getDescription(),
-            apartment.getPrice(), 
-            apartment.getBills(), 
-            apartment.getUbication(), 
-            apartment.getState() != null ? apartment.getState().toString() : null, 
-            coverImageUrl
-        );
     }
 }
