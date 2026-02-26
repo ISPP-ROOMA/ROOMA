@@ -109,7 +109,7 @@ jobs:
       - name: Crear base de datos
         run: |
           curl -s -X POST "https://api.alwaysdata.com/v1/account/${{ secrets.ALWAYSDATA_ACCOUNT_ID }}/database/" \
-          -H "Authorization: Bearer ${{ secrets.ALWAYSDATA_TOKEN }}" \
+          -u "${{ secrets.ALWAYSDATA_TOKEN }}:" \
           -H "Content-Type: application/json" \
           -d '{
                 "name": "rooma_${{ needs.build-images.outputs.release_tag }}",
@@ -119,7 +119,7 @@ jobs:
       - name: Crear usuario DB
         run: |
           curl -s -X POST "https://api.alwaysdata.com/v1/account/${{ secrets.ALWAYSDATA_ACCOUNT_ID }}/database-user/" \
-          -H "Authorization: Bearer ${{ secrets.ALWAYSDATA_TOKEN }}" \
+          -u "${{ secrets.ALWAYSDATA_TOKEN }}:" \
           -H "Content-Type: application/json" \
           -d '{
                 "username": "rooma_${{ needs.build-images.outputs.release_tag }}",
