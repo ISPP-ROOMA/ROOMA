@@ -106,6 +106,23 @@ jobs:
           echo "IMAGE_BACKEND=$REPO_LOWER/backend" >> $GITHUB_ENV
           echo "IMAGE_FRONTEND=$REPO_LOWER/frontend" >> $GITHUB_ENV
 
+      - name: Debug Alwaysdata API
+        run: |
+          # 1. Probamos una petición simple GET para ver si el token funciona y tiene acceso a la cuenta
+          echo "Probando conexión..."
+          curl -v -X GET "https://api.alwaysdata.com/v1/account/${{ secrets.ALWAYSDATA_ACCOUNT_ID }}/" \
+          -u "${{ secrets.ALWAYSDATA_TOKEN }}:"
+
+          # 2. Intentamos crear la base de datos con captura de respuesta completa
+          echo "Intentando crear DB..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://api.alwaysdata.com/v1/account/${{ secrets.ALWAYSDATA_ACCOUNT_ID }}/database/" \
+          -u "${{ secrets.ALWAYSDATA_TOKEN }}:" \
+          -H "Content-Type: application/json" \
+          -d "{\"name\": \"rooma_${{ needs.build-images.outputs.release_tag }}\", \"type\": \"postgresql\"}")
+          
+          echo "Respuesta de Alwaysdata:"
+          echo "$RESPONSE"
+
       - name: Crear base de datos
         run: |
           curl -s -X POST "https://api.alwaysdata.com/v1/account/${{ secrets.ALWAYSDATA_ACCOUNT_ID }}/database/" \
