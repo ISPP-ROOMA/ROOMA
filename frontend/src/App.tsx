@@ -35,11 +35,13 @@ function App() {
 
   useEffect(() => {
     if (token) {
-      getPendingReviews().then((data) => {
-        if (data && data.length > 0) {
-          setPendingContract(data[0])
-        }
-      })
+      void getPendingReviews()
+        .then((data) => {
+          if (data && data.length > 0) {
+            setPendingContract(data[0])
+          }
+        })
+        .catch(console.error)
     }
   }, [token])
 
@@ -130,7 +132,12 @@ function App() {
           </Routes>
         </main>
         {!usesMobileLayout && <Footer />}
-        <ReviewModal contract={pendingContract} onClose={() => setPendingContract(null)} />
+        <ReviewModal
+          contract={pendingContract}
+          onClose={() => {
+            setPendingContract(null)
+          }}
+        />
       </div>
     </ToastProvider>
   )

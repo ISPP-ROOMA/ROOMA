@@ -7,7 +7,12 @@ export default function LeaveReview() {
   return (
     <div className="container mx-auto p-4 max-w-3xl mt-8">
       <div className="mb-6 flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="btn btn-ghost btn-sm">
+        <button
+          onClick={() => {
+            navigate(-1)
+          }}
+          className="btn btn-ghost btn-sm"
+        >
           &larr; Volver
         </button>
         <h1 className="text-3xl font-bold">Valorar Contrato #{contractId}</h1>
