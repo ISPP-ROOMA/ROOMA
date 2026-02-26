@@ -3,13 +3,18 @@ package com.example.demo.Apartment;
 import com.example.demo.Apartment.DTOs.UpdateApartment;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
+
+import jakarta.validation.Valid;
+
 import com.example.demo.Apartment.DTOs.ApartmentDTO;
 import com.example.demo.Apartment.DTOs.CreateApartment;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -47,12 +52,13 @@ public class ApartmentController {
         return ResponseEntity.ok(apartments);
     }
 
-    @PostMapping
-    public ResponseEntity<ApartmentEntity> createApartment(@RequestBody CreateApartment apartments) {
-        
-        ApartmentEntity createdApartment = apartmentsService.save(CreateApartment.fromDTO(apartments));
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApartmentDTO> createApartment(
+        @RequestPart("data") @Valid CreateApartment apartment,
+        @RequestPart(value = "images", required = false) List<MultipartFile> images) {
 
-        return new ResponseEntity<>(createdApartment, HttpStatus.CREATED);
+        ApartmentEntity createdApartment = apartmentsService.createWithImages(apartment, images);
+        return new ResponseEntity<>(ApartmentDTO.fromApartmentEntity(createdApartment), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")

@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,7 +15,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentRepository;
-import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
+import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
+import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserRepository;
 
@@ -25,12 +25,17 @@ import com.example.demo.User.UserRepository;
 public class CloudinaryController {
 
     private final CloudinaryService cloudinaryService;
+    private final ApartmentPhotoService apartmentPhotoService;
 
     private final UserRepository userRepository;
     private final ApartmentRepository apartmentRepository;
 
-    public CloudinaryController(CloudinaryService cloudinaryService, UserRepository userRepository, ApartmentRepository apartmentRepository) {
+    public CloudinaryController(CloudinaryService cloudinaryService,
+                                ApartmentPhotoService apartmentPhotoService,
+                                UserRepository userRepository,
+                                ApartmentRepository apartmentRepository) {
         this.cloudinaryService = cloudinaryService;
+        this.apartmentPhotoService = apartmentPhotoService;
         this.userRepository = userRepository;
         this.apartmentRepository = apartmentRepository;
     }
@@ -38,25 +43,24 @@ public class CloudinaryController {
     @PostMapping("/apartment/{id}")
     public ResponseEntity<?> uploadApartmentImages(@PathVariable Integer id, @RequestParam("files") MultipartFile[] files)
             throws IOException {
-        ApartmentEntity apartment = apartmentRepository.findById(id).get();
+        ApartmentEntity apartment = apartmentRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
 
-        for (MultipartFile file : files) {
-            Map result = cloudinaryService.upload(file, "apartments");
-
-            ApartmentPhotoEntity img = new ApartmentPhotoEntity();
-            img.setUrl((String) result.get("secure_url"));
-            img.setPublicId((String) result.get("public_id"));
-            img.setApartment(apartment);
+        List<MultipartFile> images = new ArrayList<>();
+        if (files != null) {
+            for (MultipartFile file : files) {
+                images.add(file);
+            }
         }
 
-        apartmentRepository.save(apartment);
+        apartmentPhotoService.saveImages(apartment, images, false);
         return ResponseEntity.ok("Imágenes subidas correctamente");
     }
 
     @PostMapping("/user/{id}/profile-picture")
     public ResponseEntity<?> uploadProfilePicture(@PathVariable Integer id, @RequestParam("file") MultipartFile file)
             throws IOException {
-        Map result = cloudinaryService.upload(file, "users");
+        Map<?, ?> result = cloudinaryService.upload(file, "users");
 
         UserEntity user = userRepository.findById(id).get();
         user.setProfileImageUrl((String) result.get("secure_url"));

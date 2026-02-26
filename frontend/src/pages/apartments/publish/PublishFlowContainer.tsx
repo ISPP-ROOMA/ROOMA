@@ -71,7 +71,9 @@ export default function PublishFlowContainer() {
         bills: billsText,
         ubication: formData.street || 'Sin dirección',
         state: 'available',
-      })
+      },
+      formData.images
+    )
 
       navigate('/apartments/my')
     } catch (err) {
@@ -109,7 +111,10 @@ export default function PublishFlowContainer() {
       case 1:
         return <StepPricing data={formData} updateFields={updateFields} />
       case 2:
-        return <StepPhotos />
+        return <StepPhotos
+                  images={formData.images}
+                  onChangeImages={(images) => setFormData((prev) => ({ ...prev, images }))}
+                />
       case 3:
         return <StepRules />
       default:

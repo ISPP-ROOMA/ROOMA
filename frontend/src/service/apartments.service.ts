@@ -8,6 +8,7 @@ export interface Apartment {
   bills: string
   ubication: string
   state: string
+  coverImageUrl?: string
 }
 
 export interface CreateApartmentPayload {
@@ -51,8 +52,22 @@ export const getApartment = async (id: number): Promise<Apartment | undefined> =
 }
 
 /** Create a new apartment (auto-links as RENTER) */
-export const createApartment = async (data: CreateApartmentPayload): Promise<Apartment> => {
-  const response = await api.post<Apartment>('/apartments', data)
+export const createApartment = async (
+  data: CreateApartmentPayload,
+  images: File[]
+): Promise<Apartment> => {
+  const formData = new FormData()
+  
+  formData.append(
+    'data',
+    new Blob([JSON.stringify(data)], { type: 'application/json' })
+  )
+  
+  images.forEach((file) => {
+    formData.append('images', file)
+  })
+
+  const response = await api.post<Apartment>('/apartments', formData)
   return response.data
 }
 

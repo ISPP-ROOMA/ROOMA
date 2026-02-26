@@ -5,11 +5,22 @@ import com.example.demo.Apartment.ApartmentEntity;
 import java.util.List;
 
 public record ApartmentDTO(Integer id, String title, String description, Double price, String bills, String ubication,
-        String state) {
+    String state, String coverImageUrl) {
 
-    public static ApartmentDTO fromApartmentEntity(ApartmentEntity apartments) {
-        return new ApartmentDTO(apartments.getId(), apartments.getTitle(), apartments.getDescription(),
-                apartments.getPrice(), apartments.getBills(), apartments.getUbication(), apartments.getState());
+    public static ApartmentDTO fromApartmentEntity(ApartmentEntity apartment) {
+    String coverImageUrl = apartment.getPhotos() == null
+        ? null
+        : apartment.getPhotos().stream()
+            .filter(p -> p.getOrden() != null && p.getOrden().equals(1))
+            .map(p -> p.getUrl())
+            .findFirst()
+            .orElseGet(() -> apartment.getPhotos().stream()
+                .map(p -> p.getUrl())
+                .findFirst()
+                .orElse(null));
+
+        return new ApartmentDTO(apartment.getId(), apartment.getTitle(), apartment.getDescription(),
+        apartment.getPrice(), apartment.getBills(), apartment.getUbication(), apartment.getState(), coverImageUrl);
     }
 
     public static List<ApartmentDTO> fromApartmentEntityList(List<ApartmentEntity> apartments) {

@@ -12,6 +12,7 @@ const ACTION_BUTTON_CLASS =
   'flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-300 text-sm text-gray-600 hover:bg-gray-100 transition'
 const VIEW_BUTTON_CLASS =
   'ml-auto flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 transition'
+const CLOUDINARY_CLOUD_NAME = 'djuqshdey'
 
 export interface PropertyCardProps {
   id: number
@@ -19,7 +20,7 @@ export interface PropertyCardProps {
   price: number
   currency?: string
   period?: string
-  imageUrl?: string
+  coverImageUrl?: string
   photoCount: number
   status: 'active' | 'paused'
   stats: {
@@ -36,7 +37,7 @@ export default function PropertyCard({
   price,
   currency = '€',
   period = 'mes',
-  imageUrl,
+  coverImageUrl,
   photoCount,
   status,
   stats,
@@ -44,6 +45,12 @@ export default function PropertyCard({
   onPause,
 }: PropertyCardProps) {
   const navigate = useNavigate()
+
+  const resolvedCoverImageSrc = coverImageUrl
+    ? coverImageUrl.startsWith('http')
+      ? coverImageUrl
+      : `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/f_auto,q_auto/${coverImageUrl}`
+    : null
 
   const getStatusConfig = () => {
     switch (status) {
@@ -64,8 +71,8 @@ export default function PropertyCard({
   return (
     <div className={CARD_CLASS}>
       <div className={IMAGE_WRAPPER_CLASS}>
-        {imageUrl ? (
-          <img src={imageUrl} alt={title} className="h-full w-full object-cover" />
+        {resolvedCoverImageSrc ? (
+          <img src={resolvedCoverImageSrc} alt={title} className="h-full w-full object-cover" loading="lazy" />
         ) : (
           <div className={IMAGE_FALLBACK_CLASS}>
             <svg

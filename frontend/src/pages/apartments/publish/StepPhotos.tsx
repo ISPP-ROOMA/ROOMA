@@ -1,46 +1,77 @@
-const WRAPPER_CLASS = 'flex flex-col items-center justify-center py-16 text-center gap-5'
-const ICON_WRAPPER_CLASS = 'w-24 h-24 rounded-full bg-base-300/60 flex items-center justify-center'
-const BADGE_CLASS =
-  'badge badge-lg bg-primary/10 text-primary border-0 font-semibold tracking-wide text-xs uppercase px-4 py-3'
-const DESCRIPTION_CLASS = 'text-sm text-base-content/50 mt-1 max-w-xs mx-auto leading-relaxed'
+import { useRef } from 'react'
 
-export default function StepPhotos() {
+const WRAPPER_CLASS = 'flex flex-col py-6 gap-5'
+const PICKER_CLASS =
+  'w-full border-2 border-dashed border-base-300 rounded-2xl p-6 text-center hover:border-primary/60 transition'
+const GRID_CLASS = 'grid grid-cols-2 sm:grid-cols-3 gap-3'
+const THUMB_CLASS = 'relative rounded-xl overflow-hidden bg-base-200 aspect-square'
+
+interface StepPhotosProps {
+  images: File[]
+  onChangeImages: (images: File[]) => void
+  maxImages?: number
+}
+
+export default function StepPhotos({ images, onChangeImages, maxImages = 10 }: StepPhotosProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null)
+
+  const handlePickFiles = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const fileList = event.target.files
+    if (!fileList) return
+
+    const picked = Array.from(fileList).filter((f) => f.type.startsWith('image/'))
+    const next = [...images, ...picked].slice(0, maxImages)
+    onChangeImages(next)
+
+    // permite re-seleccionar el mismo archivo
+    event.target.value = ''
+  }
+
+  const removeImage = (index: number) => {
+    onChangeImages(images.filter((_, i) => i !== index))
+  }
+
   return (
     <div className={WRAPPER_CLASS}>
-      <div className={ICON_WRAPPER_CLASS}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-12 w-12 text-base-content/30"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M3 9a2 2 0 012-2h1.22l.88-1.76A2 2 0 019 4h6a2 2 0 011.9 1.24L17.78 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-          />
-          <circle
-            cx="12"
-            cy="13"
-            r="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-          />
-        </svg>
-      </div>
+      <div className={PICKER_CLASS}>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={handlePickFiles}
+        />
 
-      <span className={BADGE_CLASS}>En desarrollo</span>
+        <button type="button" className="btn btn-primary rounded-full" onClick={() => inputRef.current?.click()}>
+          Seleccionar fotos
+        </button>
 
-      <div>
-        <h3 className="text-lg font-bold text-base-content">Subida de fotos próximamente</h3>
-        <p className={DESCRIPTION_CLASS}>
-          Funcionalidad de subida de fotos en desarrollo. Haz clic en{' '}
-          <span className="font-semibold">Siguiente</span> para continuar.
+        <p className="text-sm text-base-content/60 mt-3">
+          JPG/PNG/WebP · Máximo {maxImages} imágenes
         </p>
       </div>
+
+      {images.length > 0 && (
+        <div className={GRID_CLASS}>
+          {images.map((file, index) => (
+            <div key={`${file.name}-${index}`} className={THUMB_CLASS}>
+              <img
+                src={URL.createObjectURL(file)}
+                alt={file.name}
+                className="w-full h-full object-cover"
+              />
+              <button
+                type="button"
+                className="btn btn-xs btn-circle absolute top-2 right-2"
+                onClick={() => removeImage(index)}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
