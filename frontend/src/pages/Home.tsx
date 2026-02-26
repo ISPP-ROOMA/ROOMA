@@ -17,7 +17,7 @@ export default function Home() {
   const [selectedApartment, setSelectedApartment] = useState<ApartmentDTO | null>(null)
 
   useEffect(() => {
-    if (!token || role === 'LANDLORD') {
+    if (!token || role !== 'TENANT') {
       setLoading(false)
       return
     }
@@ -25,7 +25,6 @@ export default function Home() {
     const fetchDeck = async () => {
       try {
         setLoading(true)
-        // Only load ACTIVE apartments for swiping
         const data = await searchApartments(undefined, undefined, undefined, 'ACTIVE')
         setApartments(data)
       } catch (error) {
@@ -39,9 +38,7 @@ export default function Home() {
   }, [token, role])
 
   const handleSwipe = async (apartmentId: number, interest: boolean) => {
-    // Optimistically remove from UI
     setApartments((prev) => prev.filter((apt) => apt.id !== apartmentId))
-
     try {
       if (userId) {
         await swipeApartment(Number(userId), apartmentId, interest)
@@ -51,28 +48,21 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Failed to register swipe', error)
-      // We could add it back to the deck if the API fails
     }
   }
 
-  // Not logged in view
   if (!token) {
     return (
       <div className="hero min-h-[60vh] bg-base-200">
         <div className="hero-content text-center">
           <div className="max-w-2xl">
-            <h1 className="text-5xl font-bold">Bienvenido a ROOMA</h1>
+            <h1 className="text-5xl font-bold">Bienvenido a Rooma</h1>
             <p className="py-6">
-              Encuentra a tus compañeros de piso ideales o publica tu habitación libre. Inicia
-              sesión o regístrate para comenzar a conectar.
+              Encuentra tu piso ideal o publica el tuyo. Regístrate como inquilino o propietario para empezar.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link to="/login" className="btn btn-primary">
-                Iniciar sesión
-              </Link>
-              <Link to="/register" className="btn btn-ghost">
-                Registrarse
-              </Link>
+              <Link to="/register" className="btn btn-primary">Crear cuenta</Link>
+              <Link to="/login" className="btn btn-ghost">Iniciar sesión</Link>
             </div>
           </div>
         </div>
@@ -80,18 +70,35 @@ export default function Home() {
     )
   }
 
-  // Landlords shouldn't swipe
   if (role === 'LANDLORD') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
-        <h2 className="text-3xl font-bold mb-4">Panel de Arrendador</h2>
-        <p className="text-base-content/70 max-w-md">
-          Como arrendador, puedes gestionar tus propiedades y revisar los perfiles de los inquilinos
-          interesados.
-        </p>
-        <Link to="/profile" className="btn btn-primary mt-6">
-          Ir a mi perfil
-        </Link>
+      <div className="hero min-h-[60vh] bg-base-200">
+        <div className="hero-content text-center">
+          <div className="max-w-2xl">
+            <h1 className="text-5xl font-bold">Panel de Arrendador</h1>
+            <p className="py-6">Gestiona tus inmuebles y encuentra a los inquilinos perfectos.</p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link to="/apartments/my" className="btn btn-primary">Mis Inmuebles</Link>
+              <Link to="/apartments/publish" className="btn btn-ghost">Publicar piso</Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (role === 'ADMIN') {
+    return (
+      <div className="hero min-h-[60vh] bg-base-200">
+        <div className="hero-content text-center">
+          <div className="max-w-2xl">
+            <h1 className="text-5xl font-bold">Panel de Administración</h1>
+            <p className="py-6">Gestiona los usuarios y la plataforma Rooma.</p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link to="/users" className="btn btn-primary">Gestionar usuarios</Link>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -101,20 +108,17 @@ export default function Home() {
       {loading ? (
         <div className="flex flex-col items-center gap-4 text-primary">
           <Loader2 className="animate-spin" size={48} />
-          <p className="font-medium animate-pulse">Buscando compañeros ideales...</p>
+          <p className="font-medium animate-pulse">Buscando tus opciones...</p>
         </div>
       ) : apartments.length === 0 ? (
         <div className="text-center p-8 bg-base-100 rounded-3xl shadow-sm max-w-sm">
           <div className="text-6xl mb-4">💤</div>
           <h2 className="text-2xl font-bold mb-2">No hay más pisos</h2>
-          <p className="text-base-content/70">
-            Has visto todos los pisos disponibles por ahora. Ajusta tus filtros o vuelve más tarde.
-          </p>
+          <p className="text-base-content/70">Vuelve más tarde para ver nuevas opciones.</p>
         </div>
       ) : (
         <div className="relative w-full max-w-sm h-[600px] flex items-center justify-center">
           <AnimatePresence>
-            {/* Render from bottom to top so the last element in array is at the top of the stack */}
             {apartments.map((apartment, index) => {
               const isTop = index === apartments.length - 1
               return (
@@ -139,7 +143,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Modal is rendered conditionally */}
       <AnimatePresence>
         {selectedApartment && (
           <ApartmentDetailModal

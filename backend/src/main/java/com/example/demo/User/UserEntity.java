@@ -29,6 +29,10 @@ public class UserEntity {
     @Column(nullable = false)
     private Role role;
 
+    private String profileImageUrl;
+
+    private String profileImagePublicId;
+
     @Column
     private String hobbies;
 
@@ -41,12 +45,36 @@ public class UserEntity {
     public UserEntity() {
     }
 
-    public UserEntity(Integer id, String email, String password, Role role, String hobbies, String schedule,
-            String profession) {
+    // Imágenes
+    public UserEntity(Integer id, String email, String password, Role role, String profileImageUrl, String profileImagePublicId) {
         this.id = id;
         this.email = email;
         this.password = password;
         this.role = role;
+        this.profileImageUrl = profileImageUrl;
+        this.profileImagePublicId = profileImagePublicId;
+    }
+
+    // Perfil
+    public UserEntity(Integer id, String email, String password, Role role, String hobbies, String schedule, String profession) {
+        this.id = id;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.hobbies = hobbies;
+        this.schedule = schedule;
+        this.profession = profession;
+    }
+
+    
+    public UserEntity(Integer id, String email, String password, Role role, String profileImageUrl, 
+                      String profileImagePublicId, String hobbies, String schedule, String profession) {
+        this.id = id;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.profileImageUrl = profileImageUrl;
+        this.profileImagePublicId = profileImagePublicId;
         this.hobbies = hobbies;
         this.schedule = schedule;
         this.profession = profession;
@@ -82,6 +110,22 @@ public class UserEntity {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public String getProfileImagePublicId() {
+        return profileImagePublicId;
+    }
+
+    public void setProfileImagePublicId(String profileImagePublicId) {
+        this.profileImagePublicId = profileImagePublicId;
     }
 
     public String getHobbies() {

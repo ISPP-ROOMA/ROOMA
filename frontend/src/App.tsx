@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import Navbar from './components/Navbar'
@@ -8,6 +9,11 @@ import PrivateRoute from './components/PrivateRoute'
 import { useAuthStore } from './store/authStore'
 import Users from './pages/admin/Users'
 import User from './pages/admin/User'
+import { hasSessionHint, refreshToken } from './service/auth.service'
+import Register from './pages/Register'
+import Apartments from './pages/apartments/Apartments'
+import ApartmentDetail from './pages/apartments/ApartmentDetail'
+import PublishFlowContainer from './pages/apartments/publish/PublishFlowContainer'
 import { useEffect, useState } from 'react'
 import { refreshToken } from './service/auth.service'
 import Register from './pages/Register'
@@ -21,6 +27,7 @@ import LeaveReview from './pages/private/LeaveReview'
 function App() {
   const location = useLocation()
   const { token, role } = useAuthStore()
+  const didTryRefresh = useRef(false)
 
   const [show_reviews_alert, setShowReviewsAlert] = useState(false)
 
@@ -31,8 +38,17 @@ function App() {
   } | null>(null)
 
   useEffect(() => {
+    if (didTryRefresh.current) {
+      return
+    }
+
+    if (token || !hasSessionHint()) {
+      return
+    }
+
+    didTryRefresh.current = true
     refreshToken()
-  }, [])
+  }, [token])
 
   useEffect(() => {
     if (token && show_reviews_alert) {
@@ -110,6 +126,82 @@ function App() {
   const usesMobileLayout = location.pathname === '/mis-solicitudes'
 
   return (
+    <div>
+      <Navbar />
+      <main className="mx-auto min-h-dvh flex flex-col">
+        <Routes>
+          <Route path="/" element={<Home />} />
+
+          {!token && <Route path="/login" element={<Login />} />}
+          {!token && <Route path="/register" element={<Register />} />}
+
+          {token && (
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute>
+                  <Profile />
+                </PrivateRoute>
+              }
+            />
+          )}
+
+          {role === 'ADMIN' && (
+            <>
+              <Route
+                path="/users"
+                element={
+                  <PrivateRoute>
+                    <Users />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/users/:id"
+                element={
+                  <PrivateRoute>
+                    <User />
+                  </PrivateRoute>
+                }
+              />
+            </>
+          )}
+
+          {role === 'LANDLORD' && (
+            <>
+              <Route
+                path="/apartments/my"
+                element={
+                  <PrivateRoute allowedRoles={['LANDLORD']}>
+                    <Apartments />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/apartments/publish"
+                element={
+                  <PrivateRoute allowedRoles={['LANDLORD']}>
+                    <PublishFlowContainer />
+                  </PrivateRoute>
+                }
+              />
+            </>
+          )}
+
+          {role === 'LANDLORD' && (
+            <Route
+              path="/apartments/:id"
+              element={
+                <PrivateRoute allowedRoles={['LANDLORD']}>
+                  <ApartmentDetail />
+                </PrivateRoute>
+              }
+            />
+          )}
+        </Routes>
+      </main>
+      <Footer />
+    </div>
     <ToastProvider>
       <div className="flex flex-col min-h-screen">
         {!usesMobileLayout && (

@@ -3,18 +3,17 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { getUser, updateUser } from '../../service/users.service'
+import { getUser, updateUser } from '../../service/users.service.js'
 
 const schema = z.object({
-  name: z.string().min(2, 'Name must have at least two characters'),
-  email: z.email('Invalid email'),
-  role: z.enum(['ADMIN', 'CUSTOMER']).catch('CUSTOMER'),
+  email: z.email('Email no válido'),
+  role: z.enum(['ADMIN', 'TENANT', 'LANDLORD']).catch('TENANT'),
   password: z
     .string()
     .optional()
     .or(z.literal(''))
     .refine((val) => !val || val.length >= 4, {
-      message: 'Password must have at leats 4 characters',
+      message: 'La contraseña debe tener al menos 4 caracteres',
     }),
 })
 
@@ -41,9 +40,8 @@ export default function User() {
         const res = await getUser(id!)
 
         reset({
-          name: res?.name || '',
           email: res?.email || '',
-          role: (res?.role || 'CUSTOMER') as 'ADMIN' | 'CUSTOMER',
+          role: (res?.role || 'TENANT') as 'ADMIN' | 'TENANT' | 'LANDLORD',
           password: '',
         })
       } catch {
@@ -77,23 +75,9 @@ export default function User() {
     <div className="flex items-center justify-center mt-6 p-4">
       <div className="card w-full max-w-md bg-base-100 shadow">
         <div className="card-body">
-          <h2 className="card-title justify-center">Edit User</h2>
+          <h2 className="card-title justify-center">Editar Usuario</h2>
 
           <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Name</span>
-              </label>
-              <input
-                {...register('name')}
-                id="name"
-                type="text"
-                className="input input-bordered w-full"
-                required
-              />
-              {errors.name && <p className="text-error text-sm mt-1">{errors.name.message}</p>}
-            </div>
-
             <div className="form-control">
               <label className="label">
                 <span className="label-text">Email</span>
@@ -118,15 +102,16 @@ export default function User() {
                 className="select select-bordered w-full"
                 required
               >
-                <option value="CUSTOMER">CUSTOMER</option>
-                <option value="ADMIN">ADMIN</option>
+                <option value="TENANT">Inquilino</option>
+                <option value="LANDLORD">Propietario</option>
+                <option value="ADMIN">Admin</option>
               </select>
               {errors.role && <p className="text-error text-sm mt-1">{errors.role.message}</p>}
             </div>
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Password</span>
+                <span className="label-text">Contraseña</span>
               </label>
               <input
                 {...register('password')}
@@ -142,11 +127,17 @@ export default function User() {
             {error && <p className="text-error text-center">{error}</p>}
 
             <div className="flex justify-between items-center">
-              <button type="button" onClick={() => navigate('/users')} className="btn">
-                Cancel
+              <button
+                type="button"
+                onClick={() => {
+                  navigate('/users')
+                }}
+                className="btn"
+              >
+                Cancelar
               </button>
               <button className="btn btn-primary" type="submit">
-                Save
+                Guardar
               </button>
             </div>
           </form>

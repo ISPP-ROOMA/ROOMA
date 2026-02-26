@@ -14,6 +14,8 @@
     "precommit": "lint-staged"
   },
   "dependencies": {
+    "@cloudinary/react": "^1.14.4",
+    "@cloudinary/url-gen": "^1.22.0",
     "@hookform/resolvers": "^5.2.2",
     "axios": "^1.13.5",
     "framer-motion": "^12.34.3",
