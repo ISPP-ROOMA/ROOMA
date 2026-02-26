@@ -2,7 +2,12 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { logout } from '../service/auth.service'
 
-export default function Navbar() {
+interface NavbarProps {
+  show_reviews_alert: boolean
+  setShowReviewsAlert: (value: boolean) => void
+}
+
+export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: NavbarProps) {
   const navigate = useNavigate()
   const { token, role } = useAuthStore()
 
@@ -53,9 +58,13 @@ export default function Navbar() {
   } else {
     privateRoutes = (
       <>
-        <NavLink className="p-2" to="/mis-solicitudes">Mis solicitudes</NavLink>
-        <NavLink className="p-2" to="/profile">Profile</NavLink>
-        <button onClick={handleLogout} className="p-2 text-white">
+        <NavLink className="p-2" to="/mis-solicitudes">
+          Mis solicitudes
+        </NavLink>
+        <NavLink className="p-2" to="/profile">
+          Profile
+        </NavLink>
+        <button onClick={handleLogout} className="btn btn-ghost btn-sm text-error">
           Logout
         </button>
       </>
@@ -70,10 +79,20 @@ export default function Navbar() {
         </NavLink>
       </div>
       <div className="navbar-center hidden lg:flex">
-        <div className="menu menu-horizontal px-1">
+        <div className="menu menu-horizontal px-1 items-center gap-2">
           <NavLink className="btn btn-ghost" to="/">
-            Home
+            Feed
           </NavLink>
+
+          {token && (
+            <button
+              onClick={() => setShowReviewsAlert(!show_reviews_alert)}
+              className={`btn btn-xs ${show_reviews_alert ? 'btn-error' : 'btn-success'} text-white`}
+            >
+              {show_reviews_alert ? 'Disable review alerts' : 'Enable review alerts'}
+            </button>
+          )}
+
           {adminRoutes}
           {customerRoutes}
         </div>
