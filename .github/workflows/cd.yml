@@ -129,7 +129,8 @@ jobs:
           MAX_ATTEMPTS=40   # 40 x 15s = 10 minutos máximo
           ATTEMPT=0
           STATUS="building"
-          while [ "$STATUS" != "live" ] && [ "$STATUS" != "failed" ] && [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+          sleep 5
+          while [ "$STATUS" != "live" ] && [ "$STATUS" != "failed" ] && [ "$STATUS" != "canceled" ] && [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
             sleep 15
             ATTEMPT=$((ATTEMPT+1))
             STATUS=$(curl -s https://api.render.com/v1/services/${{ steps.render_create.outputs.service_id }} \
@@ -170,16 +171,16 @@ jobs:
           MAX_ATTEMPTS=40   # 40 x 15s = 10 minutos máximo
           ATTEMPT=0
           STATUS="building"
-          while [ "$STATUS" != "live" ] && [ "$STATUS" != "failed" ] && [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+          while [ "$STATUS" != "live" ] && [ "$STATUS" != "failed" ] && [ "$STATUS" != "canceled" ] && [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
             sleep 15
             ATTEMPT=$((ATTEMPT+1))
             STATUS=$(curl -s https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys \
               -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-              | jq -r '.[0].status')
+              | jq -r '.[0].deploy.status')
 
             echo "Intento $ATTEMPT - Estado actual: $STATUS"
           done
-          if [ "$STATUS" = "failed" ]; then
+          if [ "$STATUS" = "failed" ] || [ "$STATUS" = "canceled" ]; then
             echo "Render deployment failed"
             exit 1
           fi
