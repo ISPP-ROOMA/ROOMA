@@ -161,6 +161,9 @@ jobs:
 
     steps:
 
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
       - name: Redeploy backend Render
         run: |
           curl -X POST https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys \
@@ -196,4 +199,5 @@ jobs:
           vercel --prod \
                  --token ${{ secrets.VERCEL_TOKEN }} \
                  --build-env VITE_API_URL=${{ secrets.DEV_BACKEND_URL }} \
+                 --build-env HUSKY=0 \
                  --yes
