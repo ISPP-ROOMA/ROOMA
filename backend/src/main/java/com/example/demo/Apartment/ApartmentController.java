@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.Apartment.DTOs.ApartmentDTO;
-import com.example.demo.Apartment.DTOs.ApartmentDTO2;
 import com.example.demo.Apartment.DTOs.CreateApartment;
 import com.example.demo.Apartment.DTOs.UpdateApartment;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
@@ -70,15 +69,12 @@ public class ApartmentController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApartmentDTO2> createApartment(
+    public ResponseEntity<ApartmentDTO> createApartment(
             @RequestPart("data") @Valid CreateApartment apartment,
             @RequestPart(value = "images", required = false) List<MultipartFile> images) {
 
-        // Usamos el servicio que procesa las imágenes (trunk-2)
         ApartmentEntity createdApartment = apartmentsService.createWithImages(apartment, images);
-        
-        // Devolvemos el DTO2 que es el que espera la lógica de fotos
-        return new ResponseEntity<>(ApartmentDTO2.fromApartmentEntity(createdApartment), HttpStatus.CREATED);
+        return new ResponseEntity<>(ApartmentDTO.fromApartmentEntity(createdApartment), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
@@ -104,8 +100,7 @@ public class ApartmentController {
         List<ApartmentPhotoEntity> images = apartmentPhotoService.findPhotosByApartmentId(id);
 
         Map<String, Object> response = new HashMap<>();
-        // Usamos DTO2 por las fotos
-        response.put("apartment", ApartmentDTO2.fromApartmentEntity(apartment));
+        response.put("apartment", ApartmentDTO.fromApartmentEntity(apartment));
         response.put("images", images);
 
         return ResponseEntity.ok(response);

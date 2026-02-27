@@ -66,9 +66,18 @@ export const createApartment = async (
   images.forEach((file) => {
     formData.append('images', file)
   })
-
-  const response = await api.post<Apartment>('/apartments', formData)
-  return response.data
+  
+  try {
+    const response = await api.post<Apartment>('/apartments', formData)
+    return response.data
+  } catch (error: any) {
+    console.error('[apartments.service] Error POST /apartments', {
+      status: error?.response?.status,
+      data: error?.response?.data,
+      message: error?.message,
+    })
+    throw error
+  }
 }
 
 export const updateApartment = async (

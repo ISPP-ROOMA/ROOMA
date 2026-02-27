@@ -51,15 +51,12 @@ public class ApartmentEntity {
     @ManyToOne(optional = true, fetch = FetchType.EAGER)
     private UserEntity user;
 
-    @Column
-    private String imageUrl;
-
     public ApartmentEntity() {
     }
 
     public ApartmentEntity(String title, String description, Double price, String bills, String ubication,
             ApartmentState state,
-            UserEntity user, String imageUrl) {
+            UserEntity user) {
         this.title = title;
         this.description = description;
         this.price = price;
@@ -67,7 +64,6 @@ public class ApartmentEntity {
         this.ubication = ubication;
         this.state = state;
         this.user = user;
-        this.imageUrl = imageUrl;
     }
 
     public Integer getId() {
@@ -142,11 +138,18 @@ public class ApartmentEntity {
         this.photos = photos;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
-    }
+    public String getCoverImageUrl() {
+        if (photos == null || photos.isEmpty()) {
+            return null;
+        }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+        return photos.stream()
+                .filter(photo -> photo.getOrden() != null && photo.getOrden().equals(1))
+                .map(ApartmentPhotoEntity::getUrl)
+                .findFirst()
+                .orElseGet(() -> photos.stream()
+                        .map(ApartmentPhotoEntity::getUrl)
+                        .findFirst()
+                        .orElse(null));
     }
 }

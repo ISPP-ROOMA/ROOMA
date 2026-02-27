@@ -11,8 +11,7 @@ public record UpdateApartment(
                 @NotNull Double price,
                 String bills,
                 @NotNull String ubication,
-                @NotNull ApartmentState state,
-                String imageUrl) {
+                @NotNull ApartmentState state) {
 
         public static ApartmentEntity fromDTO(UpdateApartment updatamentApartment) {
                 return new ApartmentEntity(
@@ -22,7 +21,6 @@ public record UpdateApartment(
                                 updatamentApartment.bills(),
                                 updatamentApartment.ubication(),
                                 updatamentApartment.state(),
-                                null,
-                                updatamentApartment.imageUrl());
+                                null);
         }
 }

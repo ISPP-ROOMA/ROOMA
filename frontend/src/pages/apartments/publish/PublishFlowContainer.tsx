@@ -70,7 +70,7 @@ export default function PublishFlowContainer() {
         price: parsedPrice,
         bills: billsText,
         ubication: formData.street || 'Sin dirección',
-        state: 'available',
+        state: 'ACTIVE',
       },
       formData.images
     )
