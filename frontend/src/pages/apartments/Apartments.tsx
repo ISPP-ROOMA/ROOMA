@@ -23,7 +23,8 @@ export default function Apartments() {
   }
 
   const toggleApartmentState = async (apartment: Apartment) => {
-    const nextState = apartment.state === 'available' ? 'paused' : 'available'
+    const isAvailable = apartment.state === 'ACTIVE' || apartment.state === 'MATCHING'
+    const nextState = isAvailable ? 'CLOSED' : 'ACTIVE'
 
     setApartments((prev) =>
       prev.map((item) => (item.id === apartment.id ? { ...item, state: nextState } : item))
@@ -101,7 +102,7 @@ export default function Apartments() {
           price={apt.price}
           coverImageUrl={apt.coverImageUrl}
           photoCount={0}
-          status={apt.state === 'available' ? 'active' : 'paused'}
+          status={apt.state === 'ACTIVE' || apt.state === 'MATCHING' ? 'active' : 'paused'}
           stats={{ requests: 0, matches: 0 }}
           onEdit={() => {
             console.log('edit', apt.id)
