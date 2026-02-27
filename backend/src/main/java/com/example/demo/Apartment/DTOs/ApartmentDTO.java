@@ -14,34 +14,34 @@ public record ApartmentDTO(
     String bills, 
     String ubication,
     ApartmentState state, 
-    String imageUrl, 
+    String coverImageUrl, 
     List<ApartmentMemberDTO> members
 ) {
 
-    public static ApartmentDTO fromApartmentEntity(ApartmentEntity apartments) {
+    public static ApartmentDTO fromApartmentEntity(ApartmentEntity apartment) {
         return new ApartmentDTO(
-            apartments.getId(), 
-            apartments.getTitle(), 
-            apartments.getDescription(),
-            apartments.getPrice(), 
-            apartments.getBills(), 
-            apartments.getUbication(), 
-            apartments.getState(),
-            apartments.getImageUrl(), 
+            apartment.getId(), 
+            apartment.getTitle(), 
+            apartment.getDescription(),
+            apartment.getPrice(), 
+            apartment.getBills(), 
+            apartment.getUbication(), 
+            apartment.getState(),
+            apartment.getCoverImageUrl(), 
             new ArrayList<>()
         );
     }
 
-    public static ApartmentDTO fromApartmentEntityWithMembers(ApartmentEntity apartments, List<ApartmentMemberDTO> members) {
+    public static ApartmentDTO fromApartmentEntityWithMembers(ApartmentEntity apartment, List<ApartmentMemberDTO> members) {
         return new ApartmentDTO(
-            apartments.getId(), 
-            apartments.getTitle(), 
-            apartments.getDescription(),
-            apartments.getPrice(), 
-            apartments.getBills(), 
-            apartments.getUbication(), 
-            apartments.getState(),
-            apartments.getImageUrl(), 
+            apartment.getId(), 
+            apartment.getTitle(), 
+            apartment.getDescription(),
+            apartment.getPrice(), 
+            apartment.getBills(), 
+            apartment.getUbication(), 
+            apartment.getState(),
+            apartment.getCoverImageUrl(), 
             members
         );
     }
