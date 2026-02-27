@@ -11,8 +11,7 @@ public record CreateApartment(
                 @NotNull Double price,
                 String bills,
                 @NotNull String ubication,
-                @NotNull String state,
-                String imageUrl
+                @NotNull String state
 
 ) {
         public static ApartmentEntity fromDTO(CreateApartment createApartment) {
@@ -23,7 +22,6 @@ public record CreateApartment(
                                 createApartment.bills(),
                                 createApartment.ubication(),
                                 ApartmentState.valueOf(createApartment.state()),
-                                null,
-                                createApartment.imageUrl());
+                                null);
         }
 }
