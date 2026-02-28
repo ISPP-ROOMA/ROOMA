@@ -19,6 +19,6 @@ jobs:
       - run: npm install
         working-directory: ./frontend
 
-      - name: Validate PR commits 
+      - name: Validate PR commits
         working-directory: ./frontend
-        run: ./frontend/node_modules/.bin/commitlint --from=origin/${{ github.base_ref }} --to=HEAD
+        run: npx commitlint --from=origin/${{ github.base_ref }} --to=HEAD --config ../commitlint.config.js
