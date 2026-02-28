@@ -1,5 +1,5 @@
 import { api } from './api'
-
+import { AxiosError } from 'axios'
 export interface Apartment {
   id: number
   title: string
@@ -70,11 +70,12 @@ export const createApartment = async (
   try {
     const response = await api.post<Apartment>('/apartments', formData)
     return response.data
-  } catch (error: any) {
+  } catch (error) {
+    const err = error as AxiosError
     console.error('[apartments.service] Error POST /apartments', {
-      status: error?.response?.status,
-      data: error?.response?.data,
-      message: error?.message,
+      status: err.response?.status,
+      data: err.response?.data,
+      message: err.message,
     })
     throw error
   }
