@@ -1,13 +1,14 @@
 package com.example.demo.User.DTOs;
 
-import com.example.demo.User.UserEntity;
-
 import java.util.List;
 
-public record UserDTO(Integer id, String email, String role) {
+import com.example.demo.User.UserEntity;
+
+public record UserDTO(Integer id, String email, String role, String hobbies, String schedule, String profession) {
 
     public static UserDTO fromUserEntity(UserEntity user) {
-        return new UserDTO(user.getId(), user.getEmail(), user.getRole().name());
+        return new UserDTO(user.getId(), user.getEmail(), user.getRole().name(), user.getHobbies(), user.getSchedule(),
+                user.getProfession());
     }
 
     public static List<UserDTO> fromUserEntityList(List<UserEntity> users) {
@@ -17,6 +18,3 @@ public record UserDTO(Integer id, String email, String role) {
                 .toList();
     }
 }
-
-
-

@@ -1,2 +1,47 @@
 @import 'tailwindcss';
-@plugin "daisyui";
+@plugin "daisyui" {
+  themes: rooma --default;
+}
+
+@plugin "daisyui/theme" {
+  name: 'rooma';
+  default: true;
+  prefersdark: false;
+
+  /* Base palette */
+  --color-base-100: #faf5ee;
+  --color-base-200: #f0ebe3;
+  --color-base-300: #e2d9cc;
+  --color-base-content: #2d2a26;
+
+  /* Primary – teal (precio, acciones principales) */
+  --color-primary: #0d9488;
+  --color-primary-content: #ffffff;
+
+  /* Secondary – beige dorado */
+  --color-secondary: #c4a97d;
+  --color-secondary-content: #2d2a26;
+
+  /* Accent – coral cálido */
+  --color-accent: #e07a5f;
+  --color-accent-content: #ffffff;
+
+  /* Neutral – gris cálido */
+  --color-neutral: #3d3a36;
+  --color-neutral-content: #faf7f2;
+
+  /* Feedback */
+  --color-info: #3abff8;
+  --color-info-content: #002b3d;
+  --color-success: #36d399;
+  --color-success-content: #003320;
+  --color-warning: #fbbd23;
+  --color-warning-content: #382800;
+  --color-error: #f87272;
+  --color-error-content: #470000;
+
+  /* Border radius */
+  --rounded-box: 1.5rem;
+  --rounded-btn: 1.5rem;
+  --rounded-badge: 1.5rem;
+}

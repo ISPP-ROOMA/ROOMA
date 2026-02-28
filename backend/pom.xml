@@ -90,8 +90,15 @@
 			<artifactId>nimbus-jose-jwt</artifactId>
 			<version>9.37.3</version>
 		</dependency>
-	</dependencies>
+		
+		<dependency>
+			<groupId>com.cloudinary</groupId>
+			<artifactId>cloudinary-http5</artifactId>
+			<version>2.0.0</version>
+		</dependency>
 
+	</dependencies>
+	
 	<build>
 		<plugins>
 			<plugin>

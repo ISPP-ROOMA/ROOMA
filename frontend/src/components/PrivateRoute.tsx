@@ -6,10 +6,11 @@ import { useAuthStore } from '../store/authStore'
 
 interface PrivateRouteProps {
   children: ReactNode
+  allowedRoles?: string[]
 }
 
-export default function PrivateRoute({ children }: PrivateRouteProps) {
-  const { token } = useAuthStore()
+export default function PrivateRoute({ children, allowedRoles }: PrivateRouteProps) {
+  const { token, role } = useAuthStore()
   const [isValid, setIsValid] = useState<boolean | null>(null)
 
   useEffect(() => {
@@ -18,9 +19,14 @@ export default function PrivateRoute({ children }: PrivateRouteProps) {
         setIsValid(false)
         return
       }
+
+      if (allowedRoles && (!role || !allowedRoles.includes(role))) {
+        setIsValid(false)
+        return
+      }
+
       try {
         const res = await validateToken()
-        console.log()
         if (res?.authenticated) {
           setIsValid(true)
         } else {
@@ -32,7 +38,7 @@ export default function PrivateRoute({ children }: PrivateRouteProps) {
       }
     }
     checkToken()
-  }, [token])
+  }, [allowedRoles, role, token])
 
   if (isValid === null)
     return (

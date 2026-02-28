@@ -1,6 +1,7 @@
 package com.example.demo.Apartment.DTOs;
 
 import com.example.demo.Apartment.ApartmentEntity;
+import com.example.demo.Apartment.ApartmentState;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -13,7 +14,6 @@ public record CreateApartment(
                 @NotNull String state
 
 ) {
-
         public static ApartmentEntity fromDTO(CreateApartment createApartment) {
                 return new ApartmentEntity(
                                 createApartment.title(),
@@ -21,7 +21,7 @@ public record CreateApartment(
                                 createApartment.price(),
                                 createApartment.bills(),
                                 createApartment.ubication(),
-                                createApartment.state(),
+                                ApartmentState.valueOf(createApartment.state()),
                                 null);
         }
 }

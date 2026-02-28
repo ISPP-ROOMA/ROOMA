@@ -1,20 +1,34 @@
 package com.example.demo.Apartment;
 
+import java.util.List;
 
+import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
 import com.example.demo.User.UserEntity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "apartments")
 public class ApartmentEntity {
 
     @Id
-    @SequenceGenerator(name = "apartments_seq",
-            sequenceName = "apartments_seq",
-            initialValue = 100)
+    @SequenceGenerator(name = "apartments_seq", sequenceName = "apartments_seq", initialValue = 100)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "apartments_seq")
     private Integer id;
+
+    @OneToMany(mappedBy = "apartment", fetch = FetchType.EAGER)
+    private List<ApartmentPhotoEntity> photos;
 
     @Column(nullable = false)
     private String title;
@@ -31,8 +45,8 @@ public class ApartmentEntity {
     @Column(nullable = false)
     private String ubication;
 
-    @Column(nullable = false)
-    private String state;
+    @Enumerated(EnumType.STRING)
+    private ApartmentState state;
 
     @ManyToOne(optional = true, fetch = FetchType.EAGER)
     private UserEntity user;
@@ -40,7 +54,8 @@ public class ApartmentEntity {
     public ApartmentEntity() {
     }
 
-    public ApartmentEntity(String title, String description, Double price, String bills, String ubication, String state,
+    public ApartmentEntity(String title, String description, Double price, String bills, String ubication,
+            ApartmentState state,
             UserEntity user) {
         this.title = title;
         this.description = description;
@@ -99,11 +114,11 @@ public class ApartmentEntity {
         this.ubication = ubication;
     }
 
-    public String getState() {
+    public ApartmentState getState() {
         return state;
     }
 
-    public void setState(String state) {
+    public void setState(ApartmentState state) {
         this.state = state;
     }
 
@@ -115,6 +130,26 @@ public class ApartmentEntity {
         this.user = user;
     }
 
-    
-    
+    public List<ApartmentPhotoEntity> getPhotos() {
+        return photos;
+    }
+
+    public void setPhotos(List<ApartmentPhotoEntity> photos) {
+        this.photos = photos;
+    }
+
+    public String getCoverImageUrl() {
+        if (photos == null || photos.isEmpty()) {
+            return null;
+        }
+
+        return photos.stream()
+                .filter(photo -> photo.getOrden() != null && photo.getOrden().equals(1))
+                .map(ApartmentPhotoEntity::getUrl)
+                .findFirst()
+                .orElseGet(() -> photos.stream()
+                        .map(ApartmentPhotoEntity::getUrl)
+                        .findFirst()
+                        .orElse(null));
+    }
 }
