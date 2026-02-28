@@ -2,13 +2,23 @@ spring:
   application:
     name: demo
 
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:10MB}
+      max-request-size: ${MAX_REQUEST_SIZE:10MB}
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/test}
     username: ${SPRING_DATASOURCE_USERNAME:user}
     password: ${SPRING_DATASOURCE_PASSWORD:user}
     driver-class-name: org.postgresql.Driver
 
+  sql:
+    init:
+      mode: always
+
   jpa:
+    defer-datasource-initialization: true
     show-sql: true
 
     hibernate:
@@ -21,3 +31,8 @@ jwt:
   expiration-at: ${JWT_EXPIRATION_AT:900000}
   expiration-rt: ${JWT_EXPIRATION_RT:604800000}
   secret-key: ${JWT_SECRET_KEY:q5X1xZK8F0z+Y3nZ8KpZ9+0rK0z8ZKJ4dZpZq8W1k3M=}
+
+cloudinary:
+  cloud_name: ${CLOUDINARY_CLOUD_NAME}
+  api_key: ${CLOUDINARY_API_KEY}
+  api_secret: ${CLOUDINARY_API_SECRET}
