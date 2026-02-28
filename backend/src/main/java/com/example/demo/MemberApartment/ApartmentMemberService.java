@@ -1,5 +1,11 @@
 package com.example.demo.MemberApartment;
 
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentRepository;
 import com.example.demo.Exceptions.BadRequestException;
@@ -8,12 +14,6 @@ import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserRepository;
 import com.example.demo.User.UserService;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Service
 public class ApartmentMemberService {
@@ -44,7 +44,7 @@ public class ApartmentMemberService {
         if (apartmentMemberRepository.existsByApartmentIdAndUserId(apartmentId, userId)) {
             throw new BadRequestException("User already belongs to this apartment");
         }
-        checkUserIsOwnerOrMember(apartmentId, userId);
+        checkUserIsCurrentMemberInOtherApartment(userId);
 
         ApartmentMemberEntity member = new ApartmentMemberEntity();
         member.setApartment(apartment);
@@ -53,19 +53,10 @@ public class ApartmentMemberService {
 
         return apartmentMemberRepository.save(member);
     }
-    private void checkUserIsOwnerOrMember(Integer apartmentId,Integer userId) {
-        ApartmentEntity apartment = apartmentRepository.findById(apartmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
-
-        UserEntity currentUser = userService.findById(userId);
-
-        boolean isOwner = apartment.getUser() != null && 
-                          apartment.getUser().getId().equals(currentUser.getId());
-
-        boolean isMember = apartmentMemberRepository.existsByApartmentIdAndUserId(apartmentId, currentUser.getId());
-
-        if (!isOwner && !isMember) {
-            throw new BadRequestException("User is not the owner nor a member of this apartment");
+    private void checkUserIsCurrentMemberInOtherApartment(Integer userId) {
+        List<ApartmentMemberEntity> activeMemberships = findActiveApartmentMembers(userId);
+        if (!activeMemberships.isEmpty()) {
+            throw new BadRequestException("User is already a member of another apartment");
         }
     }
 
@@ -114,4 +105,63 @@ public class ApartmentMemberService {
     public List<ApartmentMemberEntity> findActiveApartmentMembers(Integer userId) {
         return apartmentMemberRepository.findActiveApartmentMembers(userId);
     }
+
+    public ApartmentMemberEntity findLandlordByApartmentId(Integer apartmentId) {
+        return apartmentMemberRepository.findLandlordByApartmentId(apartmentId).orElseThrow(() -> new ResourceNotFoundException("Landlord not found for this apartment"));
+    }
+
+    public List<ApartmentMemberEntity> findCurrentTenantsByApartmentId(Integer apartmentId) {
+        return apartmentMemberRepository.findCurrentTenantsByApartmentId(apartmentId);
+    }
+
+    public ApartmentMemberEntity findLastMembershipByUserId(Integer userId) {
+        return apartmentMemberRepository.findLastMembershipByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("No past memberships found for this user"));
+    }
+
+    public void checkUserIsCurrentMember(Integer apartmentId, Integer userId) {
+        boolean isMember = apartmentMemberRepository.existsByApartmentIdAndUserId(apartmentId, userId);
+        if (!isMember) {
+            throw new BadRequestException("User is not a current member of this apartment");
+        }
+    }
+
+    public void checkUserIsLandlord(Integer apartmentId, Integer userId) {
+        ApartmentMemberEntity landlord = findLandlordByApartmentId(apartmentId);
+        if (landlord == null || landlord.getUser() == null || !landlord.getUser().getId().equals(userId)) {
+            throw new BadRequestException("User is not the landlord of this apartment");
+        }
+    }
+
+    public void checkUserIsTenant(Integer apartmentId, Integer userId) {
+        List<ApartmentMemberEntity> tenants = findCurrentTenantsByApartmentId(apartmentId);
+        boolean isTenant = tenants.stream()
+                .anyMatch(m -> m.getUser() != null && m.getUser().getId().equals(userId));
+        if (!isTenant) {
+            throw new BadRequestException("User is not a tenant of this apartment");
+        }
+    }
+    public void checkUserIsLastMemberInApartment(Integer apartmentId, Integer userId) {
+        ApartmentMemberEntity lastMember = findLastMembershipByUserId(userId);
+        if (lastMember.getApartment() == null || !lastMember.getApartment().getId().equals(apartmentId)) {
+            throw new BadRequestException("User is not the last member of this apartment");
+        }
+    }
+
+    public List<ApartmentMemberEntity> findActiveMembershipsByUserId(Integer userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Role role = user.getRole();
+
+        List<ApartmentMemberEntity> activeMemberships = apartmentMemberRepository.findActiveMembershipsByUserId(userId);
+        if (role.equals(Role.TENANT) && activeMemberships.size() > 1) {
+            throw new BadRequestException("Tenants cannot be members of more than one apartment at the same time");
+        }
+        return activeMemberships;
+    }
+
+    public List<ApartmentMemberEntity> findOverlappingMemberships(Integer userId, Integer apartmentId, LocalDate joinDate, LocalDate leaveDate) {
+        return apartmentMemberRepository.findOverlappingMemberships(userId, apartmentId, joinDate, leaveDate);
+    }
+
 }

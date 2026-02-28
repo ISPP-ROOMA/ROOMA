@@ -1,15 +1,16 @@
 package com.example.demo.User;
 
-import com.example.demo.Exceptions.ResourceNotFoundException;
-import com.example.demo.Jwt.UserDetailsImpl;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import com.example.demo.Exceptions.ResourceNotFoundException;
+import com.example.demo.Jwt.UserDetailsImpl;
 
 @Service
 public class UserService {
@@ -86,7 +87,6 @@ public class UserService {
 
         throw new ResourceNotFoundException("User not authenticated");
     }
-
 
 }
 
