@@ -9,6 +9,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -17,4 +19,6 @@ jobs:
       - run: npm install
         working-directory: ./frontend
 
-      - run: npx commitlint --from=origin/${{ github.base_ref }} --to=HEAD
+      - name: Validate PR commits 
+        working-directory: ./frontend
+        run: ./frontend/node_modules/.bin/commitlint --from=origin/${{ github.base_ref }} --to=HEAD
