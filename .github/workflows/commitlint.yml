@@ -22,3 +22,5 @@ jobs:
       - name: Validate PR commits
         working-directory: ./frontend
         run: npx commitlint --from=origin/${{ github.base_ref }} --to=HEAD --config ../commitlint.config.js
+        env:
+          NODE_PATH: ./:./node_modules
