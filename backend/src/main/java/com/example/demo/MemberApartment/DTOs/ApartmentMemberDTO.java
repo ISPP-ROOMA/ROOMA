@@ -9,7 +9,6 @@ public record ApartmentMemberDTO(
         Integer id,
         Integer apartmentId,
         Integer userId,
-        String role,
         LocalDate joinDate
 ) {
     public static ApartmentMemberDTO fromEntity(ApartmentMemberEntity member) {
@@ -17,7 +16,6 @@ public record ApartmentMemberDTO(
                 member.getId(),
                 member.getApartment().getId(),
                 member.getUser().getId(),
-                member.getRole().name(),
                 member.getJoinDate()
         );
     }

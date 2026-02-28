@@ -34,7 +34,7 @@ public class ApartmentMemberService {
     }
 
     @Transactional
-    public ApartmentMemberEntity addMember(Integer apartmentId, Integer userId, MemberRole role, LocalDate joinDate) {
+    public ApartmentMemberEntity addMember(Integer apartmentId, Integer userId, LocalDate joinDate) {
         ApartmentEntity apartment = apartmentRepository.findById(apartmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
 
@@ -44,17 +44,32 @@ public class ApartmentMemberService {
         if (apartmentMemberRepository.existsByApartmentIdAndUserId(apartmentId, userId)) {
             throw new BadRequestException("User already belongs to this apartment");
         }
+        checkUserIsOwnerOrMember(apartmentId, userId);
 
         ApartmentMemberEntity member = new ApartmentMemberEntity();
         member.setApartment(apartment);
         member.setUser(user);
-        member.setRole(role);
         member.setJoinDate(joinDate != null ? joinDate : LocalDate.now());
 
         return apartmentMemberRepository.save(member);
     }
+    private void checkUserIsOwnerOrMember(Integer apartmentId,Integer userId) {
+        ApartmentEntity apartment = apartmentRepository.findById(apartmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
 
-@Transactional(readOnly = true)
+        UserEntity currentUser = userService.findById(userId);
+
+        boolean isOwner = apartment.getUser() != null && 
+                          apartment.getUser().getId().equals(currentUser.getId());
+
+        boolean isMember = apartmentMemberRepository.existsByApartmentIdAndUserId(apartmentId, currentUser.getId());
+
+        if (!isOwner && !isMember) {
+            throw new BadRequestException("User is not the owner nor a member of this apartment");
+        }
+    }
+
+    @Transactional(readOnly = true)
     public List<ApartmentMemberEntity> listMembers(Integer apartmentId) {
 
         ApartmentEntity apartment = apartmentRepository.findById(apartmentId)
@@ -84,20 +99,6 @@ public class ApartmentMemberService {
         return members;
     }
 
-
-    @Transactional
-    public ApartmentMemberEntity updateRole(Integer apartmentId, Integer memberId, MemberRole role) {
-        ApartmentMemberEntity member = apartmentMemberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
-
-        if (!member.getApartment().getId().equals(apartmentId)) {
-            throw new ResourceNotFoundException("Member not found in the apartment");
-        }
-
-        member.setRole(role);
-        return apartmentMemberRepository.save(member);
-    }
-
     @Transactional
     public void removeMember(Integer apartmentId, Integer memberId) {
         ApartmentMemberEntity member = apartmentMemberRepository.findById(memberId)
@@ -108,5 +109,9 @@ public class ApartmentMemberService {
         }
 
         apartmentMemberRepository.delete(member);
+    }
+
+    public List<ApartmentMemberEntity> findActiveApartmentMembers(Integer userId) {
+        return apartmentMemberRepository.findActiveApartmentMembers(userId);
     }
 }
