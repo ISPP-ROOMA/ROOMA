@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchDTO;
+import com.example.demo.ApartmentMatch.DTOs.LanlordRequestApartmentMatchDTO;
+import com.example.demo.ApartmentMatch.DTOs.TenantRequestApartmentMatchDTO;
 import com.example.demo.User.UserEntity;
 
 @RestController
@@ -90,4 +93,27 @@ public class ApartmentMatchController {
         ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.cancelMatch(apartmentMatchId));
         return ResponseEntity.ok(apartmentMatch);
     } 
+
+    @PreAuthorize("hasRole('LANDLORD')")
+    @GetMapping("/apartment/{apartmentId}/interested-candidates")
+    public ResponseEntity<List<LanlordRequestApartmentMatchDTO>> getInterestedCandidates(@PathVariable Integer apartmentId) {
+        List<LanlordRequestApartmentMatchDTO> apartmentMatches = LanlordRequestApartmentMatchDTO.fromApartmentMatchEntityList(apartmentMatchService.findInterestedCandidatesByApartmentId(apartmentId));
+        return ResponseEntity.ok(apartmentMatches);
+    }
+
+    @PreAuthorize("hasRole('LANDLORD')")
+    @GetMapping("/{userId}/interested-candidates")
+    public ResponseEntity<List<LanlordRequestApartmentMatchDTO>> getInterestedCandidatesByUserId(@PathVariable Integer userId) {
+        List<LanlordRequestApartmentMatchDTO> apartmentMatches = LanlordRequestApartmentMatchDTO.fromApartmentMatchEntityList(apartmentMatchService.findInterestedCandidatesByUserId(userId));
+        return ResponseEntity.ok(apartmentMatches);
+    }
+
+    @PreAuthorize("hasRole('TENANT')")
+    @GetMapping("/my-matches")
+    public ResponseEntity<List<TenantRequestApartmentMatchDTO>> getAllTenantRequest(@AuthenticationPrincipal UserEntity authenticatedUser) {
+        List<ApartmentMatchEntity> matches = apartmentMatchService.findTenantRequestByUserId(authenticatedUser.getId());
+        List<TenantRequestApartmentMatchDTO> apartmentMatches = TenantRequestApartmentMatchDTO.fromApartmentMatchEntityList(matches);
+        return ResponseEntity.ok(apartmentMatches);
+    }
+
 }
