@@ -93,13 +93,20 @@ export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: Navb
           ) : (
             <>
               {role === 'TENANT' && (
-                <NavLink className="p-2 hidden md:block" to="/mis-solicitudes">
-                  Mis solicitudes
+                <>
+                  <NavLink className="p-2 hidden md:block" to="/mis-solicitudes">
+                    Mis solicitudes
+                  </NavLink>
+                  <NavLink className="btn btn-ghost" to="/my-home">
+                    Mi piso
+                  </NavLink>
+                </>
+              )}
+              {role !== 'TENANT' && (
+                <NavLink className="btn btn-ghost" to="/profile">
+                  Perfil
                 </NavLink>
               )}
-              <NavLink className="btn btn-ghost" to="/profile">
-                Perfil
-              </NavLink>
               {role && (
                 <span className="badge badge-outline badge-sm self-center">
                   {role === 'LANDLORD' ? 'Propietario' : role === 'TENANT' ? 'Inquilino' : role}

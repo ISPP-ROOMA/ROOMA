@@ -91,3 +91,13 @@ export const getApartmentPhotos = async (apartmentId: number): Promise<Apartment
     return []
   }
 }
+
+export const getAllApartments = async (): Promise<ApartmentDTO[]> => {
+  try {
+    const response = await api.get<ApartmentDTO[]>(`/apartments`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching all apartments:', error)
+    return []
+  }
+}

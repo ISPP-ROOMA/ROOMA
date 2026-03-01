@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/bills/me/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/bills/apartment/**").hasAnyRole("LANDLORD","ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/bills/apartment/**").hasAnyRole("LANDLORD","ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/bills/debts/**/pay").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/bills/debts/{debtId}/pay").authenticated()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/apartments/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/apartments/**").hasRole("LANDLORD")

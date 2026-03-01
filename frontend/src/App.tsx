@@ -12,6 +12,7 @@ import User from './pages/admin/User'
 import { hasSessionHint, refreshToken } from './service/auth.service'
 import Apartments from './pages/apartments/Apartments'
 import ApartmentDetail from './pages/apartments/ApartmentDetail'
+import MyHome from './pages/private/MyHome'
 import PublishFlowContainer from './pages/apartments/publish/PublishFlowContainer'
 import Register from './pages/Register'
 import MyRequests from './pages/private/MyRequests'
@@ -201,6 +202,20 @@ function App() {
                   element={
                     <PrivateRoute allowedRoles={['LANDLORD']}>
                       <ApartmentDetail />
+                    </PrivateRoute>
+                  }
+                />
+              </>
+            )}
+
+            {/* Rutas de Tenant (Inquilino) */}
+            {role === 'TENANT' && (
+              <>
+                <Route
+                  path="/my-home"
+                  element={
+                    <PrivateRoute allowedRoles={[ 'TENANT' ]}>
+                      <MyHome />
                     </PrivateRoute>
                   }
                 />
