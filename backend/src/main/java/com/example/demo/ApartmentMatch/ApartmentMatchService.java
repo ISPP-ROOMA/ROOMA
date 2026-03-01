@@ -1,6 +1,7 @@
 package com.example.demo.ApartmentMatch;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -188,4 +189,50 @@ public class ApartmentMatchService {
         apartmentMatchRepository.save(match);
         return match;
     }
+
+    @Transactional
+    public List<ApartmentMatchEntity> findInterestedCandidatesByApartmentId(Integer apartmentId) {
+        String currentUser = userService.findCurrentUser();
+        Optional<UserEntity> user = userService.findByEmail(currentUser);
+        if (user.isEmpty()) {
+            throw new ResourceNotFoundException("User not found");
+        }
+        ApartmentEntity apartment = apartmentService.findById(apartmentId);
+
+        if (apartment == null) {
+            throw new ResourceNotFoundException("Apartment not found");
+        }
+        if (!apartment.getUser().getId().equals(user.get().getId())) {
+            throw new ConflictException("Only the landlord of the apartment can view the interested candidates");
+        }
+        return apartmentMatchRepository.findByApartmentIdAndMatchStatus(apartmentId, MatchStatus.ACTIVE);
+    }
+
+    public List<ApartmentMatchEntity> findInterestedCandidatesByUserId(Integer userId) {
+        String currentUser = userService.findCurrentUser();
+        Optional<UserEntity> user = userService.findByEmail(currentUser);
+        if (user.isEmpty()) {
+            throw new ResourceNotFoundException("User not found");
+        }
+        if (!user.get().getId().equals(userId)) {
+            throw new ConflictException("You can only view your own interested candidates");
+        }
+        return apartmentMatchRepository.findByUserIdAndMatchStatus(userId, MatchStatus.ACTIVE);
+    }
+
+    List<ApartmentMatchEntity> findTenantRequestByUserId(Integer id) {
+        String currentUser = userService.findCurrentUser();
+        Optional<UserEntity> user = userService.findByEmail(currentUser);
+        if (user.isEmpty()) {
+            throw new ResourceNotFoundException("User not found");
+        }
+        if (!user.get().getId().equals(id)) {
+            throw new ConflictException("You can only view your own Request");
+        }
+        return apartmentMatchRepository.findTenantRequestByUserId(id);
+    }
+
+    
+
+    
 }

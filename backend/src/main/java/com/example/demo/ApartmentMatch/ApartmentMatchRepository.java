@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface ApartmentMatchRepository extends JpaRepository<ApartmentMatchEntity, Integer> {
 
@@ -17,4 +18,10 @@ public interface ApartmentMatchRepository extends JpaRepository<ApartmentMatchEn
 
     List<ApartmentMatchEntity> findByCandidateIdAndMatchStatus(Integer candidateId, MatchStatus matchStatus);
     
+    @Query("SELECT am FROM ApartmentMatchEntity am WHERE am.apartment.user.id = :userId AND am.matchStatus = :matchStatus")
+    List<ApartmentMatchEntity> findByUserIdAndMatchStatus(Integer userId, MatchStatus matchStatus);
+
+    @Query("SELECT am FROM ApartmentMatchEntity am WHERE am.candidate.id = :userId")
+    List<ApartmentMatchEntity> findTenantRequestByUserId (Integer userId);
+
 }

@@ -31,7 +31,7 @@ export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: Navb
     case 'TENANT':
       tenantRoutes = (
         <NavLink className="p-2" to="/reservations">
-          Reservations
+          {!token ? (
         </NavLink>
       )
       break
@@ -42,24 +42,38 @@ export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: Navb
   return (
     <div className="navbar bg-base-100 px-4 md:px-8 shadow-sm sticky top-0 z-50">
       <div className="navbar-start gap-2">
-        <NavLink to="/" className="btn btn-ghost normal-case text-xl">
-          Rooma
-        </NavLink>
+              {role === 'TENANT' && (
+                <>
+                  <NavLink className="p-2 hidden md:block" to="/mis-solicitudes">
+                    Mis solicitudes
+                  </NavLink>
+                  <NavLink className="btn btn-ghost" to="/my-home">
+                    Mi piso
+                  </NavLink>
+                </>
+              )}
 
-        {role === 'ADMIN' && (
-          <NavLink className="btn btn-ghost hidden lg:flex" to="/users">
-            Usuarios
-          </NavLink>
-        )}
+              {role === 'LANDLORD' && (
+                <>
+                  <NavLink className="btn btn-ghost hidden md:block" to="/mis-solicitudes/recibidas">
+                    Solicitudes recibidas
+                  </NavLink>
+                </>
+              )}
 
-        {role === 'LANDLORD' && (
-          <NavLink className="btn btn-ghost" to="/apartments/my">
-            Mis Inmuebles
-          </NavLink>
-        )}
-      </div>
+              <NavLink className="btn btn-ghost" to="/profile">
+                Perfil
+              </NavLink>
 
-      <div className="navbar-center hidden lg:flex">
+              {role && (
+                <span className="badge badge-outline badge-sm self-center">
+                  {role === 'LANDLORD' ? 'Propietario' : role === 'TENANT' ? 'Inquilino' : role}
+                </span>
+              )}
+
+              <button className="btn btn-error btn-sm" onClick={handleLogout}>
+                Logout
+              </button>
         <div className="menu menu-horizontal px-1 items-center gap-2">
           <NavLink className="btn btn-ghost" to="/">
             {role === 'TENANT' ? 'Feed' : 'Home'}
@@ -93,6 +107,7 @@ export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: Navb
           ) : (
             <>
               {role === 'TENANT' && (
+<<<<<<< HEAD
                 <>
                   <NavLink className="p-2 hidden md:block" to="/mis-solicitudes">
                     Mis solicitudes
@@ -105,6 +120,10 @@ export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: Navb
               {role !== 'TENANT' && (
                 <NavLink className="btn btn-ghost" to="/profile">
                   Perfil
+=======
+                <NavLink className="p-2 hidden md:block" to="/mis-solicitudes/enviadas">
+                  Mis solicitudes
+>>>>>>> 6f34f836af2bd16cd4636307a24a115c5e8abc70
                 </NavLink>
               )}
               {role && (

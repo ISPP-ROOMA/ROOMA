@@ -69,7 +69,7 @@ export const swipeApartment = async (
 ): Promise<unknown> => {
   try {
     const response = await api.post(
-      `/apartments-matches/swipe/candidate/${candidateId}/apartment/${apartmentId}/action/${interest}`,
+      `/apartments-matches/swipe/candidate/${candidateId}/apartment/${apartmentId}/action/true`,
       interest,
       { headers: { 'Content-Type': 'application/json' } }
     )
