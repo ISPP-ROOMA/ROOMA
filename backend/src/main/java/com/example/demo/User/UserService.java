@@ -87,6 +87,12 @@ public class UserService {
         throw new ResourceNotFoundException("User not authenticated");
     }
 
+    public UserEntity findCurrentUserEntity() {
+        String email = findCurrentUser();
+        return findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+
 
 }
 

@@ -1,12 +1,11 @@
 package com.example.demo.MemberApartment;
 
 import com.example.demo.Apartment.ApartmentEntity;
-import com.example.demo.Apartment.ApartmentRepository;
+import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
-import com.example.demo.User.UserRepository;
 import com.example.demo.User.UserService;
 
 import org.springframework.stereotype.Service;
@@ -19,27 +18,22 @@ import java.util.List;
 public class ApartmentMemberService {
 
     private final ApartmentMemberRepository apartmentMemberRepository;
-    private final ApartmentRepository apartmentRepository;
-    private final UserRepository userRepository;
+    private final ApartmentService apartmentService;
     private final UserService userService;
 
     public ApartmentMemberService(ApartmentMemberRepository apartmentMemberRepository,
-                                 ApartmentRepository apartmentRepository,
-                                 UserRepository userRepository,
+                                 ApartmentService apartmentService,
                                  UserService userService) {
         this.apartmentMemberRepository = apartmentMemberRepository;
-        this.apartmentRepository = apartmentRepository;
-        this.userRepository = userRepository;
+        this.apartmentService = apartmentService;
         this.userService = userService;
     }
 
     @Transactional
     public ApartmentMemberEntity addMember(Integer apartmentId, Integer userId, MemberRole role, LocalDate joinDate) {
-        ApartmentEntity apartment = apartmentRepository.findById(apartmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
+        ApartmentEntity apartment = apartmentService.findById(apartmentId);
 
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        UserEntity user = userService.findById(userId);
 
         if (apartmentMemberRepository.existsByApartmentIdAndUserId(apartmentId, userId)) {
             throw new BadRequestException("User already belongs to this apartment");
@@ -57,8 +51,7 @@ public class ApartmentMemberService {
 @Transactional(readOnly = true)
     public List<ApartmentMemberEntity> listMembers(Integer apartmentId) {
 
-        ApartmentEntity apartment = apartmentRepository.findById(apartmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
+        ApartmentEntity apartment = apartmentService.findById(apartmentId);
 
         UserEntity currentUser = userService.findByEmail(userService.findCurrentUser())
                 .orElseThrow(() -> new ResourceNotFoundException("Current user not found"));
@@ -81,6 +74,14 @@ public class ApartmentMemberService {
             throw new ResourceNotFoundException("No members found in the apartment");
         }
 
+        return members;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ApartmentMemberEntity> findCurrentMembers(Integer apartmentId) {
+        ApartmentEntity apartment = apartmentService.findById(apartmentId);
+
+        List<ApartmentMemberEntity> members = apartmentMemberRepository.findByApartmentIdAndEndDateIsNull(apartment.getId());
         return members;
     }
 

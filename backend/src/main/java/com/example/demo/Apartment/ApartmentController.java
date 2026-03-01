@@ -18,7 +18,7 @@ import com.example.demo.Apartment.DTOs.UpdateApartment;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
 import com.example.demo.MemberApartment.ApartmentMemberEntity;
-import com.example.demo.MemberApartment.ApartmentMemberRepository;
+import com.example.demo.MemberApartment.ApartmentMemberService;
 import com.example.demo.MemberApartment.DTOs.ApartmentMemberDTO;
 
 import jakarta.validation.Valid;
@@ -28,19 +28,19 @@ import jakarta.validation.Valid;
 public class ApartmentController {
 
     private final ApartmentService apartmentsService;
-    private final ApartmentMemberRepository apartmentMemberRepository;
+    private final ApartmentMemberService apartmentMemberService;
     private final ApartmentPhotoService apartmentPhotoService;
 
     public ApartmentController(ApartmentService apartmentsService, 
-                               ApartmentMemberRepository apartmentMemberRepository,
+                               ApartmentMemberService apartmentMemberService,
                                ApartmentPhotoService apartmentPhotoService) {
         this.apartmentsService = apartmentsService;
-        this.apartmentMemberRepository = apartmentMemberRepository;
+        this.apartmentMemberService = apartmentMemberService;
         this.apartmentPhotoService = apartmentPhotoService;
     }
 
     private ApartmentDTO mapToDTOWithMembers(ApartmentEntity apartment) {
-        List<ApartmentMemberEntity> members = apartmentMemberRepository.findByApartmentId(apartment.getId());
+        List<ApartmentMemberEntity> members = apartmentMemberService.findCurrentMembers(apartment.getId());
         List<ApartmentMemberDTO> memberDTOs = ApartmentMemberDTO.fromEntityList(members);
         return ApartmentDTO.fromApartmentEntityWithMembers(apartment, memberDTOs);
     }
