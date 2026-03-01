@@ -53,9 +53,14 @@ export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: Navb
         )}
 
         {role === 'LANDLORD' && (
-          <NavLink className="btn btn-ghost" to="/apartments/my">
-            Mis Inmuebles
-          </NavLink>
+          <>
+            <NavLink className="btn btn-ghost" to="/apartments/my">
+              Mis Inmuebles
+            </NavLink>
+            <NavLink className="btn btn-ghost" to="/mis-solicitudes/recibidas">
+              Solicitudes recibidas
+            </NavLink>
+          </>
         )}
       </div>
 
@@ -93,7 +98,7 @@ export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: Navb
           ) : (
             <>
               {role === 'TENANT' && (
-                <NavLink className="p-2 hidden md:block" to="/mis-solicitudes">
+                <NavLink className="p-2 hidden md:block" to="/mis-solicitudes/enviadas">
                   Mis solicitudes
                 </NavLink>
               )}

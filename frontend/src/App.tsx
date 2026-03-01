@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import Navbar from './components/Navbar'
 import Login from './pages/Login'
@@ -14,12 +14,13 @@ import Apartments from './pages/apartments/Apartments'
 import ApartmentDetail from './pages/apartments/ApartmentDetail'
 import PublishFlowContainer from './pages/apartments/publish/PublishFlowContainer'
 import Register from './pages/Register'
-import MyRequests from './pages/private/MyRequests'
+import TenantRequestsPage from './pages/private/requests/TenantRequestsPage'
 import PropertyDetails from './pages/PropertyDetails'
 import { ToastProvider } from './context/ToastContext'
 import ReviewModal from './components/ReviewModal'
 import { getPendingReviews } from './service/review.service'
 import LeaveReview from './pages/private/LeaveReview'
+import LandlordRequestsPage from './pages/private/requests/LandlordRequestsPage'
 
 function App() {
   const location = useLocation()
@@ -104,7 +105,32 @@ function App() {
           path="/mis-solicitudes"
           element={
             <PrivateRoute>
-              <MyRequests />
+              <Navigate
+                to={
+                  role === 'LANDLORD'
+                    ? '/mis-solicitudes/recibidas'
+                    : role === 'TENANT'
+                      ? '/mis-solicitudes/enviadas'
+                      : '/profile'
+                }
+                replace
+              />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/mis-solicitudes/enviadas"
+          element={
+            <PrivateRoute allowedRoles={['TENANT']}>
+              <TenantRequestsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/mis-solicitudes/recibidas"
+          element={
+            <PrivateRoute allowedRoles={['LANDLORD']}>
+              <LandlordRequestsPage />
             </PrivateRoute>
           }
         />
