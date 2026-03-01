@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -19,15 +18,18 @@ import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchDTO;
 import com.example.demo.ApartmentMatch.DTOs.LanlordRequestApartmentMatchDTO;
 import com.example.demo.ApartmentMatch.DTOs.TenantRequestApartmentMatchDTO;
 import com.example.demo.User.UserEntity;
+import com.example.demo.User.UserService;
 
 @RestController
 @RequestMapping("/api/apartments-matches")
 public class ApartmentMatchController {
 
     private final ApartmentMatchService apartmentMatchService;
+    private final UserService userService;
 
-    public ApartmentMatchController(ApartmentMatchService apartmentMatchService) {
+    public ApartmentMatchController(ApartmentMatchService apartmentMatchService, UserService userService) {
         this.apartmentMatchService = apartmentMatchService;
+        this.userService = userService;
     }
 
     @GetMapping
@@ -65,9 +67,12 @@ public class ApartmentMatchController {
         apartmentMatchService.finalizeMatchProcess(apartmentId);
         return ResponseEntity.noContent().build();
     }
+
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/swipe/candidate/{candidateId}/apartment/{apartmentId}/action/{isCandidateAction}")
     public ResponseEntity<?> processSwipe(@PathVariable Integer candidateId, @PathVariable Integer apartmentId, 
-        @PathVariable boolean isCandidateAction, @RequestBody boolean interest, @AuthenticationPrincipal UserEntity authenticatedUser) {
+        @PathVariable boolean isCandidateAction, @RequestBody boolean interest) {
+        UserEntity authenticatedUser = userService.findCurrentUserEntity();
         if (authenticatedUser == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You must be authenticated to perform swipe actions");
         }
@@ -110,7 +115,8 @@ public class ApartmentMatchController {
 
     @PreAuthorize("hasRole('TENANT')")
     @GetMapping("/my-matches")
-    public ResponseEntity<List<TenantRequestApartmentMatchDTO>> getAllTenantRequest(@AuthenticationPrincipal UserEntity authenticatedUser) {
+    public ResponseEntity<List<TenantRequestApartmentMatchDTO>> getAllTenantRequest() {
+        UserEntity authenticatedUser = userService.findCurrentUserEntity();
         List<ApartmentMatchEntity> matches = apartmentMatchService.findTenantRequestByUserId(authenticatedUser.getId());
         List<TenantRequestApartmentMatchDTO> apartmentMatches = TenantRequestApartmentMatchDTO.fromApartmentMatchEntityList(matches);
         return ResponseEntity.ok(apartmentMatches);
