@@ -9,9 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint . --fix",
     "format": "prettier --write .",
-    "preview": "vite preview",
-    "prepare": "cd .. && husky frontend/.husky",
-    "precommit": "lint-staged"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@cloudinary/react": "^1.14.4",
