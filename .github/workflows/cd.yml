@@ -55,5 +55,4 @@ jobs:
           vercel --prod \
                  --token ${{ secrets.VERCEL_TOKEN }} \
                  --build-env VITE_API_URL=${{ secrets.DEV_BACKEND_URL }} \
-                 --build-env HUSKY=0 \
                  --yes

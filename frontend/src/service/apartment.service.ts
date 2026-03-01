@@ -17,6 +17,14 @@ export interface ApartmentMemberDTO {
   joinDate: string
 }
 
+export interface ApartmentPhotoDTO {
+  id: number
+  url: string
+  publicId: string
+  orden: number
+  portada: boolean
+}
+
 export interface ApartmentDTO {
   id: number
   title: string
@@ -25,7 +33,7 @@ export interface ApartmentDTO {
   bills: string
   ubication: string
   state: string
-  imageUrl?: string
+  coverImageUrl?: string
   members?: ApartmentMemberDTO[]
 }
 
@@ -61,7 +69,7 @@ export const swipeApartment = async (
 ): Promise<unknown> => {
   try {
     const response = await api.post(
-      `/apartments-matches/swipe/candidate/${candidateId}/apartment/${apartmentId}/action/true`,
+      `/apartments-matches/swipe/candidate/${candidateId}/apartment/${apartmentId}/action/${interest}`,
       interest,
       { headers: { 'Content-Type': 'application/json' } }
     )
@@ -69,5 +77,17 @@ export const swipeApartment = async (
   } catch (error) {
     console.error('Error swiping apartment:', error)
     throw error
+  }
+}
+
+export const getApartmentPhotos = async (apartmentId: number): Promise<ApartmentPhotoDTO[]> => {
+  try {
+    const response = await api.get<{ apartment: ApartmentDTO; images: ApartmentPhotoDTO[] }>(
+      `/apartments/${apartmentId}/photos`
+    )
+    return response.data.images ?? []
+  } catch (error) {
+    console.error('Error fetching apartment photos:', error)
+    return []
   }
 }
