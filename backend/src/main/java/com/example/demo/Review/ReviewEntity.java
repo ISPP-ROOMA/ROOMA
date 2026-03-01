@@ -2,7 +2,8 @@ package com.example.demo.Review;
 
 import java.time.LocalDateTime;
 
-import com.example.demo.MemberApartment.ApartmentMemberEntity;
+import com.example.demo.Apartment.ApartmentEntity;
+import com.example.demo.User.UserEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -48,12 +49,12 @@ public class ReviewEntity {
     @NotNull
     @ManyToOne
     @JoinColumn(name = "review_member_id")
-    private ApartmentMemberEntity reviewMember;
+    private UserEntity reviewMember;
 
     @NotNull
     @ManyToOne
     @JoinColumn(name = "reviewed_member_id")
-    private ApartmentMemberEntity reviewedMember;
+    private UserEntity reviewedMember;
 
     @NotNull
     @Column(nullable = false)
@@ -61,13 +62,18 @@ public class ReviewEntity {
 
     @NotNull
     @Column(nullable = false)
-    private LocalDateTime reviewDate; 
+    private LocalDateTime reviewDate;
+
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "apartment_id")
+    private ApartmentEntity apartment;
 
     public ReviewEntity() {
     }
 
-    public ReviewEntity(Integer id, Integer rating, String comment, String response, ApartmentMemberEntity reviewMember,
-            ApartmentMemberEntity reviewedMember, Boolean published, LocalDateTime reviewDate) {
+    public ReviewEntity(Integer id, Integer rating, String comment, String response, UserEntity reviewMember,
+            UserEntity reviewedMember, Boolean published, LocalDateTime reviewDate, ApartmentEntity apartment) {
         this.id = id;
         this.rating = rating;
         this.comment = comment;
@@ -76,6 +82,7 @@ public class ReviewEntity {
         this.reviewedMember = reviewedMember;
         this.published = published;
         this.reviewDate = reviewDate;
+        this.apartment = apartment;
     }
 
     public Integer getId() {
@@ -102,19 +109,19 @@ public class ReviewEntity {
         this.comment = comment;
     }
 
-    public ApartmentMemberEntity getReviewMember() {
+    public UserEntity getReviewMember() {
         return reviewMember;
     }
 
-    public void setReviewMember(ApartmentMemberEntity reviewMember) {
+    public void setReviewMember(UserEntity reviewMember) {
         this.reviewMember = reviewMember;
     }
 
-    public ApartmentMemberEntity getReviewedMember() {
+    public UserEntity getReviewedMember() {
         return reviewedMember;
     }
 
-    public void setReviewedMember(ApartmentMemberEntity reviewedMember) {
+    public void setReviewedMember(UserEntity reviewedMember) {
         this.reviewedMember = reviewedMember;
     }
 
@@ -140,6 +147,14 @@ public class ReviewEntity {
 
     public void setResponse(String response) {
         this.response = response;
+    }
+
+    public ApartmentEntity getApartment() {
+        return apartment;
+    }
+
+    public void setApartment(ApartmentEntity apartment) {
+        this.apartment = apartment;
     }
 
 }

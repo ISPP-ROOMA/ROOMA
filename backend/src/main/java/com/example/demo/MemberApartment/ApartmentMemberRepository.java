@@ -15,9 +15,6 @@ public interface ApartmentMemberRepository extends JpaRepository<ApartmentMember
     @Query("SELECT m FROM ApartmentMemberEntity m WHERE m.apartment.id = :apartmentId AND (m.leaveDate IS NULL OR m.leaveDate > CURRENT_DATE)")
     List<ApartmentMemberEntity> findActiveApartmentMembers(Integer apartmentId);
 
-    @Query("SELECT m FROM ApartmentMemberEntity m WHERE m.apartment.id = :apartmentId AND m.user.role = 'LANDLORD'")
-    Optional<ApartmentMemberEntity> findLandlordByApartmentId(Integer apartmentId);
-
     @Query("SELECT m FROM ApartmentMemberEntity m WHERE m.apartment.id = :apartmentId AND m.user.role = 'TENANT' AND (m.leaveDate IS NULL OR m.leaveDate > CURRENT_DATE)")
     List<ApartmentMemberEntity> findCurrentTenantsByApartmentId(Integer apartmentId);
     

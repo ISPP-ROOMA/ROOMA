@@ -3,6 +3,7 @@ package com.example.demo.MemberApartment;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.boot.security.autoconfigure.SecurityProperties.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -106,10 +107,6 @@ public class ApartmentMemberService {
         return apartmentMemberRepository.findActiveApartmentMembers(userId);
     }
 
-    public ApartmentMemberEntity findLandlordByApartmentId(Integer apartmentId) {
-        return apartmentMemberRepository.findLandlordByApartmentId(apartmentId).orElseThrow(() -> new ResourceNotFoundException("Landlord not found for this apartment"));
-    }
-
     public List<ApartmentMemberEntity> findCurrentTenantsByApartmentId(Integer apartmentId) {
         return apartmentMemberRepository.findCurrentTenantsByApartmentId(apartmentId);
     }
@@ -123,13 +120,6 @@ public class ApartmentMemberService {
         boolean isMember = apartmentMemberRepository.existsByApartmentIdAndUserId(apartmentId, userId);
         if (!isMember) {
             throw new BadRequestException("User is not a current member of this apartment");
-        }
-    }
-
-    public void checkUserIsLandlord(Integer apartmentId, Integer userId) {
-        ApartmentMemberEntity landlord = findLandlordByApartmentId(apartmentId);
-        if (landlord == null || landlord.getUser() == null || !landlord.getUser().getId().equals(userId)) {
-            throw new BadRequestException("User is not the landlord of this apartment");
         }
     }
 

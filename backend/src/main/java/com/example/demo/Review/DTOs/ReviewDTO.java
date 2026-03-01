@@ -24,11 +24,11 @@ public record ReviewDTO(
                 review.getRating(),
                 review.getComment(),
                 review.getResponse(),
-                review.getReviewMember().getUser().getId(),
-                review.getReviewMember().getUser().getEmail(),
-                review.getReviewedMember().getUser().getId(),
-                review.getReviewedMember().getUser().getEmail(),
-                review.getReviewMember().getApartment().getId(),
+                review.getReviewMember().getId(),
+                review.getReviewMember().getEmail(),
+                review.getReviewedMember().getId(),
+                review.getReviewedMember().getEmail(),
+                review.getApartment().getId(),
                 review.getPublished(),
                 review.getReviewDate()
         );
