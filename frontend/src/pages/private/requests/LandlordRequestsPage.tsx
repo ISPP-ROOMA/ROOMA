@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
+  acceptRequest,
   getReceivedRequests,
+  rejectRequest,
   type RequestItem,
   type RequestStatus,
 } from '../../../service/requests.service'
@@ -38,6 +40,7 @@ function statusLabel(status: RequestStatus): string {
 export default function LandlordRequestsPage() {
   const [requests, setRequests] = useState<RequestItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [updatingRequestId, setUpdatingRequestId] = useState<number | null>(null)
 
   const updateRequestStatus = (requestId: number, status: RequestStatus) => {
     setRequests((prevRequests) =>
@@ -45,6 +48,30 @@ export default function LandlordRequestsPage() {
         request.id === requestId ? { ...request, status } : request
       )
     )
+  }
+
+  const handleAccept = async (requestId: number) => {
+    try {
+      setUpdatingRequestId(requestId)
+      await acceptRequest(requestId)
+      updateRequestStatus(requestId, 'ACCEPTED')
+    } catch (error) {
+      console.error('Error accepting request:', error)
+    } finally {
+      setUpdatingRequestId(null)
+    }
+  }
+
+  const handleReject = async (requestId: number) => {
+    try {
+      setUpdatingRequestId(requestId)
+      await rejectRequest(requestId)
+      updateRequestStatus(requestId, 'REJECTED')
+    } catch (error) {
+      console.error('Error rejecting request:', error)
+    } finally {
+      setUpdatingRequestId(null)
+    }
   }
 
   useEffect(() => {
@@ -117,13 +144,19 @@ export default function LandlordRequestsPage() {
                   <div className="card-actions justify-end mt-2">
                     <button
                       className="btn btn-sm btn-error btn-outline"
-                      onClick={() => updateRequestStatus(request.id, 'REJECTED')}
+                      onClick={() => {
+                        void handleReject(request.id)
+                      }}
+                      disabled={updatingRequestId === request.id}
                     >
                       Rechazar
                     </button>
                     <button
                       className="btn btn-sm btn-success"
-                      onClick={() => updateRequestStatus(request.id, 'ACCEPTED')}
+                      onClick={() => {
+                        void handleAccept(request.id)
+                      }}
+                      disabled={updatingRequestId === request.id}
                     >
                       Aceptar
                     </button>
