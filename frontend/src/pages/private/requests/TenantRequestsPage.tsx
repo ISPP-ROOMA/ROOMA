@@ -174,10 +174,10 @@ export default function TenantRequestsPage() {
   return (
     <div
       data-theme="light"
-      className="mx-auto w-full max-w-2xl min-h-dvh bg-[#F5F1E3] text-[#050505] pb-28"
+      className="mx-auto w-full max-w-2xl min-h-dvh bg-[#FAF5EE] text-[#050505] pb-28"
     >
       {/* ── Header ── */}
-      <header className="sticky top-0 z-10 bg-[#F5F1E3] px-4 sm:px-8 pt-5 pb-4">
+      <header className="sticky top-0 z-10 bg-[#FAF5EE] px-4 sm:px-8 pt-5 pb-4">
         <div className="flex items-center justify-between">
           <button
             className="h-10 w-10 rounded-full bg-white text-[#050505] shadow-sm flex items-center justify-center shrink-0"
