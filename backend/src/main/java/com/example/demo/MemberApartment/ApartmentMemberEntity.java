@@ -30,6 +30,9 @@ public class ApartmentMemberEntity {
     @Column(nullable = false)
     private LocalDate joinDate;
 
+    @Column(nullable = true)
+    private LocalDate endDate;
+
     public ApartmentMemberEntity() {
     }
 
@@ -71,5 +74,13 @@ public class ApartmentMemberEntity {
 
     public void setJoinDate(LocalDate joinDate) {
         this.joinDate = joinDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
     }
 }

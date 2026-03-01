@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface ApartmentMemberRepository extends JpaRepository<ApartmentMemberEntity, Integer> {
     List<ApartmentMemberEntity> findByApartmentId(Integer apartmentId);
+    List<ApartmentMemberEntity> findByApartmentIdAndEndDateIsNull(Integer apartmentId);
 
     boolean existsByApartmentIdAndUserId(Integer apartmentId, Integer userId);
 }
