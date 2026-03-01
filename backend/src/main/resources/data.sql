@@ -34,16 +34,15 @@ INSERT INTO apartments (id, title, description, price, bills, ubication, state, 
 
 -- ==========================================
 -- APARTMENT MEMBERS
--- role: HOMEBODY, RENTER
 -- ==========================================
 
 -- Piso 1 (Id: 1)
-INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date) VALUES 
-(1, 1, 3, 'HOMEBODY', '2023-09-01'), -- tenant1 es HOMEBODY del piso 1
-(2, 1, 4, 'RENTER', '2023-09-15'); -- tenant2 es RENTER del piso 1
+INSERT INTO apartment_members (id, apartment_id, user_id, join_date) VALUES 
+(1, 1, 3, '2023-09-01'), -- tenant1 en piso 1
+(2, 1, 4, '2023-09-15'); -- tenant2 en piso 1
 
 -- Piso 2 (Id: 2)
-INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date) VALUES 
-(3, 2, 5, 'HOMEBODY', '2024-01-10'); -- tenant3 es solitario/HOMEBODY del piso 2
+INSERT INTO apartment_members (id, apartment_id, user_id, join_date) VALUES 
+(3, 2, 5, '2024-01-10'); -- tenant3 en piso 2
 
 -- El piso 3 actualmente no tiene inquilinos en esta base de datos de ejemplo.

@@ -54,7 +54,7 @@ public class ApartmentMemberService {
         return apartmentMemberRepository.save(member);
     }
     private void checkUserIsCurrentMemberInOtherApartment(Integer userId) {
-        List<ApartmentMemberEntity> activeMemberships = findActiveApartmentMembers(userId);
+        List<ApartmentMemberEntity> activeMemberships = findActiveMembershipsByUserId(userId);
         if (!activeMemberships.isEmpty()) {
             throw new BadRequestException("User is already a member of another apartment");
         }
@@ -162,6 +162,11 @@ public class ApartmentMemberService {
 
     public List<ApartmentMemberEntity> findOverlappingMemberships(Integer userId, Integer apartmentId, LocalDate joinDate, LocalDate leaveDate) {
         return apartmentMemberRepository.findOverlappingMemberships(userId, apartmentId, joinDate, leaveDate);
+    }
+
+    public ApartmentMemberEntity findByUserIdAndApartmentId(Integer userId, Integer apartmentId) {
+        return apartmentMemberRepository.findByUserIdAndApartmentId(userId, apartmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Membership not found for user in this apartment"));
     }
 
 }

@@ -9,7 +9,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -19,10 +20,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 @Entity
-@Table(uniqueConstraints = {
+@Table(name = "reviews", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"review_member_id", "reviewed_member_id"})
 })
-public class Review {
+public class ReviewEntity {
 
     @Id
     @SequenceGenerator(name = "reviews_seq", sequenceName = "reviews_seq", initialValue = 100)
@@ -40,17 +41,18 @@ public class Review {
     @Column(length = 500)
     private String comment;
 
-    @NotNull
     @Size(max = 500)
     @Column(length = 500)
     private String response;
 
     @NotNull
-    @OneToOne
+    @ManyToOne
+    @JoinColumn(name = "review_member_id")
     private ApartmentMemberEntity reviewMember;
 
     @NotNull
-    @OneToOne
+    @ManyToOne
+    @JoinColumn(name = "reviewed_member_id")
     private ApartmentMemberEntity reviewedMember;
 
     @NotNull
@@ -61,10 +63,10 @@ public class Review {
     @Column(nullable = false)
     private LocalDateTime reviewDate; 
 
-    public Review() {
+    public ReviewEntity() {
     }
 
-    public Review(Integer id, Integer rating, String comment, String response, ApartmentMemberEntity reviewMember,
+    public ReviewEntity(Integer id, Integer rating, String comment, String response, ApartmentMemberEntity reviewMember,
             ApartmentMemberEntity reviewedMember, Boolean published, LocalDateTime reviewDate) {
         this.id = id;
         this.rating = rating;

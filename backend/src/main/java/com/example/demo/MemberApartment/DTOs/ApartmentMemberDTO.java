@@ -9,14 +9,16 @@ public record ApartmentMemberDTO(
         Integer id,
         Integer apartmentId,
         Integer userId,
-        LocalDate joinDate
+        LocalDate joinDate,
+        LocalDate leaveDate
 ) {
     public static ApartmentMemberDTO fromEntity(ApartmentMemberEntity member) {
         return new ApartmentMemberDTO(
                 member.getId(),
                 member.getApartment().getId(),
                 member.getUser().getId(),
-                member.getJoinDate()
+                member.getJoinDate(),
+                member.getLeaveDate()
         );
     }
 

@@ -24,6 +24,9 @@ public interface ApartmentMemberRepository extends JpaRepository<ApartmentMember
     @Query("SELECT m FROM ApartmentMemberEntity m WHERE m.user.id = :userId AND m.leaveDate IS NOT NULL ORDER BY m.leaveDate DESC")
     Optional<ApartmentMemberEntity> findLastMembershipByUserId(Integer userId);
 
+    @Query("SELECT m FROM ApartmentMemberEntity m WHERE m.user.id = :userId AND m.apartment.id = :apartmentId ORDER BY m.joinDate DESC")
+    Optional<ApartmentMemberEntity> findByUserIdAndApartmentId(Integer userId, Integer apartmentId);
+
     @Query("SELECT m FROM ApartmentMemberEntity m WHERE m.user.id = :userId AND (m.leaveDate IS NULL OR m.leaveDate > CURRENT_DATE) ORDER BY m.joinDate DESC")
     List<ApartmentMemberEntity> findActiveMembershipsByUserId(Integer userId);
 
