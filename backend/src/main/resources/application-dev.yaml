@@ -33,6 +33,6 @@ jwt:
   secret-key: ${JWT_SECRET_KEY:q5X1xZK8F0z+Y3nZ8KpZ9+0rK0z8ZKJ4dZpZq8W1k3M=}
 
 cloudinary:
-  cloud_name: djuqshdey
-  api_key: 614795631622722
-  api_secret: jiql_mw2FyNAzak4hZ-ZVvSmeCM
+  cloud_name: ${CLOUDINARY_CLOUD_NAME}
+  api_key: ${CLOUDINARY_API_KEY}
+  api_secret: ${CLOUDINARY_API_SECRET}
