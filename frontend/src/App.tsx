@@ -22,6 +22,7 @@ import ReviewModal from './components/ReviewModal'
 import { getPendingReviews } from './service/review.service'
 import LeaveReview from './pages/private/LeaveReview'
 import LandlordRequestsPage from './pages/private/requests/LandlordRequestsPage'
+import Invoices from './pages/private/Invoices'
 
 function App() {
   const location = useLocation()
@@ -240,8 +241,16 @@ function App() {
                 <Route
                   path="/my-home"
                   element={
-                    <PrivateRoute allowedRoles={[ 'TENANT' ]}>
+                    <PrivateRoute allowedRoles={['TENANT']}>
                       <MyHome />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/invoices"
+                  element={
+                    <PrivateRoute allowedRoles={['TENANT']}>
+                      <Invoices />
                     </PrivateRoute>
                   }
                 />

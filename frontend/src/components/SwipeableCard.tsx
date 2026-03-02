@@ -86,7 +86,10 @@ export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: Swi
       className="absolute w-full h-full p-4 rounded-3xl shadow-xl bg-base-100 flex flex-col justify-between overflow-hidden cursor-grab active:cursor-grabbing border border-base-300"
     >
       {/* Horizontal swipe overlay */}
-      <motion.div style={{ background }} className="absolute inset-0 z-10 pointer-events-none rounded-3xl" />
+      <motion.div
+        style={{ background }}
+        className="absolute inset-0 z-10 pointer-events-none rounded-3xl"
+      />
 
       {/* Upward swipe overlay */}
       <motion.div

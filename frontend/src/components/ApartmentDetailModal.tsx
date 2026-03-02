@@ -59,7 +59,9 @@ function SwipeGallery({
   const [offset, setOffset] = useState(0)
 
   // Reset offset when index changes externally
-  useEffect(() => { setOffset(0) }, [currentIndex])
+  useEffect(() => {
+    setOffset(0)
+  }, [currentIndex])
 
   const go = (dir: 1 | -1) => {
     const next = currentIndex + dir
@@ -195,9 +197,7 @@ function SwipeGallery({
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => onIndexChange(idx)}
               className={`rounded-full transition-all ${
-                idx === currentIndex
-                  ? 'w-6 h-2 bg-white'
-                  : 'w-2 h-2 bg-white/50 hover:bg-white/70'
+                idx === currentIndex ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50 hover:bg-white/70'
               }`}
             />
           ))}
@@ -281,12 +281,7 @@ function Lightbox({
 
       {/* Swipeable main image */}
       <div className="flex-1 min-h-0 flex items-center justify-center">
-        <SwipeGallery
-          images={images}
-          currentIndex={idx}
-          onIndexChange={setIdx}
-          height="h-full"
-        />
+        <SwipeGallery images={images} currentIndex={idx} onIndexChange={setIdx} height="h-full" />
       </div>
 
       {/* Thumbnails */}
@@ -351,9 +346,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
     const fetchRoommates = async () => {
       if (!apartment.members || apartment.members.length === 0) return
       try {
-        const userPromises = apartment.members.map((m) =>
-          api.get<UserDTO>(`/users/${m.userId}`)
-        )
+        const userPromises = apartment.members.map((m) => api.get<UserDTO>(`/users/${m.userId}`))
         const responses = await Promise.all(userPromises)
         setRoommates(responses.map((r) => r.data))
       } catch (err) {
@@ -410,7 +403,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
       })
       backdropControls.set({ opacity: Math.max(0, 1 - progress * 1.5) })
     },
-    [modalControls, backdropControls],
+    [modalControls, backdropControls]
   )
 
   const resetPull = useCallback(() => {
@@ -636,10 +629,27 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
                 Información del piso
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <DetailCard icon={<MapPin size={18} />} label="Ubicación" value={apartment.ubication} />
-                <DetailCard icon={<Banknote size={18} />} label="Precio mensual" value={`${apartment.price}€ / mes`} />
-                <DetailCard icon={<Receipt size={18} />} label="Gastos incluidos" value={apartment.bills || 'No especificado'} />
-                <DetailCard icon={<Shield size={18} />} label="Estado" value={stateInfo.label} badge={stateInfo.cls} />
+                <DetailCard
+                  icon={<MapPin size={18} />}
+                  label="Ubicación"
+                  value={apartment.ubication}
+                />
+                <DetailCard
+                  icon={<Banknote size={18} />}
+                  label="Precio mensual"
+                  value={`${apartment.price}€ / mes`}
+                />
+                <DetailCard
+                  icon={<Receipt size={18} />}
+                  label="Gastos incluidos"
+                  value={apartment.bills || 'No especificado'}
+                />
+                <DetailCard
+                  icon={<Shield size={18} />}
+                  label="Estado"
+                  value={stateInfo.label}
+                  badge={stateInfo.cls}
+                />
               </div>
             </section>
 
@@ -673,7 +683,10 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                        <ZoomIn size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                        <ZoomIn
+                          size={20}
+                          className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg"
+                        />
                       </div>
                     </button>
                   ))}
@@ -700,7 +713,10 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
               ) : (
                 <div className="space-y-3">
                   {roommates.map((user) => (
-                    <div key={user.id} className="bg-base-200 rounded-2xl p-4 hover:shadow-md transition-shadow">
+                    <div
+                      key={user.id}
+                      className="bg-base-200 rounded-2xl p-4 hover:shadow-md transition-shadow"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="avatar placeholder">
                           <div className="bg-primary text-primary-content rounded-full w-11 h-11 shrink-0">
@@ -717,13 +733,25 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
                       {(user.profession || user.schedule || user.hobbies) && (
                         <div className="mt-3 pt-3 border-t border-base-300 grid grid-cols-1 sm:grid-cols-3 gap-2">
                           {user.profession && (
-                            <RoommateTag icon={<Briefcase size={13} />} label="Profesión" value={user.profession} />
+                            <RoommateTag
+                              icon={<Briefcase size={13} />}
+                              label="Profesión"
+                              value={user.profession}
+                            />
                           )}
                           {user.schedule && (
-                            <RoommateTag icon={<Clock size={13} />} label="Horario" value={user.schedule} />
+                            <RoommateTag
+                              icon={<Clock size={13} />}
+                              label="Horario"
+                              value={user.schedule}
+                            />
                           )}
                           {user.hobbies && (
-                            <RoommateTag icon={<Heart size={13} />} label="Gustos" value={user.hobbies} />
+                            <RoommateTag
+                              icon={<Heart size={13} />}
+                              label="Gustos"
+                              value={user.hobbies}
+                            />
                           )}
                         </div>
                       )}

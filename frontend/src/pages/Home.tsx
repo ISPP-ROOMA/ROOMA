@@ -58,11 +58,16 @@ export default function Home() {
           <div className="max-w-2xl">
             <h1 className="text-5xl font-bold">Bienvenido a Rooma</h1>
             <p className="py-6">
-              Encuentra tu piso ideal o publica el tuyo. Regístrate como inquilino o propietario para empezar.
+              Encuentra tu piso ideal o publica el tuyo. Regístrate como inquilino o propietario
+              para empezar.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link to="/register" className="btn btn-primary">Crear cuenta</Link>
-              <Link to="/login" className="btn btn-ghost">Iniciar sesión</Link>
+              <Link to="/register" className="btn btn-primary">
+                Crear cuenta
+              </Link>
+              <Link to="/login" className="btn btn-ghost">
+                Iniciar sesión
+              </Link>
             </div>
           </div>
         </div>
@@ -78,8 +83,12 @@ export default function Home() {
             <h1 className="text-5xl font-bold">Panel de Arrendador</h1>
             <p className="py-6">Gestiona tus inmuebles y encuentra a los inquilinos perfectos.</p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link to="/apartments/my" className="btn btn-primary">Mis Inmuebles</Link>
-              <Link to="/apartments/publish" className="btn btn-ghost">Publicar piso</Link>
+              <Link to="/apartments/my" className="btn btn-primary">
+                Mis Inmuebles
+              </Link>
+              <Link to="/apartments/publish" className="btn btn-ghost">
+                Publicar piso
+              </Link>
             </div>
           </div>
         </div>
@@ -95,7 +104,9 @@ export default function Home() {
             <h1 className="text-5xl font-bold">Panel de Administración</h1>
             <p className="py-6">Gestiona los usuarios y la plataforma Rooma.</p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link to="/users" className="btn btn-primary">Gestionar usuarios</Link>
+              <Link to="/users" className="btn btn-primary">
+                Gestionar usuarios
+              </Link>
             </div>
           </div>
         </div>

@@ -72,7 +72,12 @@ export default function PropertyCard({
     <div className={CARD_CLASS}>
       <div className={IMAGE_WRAPPER_CLASS}>
         {resolvedCoverImageSrc ? (
-          <img src={resolvedCoverImageSrc} alt={title} className="h-full w-full object-cover" loading="lazy" />
+          <img
+            src={resolvedCoverImageSrc}
+            alt={title}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
         ) : (
           <div className={IMAGE_FALLBACK_CLASS}>
             <svg
