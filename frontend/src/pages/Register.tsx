@@ -47,6 +47,7 @@ export default function Register() {
     useAuthStore.getState().login({
       token: res.token,
       role: res.role,
+      userId: res.userId,
     })
 
     if (res.role === 'LANDLORD') {

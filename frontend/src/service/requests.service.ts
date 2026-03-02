@@ -1,5 +1,5 @@
 import { api } from './api'
-import { useAuthStore } from '../store/authStore'
+import { ensureCurrentUserId } from './auth.service'
 
 export type RequestStatus = 'PENDING' | 'ON_HOLD' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED'
 export type ApartmentStatus = 'FREE' | 'PAUSED' | 'RENTED'
@@ -135,7 +135,7 @@ export async function getSentRequests(): Promise<RequestItem[]> {
 }
 
 export async function getReceivedRequests(): Promise<RequestItem[]> {
-  const userId = useAuthStore.getState().userId
+  const userId = await ensureCurrentUserId()
 
   if (!userId) {
     return []
