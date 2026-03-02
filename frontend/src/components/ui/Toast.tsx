@@ -83,13 +83,18 @@ const Toast: React.FC<ToastProps> = ({ id, message, type = 'info', onClose }) =>
   }[type]
 
   return (
-    <div className={`alert ${alertClass} shadow-lg mb-2 animate-fade-in-up`}>
-      <div>
+    <div
+      className={`alert ${alertClass} shadow-xl mb-2 animate-fade-in-up rounded-2xl border-0 px-5 py-3.5 backdrop-blur-sm`}
+    >
+      <div className="flex items-center gap-2">
         {icon}
-        <span>{message}</span>
+        <span className="font-medium text-sm">{message}</span>
       </div>
       <div className="flex-none">
-        <button onClick={() => onClose(id)} className="btn btn-sm btn-ghost btn-circle">
+        <button
+          onClick={() => onClose(id)}
+          className="btn btn-sm btn-ghost btn-circle rounded-full opacity-70 hover:opacity-100"
+        >
           ✕
         </button>
       </div>

@@ -3,6 +3,7 @@ package com.example.demo.billing;
 import java.math.BigDecimal;
 
 import com.example.demo.User.UserEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,10 +36,12 @@ public class TenantDebtEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({"password", "profileImagePublicId"})
     private UserEntity user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bill_id", nullable = false)
+    @JsonIgnoreProperties({"tenantDebts", "apartment", "user"})
     private BillEntity bill;
 
     public TenantDebtEntity() {
