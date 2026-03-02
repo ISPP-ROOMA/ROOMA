@@ -22,7 +22,12 @@ import ReviewModal from './components/ReviewModal'
 import { getPendingReviews } from './service/review.service'
 import LeaveReview from './pages/private/LeaveReview'
 import LandlordRequestsPage from './pages/private/requests/LandlordRequestsPage'
-import Invoices from './pages/private/Invoices'
+import Invoices from './pages/private/payments/Invoices'
+import DebtDetail from './pages/private/payments/DebtDetail'
+import PaymentSuccess from './pages/private/payments/PaymentSuccess'
+import NewBill from './pages/apartments/billing/NewBill'
+import ApartmentBills from './pages/apartments/billing/ApartmentBills'
+import LandlordBillDetail from './pages/apartments/billing/LandlordBillDetail'
 
 function App() {
   const location = useLocation()
@@ -232,6 +237,30 @@ function App() {
                     </PrivateRoute>
                   }
                 />
+                <Route
+                  path="/apartments/:id/new-bill"
+                  element={
+                    <PrivateRoute allowedRoles={['LANDLORD']}>
+                      <NewBill />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/apartments/:id/bills"
+                  element={
+                    <PrivateRoute allowedRoles={['LANDLORD']}>
+                      <ApartmentBills />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/apartments/:id/bills/:billId"
+                  element={
+                    <PrivateRoute allowedRoles={['LANDLORD']}>
+                      <LandlordBillDetail />
+                    </PrivateRoute>
+                  }
+                />
               </>
             )}
 
@@ -251,6 +280,22 @@ function App() {
                   element={
                     <PrivateRoute allowedRoles={['TENANT']}>
                       <Invoices />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/invoices/:debtId"
+                  element={
+                    <PrivateRoute allowedRoles={['TENANT']}>
+                      <DebtDetail />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/invoices/:debtId/success"
+                  element={
+                    <PrivateRoute allowedRoles={['TENANT']}>
+                      <PaymentSuccess />
                     </PrivateRoute>
                   }
                 />
