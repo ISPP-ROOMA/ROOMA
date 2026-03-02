@@ -11,7 +11,6 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../../store/authStore'
 import {
   type PendingReviewApartment,
   type ReviewDTO,
@@ -86,8 +85,6 @@ function ReviewCard({ review, type }: { review: ReviewDTO; type: Tab }) {
 
 export default function MyReviews() {
   const navigate = useNavigate()
-  const { userId } = useAuthStore()
-  const numericUserId = Number(userId)
 
   const [tab, setTab] = useState<Tab>('received')
   const [receivedReviews, setReceivedReviews] = useState<ReviewDTO[]>([])
@@ -96,19 +93,14 @@ export default function MyReviews() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!numericUserId) return
-    Promise.all([
-      getReceivedReviews(numericUserId),
-      getMadeReviews(numericUserId),
-      getPendingReviewApartments(),
-    ])
+    Promise.all([getReceivedReviews(), getMadeReviews(), getPendingReviewApartments()])
       .then(([received, made, pending]) => {
         setReceivedReviews(received)
         setMadeReviews(made)
         setPendingApartments(pending)
       })
       .finally(() => setLoading(false))
-  }, [numericUserId])
+  }, [])
 
   const reviews = tab === 'received' ? receivedReviews : madeReviews
 

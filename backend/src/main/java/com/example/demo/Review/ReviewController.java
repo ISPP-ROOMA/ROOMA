@@ -51,31 +51,29 @@ public class ReviewController {
         return new ResponseEntity<>(ReviewDTO.fromEntity(review), HttpStatus.CREATED);
     }
 
-    @GetMapping("/made/{userId}")
-    public ResponseEntity<List<ReviewDTO>> getMadeReviews(@PathVariable Integer userId) {
-        List<ReviewEntity> reviews = reviewService.findMadeReviewsByUserId(userId);
+    @GetMapping("/made")
+    public ResponseEntity<List<ReviewDTO>> getMadeReviews() {
+        List<ReviewEntity> reviews = reviewService.findMadeReviewsByUserId();
         return ResponseEntity.ok(ReviewDTO.fromEntityList(reviews));
     }
 
-    @GetMapping("/received/{userId}")
-    public ResponseEntity<List<ReviewDTO>> getReceivedReviews(@PathVariable Integer userId) {
-        List<ReviewEntity> reviews = reviewService.findReceivedReviewsByUserId(userId);
+    @GetMapping("/received")
+    public ResponseEntity<List<ReviewDTO>> getReceivedReviews() {
+        List<ReviewEntity> reviews = reviewService.findReceivedReviewsByUserId();
         return ResponseEntity.ok(ReviewDTO.fromEntityList(reviews));
     }
 
-    @GetMapping("/made/{userId}/apartment/{apartmentId}")
+    @GetMapping("/made/apartment/{apartmentId}")
     public ResponseEntity<List<ReviewDTO>> getMadeReviewsByApartment(
-            @PathVariable Integer userId,
             @PathVariable Integer apartmentId) {
-        List<ReviewEntity> reviews = reviewService.findMadeReviewsByUserIdAndApartmentId(userId, apartmentId);
+        List<ReviewEntity> reviews = reviewService.findMadeReviewsByUserIdAndApartmentId(apartmentId);
         return ResponseEntity.ok(ReviewDTO.fromEntityList(reviews));
     }
 
-    @GetMapping("/received/{userId}/apartment/{apartmentId}")
+    @GetMapping("/received/apartment/{apartmentId}")
     public ResponseEntity<List<ReviewDTO>> getReceivedReviewsByApartment(
-            @PathVariable Integer userId,
             @PathVariable Integer apartmentId) {
-        List<ReviewEntity> reviews = reviewService.findReceivedReviewsByUserIdAndApartmentId(userId, apartmentId);
+        List<ReviewEntity> reviews = reviewService.findReceivedReviewsByUserIdAndApartmentId(apartmentId);
         return ResponseEntity.ok(ReviewDTO.fromEntityList(reviews));
     }
 

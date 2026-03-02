@@ -83,9 +83,9 @@ export const submitReviewAsLandlord = async (payload: CreateReviewPayload): Prom
   return res.data
 }
 
-export const getReceivedReviews = async (userId: number): Promise<ReviewDTO[]> => {
+export const getReceivedReviews = async (): Promise<ReviewDTO[]> => {
   try {
-    const res = await api.get<ReviewDTO[]>(`/reviews/received/${userId}`)
+    const res = await api.get<ReviewDTO[]>('/reviews/received')
     return res.data
   } catch (error) {
     console.error('Error fetching received reviews:', error)
@@ -93,9 +93,9 @@ export const getReceivedReviews = async (userId: number): Promise<ReviewDTO[]> =
   }
 }
 
-export const getMadeReviews = async (userId: number): Promise<ReviewDTO[]> => {
+export const getMadeReviews = async (): Promise<ReviewDTO[]> => {
   try {
-    const res = await api.get<ReviewDTO[]>(`/reviews/made/${userId}`)
+    const res = await api.get<ReviewDTO[]>('/reviews/made')
     return res.data
   } catch (error) {
     console.error('Error fetching made reviews:', error)

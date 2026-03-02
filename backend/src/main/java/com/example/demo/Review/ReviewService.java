@@ -143,20 +143,24 @@ public class ReviewService {
         return saved;
     }
 
-    public List<ReviewEntity> findMadeReviewsByUserId(Integer userId) {
-        return reviewRepository.findMadeReviewsByUserIdAndPublished(userId);
+    public List<ReviewEntity> findMadeReviewsByUserId() {
+        UserEntity user = userService.getUserProfile();
+        return reviewRepository.findMadeReviewsByUserIdAndPublished(user.getId());
     }
 
-    public List<ReviewEntity> findReceivedReviewsByUserId(Integer userId) {
-        return reviewRepository.findReceivedReviewsByUserIdAndPublished(userId);
+    public List<ReviewEntity> findReceivedReviewsByUserId() {
+        UserEntity user = userService.getUserProfile();
+        return reviewRepository.findReceivedReviewsByUserIdAndPublished(user.getId());
     }
 
-    public List<ReviewEntity> findMadeReviewsByUserIdAndApartmentId(Integer userId, Integer apartmentId) {
-        return reviewRepository.findMadeReviewsByUserIdAndApartmentId(userId, apartmentId);
+    public List<ReviewEntity> findMadeReviewsByUserIdAndApartmentId(Integer apartmentId) {
+        UserEntity user = userService.getUserProfile();
+        return reviewRepository.findMadeReviewsByUserIdAndApartmentId(user.getId(), apartmentId);
     }
 
-    public List<ReviewEntity> findReceivedReviewsByUserIdAndApartmentId(Integer userId, Integer apartmentId) {
-        return reviewRepository.findReceivedReviewsByUserIdAndApartmentId(userId, apartmentId);
+    public List<ReviewEntity> findReceivedReviewsByUserIdAndApartmentId(Integer apartmentId) {
+        UserEntity user = userService.getUserProfile();
+        return reviewRepository.findReceivedReviewsByUserIdAndApartmentId(user.getId(), apartmentId);
     }
 
     private void checkAndPublishMutualReviews(ReviewEntity review) {
