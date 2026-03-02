@@ -1,5 +1,5 @@
 import { api } from './api'
-import { ensureCurrentUserId } from './auth.service'
+import { useAuthStore } from '../store/authStore'
 
 export type RequestStatus = 'PENDING' | 'ON_HOLD' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED'
 export type ApartmentStatus = 'FREE' | 'PAUSED' | 'RENTED'
@@ -126,7 +126,7 @@ function mapLandlordRequest(dto: LandlordRequestDTO): RequestItem {
 
 export async function getSentRequests(): Promise<RequestItem[]> {
   try {
-    const response = await api.get<TenantRequestDTO[]>('/apartments-matches/my-requests/ACTIVE')
+    const response = await api.get<TenantRequestDTO[]>('/apartments-matches/my/my-requests/ACTIVE')
     return response.data.map(mapTenantRequest)
   } catch (error) {
     console.error('Error fetching tenant requests:', error)
@@ -135,7 +135,7 @@ export async function getSentRequests(): Promise<RequestItem[]> {
 }
 
 export async function getReceivedRequests(): Promise<RequestItem[]> {
-  const userId = await ensureCurrentUserId()
+  const userId = useAuthStore.getState().userId
 
   if (!userId) {
     return []
@@ -153,9 +153,9 @@ export async function getReceivedRequests(): Promise<RequestItem[]> {
 }
 
 export async function acceptRequest(apartmentMatchId: number): Promise<void> {
-  await api.post(`/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-request`, true)
+  await api.post(`/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-request?interest=true`)
 }
 
 export async function rejectRequest(apartmentMatchId: number): Promise<void> {
-  await api.post(`/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-request`, false)
+  await api.post(`/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-request?interest=false`)
 }

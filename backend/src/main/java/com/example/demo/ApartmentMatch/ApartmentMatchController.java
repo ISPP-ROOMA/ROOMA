@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchDTO;
@@ -79,7 +80,7 @@ public class ApartmentMatchController {
 
     @PreAuthorize("hasRole('LANDLORD')")
     @PostMapping("/apartmentMatch/{apartmentMatchId}/respond-request")
-    public ResponseEntity<ApartmentMatchDTO> processLandlordAction(@PathVariable Integer apartmentMatchId, @RequestBody boolean interest) {
+    public ResponseEntity<ApartmentMatchDTO> processLandlordAction(@PathVariable Integer apartmentMatchId, @RequestParam boolean interest) {
         ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.processLandlordAction(apartmentMatchId, interest));
         return ResponseEntity.ok(apartmentMatch);
     }
