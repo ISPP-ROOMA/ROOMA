@@ -22,7 +22,7 @@ public interface ApartmentRepository extends JpaRepository<ApartmentEntity, Inte
                 @Param("maxPrice") Double maxPrice,
                 @Param("state") ApartmentState state);
 
-        @Query("SELECT a FROM ApartmentEntity a JOIN a.members m WHERE m.user.id = :userId")
+        @Query("SELECT a.user FROM ApartmentEntity a WHERE a.id = :apartmentId")
         Optional<UserEntity> findLandlordByApartmentId(Integer apartmentId);
 
         public List<ApartmentEntity> findAllByUserId(Integer userId);

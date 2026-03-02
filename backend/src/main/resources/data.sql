@@ -12,15 +12,15 @@ DELETE FROM users;
 
 -- Arrendadores (LANDLORD)
 INSERT INTO users (id, email, password, role, hobbies, schedule, profession) VALUES 
-(1, 'landlord1@test.com', '$2a$10$vI8aWNk0/./1cE/gY9c/..c.00gTzB.P2w.0.0.0.0.0.0.0.0.0', 'LANDLORD', 'Lectura, Cine', 'Mañanas libres', 'Inversor Inmobiliario'),
-(2, 'landlord2@test.com', '$2a$10$vI8aWNk0/./1cE/gY9c/..c.00gTzB.P2w.0.0.0.0.0.0.0.0.0', 'LANDLORD', 'Deportes', 'Horario de oficina', 'Arquitecta');
+(1, 'landlord1@test.com', '$2a$10$3H7Z1BcLmwtP706nnCBHoujdNHe3Zwao.0xyYeoQH33S05OaJVeJe', 'LANDLORD', 'Lectura, Cine', 'Mañanas libres', 'Inversor Inmobiliario'),
+(2, 'landlord2@test.com', '$2a$10$3H7Z1BcLmwtP706nnCBHoujdNHe3Zwao.0xyYeoQH33S05OaJVeJe', 'LANDLORD', 'Deportes', 'Horario de oficina', 'Arquitecta');
 
 -- Inquilinos (TENANT)
 INSERT INTO users (id, email, password, role, hobbies, schedule, profession) VALUES 
-(3, 'tenant1@test.com', '$2a$10$vI8aWNk0/./1cE/gY9c/..c.00gTzB.P2w.0.0.0.0.0.0.0.0.0', 'TENANT', 'Videojuegos, Música', 'Estudiante de tarde', 'Estudiante Universitario'),
-(4, 'tenant2@test.com', '$2a$10$vI8aWNk0/./1cE/gY9c/..c.00gTzB.P2w.0.0.0.0.0.0.0.0.0', 'TENANT', 'Fotografía, Viajes', 'Horario intensivo mañana', 'Diseñadora Gráfica'),
-(5, 'tenant3@test.com', '$2a$10$vI8aWNk0/./1cE/gY9c/..c.00gTzB.P2w.0.0.0.0.0.0.0.0.0', 'TENANT', 'Cocina, Yoga', 'Teletrabajo', 'Desarrollador Software'),
-(6, 'tenant4@test.com', '$2a$10$vI8aWNk0/./1cE/gY9c/..c.00gTzB.P2w.0.0.0.0.0.0.0.0.0', 'TENANT', 'Lectura, Cine', 'Horario rotativo', 'Enfermero');
+(3, 'tenant1@test.com', '$2a$10$3H7Z1BcLmwtP706nnCBHoujdNHe3Zwao.0xyYeoQH33S05OaJVeJe', 'TENANT', 'Videojuegos, Música', 'Estudiante de tarde', 'Estudiante Universitario'),
+(4, 'tenant2@test.com', '$2a$10$3H7Z1BcLmwtP706nnCBHoujdNHe3Zwao.0xyYeoQH33S05OaJVeJe', 'TENANT', 'Fotografía, Viajes', 'Horario intensivo mañana', 'Diseñadora Gráfica'),
+(5, 'tenant3@test.com', '$2a$10$3H7Z1BcLmwtP706nnCBHoujdNHe3Zwao.0xyYeoQH33S05OaJVeJe', 'TENANT', 'Cocina, Yoga', 'Teletrabajo', 'Desarrollador Software'),
+(6, 'tenant4@test.com', '$2a$10$3H7Z1BcLmwtP706nnCBHoujdNHe3Zwao.0xyYeoQH33S05OaJVeJe', 'TENANT', 'Lectura, Cine', 'Horario rotativo', 'Enfermero');
 
 
 -- ==========================================
