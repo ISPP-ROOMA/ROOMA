@@ -1,18 +1,28 @@
 package com.example.demo.Auth;
 
-import com.example.demo.Auth.DTOs.AuthResult;
-import com.example.demo.Exceptions.*;
-import com.example.demo.Jwt.JwtService;
-import com.example.demo.User.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Optional;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.demo.Auth.DTOs.AuthResult;
+import com.example.demo.Exceptions.InvalidHashException;
+import com.example.demo.Exceptions.InvalidPasswordException;
+import com.example.demo.Exceptions.InvalidRefreshTokenException;
+import com.example.demo.Exceptions.InvalidRoleException;
+import com.example.demo.Exceptions.ResourceNotFoundException;
+import com.example.demo.Exceptions.UserExistsException;
+import com.example.demo.Jwt.JwtService;
+import com.example.demo.User.RefreshTokenEntity;
+import com.example.demo.User.RefreshTokenService;
+import com.example.demo.User.Role;
+import com.example.demo.User.UserEntity;
+import com.example.demo.User.UserService;
 
 @Service
 public class AuthService {
@@ -59,7 +69,7 @@ public class AuthService {
 
         refreshTokenService.save(newRefreshToken);
 
-        return new AuthResult(accessToken, refreshToken, newUser.getRole().name());
+        return new AuthResult(accessToken, refreshToken, newUser.getRole().name(), newUser.getId());
     }
 
     @Transactional
@@ -85,7 +95,7 @@ public class AuthService {
 
         refreshTokenService.save(rt);
 
-        return new AuthResult(accessToken, refreshToken, user.getRole().name());
+        return new AuthResult(accessToken, refreshToken, user.getRole().name(), user.getId());
     }
 
     @Transactional
@@ -119,7 +129,7 @@ public class AuthService {
 
         refreshTokenService.save(storedToken);
 
-        return new AuthResult(newAccessToken, newRefreshToken, user.getRole().name());
+        return new AuthResult(newAccessToken, newRefreshToken, user.getRole().name(), user.getId());
     }
 
     @Transactional
@@ -160,6 +170,3 @@ public class AuthService {
     }
 
 }
-
-
-

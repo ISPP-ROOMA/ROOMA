@@ -1,16 +1,17 @@
 package com.example.demo.Apartment;
 
-import com.example.demo.Apartment.DTOs.CreateApartment;
-import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
-import com.example.demo.Exceptions.ResourceNotFoundException;
-import com.example.demo.User.UserEntity;
-import com.example.demo.User.UserService;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.example.demo.Apartment.DTOs.CreateApartment;
+import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
+import com.example.demo.Exceptions.ResourceNotFoundException;
+import com.example.demo.User.UserEntity;
+import com.example.demo.User.UserService;
 
 @Service
 public class ApartmentService {
@@ -20,8 +21,8 @@ public class ApartmentService {
     private final ApartmentPhotoService apartmentPhotoService;
 
     public ApartmentService(ApartmentRepository apartmentsRepository,
-                            UserService userService,
-                            ApartmentPhotoService apartmentPhotoService) {
+            UserService userService,
+            ApartmentPhotoService apartmentPhotoService) {
         this.apartmentsRepository = apartmentsRepository;
         this.userService = userService;
         this.apartmentPhotoService = apartmentPhotoService;
@@ -95,6 +96,11 @@ public class ApartmentService {
     @Transactional(readOnly = true)
     public List<ApartmentEntity> search(String ubication, Double minPrice, Double maxPrice, ApartmentState state) {
         return apartmentsRepository.search(ubication, minPrice, maxPrice, state);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ApartmentEntity> getDeckForCandidate(Integer candidateId) {
+        return apartmentsRepository.findDeckForCandidate(candidateId);
     }
 
 }

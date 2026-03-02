@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchDTO;
-import com.example.demo.User.UserEntity;
 
 @RestController
 @RequestMapping("/api/apartments-matches")
@@ -29,31 +28,39 @@ public class ApartmentMatchController {
 
     @GetMapping
     public ResponseEntity<List<ApartmentMatchDTO>> getAllApartmentMatches() {
-        List<ApartmentMatchDTO> apartmentMatches = ApartmentMatchDTO.fromApartmentMatchEntityList(apartmentMatchService.findAllApartmentMatches());
+        List<ApartmentMatchDTO> apartmentMatches = ApartmentMatchDTO
+                .fromApartmentMatchEntityList(apartmentMatchService.findAllApartmentMatches());
         return ResponseEntity.ok(apartmentMatches);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApartmentMatchDTO> getApartmentMatchById(@PathVariable Integer id) {
-        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.findApartmentMatchById(id));
+        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO
+                .fromApartmentMatchEntity(apartmentMatchService.findApartmentMatchById(id));
         return ResponseEntity.ok(apartmentMatch);
     }
 
     @GetMapping("/candidate/{candidateId}/apartment/{apartmentId}")
-    public ResponseEntity<ApartmentMatchDTO> getApartmentMatchByCandidateAndApartment(@PathVariable Integer candidateId, @PathVariable Integer apartmentId) {
-        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.findApartmentMatchByCandidateAndApartment(candidateId, apartmentId));
+    public ResponseEntity<ApartmentMatchDTO> getApartmentMatchByCandidateAndApartment(@PathVariable Integer candidateId,
+            @PathVariable Integer apartmentId) {
+        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(
+                apartmentMatchService.findApartmentMatchByCandidateAndApartment(candidateId, apartmentId));
         return ResponseEntity.ok(apartmentMatch);
     }
 
     @GetMapping("/candidate/{candidateId}/status/{matchStatus}")
-    public ResponseEntity<List<ApartmentMatchDTO>> getApartmentMatchesByCandidateId(@PathVariable Integer candidateId, @PathVariable MatchStatus matchStatus) {
-        List<ApartmentMatchDTO> apartmentMatches = ApartmentMatchDTO.fromApartmentMatchEntityList(apartmentMatchService.findMatchesByCandidateIdAndMatchStatus(candidateId,matchStatus));
+    public ResponseEntity<List<ApartmentMatchDTO>> getApartmentMatchesByCandidateId(@PathVariable Integer candidateId,
+            @PathVariable MatchStatus matchStatus) {
+        List<ApartmentMatchDTO> apartmentMatches = ApartmentMatchDTO.fromApartmentMatchEntityList(
+                apartmentMatchService.findMatchesByCandidateIdAndMatchStatus(candidateId, matchStatus));
         return ResponseEntity.ok(apartmentMatches);
     }
 
     @GetMapping("/apartment/{apartmentId}/status/{matchStatus}")
-    public ResponseEntity<List<ApartmentMatchDTO>> getApartmentMatchesByApartmentId(@PathVariable Integer apartmentId, @PathVariable MatchStatus matchStatus) {
-        List<ApartmentMatchDTO> apartmentMatches = ApartmentMatchDTO.fromApartmentMatchEntityList(apartmentMatchService.findMatchesByApartmentIdAndMatchStatus(apartmentId,matchStatus));
+    public ResponseEntity<List<ApartmentMatchDTO>> getApartmentMatchesByApartmentId(@PathVariable Integer apartmentId,
+            @PathVariable MatchStatus matchStatus) {
+        List<ApartmentMatchDTO> apartmentMatches = ApartmentMatchDTO.fromApartmentMatchEntityList(
+                apartmentMatchService.findMatchesByApartmentIdAndMatchStatus(apartmentId, matchStatus));
         return ResponseEntity.ok(apartmentMatches);
     }
 
@@ -62,32 +69,40 @@ public class ApartmentMatchController {
         apartmentMatchService.finalizeMatchProcess(apartmentId);
         return ResponseEntity.noContent().build();
     }
+
     @PostMapping("/swipe/candidate/{candidateId}/apartment/{apartmentId}/action/{isCandidateAction}")
-    public ResponseEntity<?> processSwipe(@PathVariable Integer candidateId, @PathVariable Integer apartmentId, 
-        @PathVariable boolean isCandidateAction, @RequestBody boolean interest, @AuthenticationPrincipal UserEntity authenticatedUser) {
-        if (authenticatedUser == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You must be authenticated to perform swipe actions");
+    public ResponseEntity<?> processSwipe(@PathVariable Integer candidateId, @PathVariable Integer apartmentId,
+            @PathVariable boolean isCandidateAction, @RequestBody boolean interest,
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("You must be authenticated to perform swipe actions");
         }
+
+        com.example.demo.User.UserEntity authenticatedUser = apartmentMatchService
+                .getUserByEmail(userDetails.getUsername());
         if (authenticatedUser == null || !authenticatedUser.getId().equals(candidateId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only perform swipe actions for your own user");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("You can only perform swipe actions for your own user");
         }
-        // Hay que añadir tambien una verificacion para comprobar que la vivienda es del usuario que realiza la acción de swip
 
-        // Si el usuario autenticado es el candidato y además es el arrendador, debe de devolver un 403 Forbidden, ya que no puede realizar acciones de swipe sobre un apartamento que él mismo ha publicado
-
-        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.processSwipe(candidateId, apartmentId, isCandidateAction, interest));
+        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(
+                apartmentMatchService.processSwipe(candidateId, apartmentId, isCandidateAction, interest));
         return ResponseEntity.ok(apartmentMatch);
     }
 
     @PatchMapping("/apartmentMatch/{apartmentMatchId}/status/successful")
     public ResponseEntity<ApartmentMatchDTO> updateApartmentMatchStatus(@PathVariable Integer apartmentMatchId) {
-        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.successfulMatch(apartmentMatchId));
+        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO
+                .fromApartmentMatchEntity(apartmentMatchService.successfulMatch(apartmentMatchId));
         return ResponseEntity.ok(apartmentMatch);
     }
 
     @PatchMapping("/apartmentMatch/{apartmentMatchId}/status/canceled")
     public ResponseEntity<ApartmentMatchDTO> cancelApartmentMatch(@PathVariable Integer apartmentMatchId) {
-        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.cancelMatch(apartmentMatchId));
+        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO
+                .fromApartmentMatchEntity(apartmentMatchService.cancelMatch(apartmentMatchId));
         return ResponseEntity.ok(apartmentMatch);
-    } 
+    }
 }
