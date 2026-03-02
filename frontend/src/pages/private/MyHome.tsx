@@ -1,77 +1,77 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getUserProfile, getUser } from '../../service/users.service'
-import type { User } from '../../service/users.service'
-import { getAllApartments, getApartmentPhotos, type ApartmentDTO, type ApartmentPhotoDTO, type ApartmentMemberDTO } from '../../service/apartment.service'
-import { api } from '../../service/api'
+import { getUserProfile, type User } from '../../service/users.service'
+import {
+  getMyHomeSnapshot,
+  type ApartmentHomeDTO,
+  type RoommateDTO,
+} from '../../service/apartment.service'
+
+const currencyFormatter = new Intl.NumberFormat('es-ES', {
+  style: 'currency',
+  currency: 'EUR',
+  minimumFractionDigits: 2,
+})
+
+const dateFormatter = new Intl.DateTimeFormat('es-ES', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+})
+
+const formatCurrency = (value?: number) => currencyFormatter.format(Number(value ?? 0))
+
+const formatDate = (value?: string) => {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return dateFormatter.format(date)
+}
+
+function RoommateAvatar({ roommate }: { roommate: RoommateDTO }) {
+  const initial = roommate.email ? roommate.email[0]?.toUpperCase() : '?'
+
+  if (roommate.profileImageUrl) {
+    return (
+      <img
+        src={roommate.profileImageUrl}
+        alt={roommate.email}
+        className="w-12 h-12 rounded-full object-cover"
+      />
+    )
+  }
+
+  return (
+    <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-lg font-semibold">
+      {initial}
+    </div>
+  )
+}
 
 export default function MyHome() {
   const [userData, setUserData] = useState<User | null>(null)
+  const [homeData, setHomeData] = useState<ApartmentHomeDTO | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [currentApartment, setCurrentApartment] = useState<ApartmentDTO | null>(null)
-  const [roommates, setRoommates] = useState<Array<{ user: User; role: string; joinDate?: string }> | null>(null)
-  const [photos, setPhotos] = useState<ApartmentPhotoDTO[]>([])
-  const [selectedPhoto, setSelectedPhoto] = useState<number>(0)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedPhoto, setSelectedPhoto] = useState(0)
 
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await getUserProfile()
-        setUserData(res ?? null)
+        const profile = await getUserProfile()
+        setUserData(profile ?? null)
 
-        if (res && res.id) {
-          const apartments = await getAllApartments()
-          const found = apartments.find((a) =>
-            !!a.members && a.members.some((m) => m.userId === Number(res.id))
-          )
-          setCurrentApartment(found ?? null)
-
-          if (found && found.members && found.members.length) {
-            // Map members to include user details and joinDate
-            const members: ApartmentMemberDTO[] = found.members
-
-            try {
-              console.debug('Apartment members from API:', members)
-              const usersWithMeta = await Promise.all(
-                members.map(async (m) => {
-                  const u = await getUser(m.userId)
-                  return { user: u as User | undefined, role: m.role, joinDate: m.joinDate, userId: m.userId }
-                })
-              )
-              console.debug('Fetched users for members:', usersWithMeta)
-
-              // If some users are missing, try a fallback: request all users and map by id
-              const missing = usersWithMeta.filter((x) => !x.user)
-              if (missing.length > 0) {
-                try {
-                  const allResp = await api.get('/users')
-                  const allUsers = allResp.data
-                  const mapped = usersWithMeta.map((x) => {
-                    if (!x.user) {
-                      const foundUser = allUsers.find((u: any) => Number(u.id) === Number(x.userId))
-                      return { ...x, user: foundUser }
-                    }
-                    return x
-                  })
-                  console.debug('Fallback mapped users:', mapped)
-                  setRoommates(mapped.filter((x) => x.user && Number(x.user.id) !== Number(res.id)))
-                  return
-                } catch (e) {
-                  console.warn('Fallback fetch all users failed', e)
-                }
-              }
-
-              setRoommates(usersWithMeta.filter((x) => x.user && Number(x.user.id) !== Number(res.id)) as any)
-            } catch (e) {
-              console.error('Error fetching roommates', e)
-              setRoommates([])
-            }
-          } else {
-            setRoommates([])
-          }
+        const snapshot = await getMyHomeSnapshot()
+        if (!snapshot) {
+          setHomeData(null)
+          setError('Aún no tienes un piso asignado en Rooma.')
+        } else {
+          setHomeData(snapshot)
+          setError(null)
         }
       } catch (e) {
         console.error(e)
+        setError('No se pudo cargar la información del piso.')
       } finally {
         setIsLoading(false)
       }
@@ -81,112 +81,209 @@ export default function MyHome() {
   }, [])
 
   useEffect(() => {
-    if (!currentApartment) return
+    setSelectedPhoto(0)
+  }, [homeData?.photos?.length])
 
-    const loadPhotos = async () => {
-      try {
-        const imgs = await getApartmentPhotos(currentApartment.id)
-        setPhotos(imgs)
-        setSelectedPhoto(0)
-      } catch (e) {
-        console.error('Error loading photos', e)
-        setPhotos([])
-      }
+  const galleryPhotos = useMemo(() => {
+    if (!homeData?.photos?.length) {
+      return homeData?.apartment?.coverImageUrl
+        ? [
+            {
+              id: -1,
+              url: homeData.apartment.coverImageUrl,
+              publicId: 'cover',
+              orden: 0,
+              portada: true,
+            },
+          ]
+        : []
     }
+    return homeData.photos
+  }, [homeData])
 
-    void loadPhotos()
-  }, [currentApartment])
+  if (isLoading) return <p className="text-center mt-10 text-gray-500">Cargando tu piso...</p>
+  if (error && !homeData) return <p className="text-center mt-10 text-red-500">{error}</p>
+  if (!homeData)
+    return (
+      <p className="text-center mt-10 text-gray-600">
+        No estás asignado a ningún piso en el sistema.
+      </p>
+    )
 
-  if (isLoading) return <p className="text-center mt-10 text-gray-500">Cargando...</p>
-  if (!userData) return <p className="text-center mt-10 text-red-500">Error al cargar el perfil</p>
+  const { apartment, roommates = [], billing } = homeData
+  const currentUserMembership = roommates.find((mate) => mate.currentUser)
+  const otherRoommates = roommates.filter((mate) => !mate.currentUser)
+  const heroImage = galleryPhotos[selectedPhoto]?.url ?? ''
+  const pendingAmount = Number(billing?.pendingAmount ?? 0)
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[70vh] p-6 bg-base-200">
-      <div className="w-full max-w-5xl">
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="md:flex">
-            <div className="md:w-2/3 p-4">
-              {currentApartment ? (
-                <>
-                  <div className="rounded-md overflow-hidden bg-gray-100">
-                    <img
-                      src={photos && photos.length ? photos[selectedPhoto].url : currentApartment.coverImageUrl ?? ''}
-                      alt={currentApartment.title}
-                      className="w-full h-64 md:h-80 object-cover"
-                    />
+    <section className="bg-base-200 min-h-[70vh] py-8 px-4">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <header className="bg-white rounded-xl shadow-sm p-6 flex flex-col gap-2">
+          <p className="text-sm uppercase tracking-wide text-primary/80">Mi piso</p>
+          <h1 className="text-3xl font-semibold leading-tight">{apartment.title}</h1>
+          <p className="text-base text-base-content/70">{apartment.ubication}</p>
+          <div className="flex flex-wrap gap-4 text-sm text-base-content/80">
+            <span className="badge badge-outline">{apartment.state}</span>
+            {userData && (
+              <span>
+                Rol en Rooma: <strong>{userData.role}</strong>
+              </span>
+            )}
+            {currentUserMembership && (
+              <span>Miembro desde {formatDate(currentUserMembership.joinDate)}</span>
+            )}
+            <span>{roommates.length} personas viviendo aquí</span>
+          </div>
+        </header>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            <article className="bg-white rounded-xl shadow overflow-hidden">
+              <div className="w-full h-80 bg-base-200">
+                {heroImage ? (
+                  <img
+                    src={heroImage}
+                    alt={apartment.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-base-content/50">
+                    Añade fotos para este piso
                   </div>
-
-                  {photos && photos.length > 1 && (
-                    <div className="mt-3 flex gap-2 overflow-x-auto">
-                      {photos.map((p, idx) => (
-                        <button
-                          key={p.id}
-                          onClick={() => setSelectedPhoto(idx)}
-                          className={`w-20 h-14 rounded overflow-hidden border ${idx === selectedPhoto ? 'border-primary' : 'border-transparent'}`}
-                        >
-                          <img src={p.url} alt={`img-${idx}`} className="w-full h-full object-cover" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="mt-4">
-                    <h2 className="text-2xl font-semibold">{currentApartment.title}</h2>
-                    <p className="text-sm text-gray-500">{currentApartment.ubication}</p>
-                    <p className="mt-3 text-gray-700 leading-relaxed">{currentApartment.description}</p>
-
-                    <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-2">
-                      <span className="text-lg font-medium">€{currentApartment.price}</span>
-                      <span className="badge badge-outline">{currentApartment.state}</span>
-                      <span className="text-sm text-gray-500">{currentApartment.bills}</span>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <p className="text-sm text-gray-600 mt-4">No estás asignado a ningún piso en el sistema.</p>
+                )}
+              </div>
+              {galleryPhotos.length > 1 && (
+                <div className="px-4 py-3 border-t flex gap-3 overflow-x-auto">
+                  {galleryPhotos.map((photo, index) => (
+                    <button
+                      key={photo.id}
+                      onClick={() => setSelectedPhoto(index)}
+                      className={`w-20 h-16 rounded-md overflow-hidden border transition ${index === selectedPhoto ? 'border-primary' : 'border-base-200'}`}
+                    >
+                      <img
+                        src={photo.url}
+                        alt={`Foto ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
               )}
-            </div>
+            </article>
 
-            <aside className="md:w-1/3 p-4 border-l">
-              <div className="mb-4">
-                <Link to={`/invoices?apartmentId=${currentApartment?.id ?? ''}`} className="btn btn-primary btn-block">
+            <article className="bg-white rounded-xl shadow p-6 space-y-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-sm text-base-content/60">Precio mensual</p>
+                  <p className="text-3xl font-semibold">{formatCurrency(apartment.price)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-base-content/60">Gastos incluidos</p>
+                  <p className="text-lg font-medium">{apartment.bills || 'No especificado'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-base-content/60">Estado</p>
+                  <p className="text-lg font-medium">{apartment.state}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-base-content/60">Personas viviendo</p>
+                  <p className="text-lg font-medium">{roommates.length}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-base-content/60 mb-1">Descripción</p>
+                <p className="text-base leading-relaxed text-base-content/80">
+                  {apartment.description ||
+                    'El propietario todavía no ha añadido una descripción detallada.'}
+                </p>
+              </div>
+            </article>
+          </div>
+
+          <div className="space-y-6">
+            <article className="bg-white rounded-xl shadow p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">Resumen de facturas</h3>
+                  <p className="text-sm text-base-content/60">Controla tus próximos pagos</p>
+                </div>
+                <Link to="/invoices" className="btn btn-sm btn-primary">
                   Ver facturas
                 </Link>
               </div>
-
-              <div className="bg-base-100 p-3 rounded">
-                <h4 className="font-semibold">Compañeros de piso</h4>
-                {roommates && roommates.length > 0 ? (
-                  <ul className="mt-3 space-y-3">
-                    {roommates.map((r) => (
-                      <li key={(r.user && r.user.id) || Math.random()} className="flex items-start gap-3">
-                        <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-lg">
-                          {r.user && r.user.email ? r.user.email[0].toUpperCase() : '?'}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">{r.user?.email}</span>
-                            <span className="text-xs text-gray-400">{r.role}</span>
-                          </div>
-                          <div className="mt-1 text-xs text-gray-500">{r.user?.profession ?? r.user?.hobbies ?? ''}</div>
-                          <div className="mt-1 text-xs text-gray-400">Ingreso: {r.joinDate ?? '-'}</div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="mt-2 text-xs text-gray-500">No hay compañeros de piso registrados.</p>
-                )}
+              <div className="rounded-lg bg-base-200/60 p-4 space-y-3">
+                <div>
+                  <p className="text-sm text-base-content/60">Pendiente de pago</p>
+                  <p className="text-2xl font-semibold">{formatCurrency(pendingAmount)}</p>
+                </div>
+                <div className="flex flex-col text-sm">
+                  <span className="text-base-content/60">Próximo vencimiento</span>
+                  <span className="font-medium">{formatDate(billing?.nextDueDate)}</span>
+                  <span className="text-xs text-base-content/50">
+                    Ref. {billing?.nextReference ?? '—'}
+                  </span>
+                </div>
+                <div className="text-sm">
+                  <span className="text-base-content/60">Deudas abiertas</span>
+                  <p className="font-medium">{billing?.pendingDebts ?? 0}</p>
+                </div>
               </div>
-            </aside>
-          </div>
-          <div className="p-4 border-t">
-            <Link to="/" className="link">
-              ← Volver al inicio
-            </Link>
+            </article>
+
+            <article className="bg-white rounded-xl shadow p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Personas con las que vivo</h3>
+                <span className="text-xs text-base-content/60">{roommates.length} integrantes</span>
+              </div>
+              {roommates.length ? (
+                <ul className="space-y-4">
+                  {roommates.map((roommate) => (
+                    <li key={roommate.memberId} className="flex items-start gap-3">
+                      <RoommateAvatar roommate={roommate} />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold">{roommate.email}</p>
+                            <p className="text-xs text-base-content/60">
+                              {roommate.memberRole}
+                              {roommate.currentUser ? ' · Tú' : ''}
+                            </p>
+                          </div>
+                          <span className="text-xs text-base-content/50">
+                            {formatDate(roommate.joinDate)}
+                          </span>
+                        </div>
+                        {(roommate.profession || roommate.hobbies || roommate.schedule) && (
+                          <p className="text-xs text-base-content/70 mt-1">
+                            {roommate.profession || roommate.hobbies || roommate.schedule}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-base-content/60">
+                  No hay compañeros registrados todavía.
+                </p>
+              )}
+              {otherRoommates.length === 0 && (
+                <p className="text-xs text-base-content/50 mt-3">
+                  Comparte el enlace de Rooma para invitar a tus compañeros.
+                </p>
+              )}
+            </article>
           </div>
         </div>
+
+        <div className="flex items-center justify-between text-sm text-base-content/60 pb-6">
+          <Link to="/" className="link">
+            ← Volver al inicio
+          </Link>
+          <span>Última actualización {formatDate(new Date().toISOString())}</span>
+        </div>
       </div>
-    </div>
+    </section>
   )
 }

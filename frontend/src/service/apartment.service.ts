@@ -17,6 +17,26 @@ export interface ApartmentMemberDTO {
   joinDate: string
 }
 
+export interface RoommateDTO {
+  memberId: number
+  userId: number
+  email: string
+  profession?: string
+  hobbies?: string
+  schedule?: string
+  profileImageUrl?: string
+  memberRole: string
+  joinDate: string
+  currentUser: boolean
+}
+
+export interface BillingSummaryDTO {
+  pendingDebts: number
+  pendingAmount: number
+  nextDueDate?: string
+  nextReference?: string
+}
+
 export interface ApartmentPhotoDTO {
   id: number
   url: string
@@ -35,6 +55,13 @@ export interface ApartmentDTO {
   state: string
   coverImageUrl?: string
   members?: ApartmentMemberDTO[]
+}
+
+export interface ApartmentHomeDTO {
+  apartment: ApartmentDTO
+  roommates: RoommateDTO[]
+  photos: ApartmentPhotoDTO[]
+  billing: BillingSummaryDTO
 }
 
 export interface SwipeActionDTO {
@@ -99,5 +126,15 @@ export const getAllApartments = async (): Promise<ApartmentDTO[]> => {
   } catch (error) {
     console.error('Error fetching all apartments:', error)
     return []
+  }
+}
+
+export const getMyHomeSnapshot = async (): Promise<ApartmentHomeDTO | null> => {
+  try {
+    const response = await api.get<ApartmentHomeDTO>(`/apartments/me/home`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching my home snapshot:', error)
+    return null
   }
 }

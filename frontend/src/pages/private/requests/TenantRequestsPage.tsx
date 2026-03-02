@@ -118,7 +118,6 @@ export default function TenantRequestsPage() {
                     <span className="font-semibold">Precio:</span> {request.monthlyPrice} €/mes
                   </p>
                 )}
-
               </div>
             </article>
           ))}

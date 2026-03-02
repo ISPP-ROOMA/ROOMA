@@ -43,7 +43,11 @@ export default function StepPhotos({ images, onChangeImages, maxImages = 10 }: S
           onChange={handlePickFiles}
         />
 
-        <button type="button" className="btn btn-primary rounded-full" onClick={() => inputRef.current?.click()}>
+        <button
+          type="button"
+          className="btn btn-primary rounded-full"
+          onClick={() => inputRef.current?.click()}
+        >
           Seleccionar fotos
         </button>
 

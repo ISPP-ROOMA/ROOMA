@@ -15,7 +15,11 @@ export default function Profile() {
   const [userData, setUserData] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentApartment, setCurrentApartment] = useState<ApartmentDTO | null>(null)
-  const [roommates, setRoommates] = useState<Array<{ user: User; role: string; joinDate?: string }> | null>(null)
+  const [roommates, setRoommates] = useState<Array<{
+    user: User
+    role: string
+    joinDate?: string
+  }> | null>(null)
 
   useEffect(() => {
     const profile = async () => {
@@ -24,8 +28,8 @@ export default function Profile() {
         setUserData(res || null)
         if (res && res.id) {
           const apartments = await getAllApartments()
-          const found = apartments.find((a) =>
-            !!a.members && a.members.some((m) => m.userId === Number(res.id))
+          const found = apartments.find(
+            (a) => !!a.members && a.members.some((m) => m.userId === Number(res.id))
           )
           setCurrentApartment(found ?? null)
           if (found && found.members && found.members.length) {
@@ -36,7 +40,12 @@ export default function Profile() {
               const usersWithMeta = await Promise.all(
                 members.map(async (m) => {
                   const u = await getUser(m.userId)
-                  return { user: u as User | undefined, role: m.role, joinDate: m.joinDate, userId: m.userId }
+                  return {
+                    user: u as User | undefined,
+                    role: m.role,
+                    joinDate: m.joinDate,
+                    userId: m.userId,
+                  }
                 })
               )
 
@@ -62,7 +71,9 @@ export default function Profile() {
                 }
               }
 
-              setRoommates(usersWithMeta.filter((x) => x.user && Number(x.user.id) !== Number(res.id)) as any)
+              setRoommates(
+                usersWithMeta.filter((x) => x.user && Number(x.user.id) !== Number(res.id)) as any
+              )
             } catch (e) {
               console.error('Error fetching roommates', e)
               setRoommates([])
@@ -107,12 +118,18 @@ export default function Profile() {
                 <p className="text-xs text-gray-500">{currentApartment.ubication}</p>
                 <div className="mt-2">
                   <Link
-                    to={userData.role === 'LANDLORD' ? `/apartments/${currentApartment.id}` : `/properties/${currentApartment.id}`}
+                    to={
+                      userData.role === 'LANDLORD'
+                        ? `/apartments/${currentApartment.id}`
+                        : `/properties/${currentApartment.id}`
+                    }
                     className="btn btn-sm btn-primary"
                   >
                     Ver detalle
                   </Link>
-                  <Link to="/invoices" className="btn btn-sm btn-outline">Facturas</Link>
+                  <Link to="/invoices" className="btn btn-sm btn-outline">
+                    Facturas
+                  </Link>
                 </div>
                 <div className="mt-3">
                   <h5 className="font-medium">Compañeros de piso</h5>
@@ -131,13 +148,17 @@ export default function Profile() {
                       ))}
                     </ul>
                   ) : (
-                    <p className="mt-2 text-xs text-gray-500">No hay compañeros de piso registrados.</p>
+                    <p className="mt-2 text-xs text-gray-500">
+                      No hay compañeros de piso registrados.
+                    </p>
                   )}
                 </div>
               </div>
             </div>
           ) : (
-            <div className="w-full mt-4 text-sm text-gray-600">No estás viviendo en ningún apartamento registrado.</div>
+            <div className="w-full mt-4 text-sm text-gray-600">
+              No estás viviendo en ningún apartamento registrado.
+            </div>
           )}
 
           <div className="flex flex-col gap-2 mt-4 w-full">

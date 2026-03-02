@@ -24,7 +24,7 @@ export const INITIAL_PUBLISH_FORM_DATA: PublishFormData = {
   deposit: 1,
   availableDate: '',
   includedBills: [],
-  images: []
+  images: [],
 }
 
 export const parsePrice = (value: string): number => {

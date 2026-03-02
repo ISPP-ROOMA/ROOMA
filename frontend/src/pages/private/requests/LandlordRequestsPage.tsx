@@ -44,9 +44,7 @@ export default function LandlordRequestsPage() {
 
   const updateRequestStatus = (requestId: number, status: RequestStatus) => {
     setRequests((prevRequests) =>
-      prevRequests.map((request) =>
-        request.id === requestId ? { ...request, status } : request
-      )
+      prevRequests.map((request) => (request.id === requestId ? { ...request, status } : request))
     )
   }
 
