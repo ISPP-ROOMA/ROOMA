@@ -40,35 +40,35 @@ function statusLabel(status: RequestStatus): string {
 export default function LandlordRequestsPage() {
   const [requests, setRequests] = useState<RequestItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [updatingRequestId, setUpdatingRequestId] = useState<number | null>(null)
+  const [updatingApartmentMatchId, setUpdatingApartmentMatchId] = useState<number | null>(null)
 
-  const updateRequestStatus = (requestId: number, status: RequestStatus) => {
+  const updateRequestStatus = (apartmentMatchId: number, status: RequestStatus) => {
     setRequests((prevRequests) =>
-      prevRequests.map((request) => (request.id === requestId ? { ...request, status } : request))
+      prevRequests.map((request) => (request.id === apartmentMatchId ? { ...request, status } : request))
     )
   }
 
-  const handleAccept = async (requestId: number) => {
+  const handleAccept = async (apartmentMatchId: number) => {
     try {
-      setUpdatingRequestId(requestId)
-      await acceptRequest(requestId)
-      updateRequestStatus(requestId, 'ACCEPTED')
+      setUpdatingApartmentMatchId(apartmentMatchId)
+      await acceptRequest(apartmentMatchId)
+      updateRequestStatus(apartmentMatchId, 'ACCEPTED')
     } catch (error) {
       console.error('Error accepting request:', error)
     } finally {
-      setUpdatingRequestId(null)
+      setUpdatingApartmentMatchId(null)
     }
   }
 
-  const handleReject = async (requestId: number) => {
+  const handleReject = async (apartmentMatchId: number) => {
     try {
-      setUpdatingRequestId(requestId)
-      await rejectRequest(requestId)
-      updateRequestStatus(requestId, 'REJECTED')
+      setUpdatingApartmentMatchId(apartmentMatchId)
+      await rejectRequest(apartmentMatchId)
+      updateRequestStatus(apartmentMatchId, 'REJECTED')
     } catch (error) {
       console.error('Error rejecting request:', error)
     } finally {
-      setUpdatingRequestId(null)
+      setUpdatingApartmentMatchId(null)
     }
   }
 
@@ -145,7 +145,7 @@ export default function LandlordRequestsPage() {
                       onClick={() => {
                         void handleReject(request.id)
                       }}
-                      disabled={updatingRequestId === request.id}
+                      disabled={updatingApartmentMatchId === request.id}
                     >
                       Rechazar
                     </button>
@@ -154,7 +154,7 @@ export default function LandlordRequestsPage() {
                       onClick={() => {
                         void handleAccept(request.id)
                       }}
-                      disabled={updatingRequestId === request.id}
+                      disabled={updatingApartmentMatchId === request.id}
                     >
                       Aceptar
                     </button>
