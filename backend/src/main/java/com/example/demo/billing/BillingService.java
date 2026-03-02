@@ -2,10 +2,14 @@ package com.example.demo.billing;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentService;
@@ -15,7 +19,7 @@ import com.example.demo.MemberApartment.ApartmentMemberEntity;
 import com.example.demo.MemberApartment.ApartmentMemberService;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
-import org.springframework.transaction.annotation.Transactional;
+import com.example.demo.billing.dto.BillingSummaryDTO;
 
 @Service
 public class BillingService {
@@ -115,6 +119,46 @@ public class BillingService {
         billEntity.setTenantDebts(debts);
 
         return billRepository.save(billEntity);
+    }
+
+    @Transactional(readOnly = true)
+    public BillingSummaryDTO getBillingSummaryForUser(Integer userId) {
+        List<TenantDebtEntity> debts = tenantDebtRepository.findByUserId(userId);
+
+        BigDecimal pendingAmount = debts.stream()
+                .filter(debt -> debt.getStatus() == DebtStatus.PENDING)
+                .map(TenantDebtEntity::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        int pendingCount = (int) debts.stream()
+                .filter(debt -> debt.getStatus() == DebtStatus.PENDING)
+                .count();
+
+        LocalDate nextDueDate = debts.stream()
+                .filter(debt -> debt.getStatus() == DebtStatus.PENDING)
+                .map(TenantDebtEntity::getBill)
+                .filter(Objects::nonNull)
+                .map(BillEntity::getDuDate)
+                .filter(Objects::nonNull)
+                .min(LocalDate::compareTo)
+                .orElse(null);
+
+        String nextReference = debts.stream()
+                .filter(debt -> debt.getStatus() == DebtStatus.PENDING)
+                .sorted(Comparator.comparing(
+                        d -> {
+                            BillEntity bill = d.getBill();
+                            return bill != null ? bill.getDuDate() : null;
+                        },
+                        Comparator.nullsLast(LocalDate::compareTo)))
+                .map(TenantDebtEntity::getBill)
+                .filter(Objects::nonNull)
+                .map(BillEntity::getReference)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+
+        return new BillingSummaryDTO(pendingCount, pendingAmount, nextDueDate, nextReference);
     }
 
 
