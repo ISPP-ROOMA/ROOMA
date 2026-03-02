@@ -1,9 +1,12 @@
 package com.example.demo.ApartmentMatch;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,62 +61,35 @@ public class ApartmentMatchService {
     }
 
     @Transactional
-    public ApartmentMatchEntity processSwipe(Integer candidateId, Integer apartmentId, boolean isCandidateAction, boolean interest) {
-        
-        UserEntity candidate = userService.findById(candidateId);
-        if (candidate == null) {
-            throw new ResourceNotFoundException("Candidate not found");
-        }
+    public ApartmentMatchEntity processSwipe(Integer apartmentId, boolean interest) {
+        UserEntity currentUser = userService.findCurrentUserEntity();
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
+
         if (apartment == null) {
             throw new ResourceNotFoundException("Apartment not found");
         }
         if(apartment.getState() != ApartmentState.ACTIVE) {
             throw new ConflictException("Cannot swipe on an apartment that is not active");
-         }
-
-        ApartmentMatchEntity apartmentMatch = apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId).orElse(null);
-        if (apartmentMatch == null) {
-            apartmentMatch = createFirstInteraction(candidate, apartment, isCandidateAction, interest);
-            return apartmentMatchRepository.save(apartmentMatch);
+        }
+        if(apartment.getUser().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You cannot swipe on your own apartment");
+        }
+        if(apartmentMatchRepository.findByCandidateIdAndApartmentId(currentUser.getId(), apartmentId).isPresent()) {
+            throw new ConflictException("You have already swiped on this apartment");
         }
         
-        checkNoDuplicateInteraction(apartmentMatch, isCandidateAction);
-        if (apartmentMatch.getMatchStatus() == MatchStatus.MATCH
-                || apartmentMatch.getMatchStatus() == MatchStatus.SUCCESSFUL
-                || apartmentMatch.getMatchStatus() == MatchStatus.CANCELED) {
-            throw new ConflictException("Cannot change interest on a match that is already matched, successful or canceled");
-        }
-        if (isCandidateAction) {
-            apartmentMatch.setCandidateInterest(interest);
-        } else {
-            apartmentMatch.setLandlordInterest(interest);
-        }
-        if (Boolean.TRUE.equals(apartmentMatch.getCandidateInterest()) && 
-                Boolean.TRUE.equals(apartmentMatch.getLandlordInterest())) {
-            
-            apartmentMatch.setMatchStatus(MatchStatus.MATCH);
-        } else {
-            apartmentMatch.setMatchStatus(MatchStatus.REJECTED);
-        }
-
+        ApartmentMatchEntity apartmentMatch = createApartmentMatch(currentUser, apartment, interest);
         return apartmentMatchRepository.save(apartmentMatch);
     }
 
-    public ApartmentMatchEntity createFirstInteraction(UserEntity candidate, ApartmentEntity apartment, boolean isCandidateAction, boolean interest) {
-
-                        
+    public ApartmentMatchEntity createApartmentMatch(UserEntity candidate, ApartmentEntity apartment, boolean interest) { 
         ApartmentMatchEntity newMatch = new ApartmentMatchEntity();
-
-        if(isCandidateAction) {
-            newMatch.setCandidateInterest(interest);
-            newMatch.setLandlordInterest(null);
-        } else {
-            newMatch.setLandlordInterest(interest);
-            newMatch.setCandidateInterest(null);
-        }
+        newMatch.setCandidateInterest(interest);
+        newMatch.setLandlordInterest(null);
         newMatch.setCandidate(candidate);
         newMatch.setApartment(apartment);
+        newMatch.setMatchDate(LocalDateTime.now(ZoneId.of("Europe/Madrid")));
+
         if(interest){
             newMatch.setMatchStatus(MatchStatus.ACTIVE);
         } else {
@@ -122,13 +98,23 @@ public class ApartmentMatchService {
         return newMatch;
     }
 
-    public void checkNoDuplicateInteraction(ApartmentMatchEntity apartmentMatchEntity, boolean isCandidateAction) {
-        if (apartmentMatchEntity.getCandidateInterest() != null && isCandidateAction) {
-            throw new ConflictException("Candidate has already swiped on this apartment");
+    @Transactional
+    public ApartmentMatchEntity processLandlordAction(Integer matchId, boolean interest) {
+        ApartmentMatchEntity match = apartmentMatchRepository.findById(matchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
+        if (match.getMatchStatus() != MatchStatus.ACTIVE) {
+            throw new ConflictException("Only matches with status ACTIVE can be processed by the landlord");
         }
-        if (apartmentMatchEntity.getLandlordInterest() != null && !isCandidateAction) {
-            throw new ConflictException("Landlord has already swiped on this candidate");
+        if (!match.getApartment().getUser().getId().equals(userService.findCurrentUserEntity().getId())) {
+            throw new ConflictException("Only the landlord of the apartment can process this action");
         }
+        match.setLandlordInterest(interest);
+        if (interest) {
+            match.setMatchStatus(MatchStatus.MATCH);
+        } else {
+            match.setMatchStatus(MatchStatus.REJECTED);
+        }
+        return apartmentMatchRepository.save(match);
     }
 
     @Transactional
@@ -209,30 +195,18 @@ public class ApartmentMatchService {
     }
 
     public List<ApartmentMatchEntity> findInterestedCandidatesByUserId(Integer userId) {
-        String currentUser = userService.findCurrentUser();
-        Optional<UserEntity> user = userService.findByEmail(currentUser);
-        if (user.isEmpty()) {
-            throw new ResourceNotFoundException("User not found");
-        }
-        if (!user.get().getId().equals(userId)) {
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        if (!currentUser.getId().equals(userId)) {
             throw new ConflictException("You can only view your own interested candidates");
         }
         return apartmentMatchRepository.findByUserIdAndMatchStatus(userId, MatchStatus.ACTIVE);
     }
 
     List<ApartmentMatchEntity> findTenantRequestByUserId(Integer id) {
-        String currentUser = userService.findCurrentUser();
-        Optional<UserEntity> user = userService.findByEmail(currentUser);
-        if (user.isEmpty()) {
-            throw new ResourceNotFoundException("User not found");
-        }
-        if (!user.get().getId().equals(id)) {
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        if (!currentUser.getId().equals(id)) {
             throw new ConflictException("You can only view your own Request");
         }
         return apartmentMatchRepository.findTenantRequestByUserId(id);
-    }
-
-    
-
-    
+    }    
 }

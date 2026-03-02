@@ -2,7 +2,6 @@ package com.example.demo.ApartmentMatch;
 
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -67,21 +66,23 @@ public class ApartmentMatchController {
         apartmentMatchService.finalizeMatchProcess(apartmentId);
         return ResponseEntity.noContent().build();
     }
-    @PreAuthorize("isAuthenticated()")
+
+    @PreAuthorize("hasRole('TENANT')")
     @PostMapping("/swipe/apartment/{apartmentId}/action")
     public ResponseEntity<?> processSwipe(@PathVariable Integer apartmentId, @RequestBody boolean interest) {
-        
-        UserEntity authenticatedUser = userService.findCurrentUserEntity();
-        if (authenticatedUser == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You must be authenticated to perform swipe actions");
-        }
-        // Hay que añadir tambien una verificacion para comprobar que la vivienda es del usuario que realiza la acción de swip
-
-        // Si el usuario autenticado es el candidato y además es el arrendador, debe de devolver un 403 Forbidden, ya que no puede realizar acciones de swipe sobre un apartamento que él mismo ha publicado
-
-        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.processSwipe(authenticatedUser.getId(), apartmentId, true, interest));
+        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.processSwipe(apartmentId, interest));
         return ResponseEntity.ok(apartmentMatch);
     }
+
+    @PreAuthorize("hasRole('LANDLORD')")
+    @PostMapping("/apartmentMatch/{apartmentMatchId}/landlord-action")
+    public ResponseEntity<ApartmentMatchDTO> processLandlordAction(@PathVariable Integer apartmentMatchId, @RequestBody boolean interest) {
+        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.processLandlordAction(apartmentMatchId, interest));
+        return ResponseEntity.ok(apartmentMatch);
+    }
+
+    
+    
 
     @PatchMapping("/apartmentMatch/{apartmentMatchId}/status/successful")
     public ResponseEntity<ApartmentMatchDTO> updateApartmentMatchStatus(@PathVariable Integer apartmentMatchId) {

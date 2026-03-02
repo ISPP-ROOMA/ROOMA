@@ -1,12 +1,12 @@
 package com.example.demo.ApartmentMatch;
 
+
 import java.time.LocalDateTime;
 
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.User.UserEntity;
 
 import jakarta.persistence.Column;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -17,7 +17,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.FutureOrPresent;
 
 @Entity
 @Table(name = "apartment_matches")
@@ -37,7 +36,6 @@ public class ApartmentMatchEntity {
     private Boolean landlordInterest;
 
     @Column()
-    @FutureOrPresent
     private LocalDateTime matchDate;
 
     @JoinColumn(name = "candidate_id")
