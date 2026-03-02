@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchDTO;
-import com.example.demo.ApartmentMatch.DTOs.LandlordRequestApartmentMatchDTO;
-import com.example.demo.ApartmentMatch.DTOs.TenantRequestApartmentMatchDTO;
+import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchLandlordDTO;
+import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchSummaryDTO;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 
@@ -35,12 +35,6 @@ public class ApartmentMatchController {
     public ResponseEntity<List<ApartmentMatchDTO>> getAllApartmentMatches() {
         List<ApartmentMatchDTO> apartmentMatches = ApartmentMatchDTO.fromApartmentMatchEntityList(apartmentMatchService.findAllApartmentMatches());
         return ResponseEntity.ok(apartmentMatches);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ApartmentMatchDTO> getApartmentMatchById(@PathVariable Integer id) {
-        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.findApartmentMatchById(id));
-        return ResponseEntity.ok(apartmentMatch);
     }
 
     @GetMapping("/candidate/{candidateId}/apartment/{apartmentId}")
@@ -81,8 +75,13 @@ public class ApartmentMatchController {
         return ResponseEntity.ok(apartmentMatch);
     }
 
-    
-    
+    @PreAuthorize("hasRole('TENANT')")
+    @PatchMapping("/apartmentMatch/{apartmentMatchId}/match")
+    public ResponseEntity<ApartmentMatchLandlordDTO> getApartmentMatchDetails(@PathVariable Integer apartmentMatchId) {
+        ApartmentMatchLandlordDTO apartmentMatch = ApartmentMatchLandlordDTO.fromApartmentMatchEntity(apartmentMatchService.findMyMatch(apartmentMatchId));
+        return ResponseEntity.ok(apartmentMatch);
+    }
+
 
     @PatchMapping("/apartmentMatch/{apartmentMatchId}/status/successful")
     public ResponseEntity<ApartmentMatchDTO> updateApartmentMatchStatus(@PathVariable Integer apartmentMatchId) {
@@ -98,24 +97,24 @@ public class ApartmentMatchController {
 
     @PreAuthorize("hasRole('LANDLORD')")
     @GetMapping("/apartment/{apartmentId}/interested-candidates")
-    public ResponseEntity<List<LandlordRequestApartmentMatchDTO>> getInterestedCandidates(@PathVariable Integer apartmentId) {
-        List<LandlordRequestApartmentMatchDTO> apartmentMatches = LandlordRequestApartmentMatchDTO.fromApartmentMatchEntityList(apartmentMatchService.findInterestedCandidatesByApartmentId(apartmentId));
+    public ResponseEntity<List<ApartmentMatchLandlordDTO>> getInterestedCandidates(@PathVariable Integer apartmentId) {
+        List<ApartmentMatchLandlordDTO> apartmentMatches = ApartmentMatchLandlordDTO.fromApartmentMatchEntityList(apartmentMatchService.findInterestedCandidatesByApartmentId(apartmentId));
         return ResponseEntity.ok(apartmentMatches);
     }
 
     @PreAuthorize("hasRole('LANDLORD')")
     @GetMapping("/{userId}/interested-candidates")
-    public ResponseEntity<List<LandlordRequestApartmentMatchDTO>> getInterestedCandidatesByUserId(@PathVariable Integer userId) {
-        List<LandlordRequestApartmentMatchDTO> apartmentMatches = LandlordRequestApartmentMatchDTO.fromApartmentMatchEntityList(apartmentMatchService.findInterestedCandidatesByUserId(userId));
+    public ResponseEntity<List<ApartmentMatchLandlordDTO>> getInterestedCandidatesByUserId(@PathVariable Integer userId) {
+        List<ApartmentMatchLandlordDTO> apartmentMatches = ApartmentMatchLandlordDTO.fromApartmentMatchEntityList(apartmentMatchService.findInterestedCandidatesByUserId(userId));
         return ResponseEntity.ok(apartmentMatches);
     }
 
     @PreAuthorize("hasRole('TENANT')")
     @GetMapping("/my-matches")
-    public ResponseEntity<List<TenantRequestApartmentMatchDTO>> getAllTenantRequest() {
+    public ResponseEntity<List<ApartmentMatchSummaryDTO>> getAllTenantRequest() {
         UserEntity authenticatedUser = userService.findCurrentUserEntity();
         List<ApartmentMatchEntity> matches = apartmentMatchService.findTenantRequestByUserId(authenticatedUser.getId());
-        List<TenantRequestApartmentMatchDTO> apartmentMatches = TenantRequestApartmentMatchDTO.fromApartmentMatchEntityList(matches);
+        List<ApartmentMatchSummaryDTO> apartmentMatches = ApartmentMatchSummaryDTO.fromApartmentMatchEntityList(matches);
         return ResponseEntity.ok(apartmentMatches);
     }
 

@@ -32,11 +32,6 @@ public class ApartmentMatchService {
         this.userService = userService;
     }
 
-    public ApartmentMatchEntity findApartmentMatchById(Integer id) {
-        return apartmentMatchRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Apartment match not found"));
-    }
-
     public ApartmentMatchEntity findApartmentMatchByCandidateAndApartment(Integer candidateId, Integer apartmentId) {
         UserEntity candidate = userService.findById(candidateId);
         if (candidate == null) {
@@ -115,6 +110,17 @@ public class ApartmentMatchService {
             match.setMatchStatus(MatchStatus.REJECTED);
         }
         return apartmentMatchRepository.save(match);
+    }
+
+    @Transactional(readOnly = true)
+    public ApartmentMatchEntity findMyMatch(Integer apartmentMatchId){
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        ApartmentMatchEntity match = apartmentMatchRepository.findById(apartmentMatchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
+        if (!match.getCandidate().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You can only view your own matches");
+        }
+        return match;
     }
 
     @Transactional
