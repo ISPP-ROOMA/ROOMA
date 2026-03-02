@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.Apartment.DTOs.ApartmentDTO;
+import com.example.demo.Apartment.DTOs.ApartmentHomeDTO;
 import com.example.demo.Apartment.DTOs.CreateApartment;
 import com.example.demo.Apartment.DTOs.UpdateApartment;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
@@ -30,13 +31,16 @@ public class ApartmentController {
     private final ApartmentService apartmentsService;
     private final ApartmentMemberService apartmentMemberService;
     private final ApartmentPhotoService apartmentPhotoService;
+    private final ApartmentHomeService apartmentHomeService;
 
     public ApartmentController(ApartmentService apartmentsService, 
                                ApartmentMemberService apartmentMemberService,
-                               ApartmentPhotoService apartmentPhotoService) {
+                               ApartmentPhotoService apartmentPhotoService,
+                               ApartmentHomeService apartmentHomeService) {
         this.apartmentsService = apartmentsService;
         this.apartmentMemberService = apartmentMemberService;
         this.apartmentPhotoService = apartmentPhotoService;
+        this.apartmentHomeService = apartmentHomeService;
     }
 
     private ApartmentDTO mapToDTOWithMembers(ApartmentEntity apartment) {
@@ -51,6 +55,13 @@ public class ApartmentController {
                 .map(this::mapToDTOWithMembers)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(apartments);
+    }
+
+    @GetMapping("/me/home")
+    @PreAuthorize("hasAnyRole('TENANT','ADMIN')")
+    public ResponseEntity<ApartmentHomeDTO> getMyHomeSnapshot() {
+        ApartmentHomeDTO dto = apartmentHomeService.getCurrentUserHome();
+        return ResponseEntity.ok(dto);
     }
 
     @PreAuthorize("hasRole('LANDLORD')")
