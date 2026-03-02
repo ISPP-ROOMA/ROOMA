@@ -17,12 +17,13 @@ import { ToastProvider } from './context/ToastContext'
 import ReviewModal from './components/ReviewModal'
 import { getPendingReviews } from './service/review.service'
 import LeaveReview from './pages/private/LeaveReview'
+import ReviewContractFinished from './pages/private/ReviewContractFinished'
+import SelectReviewTarget from './pages/private/SelectReviewTarget'
+import MyReviews from './pages/private/MyReviews'
 
 function App() {
   const location = useLocation()
   const { token, role } = useAuthStore()
-
-  const [show_reviews_alert, setShowReviewsAlert] = useState(false)
 
   const [pendingContract, setPendingContract] = useState<{
     contractId: number
@@ -35,7 +36,7 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (token && show_reviews_alert) {
+    if (token) {
       void getPendingReviews()
         .then((data) => {
           if (data && data.length > 0) {
@@ -44,7 +45,7 @@ function App() {
         })
         .catch(console.error)
     }
-  }, [token, show_reviews_alert])
+  }, [token])
 
   let publicRoutes = <></>
   let privateRoutes = <></>
@@ -99,7 +100,31 @@ function App() {
           path="/reviews/new/:contractId"
           element={
             <PrivateRoute>
+              <ReviewContractFinished />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/reviews/new/:contractId/select"
+          element={
+            <PrivateRoute>
+              <SelectReviewTarget />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/reviews/new/:contractId/form/:userId"
+          element={
+            <PrivateRoute>
               <LeaveReview />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/my-reviews"
+          element={
+            <PrivateRoute>
+              <MyReviews />
             </PrivateRoute>
           }
         />
@@ -107,17 +132,15 @@ function App() {
     )
   }
 
-  const usesMobileLayout = location.pathname === '/mis-solicitudes'
+  const usesMobileLayout =
+    location.pathname === '/mis-solicitudes' ||
+    location.pathname.startsWith('/reviews/') ||
+    location.pathname === '/my-reviews'
 
   return (
     <ToastProvider>
       <div className="flex flex-col min-h-screen">
-        {!usesMobileLayout && (
-          <Navbar
-            show_reviews_alert={show_reviews_alert}
-            setShowReviewsAlert={setShowReviewsAlert}
-          />
-        )}
+        {!usesMobileLayout && <Navbar />}
 
         <main className="mx-auto flex-grow w-full">
           <Routes>

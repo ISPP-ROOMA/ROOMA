@@ -2,12 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { logout } from '../service/auth.service'
 
-interface NavbarProps {
-  show_reviews_alert: boolean
-  setShowReviewsAlert: (value: boolean) => void
-}
-
-export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: NavbarProps) {
+export default function Navbar() {
   const navigate = useNavigate()
   const { token, role } = useAuthStore()
 
@@ -61,6 +56,9 @@ export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: Navb
         <NavLink className="p-2" to="/mis-solicitudes">
           Mis solicitudes
         </NavLink>
+        <NavLink className="p-2" to="/my-reviews">
+          Mis valoraciones
+        </NavLink>
         <NavLink className="p-2" to="/profile">
           Profile
         </NavLink>
@@ -83,15 +81,6 @@ export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: Navb
           <NavLink className="btn btn-ghost" to="/">
             Feed
           </NavLink>
-
-          {token && (
-            <button
-              onClick={() => setShowReviewsAlert(!show_reviews_alert)}
-              className={`btn btn-xs ${show_reviews_alert ? 'btn-error' : 'btn-success'} text-white`}
-            >
-              {show_reviews_alert ? 'Disable review alerts' : 'Enable review alerts'}
-            </button>
-          )}
 
           {adminRoutes}
           {customerRoutes}
