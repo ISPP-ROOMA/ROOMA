@@ -126,7 +126,7 @@ function mapLandlordRequest(dto: LandlordRequestDTO): RequestItem {
 
 export async function getSentRequests(): Promise<RequestItem[]> {
   try {
-    const response = await api.get<TenantRequestDTO[]>('/apartments-matches/my-matches')
+    const response = await api.get<TenantRequestDTO[]>('/apartments-matches/my-requests/ACTIVE')
     return response.data.map(mapTenantRequest)
   } catch (error) {
     console.error('Error fetching tenant requests:', error)
@@ -143,7 +143,7 @@ export async function getReceivedRequests(): Promise<RequestItem[]> {
 
   try {
     const response = await api.get<LandlordRequestDTO[]>(
-      `/apartments-matches/${userId}/interested-candidates`
+      `/apartments-matches/${userId}/interested-candidates/ACTIVE`
     )
     return response.data.map(mapLandlordRequest)
   } catch (error) {
@@ -152,10 +152,10 @@ export async function getReceivedRequests(): Promise<RequestItem[]> {
   }
 }
 
-export async function acceptRequest(matchId: number): Promise<void> {
-  await api.patch(`/apartments-matches/apartmentMatch/${matchId}/status/successful`)
+export async function acceptRequest(apartmentMatchId: number): Promise<void> {
+  await api.post(`/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-request`, true)
 }
 
-export async function rejectRequest(matchId: number): Promise<void> {
-  await api.patch(`/apartments-matches/apartmentMatch/${matchId}/status/canceled`)
+export async function rejectRequest(apartmentMatchId: number): Promise<void> {
+  await api.post(`/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-request`, false)
 }
