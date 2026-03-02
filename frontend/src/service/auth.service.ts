@@ -13,17 +13,12 @@ export interface LoginData {
 export interface AuthResponse {
   token: string
   role: UserRole
-  userId: number
   error?: string
 }
 
 export interface ValidateResponse {
   authenticated: boolean
   message?: string
-}
-
-interface UserProfileResponse {
-  id: number
 }
 
 const SESSION_HINT_KEY = 'hasSessionHint'
@@ -59,33 +54,11 @@ export const registerUser = async (loginData: LoginData): Promise<AuthResponse> 
     const response = await api.post<AuthResponse>('/auth/register', payload)
     if (response.data.token) {
       markSessionHint()
-      const userId = await resolveAuthenticatedUserId(response.data.token)
-      if (!userId) {
-        return {
-          error: 'Unable to resolve authenticated user',
-          token: '',
-          role: response.data.role,
-          userId: 0,
-        }
-      }
-      return { ...response.data, userId }
     }
     return response.data
   } catch (error) {
     console.error(error)
-    return { error: 'Invalid credentials', token: '', role: 'TENANT', userId: 0 }
-  }
-}
-
-const resolveAuthenticatedUserId = async (token: string): Promise<number | undefined> => {
-  try {
-    const response = await api.get<UserProfileResponse>('/users/profile', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    return response.data.id
-  } catch (error) {
-    console.error('Unable to resolve authenticated user id', error)
-    return undefined
+    return { error: 'Invalid credentials', token: '', role: 'TENANT' }
   }
 }
 
@@ -98,21 +71,11 @@ export const loginUser = async (loginData: LoginData): Promise<AuthResponse> => 
     const response = await api.post<AuthResponse>('/auth/login', payload)
     if (response.data.token) {
       markSessionHint()
-      const userId = await resolveAuthenticatedUserId(response.data.token)
-      if (!userId) {
-        return {
-          error: 'Unable to resolve authenticated user',
-          token: '',
-          role: response.data.role,
-          userId: 0,
-        }
-      }
-      return { ...response.data, userId }
     }
     return response.data
   } catch (error) {
     console.error(error)
-    return { error: 'Invalid credentials', token: '', role: 'TENANT', userId: 0 }
+    return { error: 'Invalid credentials', token: '', role: 'TENANT' }
   }
 }
 
@@ -125,18 +88,8 @@ export const refreshToken = async (): Promise<AuthResponse | undefined> => {
     try {
       const response = await api.post<AuthResponse>('/auth/refresh', { deviceId: getDeviceId() })
       markSessionHint()
-      const userId = await resolveAuthenticatedUserId(response.data.token)
-      if (!userId) {
-        clearSessionHint()
-        useAuthStore.getState().logout()
-        return undefined
-      }
-      useAuthStore.getState().login({
-        token: response.data.token,
-        role: response.data.role,
-        userId,
-      })
-      return { ...response.data, userId }
+      useAuthStore.getState().login({ token: response.data.token, role: response.data.role })
+      return response.data
     } catch (error) {
       console.error(error)
       clearSessionHint()

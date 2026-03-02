@@ -10,7 +10,7 @@ import { useAuthStore } from '../store/authStore'
 import { useToast } from '../hooks/useToast'
 
 export default function Home() {
-  const { token, userId, role } = useAuthStore()
+  const { token, role } = useAuthStore()
   const { showToast } = useToast()
   const [apartments, setApartments] = useState<ApartmentDTO[]>([])
   const [loading, setLoading] = useState(true)
@@ -40,11 +40,9 @@ export default function Home() {
   const handleSwipe = async (apartmentId: number, interest: boolean) => {
     setApartments((prev) => prev.filter((apt) => apt.id !== apartmentId))
     try {
-      if (userId) {
-        await swipeApartment(Number(userId), apartmentId, interest)
-        if (interest) {
-          showToast('¡Solicitud enviada correctamente!', 'success')
-        }
+      await swipeApartment(apartmentId, interest)
+      if (interest) {
+        showToast('¡Solicitud enviada correctamente!', 'success')
       }
     } catch (error) {
       console.error('Failed to register swipe', error)

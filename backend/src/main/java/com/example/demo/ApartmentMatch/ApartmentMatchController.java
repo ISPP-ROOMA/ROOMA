@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchDTO;
-import com.example.demo.ApartmentMatch.DTOs.LanlordRequestApartmentMatchDTO;
+import com.example.demo.ApartmentMatch.DTOs.LandlordRequestApartmentMatchDTO;
 import com.example.demo.ApartmentMatch.DTOs.TenantRequestApartmentMatchDTO;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
@@ -67,23 +67,19 @@ public class ApartmentMatchController {
         apartmentMatchService.finalizeMatchProcess(apartmentId);
         return ResponseEntity.noContent().build();
     }
-
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/swipe/candidate/{candidateId}/apartment/{apartmentId}/action/{isCandidateAction}")
-    public ResponseEntity<?> processSwipe(@PathVariable Integer candidateId, @PathVariable Integer apartmentId, 
-        @PathVariable boolean isCandidateAction, @RequestBody boolean interest) {
+    @PostMapping("/swipe/apartment/{apartmentId}/action")
+    public ResponseEntity<?> processSwipe(@PathVariable Integer apartmentId, @RequestBody boolean interest) {
+        
         UserEntity authenticatedUser = userService.findCurrentUserEntity();
         if (authenticatedUser == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You must be authenticated to perform swipe actions");
-        }
-        if (authenticatedUser == null || !authenticatedUser.getId().equals(candidateId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only perform swipe actions for your own user");
         }
         // Hay que añadir tambien una verificacion para comprobar que la vivienda es del usuario que realiza la acción de swip
 
         // Si el usuario autenticado es el candidato y además es el arrendador, debe de devolver un 403 Forbidden, ya que no puede realizar acciones de swipe sobre un apartamento que él mismo ha publicado
 
-        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.processSwipe(candidateId, apartmentId, isCandidateAction, interest));
+        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.processSwipe(authenticatedUser.getId(), apartmentId, true, interest));
         return ResponseEntity.ok(apartmentMatch);
     }
 
@@ -101,15 +97,15 @@ public class ApartmentMatchController {
 
     @PreAuthorize("hasRole('LANDLORD')")
     @GetMapping("/apartment/{apartmentId}/interested-candidates")
-    public ResponseEntity<List<LanlordRequestApartmentMatchDTO>> getInterestedCandidates(@PathVariable Integer apartmentId) {
-        List<LanlordRequestApartmentMatchDTO> apartmentMatches = LanlordRequestApartmentMatchDTO.fromApartmentMatchEntityList(apartmentMatchService.findInterestedCandidatesByApartmentId(apartmentId));
+    public ResponseEntity<List<LandlordRequestApartmentMatchDTO>> getInterestedCandidates(@PathVariable Integer apartmentId) {
+        List<LandlordRequestApartmentMatchDTO> apartmentMatches = LandlordRequestApartmentMatchDTO.fromApartmentMatchEntityList(apartmentMatchService.findInterestedCandidatesByApartmentId(apartmentId));
         return ResponseEntity.ok(apartmentMatches);
     }
 
     @PreAuthorize("hasRole('LANDLORD')")
     @GetMapping("/{userId}/interested-candidates")
-    public ResponseEntity<List<LanlordRequestApartmentMatchDTO>> getInterestedCandidatesByUserId(@PathVariable Integer userId) {
-        List<LanlordRequestApartmentMatchDTO> apartmentMatches = LanlordRequestApartmentMatchDTO.fromApartmentMatchEntityList(apartmentMatchService.findInterestedCandidatesByUserId(userId));
+    public ResponseEntity<List<LandlordRequestApartmentMatchDTO>> getInterestedCandidatesByUserId(@PathVariable Integer userId) {
+        List<LandlordRequestApartmentMatchDTO> apartmentMatches = LandlordRequestApartmentMatchDTO.fromApartmentMatchEntityList(apartmentMatchService.findInterestedCandidatesByUserId(userId));
         return ResponseEntity.ok(apartmentMatches);
     }
 
