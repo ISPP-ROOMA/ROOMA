@@ -45,8 +45,18 @@ public class BillingService {
         return billRepository.findByUserId(currentUser.getId());
     }
 
+    @Transactional(readOnly = true)
     public List<BillEntity> getBillsForApartment(Integer apartmentId) {
-        return billRepository.findByApartmentId(apartmentId);
+        List<BillEntity> bills = billRepository.findByApartmentId(apartmentId);
+        // force eager load of tenantDebts + user to avoid lazy init issues
+        for (BillEntity bill : bills) {
+            if (bill.getTenantDebts() != null) {
+                bill.getTenantDebts().forEach(d -> {
+                    if (d.getUser() != null) d.getUser().getEmail();
+                });
+            }
+        }
+        return bills;
     }
 
     public List<TenantDebtEntity> getDebtsForCurrentUser() {
@@ -84,6 +94,7 @@ public class BillingService {
         return debt;
     }
 
+    @Transactional
     public BillEntity createBillAndSplit(BillEntity bill, Integer apartmentId) {
 
         ApartmentEntity apartment = apartmentService.findById(apartmentId);

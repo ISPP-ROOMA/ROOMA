@@ -1,4 +1,6 @@
 -- Limpiar datos existentes (opcional pero recomendado en desarrollo)
+DELETE FROM tenant_debts;
+DELETE FROM bills;
 DELETE FROM apartment_members;
 DELETE FROM apartment_photos;
 DELETE FROM apartments;
@@ -94,27 +96,7 @@ INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date) VALUE
 (7, 5, 8, 'RENTER', '2025-01-20');
 
 -- ==========================================
--- FACTURAS (bills) y deudas por inquilino (tenant_debts)
--- ==========================================
--- Bill para el piso 1 dividido entre tenant1 (id 3), tenant2 (id 4) y tenant3 (id 5)
-INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
-(1, 'BILL-2026-03-001', 180.00, 'PENDING', '2026-03-10', 1, 1),
-(2, 'BILL-2026-02-001', 120.00, 'PAID', '2026-02-05', 2, 1),
-(3, 'BILL-2026-03-002', 450.00, 'PENDING', '2026-03-15', 3, 2);
-
--- Tenant debts linked to bills
-INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
-(1, 60.00, 'PENDING', 3, 1),
-(2, 60.00, 'PENDING', 4, 1),
-(3, 60.00, 'PENDING', 5, 1),
-(4, 120.00, 'PAID', 5, 2),
-(5, 450.00, 'PENDING', 6, 3);
-
--- Notas: los ids aquí son de ejemplo y deben ajustarse si tu base de datos aplica secuencias automáticas.
-
--- ==========================================
--- Añadir más compañeros al piso del tenant1 (user id 3)
--- Creamos usuarios de prueba adicionales y los añadimos como miembros del apartment 1
+-- Más compañeros para el piso del tenant1 (apartment 1)
 -- ==========================================
 INSERT INTO users (id, email, password, role, hobbies, schedule, profession) VALUES
 (10, 'tenant7@test.com', '$2a$10$n13oA7FdkI4.H2W/6JG0TufyC2U91I1t7jZ9pKdsqukvkDsoRYUOO', 'TENANT', 'Música, Cocina', 'Tardes', 'Estudiante'),
@@ -125,3 +107,105 @@ INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date) VALUE
 (8, 1, 10, 'RENTER', '2025-06-01'),
 (9, 1, 11, 'RENTER', '2025-07-01'),
 (10, 1, 12, 'RENTER', '2025-08-01');
+
+-- ==========================================
+-- FACTURAS (bills) y deudas por inquilino (tenant_debts)
+-- ==========================================
+
+-- === Piso 1 (apartment_id=1, landlord user_id=1) ===
+-- Miembros activos: tenant1(3), tenant2(4), tenant3(5), tenant7(10), tenant8(11), tenant9(12)
+
+-- Bill 1: Alquiler Julio — vencida (urgente)
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(1, 'Alquiler', 2100.00, 'PENDING', '2025-07-01', 1, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(1, 350.00, 'PENDING', 3, 1),
+(2, 350.00, 'PENDING', 4, 1),
+(3, 350.00, 'PENDING', 5, 1),
+(4, 350.00, 'PENDING', 10, 1),
+(5, 350.00, 'PENDING', 11, 1),
+(6, 350.00, 'PENDING', 12, 1);
+
+-- Bill 2: Electricidad Mayo — ya pagada
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(2, 'Electricidad', 132.00, 'PAID', '2025-05-15', 1, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(7, 22.00, 'PAID', 3, 2),
+(8, 22.00, 'PAID', 4, 2),
+(9, 22.00, 'PAID', 5, 2),
+(10, 22.00, 'PAID', 10, 2),
+(11, 22.00, 'PAID', 11, 2),
+(12, 22.00, 'PAID', 12, 2);
+
+-- Bill 3: Agua Junio — vence pronto
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(3, 'Agua', 78.00, 'PENDING', '2025-08-05', 1, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(13, 13.00, 'PENDING', 3, 3),
+(14, 13.00, 'PENDING', 4, 3),
+(15, 13.00, 'PENDING', 5, 3),
+(16, 13.00, 'PENDING', 10, 3),
+(17, 13.00, 'PENDING', 11, 3),
+(18, 13.00, 'PENDING', 12, 3);
+
+-- Bill 4: Internet Julio — vence en el futuro
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(4, 'Internet', 54.00, 'PENDING', '2025-09-01', 1, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(19, 9.00, 'PENDING', 3, 4),
+(20, 9.00, 'PENDING', 4, 4),
+(21, 9.00, 'PENDING', 5, 4),
+(22, 9.00, 'PENDING', 10, 4),
+(23, 9.00, 'PENDING', 11, 4),
+(24, 9.00, 'PENDING', 12, 4);
+
+-- Bill 5: Gas Abril — pagada
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(5, 'Gas', 96.00, 'PAID', '2025-04-20', 1, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(25, 16.00, 'PAID', 3, 5),
+(26, 16.00, 'PAID', 4, 5),
+(27, 16.00, 'PAID', 5, 5),
+(28, 16.00, 'PAID', 10, 5),
+(29, 16.00, 'PAID', 11, 5),
+(30, 16.00, 'PAID', 12, 5);
+
+-- Bill 6: Comunidad Julio — vencida (urgente)
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(6, 'Comunidad', 300.00, 'PENDING', '2025-07-05', 1, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(31, 50.00, 'PENDING', 3, 6),
+(32, 50.00, 'PENDING', 4, 6),
+(33, 50.00, 'PENDING', 5, 6),
+(34, 50.00, 'PENDING', 10, 6),
+(35, 50.00, 'PENDING', 11, 6),
+(36, 50.00, 'PENDING', 12, 6);
+
+-- Bill 7: Alquiler Junio — parcialmente pagada (tenant1 ya pagó)
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(7, 'Alquiler', 2100.00, 'PENDING', '2025-06-01', 1, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(37, 350.00, 'PAID', 3, 7),
+(38, 350.00, 'PENDING', 4, 7),
+(39, 350.00, 'PENDING', 5, 7),
+(40, 350.00, 'PENDING', 10, 7),
+(41, 350.00, 'PENDING', 11, 7),
+(42, 350.00, 'PENDING', 12, 7);
+
+-- === Piso 2 (apartment_id=2, landlord user_id=1) ===
+-- Miembro: tenant3 (id 5)
+-- Bill 8: Alquiler piso 2
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(8, 'Alquiler', 250.00, 'PAID', '2025-06-05', 2, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(43, 250.00, 'PAID', 5, 8);
+
+-- === Piso 3 (apartment_id=3, landlord user_id=2) ===
+-- Miembro: tenant4 (id 6)
+-- Bill 9: Alquiler piso 3
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(9, 'Alquiler', 450.00, 'PENDING', '2025-08-01', 3, 2);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(44, 450.00, 'PENDING', 6, 9);
+
+-- Notas: los ids aquí son de ejemplo y deben ajustarse si tu base de datos aplica secuencias automáticas.
