@@ -16,19 +16,16 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchDTO;
 import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchLandlordDTO;
 import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchSummaryDTO;
-import com.example.demo.User.UserEntity;
-import com.example.demo.User.UserService;
+import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchTenantDTO;
 
 @RestController
 @RequestMapping("/api/apartments-matches")
 public class ApartmentMatchController {
 
     private final ApartmentMatchService apartmentMatchService;
-    private final UserService userService;
 
-    public ApartmentMatchController(ApartmentMatchService apartmentMatchService, UserService userService) {
+    public ApartmentMatchController(ApartmentMatchService apartmentMatchService) {
         this.apartmentMatchService = apartmentMatchService;
-        this.userService = userService;
     }
 
     @GetMapping
@@ -61,28 +58,6 @@ public class ApartmentMatchController {
         return ResponseEntity.noContent().build();
     }
 
-    @PreAuthorize("hasRole('TENANT')")
-    @PostMapping("/swipe/apartment/{apartmentId}/action")
-    public ResponseEntity<?> processSwipe(@PathVariable Integer apartmentId, @RequestBody boolean interest) {
-        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.processSwipe(apartmentId, interest));
-        return ResponseEntity.ok(apartmentMatch);
-    }
-
-    @PreAuthorize("hasRole('LANDLORD')")
-    @PostMapping("/apartmentMatch/{apartmentMatchId}/landlord-action")
-    public ResponseEntity<ApartmentMatchDTO> processLandlordAction(@PathVariable Integer apartmentMatchId, @RequestBody boolean interest) {
-        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.processLandlordAction(apartmentMatchId, interest));
-        return ResponseEntity.ok(apartmentMatch);
-    }
-
-    @PreAuthorize("hasRole('TENANT')")
-    @PatchMapping("/apartmentMatch/{apartmentMatchId}/match")
-    public ResponseEntity<ApartmentMatchLandlordDTO> getApartmentMatchDetails(@PathVariable Integer apartmentMatchId) {
-        ApartmentMatchLandlordDTO apartmentMatch = ApartmentMatchLandlordDTO.fromApartmentMatchEntity(apartmentMatchService.findMyMatch(apartmentMatchId));
-        return ResponseEntity.ok(apartmentMatch);
-    }
-
-
     @PatchMapping("/apartmentMatch/{apartmentMatchId}/status/successful")
     public ResponseEntity<ApartmentMatchDTO> updateApartmentMatchStatus(@PathVariable Integer apartmentMatchId) {
         ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.successfulMatch(apartmentMatchId));
@@ -95,27 +70,68 @@ public class ApartmentMatchController {
         return ResponseEntity.ok(apartmentMatch);
     } 
 
+    @PreAuthorize("hasRole('TENANT')")
+    @PostMapping("/swipe/apartment/{apartmentId}/tenant")
+    public ResponseEntity<?> processSwipe(@PathVariable Integer apartmentId, @RequestBody boolean interest) {
+        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.processSwipe(apartmentId, interest));
+        return ResponseEntity.ok(apartmentMatch);
+    }
+
     @PreAuthorize("hasRole('LANDLORD')")
-    @GetMapping("/apartment/{apartmentId}/interested-candidates")
-    public ResponseEntity<List<ApartmentMatchLandlordDTO>> getInterestedCandidates(@PathVariable Integer apartmentId) {
-        List<ApartmentMatchLandlordDTO> apartmentMatches = ApartmentMatchLandlordDTO.fromApartmentMatchEntityList(apartmentMatchService.findInterestedCandidatesByApartmentId(apartmentId));
+    @PostMapping("/apartmentMatch/{apartmentMatchId}/respond-request")
+    public ResponseEntity<ApartmentMatchDTO> processLandlordAction(@PathVariable Integer apartmentMatchId, @RequestBody boolean interest) {
+        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.processLandlordAction(apartmentMatchId, interest));
+        return ResponseEntity.ok(apartmentMatch);
+    }
+
+    @PreAuthorize("hasRole('LANDLORD')")
+    @GetMapping("/apartment/{apartmentId}/interested-candidates/{status}")
+    public ResponseEntity<List<ApartmentMatchLandlordDTO>> getInterestedCandidates(@PathVariable Integer apartmentId, @PathVariable MatchStatus status) {
+        List<ApartmentMatchLandlordDTO> apartmentMatches = ApartmentMatchLandlordDTO.fromApartmentMatchEntityList(apartmentMatchService.findInterestedCandidatesByApartmentIdAndStatus(apartmentId, status));
         return ResponseEntity.ok(apartmentMatches);
     }
 
     @PreAuthorize("hasRole('LANDLORD')")
-    @GetMapping("/{userId}/interested-candidates")
-    public ResponseEntity<List<ApartmentMatchLandlordDTO>> getInterestedCandidatesByUserId(@PathVariable Integer userId) {
-        List<ApartmentMatchLandlordDTO> apartmentMatches = ApartmentMatchLandlordDTO.fromApartmentMatchEntityList(apartmentMatchService.findInterestedCandidatesByUserId(userId));
+    @GetMapping("/{userId}/interested-candidates/{status}")
+    public ResponseEntity<List<ApartmentMatchLandlordDTO>> getInterestedCandidatesByUserId(@PathVariable Integer userId, @PathVariable MatchStatus status) {
+        List<ApartmentMatchLandlordDTO> apartmentMatches = ApartmentMatchLandlordDTO.fromApartmentMatchEntityList(apartmentMatchService.findInterestedCandidatesByUserIdAndStatus(userId, status));
         return ResponseEntity.ok(apartmentMatches);
     }
 
     @PreAuthorize("hasRole('TENANT')")
-    @GetMapping("/my-matches")
-    public ResponseEntity<List<ApartmentMatchSummaryDTO>> getAllTenantRequest() {
-        UserEntity authenticatedUser = userService.findCurrentUserEntity();
-        List<ApartmentMatchEntity> matches = apartmentMatchService.findTenantRequestByUserId(authenticatedUser.getId());
+    @GetMapping("/my-requests/{status}")
+    public ResponseEntity<List<ApartmentMatchSummaryDTO>> getAllTenantRequest(@PathVariable MatchStatus status) {
+        List<ApartmentMatchEntity> matches = apartmentMatchService.findTenantRequestByUserIdAndStatus(status);
         List<ApartmentMatchSummaryDTO> apartmentMatches = ApartmentMatchSummaryDTO.fromApartmentMatchEntityList(matches);
         return ResponseEntity.ok(apartmentMatches);
+    }
+
+    @PreAuthorize("hasRole('TENANT')")
+    @PatchMapping("/apartmentMatch/{apartmentMatchId}/tenant-match-details")
+    public ResponseEntity<ApartmentMatchLandlordDTO> getApartmentMatchDetailsForTenant(@PathVariable Integer apartmentMatchId) {
+        ApartmentMatchLandlordDTO apartmentMatch = ApartmentMatchLandlordDTO.fromApartmentMatchEntity(apartmentMatchService.findMyMatchForTenant(apartmentMatchId));
+        return ResponseEntity.ok(apartmentMatch);
+    }
+
+    @PreAuthorize("hasRole('LANDLORD')")
+    @GetMapping("/apartmentMatch/{apartmentMatchId}/landlord-match-details")
+    public ResponseEntity<ApartmentMatchTenantDTO> getApartmentMatchDetailsForLandlord(@PathVariable Integer apartmentMatchId) {
+        ApartmentMatchTenantDTO apartmentMatch = ApartmentMatchTenantDTO.fromApartmentMatchEntity(apartmentMatchService.findMyMatchForLandlord(apartmentMatchId));
+        return ResponseEntity.ok(apartmentMatch);
+    }
+
+    @PreAuthorize("hasRole('LANDLORD')")
+    @PatchMapping("/apartmentMatch/{apartmentMatchId}/send-invitation")
+    public ResponseEntity<ApartmentMatchLandlordDTO> sendInvitation(@PathVariable Integer apartmentMatchId) {
+        ApartmentMatchLandlordDTO apartmentMatch = ApartmentMatchLandlordDTO.fromApartmentMatchEntity(apartmentMatchService.sendInvitation(apartmentMatchId));
+        return ResponseEntity.ok(apartmentMatch);
+    }
+
+    @PreAuthorize("hasRole('TENANT')")
+    @PatchMapping("/apartmentMatch/{apartmentMatchId}/respond-invitation")
+    public ResponseEntity<ApartmentMatchDTO> respondToInvitation(@PathVariable Integer apartmentMatchId, @RequestBody boolean accepted) {
+        ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.respondToInvitation(apartmentMatchId, accepted));
+        return ResponseEntity.ok(apartmentMatch);
     }
 
 }

@@ -1,5 +1,11 @@
 package com.example.demo.MemberApartment;
 
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.Exceptions.BadRequestException;
@@ -7,12 +13,6 @@ import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Service
 public class ApartmentMemberService {
@@ -109,5 +109,10 @@ public class ApartmentMemberService {
         }
 
         apartmentMemberRepository.delete(member);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existsByUserIdAndRole(Integer userId, MemberRole role) {
+        return apartmentMemberRepository.existsByUserIdAndRole(userId, role);
     }
 }
