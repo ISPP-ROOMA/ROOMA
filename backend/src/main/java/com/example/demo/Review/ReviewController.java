@@ -12,7 +12,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.Review.DTOs.CreateReviewRequest;
+import com.example.demo.Review.DTOs.PendingReviewApartmentDTO;
 import com.example.demo.Review.DTOs.ReviewDTO;
+import com.example.demo.Review.DTOs.ReviewableUserDTO;
+import com.example.demo.User.UserEntity;
 
 import jakarta.validation.Valid;
 
@@ -74,5 +77,30 @@ public class ReviewController {
             @PathVariable Integer apartmentId) {
         List<ReviewEntity> reviews = reviewService.findReceivedReviewsByUserIdAndApartmentId(userId, apartmentId);
         return ResponseEntity.ok(ReviewDTO.fromEntityList(reviews));
+    }
+
+    @GetMapping("/reviewable/{apartmentId}")
+    public ResponseEntity<List<ReviewableUserDTO>> getReviewableUsers(@PathVariable Integer apartmentId) {
+        List<UserEntity> users = reviewService.getReviewableUsers(apartmentId);
+        List<ReviewableUserDTO> dtos = users.stream()
+                .map(u -> new ReviewableUserDTO(u.getId(), u.getEmail(), u.getRole().name()))
+                .toList();
+        return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/pending")
+    public ResponseEntity<List<PendingReviewApartmentDTO>> getPendingReviewApartments() {
+        List<ReviewService.PendingReviewApartment> pending = reviewService.getPendingReviewApartments();
+        List<PendingReviewApartmentDTO> dtos = pending.stream()
+                .map(p -> new PendingReviewApartmentDTO(
+                        p.apartment().getId(),
+                        p.apartment().getTitle(),
+                        p.apartment().getUbication(),
+                        p.pendingUsers().stream()
+                                .map(u -> new ReviewableUserDTO(u.getId(), u.getEmail(), u.getRole().name()))
+                                .toList()
+                ))
+                .toList();
+        return ResponseEntity.ok(dtos);
     }
 }

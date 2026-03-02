@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer> {
 
-    @Query("SELECT r FROM ReviewEntity r WHERE r.reviewMember.id = :userId AND r.published = true")
+    @Query("SELECT r FROM ReviewEntity r WHERE r.reviewMember.id = :userId")
     List<ReviewEntity> findMadeReviewsByUserIdAndPublished(Integer userId);
 
     @Query("SELECT r FROM ReviewEntity r WHERE r.reviewedMember.id = :userId AND r.published = true")

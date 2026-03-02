@@ -99,4 +99,9 @@ public class ApartmentService {
         return apartmentsRepository.findLandlordByApartmentId(apartmentId).orElseThrow(() -> new ResourceNotFoundException("Landlord not found for this apartment"));
     }
 
+    @Transactional(readOnly = true)
+    public List<ApartmentEntity> findAllByUserId(Integer userId) {
+        return apartmentsRepository.findAllByUserId(userId);
+    }
+
 }

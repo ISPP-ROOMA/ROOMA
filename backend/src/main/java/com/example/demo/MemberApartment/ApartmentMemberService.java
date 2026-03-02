@@ -154,9 +154,21 @@ public class ApartmentMemberService {
         return apartmentMemberRepository.findOverlappingMemberships(userId, apartmentId, joinDate, leaveDate);
     }
 
+    public List<ApartmentMemberEntity> findOtherOverlappingMemberships(Integer excludeUserId, Integer apartmentId, LocalDate joinDate, LocalDate leaveDate) {
+        return apartmentMemberRepository.findOtherOverlappingMemberships(excludeUserId, apartmentId, joinDate, leaveDate);
+    }
+
     public ApartmentMemberEntity findByUserIdAndApartmentId(Integer userId, Integer apartmentId) {
         return apartmentMemberRepository.findByUserIdAndApartmentId(userId, apartmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Membership not found for user in this apartment"));
+    }
+
+    public List<ApartmentMemberEntity> listMembersInternal(Integer apartmentId) {
+        return apartmentMemberRepository.findByApartmentId(apartmentId);
+    }
+
+    public List<ApartmentMemberEntity> findAllByUserId(Integer userId) {
+        return apartmentMemberRepository.findAllByUserId(userId);
     }
 
 }

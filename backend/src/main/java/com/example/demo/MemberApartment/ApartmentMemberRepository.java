@@ -29,4 +29,10 @@ public interface ApartmentMemberRepository extends JpaRepository<ApartmentMember
 
     @Query("SELECT m FROM ApartmentMemberEntity m WHERE m.user.id = :userId AND m.apartment.id = :apartmentId AND ((m.joinDate <= :joinDate AND (m.leaveDate IS NULL OR m.leaveDate >= :joinDate)) OR (m.joinDate <= :leaveDate AND (m.leaveDate IS NULL OR m.leaveDate >= :leaveDate)) OR (m.joinDate >= :joinDate AND (m.leaveDate IS NULL OR m.leaveDate <= :leaveDate)))")
     List<ApartmentMemberEntity> findOverlappingMemberships(Integer userId, Integer apartmentId, LocalDate joinDate, LocalDate leaveDate);
+
+    @Query("SELECT m FROM ApartmentMemberEntity m WHERE m.user.id <> :excludeUserId AND m.apartment.id = :apartmentId AND ((m.joinDate <= :joinDate AND (m.leaveDate IS NULL OR m.leaveDate >= :joinDate)) OR (m.joinDate <= :leaveDate AND (m.leaveDate IS NULL OR m.leaveDate >= :leaveDate)) OR (m.joinDate >= :joinDate AND (m.leaveDate IS NULL OR m.leaveDate <= :leaveDate)))")
+    List<ApartmentMemberEntity> findOtherOverlappingMemberships(Integer excludeUserId, Integer apartmentId, LocalDate joinDate, LocalDate leaveDate);
+
+    @Query("SELECT m FROM ApartmentMemberEntity m WHERE m.user.id = :userId")
+    List<ApartmentMemberEntity> findAllByUserId(Integer userId);
 }
