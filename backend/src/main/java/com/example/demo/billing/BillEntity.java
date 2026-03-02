@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.User.UserEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -46,13 +47,16 @@ public class BillEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "apartment_id", nullable = false)
+    @JsonIgnoreProperties({"user", "apartmentMembers", "photos"})
     private ApartmentEntity apartment;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({"password", "profileImagePublicId"})
     private UserEntity user;
 
     @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"bill"})
     private List<TenantDebtEntity> tenantDebts;
 
     public BillEntity() {
