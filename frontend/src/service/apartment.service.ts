@@ -25,12 +25,21 @@ export interface ApartmentDTO {
   bills: string
   ubication: string
   state: string
-  imageUrl?: string
+  coverImageUrl?: string
   members?: ApartmentMemberDTO[]
 }
 
 export interface SwipeActionDTO {
   interest: boolean
+}
+
+export type MatchStatus = 'ACTIVE' | 'MATCH' | 'REJECTED' | 'SUCCESSFUL' | 'CANCELED'
+
+export interface ApartmentMatchDTO {
+  id: number
+  candidateId: number
+  apartmentId: number
+  matchStatus: MatchStatus
 }
 
 export const searchApartments = async (
@@ -61,7 +70,7 @@ export const swipeApartment = async (
 ): Promise<unknown> => {
   try {
     const response = await api.post(
-      `/apartments-matches/swipe/candidate/${candidateId}/apartment/${apartmentId}/action/true`,
+      `/apartments-matches/swipe/candidate/${candidateId}/apartment/${apartmentId}/action/${interest}`,
       interest,
       { headers: { 'Content-Type': 'application/json' } }
     )
@@ -69,5 +78,36 @@ export const swipeApartment = async (
   } catch (error) {
     console.error('Error swiping apartment:', error)
     throw error
+  }
+}
+
+export const getMatchesForCandidate = async (
+  candidateId: number,
+  status: MatchStatus
+): Promise<ApartmentMatchDTO[]> => {
+  try {
+    const response = await api.get<ApartmentMatchDTO[]>(
+      `/apartments-matches/candidate/${candidateId}/status/${status}`
+    )
+    return response.data
+  } catch (error) {
+    console.error('Error fetching matches:', error)
+    return []
+  }
+}
+
+export const cancelApartmentMatch = async (matchId: number): Promise<void> => {
+  await api.patch(`/apartments-matches/apartmentMatch/${matchId}/status/canceled`)
+}
+
+export const getDeckForCandidate = async (
+  candidateId: number
+): Promise<ApartmentDTO[]> => {
+  try {
+    const response = await api.get<ApartmentDTO[]>(`/apartments/deck/${candidateId}`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching deck:', error)
+    return []
   }
 }

@@ -22,7 +22,8 @@ public class ApartmentMatchService {
     private final UserService userService;
 
     @Autowired
-    public ApartmentMatchService(ApartmentMatchRepository apartmentMatchRepository, ApartmentService apartmentService, UserService userService) {
+    public ApartmentMatchService(ApartmentMatchRepository apartmentMatchRepository, ApartmentService apartmentService,
+            UserService userService) {
         this.apartmentMatchRepository = apartmentMatchRepository;
         this.apartmentService = apartmentService;
         this.userService = userService;
@@ -44,7 +45,8 @@ public class ApartmentMatchService {
             throw new ResourceNotFoundException("Apartment not found");
         }
         return apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Apartment match not found for the given candidate and apartment"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Apartment match not found for the given candidate and apartment"));
     }
 
     public List<ApartmentMatchEntity> findAllApartmentMatches() {
@@ -56,9 +58,14 @@ public class ApartmentMatchService {
         return apartmentMatchRepository.save(apartmentMatch);
     }
 
+    public com.example.demo.User.UserEntity getUserByEmail(String email) {
+        return userService.findByEmail(email).orElse(null);
+    }
+
     @Transactional
-    public ApartmentMatchEntity processSwipe(Integer candidateId, Integer apartmentId, boolean isCandidateAction, boolean interest) {
-        
+    public ApartmentMatchEntity processSwipe(Integer candidateId, Integer apartmentId, boolean isCandidateAction,
+            boolean interest) {
+
         UserEntity candidate = userService.findById(candidateId);
         if (candidate == null) {
             throw new ResourceNotFoundException("Candidate not found");
@@ -67,30 +74,32 @@ public class ApartmentMatchService {
         if (apartment == null) {
             throw new ResourceNotFoundException("Apartment not found");
         }
-        if(apartment.getState() != ApartmentState.ACTIVE) {
+        if (apartment.getState() != ApartmentState.ACTIVE) {
             throw new ConflictException("Cannot swipe on an apartment that is not active");
-         }
+        }
 
-        ApartmentMatchEntity apartmentMatch = apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId).orElse(null);
+        ApartmentMatchEntity apartmentMatch = apartmentMatchRepository
+                .findByCandidateIdAndApartmentId(candidateId, apartmentId).orElse(null);
         if (apartmentMatch == null) {
             apartmentMatch = createFirstInteraction(candidate, apartment, isCandidateAction, interest);
             return apartmentMatchRepository.save(apartmentMatch);
         }
-        
+
         checkNoDuplicateInteraction(apartmentMatch, isCandidateAction);
         if (apartmentMatch.getMatchStatus() == MatchStatus.MATCH
                 || apartmentMatch.getMatchStatus() == MatchStatus.SUCCESSFUL
                 || apartmentMatch.getMatchStatus() == MatchStatus.CANCELED) {
-            throw new ConflictException("Cannot change interest on a match that is already matched, successful or canceled");
+            throw new ConflictException(
+                    "Cannot change interest on a match that is already matched, successful or canceled");
         }
         if (isCandidateAction) {
             apartmentMatch.setCandidateInterest(interest);
         } else {
             apartmentMatch.setLandlordInterest(interest);
         }
-        if (Boolean.TRUE.equals(apartmentMatch.getCandidateInterest()) && 
+        if (Boolean.TRUE.equals(apartmentMatch.getCandidateInterest()) &&
                 Boolean.TRUE.equals(apartmentMatch.getLandlordInterest())) {
-            
+
             apartmentMatch.setMatchStatus(MatchStatus.MATCH);
         } else {
             apartmentMatch.setMatchStatus(MatchStatus.REJECTED);
@@ -99,12 +108,12 @@ public class ApartmentMatchService {
         return apartmentMatchRepository.save(apartmentMatch);
     }
 
-    public ApartmentMatchEntity createFirstInteraction(UserEntity candidate, ApartmentEntity apartment, boolean isCandidateAction, boolean interest) {
+    public ApartmentMatchEntity createFirstInteraction(UserEntity candidate, ApartmentEntity apartment,
+            boolean isCandidateAction, boolean interest) {
 
-                        
         ApartmentMatchEntity newMatch = new ApartmentMatchEntity();
 
-        if(isCandidateAction) {
+        if (isCandidateAction) {
             newMatch.setCandidateInterest(interest);
             newMatch.setLandlordInterest(null);
         } else {
@@ -113,7 +122,7 @@ public class ApartmentMatchService {
         }
         newMatch.setCandidate(candidate);
         newMatch.setApartment(apartment);
-        if(interest){
+        if (interest) {
             newMatch.setMatchStatus(MatchStatus.ACTIVE);
         } else {
             newMatch.setMatchStatus(MatchStatus.REJECTED);
@@ -136,7 +145,7 @@ public class ApartmentMatchService {
         if (apartment == null) {
             throw new ResourceNotFoundException("Apartment not found");
         }
-        if(apartment.getState() == ApartmentState.MATCHING) {
+        if (apartment.getState() == ApartmentState.MATCHING) {
             throw new ConflictException("Only apartments that are not matching can be finalized");
         }
         List<ApartmentMatchEntity> matches = apartmentMatchRepository.findByApartmentId(apartmentId);
@@ -162,10 +171,9 @@ public class ApartmentMatchService {
     public ApartmentMatchEntity successfulMatch(Integer matchId) {
         ApartmentMatchEntity match = apartmentMatchRepository.findById(matchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
-        if(match.getMatchStatus() == MatchStatus.SUCCESSFUL) {
+        if (match.getMatchStatus() == MatchStatus.SUCCESSFUL) {
             throw new ConflictException("Match is already finalized as successful");
-        }
-        else if(match.getMatchStatus() != MatchStatus.MATCH) {
+        } else if (match.getMatchStatus() != MatchStatus.MATCH) {
             throw new ConflictException("Only matches with status MATCH can be finalized as successful");
         }
         match.setMatchStatus(MatchStatus.SUCCESSFUL);

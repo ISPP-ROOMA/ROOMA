@@ -1,12 +1,24 @@
 package com.example.demo.Auth;
 
-import com.example.demo.Auth.DTOs.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.demo.Auth.DTOs.AuthRequest;
+import com.example.demo.Auth.DTOs.AuthResponse;
+import com.example.demo.Auth.DTOs.AuthResult;
+import com.example.demo.Auth.DTOs.RefreshTokenRequest;
+import com.example.demo.Auth.DTOs.ValidateTokenResponse;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -17,19 +29,22 @@ public class AuthController {
 
     public AuthController(AuthService authService, @Value("${jwt.expiration-rt}") int expirationRt) {
         this.authService = authService;
-        this.secondsExpirationRt = expirationRt/1000;
+        this.secondsExpirationRt = expirationRt / 1000;
 
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody AuthRequest request, HttpServletResponse response) {
-        AuthResult registerRes = authService.register(request.email(), request.password(), request.deviceId(), request.role());
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody AuthRequest request,
+            HttpServletResponse response) {
+        AuthResult registerRes = authService.register(request.email(), request.password(), request.deviceId(),
+                request.role());
         Cookie cookie = new Cookie("refresh_token", registerRes.refreshToken());
         cookie.setMaxAge(secondsExpirationRt);
         cookie.setSecure(false);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
-        AuthResponse authResponse = new AuthResponse(registerRes.accessToken(), registerRes.role());
+        AuthResponse authResponse = new AuthResponse(registerRes.accessToken(), registerRes.role(),
+                registerRes.userId());
         response.addCookie(cookie);
         return ResponseEntity.ok().body(authResponse);
     }
@@ -42,22 +57,22 @@ public class AuthController {
         cookie.setSecure(false);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
-        AuthResponse AuthResponse = new AuthResponse(loginRes.accessToken(), loginRes.role());
+        AuthResponse AuthResponse = new AuthResponse(loginRes.accessToken(), loginRes.role(), loginRes.userId());
         response.addCookie(cookie);
         return ResponseEntity.ok().body(AuthResponse);
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshTokenRequest refreshTokenRequest,
-                                                @CookieValue(value = "refresh_token", required = true) String token,
-                                                HttpServletResponse response) {
+            @CookieValue(value = "refresh_token", required = true) String token,
+            HttpServletResponse response) {
         AuthResult refreshRes = authService.refreshToken(token, refreshTokenRequest.deviceId());
         Cookie cookie = new Cookie("refresh_token", refreshRes.refreshToken());
         cookie.setMaxAge(secondsExpirationRt);
         cookie.setSecure(false);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
-        AuthResponse AuthResponse = new AuthResponse(refreshRes.accessToken(), refreshRes.role());
+        AuthResponse AuthResponse = new AuthResponse(refreshRes.accessToken(), refreshRes.role(), refreshRes.userId());
         response.addCookie(cookie);
         return ResponseEntity.ok().body(AuthResponse);
     }
@@ -83,13 +98,11 @@ public class AuthController {
 
     @GetMapping("/validate")
     public ResponseEntity<ValidateTokenResponse> validateToken(
-            @RequestHeader(value = "Authorization", required = false) String authHeader
-    ) {
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.badRequest().body(
-                    new ValidateTokenResponse(false, "Missing token")
-            );
+                    new ValidateTokenResponse(false, "Missing token"));
         }
 
         String token = authHeader.substring(7);
@@ -98,14 +111,10 @@ public class AuthController {
 
         if (!valid) {
             return ResponseEntity.ok(
-                    new ValidateTokenResponse(false, "Invalid or expired token")
-            );
+                    new ValidateTokenResponse(false, "Invalid or expired token"));
         }
 
         return ResponseEntity.ok(new ValidateTokenResponse(true, "Token valid"));
     }
 
 }
-
-
-

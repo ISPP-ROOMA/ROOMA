@@ -13,6 +13,7 @@ export interface LoginData {
 export interface AuthResponse {
   token: string
   role: UserRole
+  userId: number
   error?: string
 }
 
@@ -58,7 +59,7 @@ export const registerUser = async (loginData: LoginData): Promise<AuthResponse> 
     return response.data
   } catch (error) {
     console.error(error)
-    return { error: 'Invalid credentials', token: '', role: 'TENANT' }
+    return { error: 'Invalid credentials', token: '', role: 'TENANT', userId: 0 }
   }
 }
 
@@ -75,7 +76,7 @@ export const loginUser = async (loginData: LoginData): Promise<AuthResponse> => 
     return response.data
   } catch (error) {
     console.error(error)
-    return { error: 'Invalid credentials', token: '', role: 'TENANT' }
+    return { error: 'Invalid credentials', token: '', role: 'TENANT', userId: 0 }
   }
 }
 
@@ -88,7 +89,7 @@ export const refreshToken = async (): Promise<AuthResponse | undefined> => {
     try {
       const response = await api.post<AuthResponse>('/auth/refresh', { deviceId: getDeviceId() })
       markSessionHint()
-      useAuthStore.getState().login({ token: response.data.token, role: response.data.role })
+      useAuthStore.getState().login({ token: response.data.token, role: response.data.role, userId: response.data.userId })
       return response.data
     } catch (error) {
       console.error(error)

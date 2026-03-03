@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
 import { useForm, useWatch } from 'react-hook-form'
+import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { getDeviceId, registerUser } from '../service/auth.service'
 import { useAuthStore } from '../store/authStore'
@@ -47,6 +47,7 @@ export default function Register() {
     useAuthStore.getState().login({
       token: res.token,
       role: res.role,
+      userId: res.userId,
     })
 
     if (res.role === 'LANDLORD') {
@@ -77,11 +78,10 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setValue('role', 'TENANT', { shouldValidate: true })}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                    selectedRole === 'TENANT'
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${selectedRole === 'TENANT'
                       ? 'border-primary bg-primary/5 shadow-sm'
                       : 'border-base-300 hover:border-base-content/20'
-                  }`}
+                    }`}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -103,11 +103,10 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setValue('role', 'LANDLORD', { shouldValidate: true })}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                    selectedRole === 'LANDLORD'
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${selectedRole === 'LANDLORD'
                       ? 'border-primary bg-primary/5 shadow-sm'
                       : 'border-base-300 hover:border-base-content/20'
-                  }`}
+                    }`}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
