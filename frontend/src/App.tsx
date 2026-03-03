@@ -1,29 +1,34 @@
 import { useEffect, useRef, useState } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
-import Home from './pages/Home'
 import Navbar from './components/Navbar'
-import Login from './pages/Login'
-import Profile from './pages/private/Profile'
-import Footer from './components/Footer'
 import PrivateRoute from './components/PrivateRoute'
-import { useAuthStore } from './store/authStore'
-import Users from './pages/admin/Users'
-import User from './pages/admin/User'
-import { hasSessionHint, refreshToken } from './service/auth.service'
-import Apartments from './pages/apartments/Apartments'
-import ApartmentDetail from './pages/apartments/ApartmentDetail'
-import PublishFlowContainer from './pages/apartments/publish/PublishFlowContainer'
-import Register from './pages/Register'
-import MyRequests from './pages/private/MyRequests'
-import PropertyDetails from './pages/PropertyDetails'
-import { ToastProvider } from './context/ToastContext'
 import ReviewModal from './components/ReviewModal'
-import { getPendingReviews } from './service/review.service'
+import Grainient from './components/ui/Grainient'
+import { ToastProvider } from './context/ToastContext'
+import User from './pages/admin/User'
+import Users from './pages/admin/Users'
+import ApartmentDetail from './pages/apartments/ApartmentDetail'
+import Apartments from './pages/apartments/Apartments'
+import PublishFlowContainer from './pages/apartments/publish/PublishFlowContainer'
+import Home from './pages/Home'
+import Login from './pages/Login'
 import LeaveReview from './pages/private/LeaveReview'
+import MyRequests from './pages/private/MyRequests'
+import Profile from './pages/private/Profile'
+import PropertyDetails from './pages/PropertyDetails'
+import Register from './pages/Register'
+import { hasSessionHint, refreshToken } from './service/auth.service'
+import { getPendingReviews } from './service/review.service'
+import { useAuthStore } from './store/authStore'
 
 function App() {
-  const location = useLocation()
   const { token, role } = useAuthStore()
+  const location = useLocation()
+
+  const showBackground =
+    location.pathname === '/login' ||
+    location.pathname === '/register' ||
+    (location.pathname === '/' && !token)
   const didTryRefresh = useRef(false)
 
   const [show_reviews_alert, setShowReviewsAlert] = useState(false)
@@ -120,19 +125,46 @@ function App() {
     )
   }
 
-  const usesMobileLayout = location.pathname === '/mis-solicitudes'
-
   return (
     <ToastProvider>
-      <div className="flex flex-col min-h-screen">
-        {!usesMobileLayout && (
+      <div className="flex flex-col min-h-screen relative overflow-hidden text-base-content font-sans">
+        {/* Animated Background */}
+        {showBackground && (
+          <div className="fixed inset-0 z-[-1] pointer-events-none">
+            <Grainient
+              color1="#f0ebe3" // base-200
+              color2="#0d9488" // primary (teal)
+              color3="#c4a97d" // secondary (beige)
+              timeSpeed={0.25}
+              colorBalance={-0.17}
+              warpStrength={0.75}
+              warpFrequency={5}
+              warpSpeed={2}
+              warpAmplitude={65}
+              blendAngle={0}
+              blendSoftness={0.05}
+              rotationAmount={500}
+              noiseScale={2.3}
+              grainAmount={0.02}
+              grainScale={2}
+              grainAnimated={true}
+              contrast={1.1}
+              gamma={1}
+              saturation={1.2}
+              zoom={0.9}
+            />
+          </div>
+        )}
+
+        {/* Only show Navbar if not on Home screen unauthenticated */}
+        {(token || location.pathname !== '/') && (
           <Navbar
             show_reviews_alert={show_reviews_alert}
             setShowReviewsAlert={setShowReviewsAlert}
           />
         )}
 
-        <main className="mx-auto flex-grow w-full">
+        <main className="mx-auto flex-grow w-full pb-20 md:pb-0 relative z-0">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/properties/:id" element={<PropertyDetails />} />
@@ -212,9 +244,6 @@ function App() {
             {publicRoutes}
           </Routes>
         </main>
-
-        {/* Footer solo si no es móvil */}
-        {!usesMobileLayout && <Footer />}
 
         {/* Modales globales */}
         <ReviewModal

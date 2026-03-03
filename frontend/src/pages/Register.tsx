@@ -62,8 +62,8 @@ export default function Register() {
   }
 
   return (
-    <div className="flex items-center justify-center mt-6 p-4">
-      <div className="card w-full max-w-md bg-base-100 shadow">
+    <div className="flex items-center justify-center min-h-[85vh] w-full px-4">
+      <div className="card w-full max-w-md bg-base-100/40 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/20 rounded-xl">
         <div className="card-body">
           <h2 className="card-title justify-center text-2xl">Crear cuenta</h2>
           <p className="text-center text-sm text-gray-500 mb-2">Elige cómo quieres usar Rooma</p>
@@ -78,9 +78,9 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setValue('role', 'TENANT', { shouldValidate: true })}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${selectedRole === 'TENANT'
-                      ? 'border-primary bg-primary/5 shadow-sm'
-                      : 'border-base-300 hover:border-base-content/20'
+                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${selectedRole === 'TENANT'
+                    ? 'border-primary bg-primary/5 shadow-sm'
+                    : 'border-base-300 hover:border-base-content/20'
                     }`}
                 >
                   <svg
@@ -103,9 +103,9 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setValue('role', 'LANDLORD', { shouldValidate: true })}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${selectedRole === 'LANDLORD'
-                      ? 'border-primary bg-primary/5 shadow-sm'
-                      : 'border-base-300 hover:border-base-content/20'
+                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${selectedRole === 'LANDLORD'
+                    ? 'border-primary bg-primary/5 shadow-sm'
+                    : 'border-base-300 hover:border-base-content/20'
                     }`}
                 >
                   <svg
@@ -140,7 +140,7 @@ export default function Register() {
                 id="email"
                 type="text"
                 placeholder="tu@email.com"
-                className="input input-bordered w-full"
+                className="input input-bordered w-full rounded-2xl"
               />
               {errors.email && <p className="text-error text-sm mt-1">{errors.email.message}</p>}
             </div>
@@ -154,7 +154,7 @@ export default function Register() {
                 id="password"
                 type={isPasswordVisible ? 'text' : 'password'}
                 placeholder="Mínimo 4 caracteres"
-                className="input input-bordered w-full"
+                className="input input-bordered w-full rounded-2xl"
               />
               {errors.password && (
                 <p className="text-error text-sm mt-1">{errors.password.message}</p>
@@ -168,7 +168,7 @@ export default function Register() {
               <select
                 {...register('role')}
                 id="role"
-                className="select select-bordered w-full"
+                className="select select-bordered w-full rounded-2xl"
                 defaultValue=""
               >
                 <option value="" disabled>
@@ -186,7 +186,7 @@ export default function Register() {
               <button type="button" onClick={togglePassword} className="btn btn-link btn-sm px-0">
                 {isPasswordVisible ? 'Ocultar contraseña' : 'Ver contraseña'}
               </button>
-              <button type="submit" className="btn btn-primary">
+              <button type="submit" className="btn btn-primary rounded-2xl px-6 border-none">
                 Registrarse
               </button>
             </div>
