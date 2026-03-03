@@ -30,6 +30,8 @@ function statusLabel(status: MatchStatus): string {
       return 'Pendiente'
     case 'MATCH':
       return '¡Match!'
+    case 'INVITED':
+      return 'Invitado'
     case 'SUCCESSFUL':
       return 'Aceptada'
     case 'REJECTED':
@@ -44,6 +46,7 @@ function statusBadgeClass(status: MatchStatus): string {
     case 'ACTIVE':
       return 'border border-[#050505] bg-white text-[#050505]'
     case 'MATCH':
+    case 'INVITED':
     case 'SUCCESSFUL':
       return 'border-0 bg-[#008080] text-white'
     case 'REJECTED':
@@ -263,7 +266,7 @@ export default function LandlordRequestsPage() {
               const isCancelled =
                 item.matchStatus === 'CANCELED' || item.matchStatus === 'REJECTED'
               const isMatch =
-                item.matchStatus === 'MATCH' || item.matchStatus === 'SUCCESSFUL'
+                item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED'
 
               return (
                 <article

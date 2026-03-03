@@ -7,6 +7,7 @@ import type { ApartmentDTO, ApartmentMatchDTO, MatchStatus } from '../../../serv
 import {
   cancelApartmentMatch,
   getMatchesForCandidate,
+  respondToInvitation,
 } from '../../../service/apartment.service'
 import { getApartment } from '../../../service/apartments.service'
 import { useAuthStore } from '../../../store/authStore'
@@ -29,6 +30,8 @@ function statusLabel(status: MatchStatus): string {
       return 'Pendiente'
     case 'MATCH':
       return '¡Match!'
+    case 'INVITED':
+      return 'Invitado'
     case 'SUCCESSFUL':
       return 'Aceptada'
     case 'REJECTED':
@@ -43,6 +46,7 @@ function statusBadgeClass(status: MatchStatus): string {
     case 'ACTIVE':
       return 'border border-[#050505] bg-white text-[#050505]'
     case 'MATCH':
+    case 'INVITED':
     case 'SUCCESSFUL':
       return 'border-0 bg-[#008080] text-white'
     case 'REJECTED':
@@ -82,6 +86,7 @@ export default function TenantRequestsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [cancellingId, setCancellingId] = useState<number | null>(null)
+  const [invitationActionId, setInvitationActionId] = useState<number | null>(null)
   const [selectedApartment, setSelectedApartment] = useState<(ApartmentDTO & { imageUrl: string }) | null>(null)
   const [modalLoading, setModalLoading] = useState<number | null>(null)
 
@@ -91,20 +96,20 @@ export default function TenantRequestsPage() {
     setError(null)
     try {
       const id = Number(userId)
-      const [activeMatches, successMatches, fullMatches] = await Promise.all([
+      const [activeMatches, invitedMatches, fullMatches] = await Promise.all([
         getMatchesForCandidate(id, 'ACTIVE'),
-        getMatchesForCandidate(id, 'SUCCESSFUL'),
+        getMatchesForCandidate(id, 'INVITED'),
         getMatchesForCandidate(id, 'MATCH'),
       ])
 
-      const [enrichedPending, enrichedSuccess, enrichedFull] = await Promise.all([
+      const [enrichedPending, enrichedInvited, enrichedFull] = await Promise.all([
         enrichMatches(activeMatches),
-        enrichMatches(successMatches),
+        enrichMatches(invitedMatches),
         enrichMatches(fullMatches),
       ])
 
       setPendingItems(enrichedPending)
-      setMatchItems([...enrichedFull, ...enrichedSuccess])
+      setMatchItems([...enrichedFull, ...enrichedInvited])
     } catch (err) {
       console.error('Error loading requests', err)
       setError('No se pudieron cargar tus solicitudes. Inténtalo de nuevo.')
@@ -148,6 +153,19 @@ export default function TenantRequestsPage() {
       console.error('Error loading apartment details', err)
     } finally {
       setModalLoading(null)
+    }
+  }
+
+  const handleInvitationResponse = async (matchId: number, accepted: boolean) => {
+    setInvitationActionId(matchId)
+    setMatchItems((prev) => prev.filter((i) => i.matchId !== matchId))
+    try {
+      await respondToInvitation(matchId, accepted)
+    } catch (err) {
+      console.error('Error responding to invitation', err)
+      void fetchData()
+    } finally {
+      setInvitationActionId(null)
     }
   }
 
@@ -244,7 +262,7 @@ export default function TenantRequestsPage() {
               const isCancelled =
                 item.matchStatus === 'CANCELED' || item.matchStatus === 'REJECTED'
               const isMatch =
-                item.matchStatus === 'MATCH' || item.matchStatus === 'SUCCESSFUL'
+                item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED'
 
               return (
                 <article
@@ -324,6 +342,38 @@ export default function TenantRequestsPage() {
                             aria-label="Agendar cita"
                           >
                             <CalendarDays size={16} />
+                          </button>
+                        </div>
+                      )}
+                      {item.matchStatus === 'INVITED' && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-error btn-outline"
+                            onClick={() => {
+                              void handleInvitationResponse(item.matchId, false)
+                            }}
+                            disabled={invitationActionId === item.matchId}
+                          >
+                            {invitationActionId === item.matchId ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              'Rechazar'
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-success"
+                            onClick={() => {
+                              void handleInvitationResponse(item.matchId, true)
+                            }}
+                            disabled={invitationActionId === item.matchId}
+                          >
+                            {invitationActionId === item.matchId ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              'Aceptar'
+                            )}
                           </button>
                         </div>
                       )}
