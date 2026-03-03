@@ -68,6 +68,15 @@ export interface SwipeActionDTO {
   interest: boolean
 }
 
+export type MatchStatus = 'ACTIVE' | 'MATCH' | 'REJECTED' | 'SUCCESSFUL' | 'CANCELED'
+
+export interface ApartmentMatchDTO {
+  id: number
+  candidateId: number
+  apartmentId: number
+  matchStatus: MatchStatus
+}
+
 export const searchApartments = async (
   ubication?: string,
   minPrice?: number,
@@ -90,12 +99,13 @@ export const searchApartments = async (
 }
 
 export const swipeApartment = async (
+  candidateId: number,
   apartmentId: number,
   interest: boolean,
 ): Promise<unknown> => {
   try {
     const response = await api.post(
-      `/apartments-matches/swipe/apartment/${apartmentId}/tenant`,
+      `/apartments-matches/swipe/candidate/${candidateId}/apartment/${apartmentId}/action/${interest}`,
       interest,
       { headers: { 'Content-Type': 'application/json' } }
     )
@@ -117,6 +127,20 @@ export const getApartmentPhotos = async (apartmentId: number): Promise<Apartment
     return []
   }
 }
+export const getMatchesForCandidate = async (
+  candidateId: number,
+  status: MatchStatus
+): Promise<ApartmentMatchDTO[]> => {
+  try {
+    const response = await api.get<ApartmentMatchDTO[]>(
+      `/apartments-matches/candidate/${candidateId}/status/${status}`
+    )
+    return response.data
+  } catch (error) {
+    console.error('Error fetching matches:', error)
+    return []
+  }
+}
 
 export const getAllApartments = async (): Promise<ApartmentDTO[]> => {
   try {
@@ -135,5 +159,20 @@ export const getMyHomeSnapshot = async (): Promise<ApartmentHomeDTO | null> => {
   } catch (error) {
     console.error('Error fetching my home snapshot:', error)
     return null
+  }
+}
+export const cancelApartmentMatch = async (matchId: number): Promise<void> => {
+  await api.patch(`/apartments-matches/apartmentMatch/${matchId}/status/canceled`)
+}
+
+export const getDeckForCandidate = async (
+  candidateId: number
+): Promise<ApartmentDTO[]> => {
+  try {
+    const response = await api.get<ApartmentDTO[]>(`/apartments/deck/${candidateId}`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching deck:', error)
+    return []
   }
 }

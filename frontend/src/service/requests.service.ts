@@ -126,7 +126,7 @@ function mapLandlordRequest(dto: LandlordRequestDTO): RequestItem {
 
 export async function getSentRequests(): Promise<RequestItem[]> {
   try {
-    const response = await api.get<TenantRequestDTO[]>('/apartments-matches/my/my-requests/ACTIVE')
+    const response = await api.get<TenantRequestDTO[]>('/apartments-matches/my-requests/ACTIVE')
     return response.data.map(mapTenantRequest)
   } catch (error) {
     console.error('Error fetching tenant requests:', error)

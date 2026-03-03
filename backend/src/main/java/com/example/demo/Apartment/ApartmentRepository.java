@@ -10,15 +10,20 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ApartmentRepository extends JpaRepository<ApartmentEntity, Integer> {
 
-    @Query("SELECT a FROM ApartmentEntity a WHERE " +
-            "(:ubication IS NULL OR a.ubication LIKE %:ubication%) AND " +
-            "(:minPrice IS NULL OR a.price >= :minPrice) AND " +
-            "(:maxPrice IS NULL OR a.price <= :maxPrice) AND " +
-            "(:state IS NULL OR a.state = :state)")
-    List<ApartmentEntity> search(@Param("ubication") String ubication,
-            @Param("minPrice") Double minPrice,
-            @Param("maxPrice") Double maxPrice,
-            @Param("state") ApartmentState state);
+        @Query("SELECT a FROM ApartmentEntity a WHERE " +
+                        "(:ubication IS NULL OR a.ubication LIKE %:ubication%) AND " +
+                        "(:minPrice IS NULL OR a.price >= :minPrice) AND " +
+                        "(:maxPrice IS NULL OR a.price <= :maxPrice) AND " +
+                        "(:state IS NULL OR a.state = :state)")
+        List<ApartmentEntity> search(@Param("ubication") String ubication,
+                        @Param("minPrice") Double minPrice,
+                        @Param("maxPrice") Double maxPrice,
+                        @Param("state") ApartmentState state);
 
-    public List<ApartmentEntity> findAllByUserId(Integer userId);
+        public List<ApartmentEntity> findAllByUserId(Integer userId);
+
+        @Query("SELECT a FROM ApartmentEntity a WHERE a.state = com.example.demo.Apartment.ApartmentState.ACTIVE " +
+                        "AND a.user.id <> :candidateId " +
+                        "AND NOT EXISTS (SELECT m FROM ApartmentMatchEntity m WHERE m.candidate.id = :candidateId AND m.apartment.id = a.id)")
+        List<ApartmentEntity> findDeckForCandidate(@Param("candidateId") Integer candidateId);
 }
