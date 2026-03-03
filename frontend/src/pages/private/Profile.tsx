@@ -136,12 +136,12 @@ export default function Profile() {
                   {roommates && roommates.length > 0 ? (
                     <ul className="mt-2 space-y-2 text-sm">
                       {roommates.map((r) => (
-                        <li key={r.id} className="flex items-center gap-3">
+                        <li key={r.user?.id} className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
-                            {r.email ? r.email[0].toUpperCase() : '?'}
+                            {r.user?.email ? r.user.email[0].toUpperCase() : '?'}
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-medium">{r.email}</span>
+                            <span className="font-medium">{r.user?.email}</span>
                             <span className="text-xs text-gray-500">{r.role}</span>
                           </div>
                         </li>

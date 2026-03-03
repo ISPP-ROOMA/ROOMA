@@ -1,4 +1,5 @@
 import { Cloudinary } from '@cloudinary/url-gen'
+import { fill } from '@cloudinary/url-gen/actions/resize'
 import { AdvancedImage, lazyload, responsive, placeholder } from '@cloudinary/react'
 
 const cld = new Cloudinary({
@@ -24,14 +25,14 @@ export default function ShowImage({
     .image(publicId)
     .format('auto')
     .quality('auto')
-    .resize(`w_${width},h_${height},c_fill`)
+    .resize(fill().width(width).height(height))
 
   return (
     <AdvancedImage
       cldImg={img}
       alt={alt}
       className={className}
-      plugins={[lazyload(), responsive(200), placeholder('blur')]}
+      plugins={[lazyload(), responsive({ steps: 200 }), placeholder({ mode: 'blur' })]}
     />
   )
 }

@@ -57,7 +57,7 @@ export const registerUser = async (loginData: LoginData): Promise<AuthResponse> 
       markSessionHint()
       const userId = await fetchCurrentUserId(response.data.token)
       if (userId !== null) {
-        response.data.userId = userId
+        response.data.userId = typeof userId === 'string' ? parseInt(userId, 10) : userId
       }
     }
     return response.data
@@ -78,7 +78,7 @@ export const loginUser = async (loginData: LoginData): Promise<AuthResponse> => 
       markSessionHint()
       const userId = await fetchCurrentUserId(response.data.token)
       if (userId !== null) {
-        response.data.userId = userId
+        response.data.userId = typeof userId === 'string' ? parseInt(userId, 10) : userId
       }
     }
     return response.data
