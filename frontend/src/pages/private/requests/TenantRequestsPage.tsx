@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion'
-import { Loader2, X } from 'lucide-react'
+import { CalendarDays, Loader2, MessageCircle, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
@@ -305,10 +305,28 @@ export default function TenantRequestsPage() {
 
                     <div className="my-3 h-px w-full bg-[#DDDBCB]" />
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-2">
                       <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.matchStatus)}`}>
                         {statusLabel(item.matchStatus)}
                       </span>
+                      {item.matchStatus === 'MATCH' && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center"
+                            aria-label="Abrir chat"
+                          >
+                            <MessageCircle size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            className="h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center"
+                            aria-label="Agendar cita"
+                          >
+                            <CalendarDays size={16} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </article>
