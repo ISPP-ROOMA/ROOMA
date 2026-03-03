@@ -77,6 +77,13 @@ export interface ApartmentMatchDTO {
   matchStatus: MatchStatus
 }
 
+export interface ApartmentMatchTenantDetailsDTO {
+  id: number
+  tenant: UserDTO
+  apartment: ApartmentDTO
+  matchStatus: MatchStatus
+}
+
 export const searchApartments = async (
   ubication?: string,
   minPrice?: number,
@@ -196,6 +203,20 @@ export const respondToInvitation = async (
     `/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-invitation`,
     accepted
   )
+}
+
+export const getLandlordMatchDetails = async (
+  apartmentMatchId: number
+): Promise<ApartmentMatchTenantDetailsDTO | null> => {
+  try {
+    const response = await api.get<ApartmentMatchTenantDetailsDTO>(
+      `/apartments-matches/apartmentMatch/${apartmentMatchId}/landlord-match-details`
+    )
+    return response.data
+  } catch (error) {
+    console.error('Error fetching landlord match details:', error)
+    return null
+  }
 }
 
 export const getDeckForCandidate = async (

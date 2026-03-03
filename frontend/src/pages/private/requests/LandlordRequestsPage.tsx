@@ -6,6 +6,7 @@ import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
 import type { ApartmentDTO, ApartmentMatchDTO, MatchStatus } from '../../../service/apartment.service'
 import {
   acceptApartmentMatch,
+  getLandlordMatchDetails,
   getMatchesForLandlord,
   rejectApartmentMatch,
 } from '../../../service/apartment.service'
@@ -22,6 +23,7 @@ interface EnrichedMatch {
   location: string
   price: string
   imageUrl: string
+  tenantEmail: string
 }
 
 function statusLabel(status: MatchStatus): string {
@@ -58,17 +60,26 @@ function statusBadgeClass(status: MatchStatus): string {
 async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatch[]> {
   const enriched = await Promise.all(
     matches.map(async (match) => {
-      const apt = await getApartment(match.apartmentId)
+      const [apt, details] = await Promise.all([
+        getApartment(match.apartmentId),
+        getLandlordMatchDetails(match.id),
+      ])
+      const detailsApt = details?.apartment
       return {
         matchId: match.id,
         apartmentId: match.apartmentId,
         matchStatus: match.matchStatus,
-        title: apt?.title ?? `Vivienda #${match.apartmentId}`,
-        location: apt?.ubication ?? '—',
-        price: apt ? `${apt.price.toLocaleString('es-ES')} €` : '—',
+        title: detailsApt?.title ?? apt?.title ?? `Vivienda #${match.apartmentId}`,
+        location: detailsApt?.ubication ?? apt?.ubication ?? '—',
+        price: detailsApt?.price
+          ? `${detailsApt.price.toLocaleString('es-ES')} €`
+          : apt?.price
+            ? `${apt.price.toLocaleString('es-ES')} €`
+            : '—',
         imageUrl:
           apt?.coverImageUrl ??
           'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+        tenantEmail: details?.tenant?.email ?? '—',
       } satisfies EnrichedMatch
     })
   )
@@ -309,6 +320,7 @@ export default function LandlordRequestsPage() {
                     </div>
 
                     <p className="mt-0.5 text-sm text-[#050505]/70 line-clamp-1">{item.location}</p>
+                    <p className="mt-1 text-sm text-[#008080] line-clamp-1">{item.tenantEmail}</p>
 
                     <div className="my-3 h-px w-full bg-[#DDDBCB]" />
 
