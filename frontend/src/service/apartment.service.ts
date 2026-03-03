@@ -142,6 +142,21 @@ export const getMatchesForCandidate = async (
   }
 }
 
+export const getMatchesForLandlord = async (
+  landlordId: number,
+  status: MatchStatus
+): Promise<ApartmentMatchDTO[]> => {
+  try {
+    const response = await api.get<ApartmentMatchDTO[]>(
+      `/apartments-matches/${landlordId}/interested-candidates/${status}`
+    )
+    return response.data
+  } catch (error) {
+    console.error('Error fetching landlord matches:', error)
+    return []
+  }
+}
+
 export const getAllApartments = async (): Promise<ApartmentDTO[]> => {
   try {
     const response = await api.get<ApartmentDTO[]>(`/apartments`)
@@ -163,6 +178,14 @@ export const getMyHomeSnapshot = async (): Promise<ApartmentHomeDTO | null> => {
 }
 export const cancelApartmentMatch = async (matchId: number): Promise<void> => {
   await api.patch(`/apartments-matches/apartmentMatch/${matchId}/status/canceled`)
+}
+
+export const rejectApartmentMatch = async (matchId: number): Promise<void> => {
+  await api.post(`/apartments-matches/apartmentMatch/${matchId}/respond-request?interest=false`)
+}
+
+export const acceptApartmentMatch = async (matchId: number): Promise<void> => {
+  await api.post(`/apartments-matches/apartmentMatch/${matchId}/respond-request?interest=true`)
 }
 
 export const getDeckForCandidate = async (
