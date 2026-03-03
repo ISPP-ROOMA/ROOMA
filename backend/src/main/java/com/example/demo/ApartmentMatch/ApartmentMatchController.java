@@ -155,14 +155,14 @@ public class ApartmentMatchController {
     }
 
     @PreAuthorize("hasRole('LANDLORD')")
-    @PatchMapping("/apartmentMatch/{apartmentMatchId}/send-invitation")
+    @PostMapping("/apartmentMatch/{apartmentMatchId}/send-invitation")
     public ResponseEntity<ApartmentMatchLandlordDTO> sendInvitation(@PathVariable Integer apartmentMatchId) {
         ApartmentMatchLandlordDTO apartmentMatch = ApartmentMatchLandlordDTO.fromApartmentMatchEntity(apartmentMatchService.sendInvitation(apartmentMatchId));
         return ResponseEntity.ok(apartmentMatch);
     }
 
     @PreAuthorize("hasRole('TENANT')")
-    @PatchMapping("/apartmentMatch/{apartmentMatchId}/respond-invitation")
+    @PostMapping("/apartmentMatch/{apartmentMatchId}/respond-invitation")
     public ResponseEntity<ApartmentMatchDTO> respondToInvitation(@PathVariable Integer apartmentMatchId, @RequestBody boolean accepted) {
         ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(apartmentMatchService.respondToInvitation(apartmentMatchId, accepted));
         return ResponseEntity.ok(apartmentMatch);
