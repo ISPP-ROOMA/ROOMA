@@ -4,9 +4,7 @@ on:
   workflow_run:
     workflows: ["CI"]
     types: [completed]
-    branches:
-      - main
-      - trunk
+    branches: [main, trunk]
 
 jobs:
   deploy-dev:
