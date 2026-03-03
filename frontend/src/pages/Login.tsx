@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { getDeviceId, loginUser } from '../service/auth.service'
 import { useAuthStore } from '../store/authStore'
@@ -56,8 +56,8 @@ export default function Login() {
   }
 
   return (
-    <div className="flex items-center justify-center mt-6 p-4">
-      <div className="card w-full max-w-md bg-base-100 shadow">
+    <div className="flex items-center justify-center min-h-[85vh] w-full px-4">
+      <div className="card w-full max-w-md bg-base-100/40 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/20 rounded-xl">
         <div className="card-body">
           <h2 className="card-title justify-center text-2xl">Iniciar sesión</h2>
 
@@ -70,7 +70,7 @@ export default function Login() {
                 {...register('email')}
                 id="email"
                 type="text"
-                className="input input-bordered w-full"
+                className="input input-bordered w-full rounded-2xl"
               />
               {errors.email && <p className="text-error text-sm mt-1">{errors.email.message}</p>}
             </div>
@@ -83,7 +83,7 @@ export default function Login() {
                 {...register('password')}
                 id="password"
                 type={isPasswordVisible ? 'text' : 'password'}
-                className="input input-bordered w-full"
+                className="input input-bordered w-full rounded-2xl"
               />
               {errors.password && (
                 <p className="text-error text-sm mt-1">{errors.password.message}</p>
@@ -100,7 +100,7 @@ export default function Login() {
               >
                 {isPasswordVisible ? 'Ocultar contraseña' : 'Ver contraseña'}
               </button>
-              <button type="submit" className="btn btn-primary">
+              <button type="submit" className="btn btn-primary rounded-2xl px-8 border-none">
                 Login
               </button>
             </div>

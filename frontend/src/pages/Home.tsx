@@ -1,5 +1,5 @@
-import { AnimatePresence } from 'framer-motion'
-import { Loader2 } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Building2, Loader2, PlusCircle, ShieldCheck, Users2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ApartmentDetailModal from '../components/ApartmentDetailModal'
@@ -8,6 +8,21 @@ import { useToast } from '../hooks/useToast'
 import type { ApartmentDTO } from '../service/apartment.service'
 import { getDeckForCandidate, swipeApartment } from '../service/apartment.service'
 import { useAuthStore } from '../store/authStore'
+
+function HeroWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen w-full px-6 py-16 relative overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 32 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="relative z-10 w-full max-w-2xl"
+      >
+        {children}
+      </motion.div>
+    </div>
+  )
+}
 
 export default function Home() {
   const { token, userId, role } = useAuthStore()
@@ -53,76 +68,115 @@ export default function Home() {
     }
   }
 
-  // --- NON-TENANT VIEWS ---
   if (!token) {
     return (
-      <div className="hero min-h-[80vh] bg-base-200 px-6">
-        <div className="hero-content text-center">
-          <div className="max-w-xl">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Bienvenido a Rooma</h1>
-            <p className="py-6 text-lg text-base-content/80">
-              Encuentra tu piso ideal o publica el tuyo. Regístrate como inquilino o propietario para empezar.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/register" className="btn btn-primary btn-wide sm:btn-md">Crear cuenta</Link>
-              <Link to="/login" className="btn btn-ghost btn-wide sm:btn-md">Iniciar sesión</Link>
-            </div>
+      <HeroWrapper>
+        <div className="text-center p-4">
+          <img src="/Logo Rooma.jpeg" alt="Logo" className="w-40 h-40 md:w-56 md:h-56 mx-auto mb-10 rounded-[2.5rem] shadow-2xl object-cover" />
+          <h1 className="text-6xl md:text-8xl font-black tracking-tight mb-6 text-base-content drop-shadow-lg">
+            Bienvenido a <span className="text-primary block sm:inline mt-2 sm:mt-0">Rooma</span>
+          </h1>
+          <p className="text-base-content/90 font-medium text-xl md:text-2xl lg:text-3xl mb-12 max-w-2xl mx-auto drop-shadow">
+            Encuentra tu piso ideal o publica el tuyo. Regístrate como inquilino o propietario para empezar.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-5 justify-center items-center w-full max-w-lg mx-auto">
+            <Link to="/register" className="btn btn-lg rounded-3xl w-full sm:w-auto flex-1 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all text-lg border-none bg-primary text-primary-content">
+              Crear cuenta
+            </Link>
+            <Link to="/login" className="btn btn-lg btn-neutral rounded-3xl w-full sm:w-auto flex-1 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all text-lg border-none">
+              Iniciar sesión
+            </Link>
           </div>
         </div>
-      </div>
+      </HeroWrapper>
     )
   }
 
   if (role === 'LANDLORD') {
     return (
-      <div className="hero min-h-[80vh] bg-base-200 px-6">
-        <div className="hero-content text-center">
-          <div className="max-w-xl">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Panel de Arrendador</h1>
-            <p className="py-6 text-lg text-base-content/80">Gestiona tus inmuebles y encuentra a los inquilinos perfectos.</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/apartments/my" className="btn btn-primary btn-wide sm:btn-md">Mis Inmuebles</Link>
-              <Link to="/apartments/publish" className="btn btn-ghost btn-wide sm:btn-md">Publicar piso</Link>
-            </div>
+      <HeroWrapper>
+        <div className="text-center bg-base-100 rounded-3xl shadow-xl border border-base-200 p-8 md:p-10">
+          <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-secondary/10 text-secondary">
+            <Building2 size={32} />
+          </div>
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+            Panel de Arrendador
+          </h1>
+          <p className="text-base-content/60 text-base mb-8 leading-relaxed">
+            Gestiona tus inmuebles y encuentra a los inquilinos perfectos.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <Link
+              to="/apartments/my"
+              className="btn btn-outline rounded-2xl flex-col h-auto py-4 gap-2 border-base-300 hover:border-primary hover:bg-primary/5"
+            >
+              <Building2 size={22} />
+              <span className="text-xs font-semibold">Mis Inmuebles</span>
+            </Link>
+            <Link
+              to="/apartments/publish"
+              className="btn btn-primary rounded-2xl flex-col h-auto py-4 gap-2"
+            >
+              <PlusCircle size={22} />
+              <span className="text-xs font-semibold">Publicar piso</span>
+            </Link>
           </div>
         </div>
-      </div>
+      </HeroWrapper>
     )
   }
 
   if (role === 'ADMIN') {
     return (
-      <div className="hero min-h-[80vh] bg-base-200 px-6">
-        <div className="hero-content text-center">
-          <div className="max-w-xl">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Panel de Administración</h1>
-            <p className="py-6 text-lg text-base-content/80">Gestiona los usuarios y la plataforma Rooma.</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/users" className="btn btn-primary btn-wide sm:btn-md">Gestionar usuarios</Link>
-            </div>
+      <HeroWrapper>
+        <div className="text-center bg-base-100 rounded-3xl shadow-xl border border-base-200 p-8 md:p-10">
+          <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-error/10 text-error">
+            <ShieldCheck size={32} />
           </div>
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+            Panel de Administración
+          </h1>
+          <p className="text-base-content/60 text-base mb-8 leading-relaxed">
+            Gestiona los usuarios y la plataforma Rooma.
+          </p>
+          <Link
+            to="/users"
+            className="btn btn-primary rounded-2xl w-full gap-2"
+          >
+            <Users2 size={18} />
+            Gestionar usuarios
+          </Link>
         </div>
-      </div>
+      </HeroWrapper>
     )
   }
 
-  // --- TENANT SWIPING VIEW ---
   return (
-    <div className="flex flex-col items-center justify-center min-h-[85vh] w-full px-6 md:px-8 py-8 overflow-hidden bg-base-200 relative">
+    <div className="flex flex-col items-center justify-center min-h-[85vh] w-full px-4 md:px-8 py-6 overflow-hidden relative">
       {loading ? (
-        <div className="flex flex-col items-center gap-4 text-primary">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center gap-4 text-primary"
+        >
           <Loader2 className="animate-spin" size={48} />
           <p className="font-medium animate-pulse text-lg">Buscando tus opciones...</p>
-        </div>
+        </motion.div>
       ) : apartments.length === 0 ? (
-        <div className="text-center p-10 bg-base-100 rounded-3xl shadow-lg w-full max-w-md border border-base-300">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center p-10 bg-base-100 rounded-3xl shadow-lg w-full max-w-sm border border-base-200"
+        >
           <div className="text-6xl mb-6">💤</div>
           <h2 className="text-2xl font-bold mb-3">No hay más pisos</h2>
-          <p className="text-base-content/70">Vuelve más tarde para ver nuevas opciones publicadas.</p>
-        </div>
+          <p className="text-base-content/60 text-sm leading-relaxed">
+            Vuelve más tarde para ver nuevas opciones publicadas.
+          </p>
+        </motion.div>
       ) : (
-        /* Card Container - Responsive Height & Constrained Width */
-        <div className="relative w-full max-w-md h-[65vh] min-h-[500px] max-h-[650px] flex items-center justify-center mt-4">
+        /* Card stack */
+        <div className="relative w-full max-w-sm md:max-w-md h-[62vh] min-h-[480px] max-h-[660px] flex items-center justify-center">
           <AnimatePresence>
             {apartments.map((apartment, index) => {
               const isTop = index === apartments.length - 1
@@ -133,7 +187,7 @@ export default function Home() {
                   style={{
                     zIndex: index,
                     transform: `scale(${1 - (apartments.length - 1 - index) * 0.04}) translateY(-${(apartments.length - 1 - index) * 16}px)`,
-                    transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)', // Smoother spring-like transition
+                    transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
                   }}
                 >
                   <SwipeableCard
