@@ -13,7 +13,12 @@ spring:
     password: ${DB_PASS}
     driver-class-name: org.postgresql.Driver
 
+  sql:
+    init:
+      mode: always
+
   jpa:
+    defer-datasource-initialization: true
     show-sql: false
     hibernate:
       ddl-auto: update
