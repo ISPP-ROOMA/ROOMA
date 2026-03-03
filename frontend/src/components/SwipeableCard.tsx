@@ -5,7 +5,7 @@ import {
   useTransform,
 } from 'framer-motion'
 import { Check, MapPin, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ApartmentDTO } from '../service/apartment.service'
 
 interface SwipeableCardProps {
@@ -14,41 +14,22 @@ interface SwipeableCardProps {
   onShowDetails: () => void
 }
 
-export default function SwipeableCard({ apartment, onSwipe }: SwipeableCardProps) {
+export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: SwipeableCardProps) {
   /* ── Horizontal swipe (like / dislike) ── */
   const x = useMotionValue(0)
-  const y = useMotionValue(0)
   const controls = useAnimation()
   const [exitX, setExitX] = useState<number | string>(0)
 
   const rotate = useTransform(x, [-200, 200], [-18, 18])
   const cardOpacity = useTransform(x, [-220, -100, 0, 100, 220], [0, 1, 1, 1, 0])
 
-  /* ── Vertical / details panel ── */
-  const [detailsOpen, setDetailsOpen] = useState(false)
-  const dragStartY = useRef(0)
-
   // Green/red overlay driven by horizontal drag
   const likeOpacity = useTransform(x, [20, 120], [0, 1])
   const nopeOpacity = useTransform(x, [-20, -120], [0, 1])
 
-  // Scale up when dragging upward — responds faster
-  const dragScale = useTransform(y, [0, -60], [1, 1.06])
-
-  // Up-swipe indicator opacity — appears quickly
-  const upIndicatorOpacity = useTransform(y, [0, -20], [0, 1])
-
   useEffect(() => {
     controls.start({ scale: 1, opacity: 1, x: 0, y: 0 })
   }, [controls])
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleDragStart = (_: any, info: any) => {
-    dragStartY.current = info.point.y
-  }
-
-  // Upward swipe overlay — responds faster
-  const upOverlayOpacity = useTransform(y, [0, -40], [0, 0.35])
 
   const handleDragEnd = async (_: any, info: any) => {
     const ox = info.offset.x
@@ -68,11 +49,9 @@ export default function SwipeableCard({ apartment, onSwipe }: SwipeableCardProps
       return
     }
 
-    // Swipe up → open details; swipe down → close
-    if (oy < -60 && !detailsOpen) {
-      setDetailsOpen(true)
-    } else if (oy > 60 && detailsOpen) {
-      setDetailsOpen(false)
+    // Swipe up → open apartment modal details
+    if (oy < -60) {
+      onShowDetails()
     }
     controls.start({ x: 0, y: 0, rotate: 0 })
   }
@@ -90,7 +69,6 @@ export default function SwipeableCard({ apartment, onSwipe }: SwipeableCardProps
       drag
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
       dragElastic={0.15}
-      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       animate={controls}
       className="absolute inset-0 rounded-3xl shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing select-none touch-none"
@@ -129,14 +107,12 @@ export default function SwipeableCard({ apartment, onSwipe }: SwipeableCardProps
 
       <div className="absolute bottom-0 inset-x-0 z-30 px-5 pb-24">
         {/* Swipe-up hint */}
-        {!detailsOpen && (
-          <div className="flex justify-center mb-2">
-            <div className="flex flex-col items-center gap-0.5 opacity-70 animate-bounce">
-              <div className="w-8 h-1 bg-white/80 rounded-full" />
-              <div className="w-5 h-1 bg-white/50 rounded-full" />
-            </div>
+        <div className="flex justify-center mb-2">
+          <div className="flex flex-col items-center gap-0.5 opacity-70 animate-bounce">
+            <div className="w-8 h-1 bg-white/80 rounded-full" />
+            <div className="w-5 h-1 bg-white/50 rounded-full" />
           </div>
-        )}
+        </div>
 
         <h2 className="text-3xl font-bold text-white leading-tight drop-shadow-md">
           {apartment.title}
@@ -149,59 +125,6 @@ export default function SwipeableCard({ apartment, onSwipe }: SwipeableCardProps
           <span className="bg-primary px-2 py-0.5 rounded-lg">{apartment.price} €<span className="text-sm font-normal">/mes</span></span>
         </p>
       </div>
-
-      {/* ── Swipe-up details panel (slides up from bottom) ── */}
-      <motion.div
-        animate={{ y: detailsOpen ? 0 : '100%' }}
-        initial={{ y: '100%' }}
-        transition={{ type: 'spring', stiffness: 300, damping: 35 }}
-        className="absolute inset-x-0 bottom-0 z-40 bg-base-100 rounded-t-3xl pt-4 pb-28 px-5 max-h-[65%] overflow-y-auto"
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        {/* Pull-down handle */}
-        <button
-          className="flex justify-center w-full mb-3"
-          onClick={() => setDetailsOpen(false)}
-        >
-          <div className="w-10 h-1.5 bg-base-300 rounded-full" />
-        </button>
-
-        <h3 className="text-xl font-bold text-base-content">{apartment.title}</h3>
-        <div className="flex items-center gap-1 mt-1 text-base-content/60 text-sm">
-          <MapPin size={13} />
-          <span>{apartment.ubication}</span>
-        </div>
-
-        <div className="divider my-2" />
-
-        {apartment.description && (
-          <p className="text-base-content/80 text-sm leading-relaxed mb-3">
-            {apartment.description}
-          </p>
-        )}
-
-        {apartment.bills && (
-          <div className="flex items-start gap-2 mb-3">
-            <span className="badge badge-outline badge-sm shrink-0 mt-0.5">Gastos</span>
-            <span className="text-sm text-base-content/70">{apartment.bills}</span>
-          </div>
-        )}
-
-        {apartment.members && apartment.members.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-base-content/50 mb-2">
-              Compañeros ({apartment.members.length})
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {apartment.members.map((m) => (
-                <div key={m.id} className="badge badge-secondary gap-1">
-                  {m.role}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </motion.div>
 
       {/* ── Action buttons ── */}
       <div className="absolute bottom-5 inset-x-0 z-50 flex items-center justify-center gap-8">
