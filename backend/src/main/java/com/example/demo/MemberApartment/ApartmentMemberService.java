@@ -3,7 +3,6 @@ package com.example.demo.MemberApartment;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.boot.security.autoconfigure.SecurityProperties.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -132,8 +131,9 @@ public class ApartmentMemberService {
         }
     }
     public void checkUserIsLastMemberInApartment(Integer apartmentId, Integer userId) {
-        ApartmentMemberEntity lastMember = findLastMembershipByUserId(userId);
-        if (lastMember.getApartment() == null || !lastMember.getApartment().getId().equals(apartmentId)) {
+        ApartmentMemberEntity member = findByUserIdAndApartmentId(userId, apartmentId);
+        LocalDate cutoffDate = LocalDate.now().minusDays(30);
+        if (member.getLeaveDate() != null && member.getLeaveDate().isBefore(cutoffDate)) {
             throw new BadRequestException("User is not the last member of this apartment");
         }
     }
@@ -169,6 +169,22 @@ public class ApartmentMemberService {
 
     public List<ApartmentMemberEntity> findAllByUserId(Integer userId) {
         return apartmentMemberRepository.findAllByUserId(userId);
+    }
+
+    public List<ApartmentMemberEntity> findPastLandlordMembershipsByUserIdAndApartmentId(Integer currentUserId, Integer apartmentId) {
+        return apartmentMemberRepository.findPastLandlordMembershipsByUserIdAndApartmentId(currentUserId, apartmentId);
+    }
+
+    public List<ApartmentMemberEntity> findPastTenantMembershipsByUserIdAndApartmentId(Integer currentUserId, Integer apartmentId) {
+        return apartmentMemberRepository.findPastTenantMembershipsByUserIdAndApartmentId(currentUserId, apartmentId);
+    }
+
+    public List<ApartmentEntity> findLastApartmentsByTenantIdAndApartmentId(Integer userId) {
+        return apartmentMemberRepository.findLastApartmentsByTenantIdAndApartmentId(userId);
+    }
+
+    public List<ApartmentEntity> findLastApartmentsByLandlordIdAndApartmentId(Integer userId) {
+        return apartmentMemberRepository.findLastApartmentsByLandlordIdAndApartmentId(userId);
     }
 
 }

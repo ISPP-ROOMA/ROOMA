@@ -3,9 +3,7 @@ package com.example.demo.Review;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,6 +14,7 @@ import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.MemberApartment.ApartmentMemberEntity;
 import com.example.demo.MemberApartment.ApartmentMemberService;
+import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 
@@ -68,6 +67,11 @@ public class ReviewService {
             throw new BadRequestException("Reviewed user is not a member of the apartment");
         }
 
+        LocalDate cutoffDate = LocalDate.now().minusDays(30);
+        if (reviewedMember.getLeaveDate() != null && reviewedMember.getLeaveDate().isBefore(cutoffDate)) {
+            throw new BadRequestException("Can only review users who left in the last 30 days");
+        }
+
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
 
         ReviewEntity review = new ReviewEntity();
@@ -99,7 +103,7 @@ public class ReviewService {
             throw new BadRequestException("You cannot review yourself");
         }
 
-        apartmentMemberService.checkUserIsTenant(apartmentId, reviewerUserId);
+        apartmentMemberService.checkUserIsLastMemberInApartment(apartmentId, reviewerUserId);
         
         if (reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(reviewerUserId, reviewedUserId, apartmentId).isPresent()) {
             throw new BadRequestException("Review already exists for the given reviewer, reviewed user and apartment");
@@ -194,6 +198,16 @@ public class ReviewService {
         return apartmentMemberService.findAllByUserId(userId);
     }
 
+    public List<UserEntity> getNotReviewableUsers(Integer apartmentId) {
+        UserEntity currentUser = userService.getUserProfile();
+        List<ReviewEntity> members = reviewRepository.findAllMadeReviewsByUserIdAndApartmentId(currentUser.getId(), apartmentId);
+        List<UserEntity> candidates = new ArrayList<>();
+        for (ReviewEntity m : members) {
+            candidates.add(m.getReviewedMember());
+        }
+        return candidates;
+    }
+
     public List<UserEntity> getReviewableUsers(Integer apartmentId) {
         String email = userService.findCurrentUser();
         UserEntity currentUser = userService.findByEmail(email)
@@ -229,52 +243,42 @@ public class ReviewService {
         UserEntity currentUser = userService.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Current user not found"));
         Integer currentUserId = currentUser.getId();
-
-        Set<Integer> apartmentIds = new LinkedHashSet<>();
-
-        List<ApartmentMemberEntity> memberships = apartmentMemberService.findAllByUserId(currentUserId);
-        for (ApartmentMemberEntity m : memberships) {
-            apartmentIds.add(m.getApartment().getId());
+        List<ApartmentEntity> apartments;
+        if(currentUser.getRole().equals(Role.LANDLORD)) {
+            apartments = apartmentMemberService.findLastApartmentsByLandlordIdAndApartmentId(currentUserId);
+        } else {
+            apartments = apartmentMemberService.findLastApartmentsByTenantIdAndApartmentId(currentUserId);
         }
-
-        List<ApartmentEntity> ownedApartments = apartmentService.findAllByUserId(currentUserId);
-        for (ApartmentEntity a : ownedApartments) {
-            apartmentIds.add(a.getId());
-        }
-
         List<PendingReviewApartment> result = new ArrayList<>();
-
-        for (Integer aptId : apartmentIds) {
-            ApartmentEntity apartment = apartmentService.findById(aptId);
-
-            Set<UserEntity> candidates = new LinkedHashSet<>();
-
-            try {
-                UserEntity landlord = apartmentService.findLandlordByApartmentId(aptId);
-                candidates.add(landlord);
-            } catch (Exception ignored) {}
-
-            List<ApartmentMemberEntity> members = apartmentMemberService.listMembersInternal(aptId);
-            for (ApartmentMemberEntity m : members) {
-                candidates.add(m.getUser());
-            }
-
-            candidates.removeIf(u -> u.getId().equals(currentUserId));
-
-            List<UserEntity> pending = new ArrayList<>();
-            for (UserEntity candidate : candidates) {
-                var existing = reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(
-                        currentUserId, candidate.getId(), aptId);
-                if (existing.isEmpty()) {
-                    pending.add(candidate);
+        for (ApartmentEntity apartment : apartments) {
+            List<ApartmentMemberEntity> memberships = new ArrayList<>();
+            List<UserEntity> userMembers = new ArrayList<>();
+            
+            if(currentUser.getRole().equals(Role.LANDLORD)) {
+                memberships = apartmentMemberService.findPastLandlordMembershipsByUserIdAndApartmentId(currentUserId, apartment.getId());
+                userMembers = new ArrayList<>(memberships.stream().map(ApartmentMemberEntity::getUser).toList());
+            } else {
+                // Comprobar si el inquilino ha dejado el apartamento o sigue activo
+                ApartmentMemberEntity currentMembership = apartmentMemberService.findByUserIdAndApartmentId(currentUserId, apartment.getId());
+                boolean isActive = currentMembership.getLeaveDate() == null || currentMembership.getLeaveDate().isAfter(LocalDate.now());
+                
+                if (isActive) {
+                    // El inquilino sigue activo: puede revisar solo a los que se fueron en los últimos 30 días y compartieron piso con él
+                    memberships = apartmentMemberService.findPastTenantMembershipsByUserIdAndApartmentId(currentUserId, apartment.getId());
+                    userMembers.addAll(memberships.stream().map(ApartmentMemberEntity::getUser).toList());
+                } else {
+                    // El inquilino ha dejado el apartamento: puede revisar a todos los miembros actuales + al propietario
+                    List<ApartmentMemberEntity> currentMembers = apartmentMemberService.findCurrentTenantsByApartmentId(apartment.getId());
+                    userMembers.add(apartmentService.findLandlordByApartmentId(apartment.getId()));
+                    userMembers.addAll(currentMembers.stream().map(ApartmentMemberEntity::getUser).toList());
                 }
+                userMembers.removeIf(u -> u.getId().equals(currentUserId));
             }
-
-            if (!pending.isEmpty()) {
-                result.add(new PendingReviewApartment(apartment, pending));
+            userMembers.removeAll(getNotReviewableUsers(apartment.getId()));
+            if(!userMembers.isEmpty()) {
+                result.add(new PendingReviewApartment(apartment, userMembers));
             }
         }
-
         return result;
     }
 

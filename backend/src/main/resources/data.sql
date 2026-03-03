@@ -37,9 +37,10 @@ INSERT INTO apartments (id, title, description, price, bills, ubication, state, 
 -- ==========================================
 
 -- Piso 1 (Id: 1)
-INSERT INTO apartment_members (id, apartment_id, user_id, join_date) VALUES 
-(1, 1, 3, '2023-09-01'), -- tenant1 en piso 1
-(2, 1, 4, '2023-09-15'); -- tenant2 en piso 1
+INSERT INTO apartment_members (id, apartment_id, user_id, join_date, leave_date) VALUES 
+(1, 1, 3, '2023-09-01', '2026-03-02'), -- tenant1 en piso 1
+(2, 1, 4, '2023-09-15', NULL), -- tenant2 en piso 1
+(4, 1, 6, '2024-01-01', '2025-01-01'); -- tenant4 en piso 1
 
 -- Piso 2 (Id: 2)
 INSERT INTO apartment_members (id, apartment_id, user_id, join_date) VALUES 

@@ -21,10 +21,12 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer> {
     @Query("SELECT r FROM ReviewEntity r WHERE r.reviewMember.id = :userId AND r.apartment.id = :apartmentId AND r.published = true")
     List<ReviewEntity> findMadeReviewsByUserIdAndApartmentId(Integer userId, Integer apartmentId);
 
+    @Query("SELECT r FROM ReviewEntity r WHERE r.reviewMember.id = :userId AND r.apartment.id = :apartmentId")
+    List<ReviewEntity> findAllMadeReviewsByUserIdAndApartmentId(Integer userId, Integer apartmentId);
+
     @Query("SELECT r FROM ReviewEntity r WHERE r.reviewedMember.id = :userId AND r.apartment.id = :apartmentId AND r.published = true")
     List<ReviewEntity> findReceivedReviewsByUserIdAndApartmentId(Integer userId, Integer apartmentId);
 
     @Query("SELECT r FROM ReviewEntity r WHERE r.reviewMember.id = :reviewerUserId AND r.reviewedMember.id = :reviewedUserId AND r.apartment.id = :apartmentId")
     Optional<ReviewEntity> findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(Integer reviewerUserId, Integer reviewedUserId, Integer apartmentId);
-    
 }
