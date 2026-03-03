@@ -199,10 +199,18 @@ export const respondToInvitation = async (
   apartmentMatchId: number,
   accepted: boolean
 ): Promise<void> => {
-  await api.patch(
+  await api.post(
     `/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-invitation`,
-    accepted
+    accepted,
+    { headers: { 'Content-Type': 'application/json' } }
   )
+}
+
+
+export const sendInvitationToMatch = async (
+  apartmentMatchId: number
+): Promise<void> => {
+  await api.post(`/apartments-matches/apartmentMatch/${apartmentMatchId}/send-invitation`)
 }
 
 export const getLandlordMatchDetails = async (

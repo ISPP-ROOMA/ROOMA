@@ -168,6 +168,17 @@ export default function LandlordRequestsPage() {
   const handleCardClick = async (item: EnrichedMatch, e: React.MouseEvent) => {
     // Don't open modal when clicking the cancel button
     if ((e.target as HTMLElement).closest('button')) return
+
+    if (item.matchStatus === 'ACTIVE') {
+      navigate(`/mis-solicitudes/recibidas/${item.matchId}`)
+      return
+    }
+
+    if (item.matchStatus === 'MATCH') {
+      navigate(`/mis-solicitudes/recibidas/${item.matchId}/match`)
+      return
+    }
+
     setModalLoading(item.matchId)
     try {
       const apt = await getApartment(item.apartmentId)
@@ -331,18 +342,24 @@ export default function LandlordRequestsPage() {
                       {item.matchStatus === 'ACTIVE' && (
                         <div className="flex items-center gap-2">
                           <button
-                            className="btn btn-xs btn-error btn-outline"
+                            className="rounded-xl border border-[#DDDBCB] bg-white px-3 py-2 text-xs font-semibold text-[#050505] transition-colors hover:bg-[#F5F1E3] disabled:cursor-not-allowed disabled:opacity-60"
                             onClick={() => void handleReject(item.matchId)}
                             disabled={updatingId === item.matchId}
                           >
-                            {updatingId === item.matchId ? <Loader2 size={12} className="animate-spin" /> : 'Rechazar'}
+                            <span className="flex items-center justify-center gap-1.5">
+                              {updatingId === item.matchId && <Loader2 size={12} className="animate-spin" />}
+                              Rechazar
+                            </span>
                           </button>
                           <button
-                            className="btn btn-xs btn-success"
+                            className="rounded-xl bg-[#008080] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#006d6d] disabled:cursor-not-allowed disabled:opacity-60"
                             onClick={() => void handleAccept(item.matchId)}
                             disabled={updatingId === item.matchId}
                           >
-                            {updatingId === item.matchId ? <Loader2 size={12} className="animate-spin" /> : 'Aceptar'}
+                            <span className="flex items-center justify-center gap-1.5">
+                              {updatingId === item.matchId && <Loader2 size={12} className="animate-spin" />}
+                              Aceptar
+                            </span>
                           </button>
                         </div>
                       )}

@@ -22,6 +22,8 @@ import ReviewModal from './components/ReviewModal'
 import { getPendingReviews } from './service/review.service'
 import LeaveReview from './pages/private/LeaveReview'
 import LandlordRequestsPage from './pages/private/requests/LandlordRequestsPage'
+import LandlordRequestDetailPage from './pages/private/requests/LandlordRequestDetailPage'
+import LandlordMatchDetailPage from './pages/private/requests/LandlordMatchDetailPage'
 import Invoices from './pages/private/payments/Invoices'
 import DebtDetail from './pages/private/payments/DebtDetail'
 import PaymentSuccess from './pages/private/payments/PaymentSuccess'
@@ -138,6 +140,22 @@ function App() {
           element={
             <PrivateRoute allowedRoles={['LANDLORD']}>
               <LandlordRequestsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/mis-solicitudes/recibidas/:apartmentMatchId"
+          element={
+            <PrivateRoute allowedRoles={['LANDLORD']}>
+              <LandlordRequestDetailPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/mis-solicitudes/recibidas/:apartmentMatchId/match"
+          element={
+            <PrivateRoute allowedRoles={['LANDLORD']}>
+              <LandlordMatchDetailPage />
             </PrivateRoute>
           }
         />
