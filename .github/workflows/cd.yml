@@ -10,8 +10,7 @@ jobs:
   deploy-dev:
     runs-on: ubuntu-latest
     if: |
-      github.ref == 'refs/heads/trunk' ||
-      (github.event.pull_request.merged == true && github.base_ref == 'trunk')
+      github.event.workflow_run.head_branch == 'trunk'
 
     steps:
 
