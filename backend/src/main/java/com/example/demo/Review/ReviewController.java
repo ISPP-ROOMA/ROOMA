@@ -7,12 +7,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.Review.DTOs.CreateReviewRequest;
 import com.example.demo.Review.DTOs.PendingReviewApartmentDTO;
+import com.example.demo.Review.DTOs.RespondReviewRequest;
 import com.example.demo.Review.DTOs.ReviewDTO;
 import com.example.demo.Review.DTOs.ReviewableUserDTO;
 import com.example.demo.User.UserEntity;
@@ -81,7 +83,7 @@ public class ReviewController {
     public ResponseEntity<List<ReviewableUserDTO>> getReviewableUsers(@PathVariable Integer apartmentId) {
         List<UserEntity> users = reviewService.getReviewableUsers(apartmentId);
         List<ReviewableUserDTO> dtos = users.stream()
-                .map(u -> new ReviewableUserDTO(u.getId(), u.getEmail(), u.getRole().name()))
+                .map(u -> new ReviewableUserDTO(u.getId(), u.getEmail(), u.getRole().name(), false, false))
                 .toList();
         return ResponseEntity.ok(dtos);
     }
@@ -95,10 +97,23 @@ public class ReviewController {
                         p.apartment().getTitle(),
                         p.apartment().getUbication(),
                         p.pendingUsers().stream()
-                                .map(u -> new ReviewableUserDTO(u.getId(), u.getEmail(), u.getRole().name()))
+                                .map(pu -> new ReviewableUserDTO(
+                                        pu.user().getId(),
+                                        pu.user().getEmail(),
+                                        pu.user().getRole().name(),
+                                        pu.hasReviewedYou(),
+                                        pu.youReviewedThem()))
                                 .toList()
                 ))
                 .toList();
         return ResponseEntity.ok(dtos);
+    }
+
+    @PutMapping("/{reviewId}/respond")
+    public ResponseEntity<ReviewDTO> respondToReview(
+            @PathVariable Integer reviewId,
+            @Valid @RequestBody RespondReviewRequest request) {
+        ReviewEntity review = reviewService.respondToReview(reviewId, request.response());
+        return ResponseEntity.ok(ReviewDTO.fromEntity(review));
     }
 }

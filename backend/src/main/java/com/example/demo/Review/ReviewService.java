@@ -198,14 +198,25 @@ public class ReviewService {
         return apartmentMemberService.findAllByUserId(userId);
     }
 
-    public List<UserEntity> getNotReviewableUsers(Integer apartmentId) {
+    @Transactional
+    public ReviewEntity respondToReview(Integer reviewId, String response) {
         UserEntity currentUser = userService.getUserProfile();
-        List<ReviewEntity> members = reviewRepository.findAllMadeReviewsByUserIdAndApartmentId(currentUser.getId(), apartmentId);
-        List<UserEntity> candidates = new ArrayList<>();
-        for (ReviewEntity m : members) {
-            candidates.add(m.getReviewedMember());
+        ReviewEntity review = findById(reviewId);
+
+        if (!review.getReviewedMember().getId().equals(currentUser.getId())) {
+            throw new BadRequestException("Only the reviewed user can respond to a review");
         }
-        return candidates;
+
+        if (!review.getPublished()) {
+            throw new BadRequestException("Cannot respond to an unpublished review");
+        }
+
+        if (review.getResponse() != null && !review.getResponse().isEmpty()) {
+            throw new BadRequestException("Review already has a response");
+        }
+
+        review.setResponse(response);
+        return reviewRepository.save(review);
     }
 
     public List<UserEntity> getReviewableUsers(Integer apartmentId) {
@@ -251,11 +262,10 @@ public class ReviewService {
         }
         List<PendingReviewApartment> result = new ArrayList<>();
         for (ApartmentEntity apartment : apartments) {
-            List<ApartmentMemberEntity> memberships = new ArrayList<>();
             List<UserEntity> userMembers = new ArrayList<>();
             
             if(currentUser.getRole().equals(Role.LANDLORD)) {
-                memberships = apartmentMemberService.findPastLandlordMembershipsByUserIdAndApartmentId(currentUserId, apartment.getId());
+                List<ApartmentMemberEntity> memberships = apartmentMemberService.findPastLandlordMembershipsByUserIdAndApartmentId(currentUserId, apartment.getId());
                 userMembers = new ArrayList<>(memberships.stream().map(ApartmentMemberEntity::getUser).toList());
             } else {
                 // Comprobar si el inquilino ha dejado el apartamento o sigue activo
@@ -263,25 +273,38 @@ public class ReviewService {
                 boolean isActive = currentMembership.getLeaveDate() == null || currentMembership.getLeaveDate().isAfter(LocalDate.now());
                 
                 if (isActive) {
-                    // El inquilino sigue activo: puede revisar solo a los que se fueron en los últimos 30 días y compartieron piso con él
-                    memberships = apartmentMemberService.findPastTenantMembershipsByUserIdAndApartmentId(currentUserId, apartment.getId());
+                    List<ApartmentMemberEntity> memberships = apartmentMemberService.findPastTenantMembershipsByUserIdAndApartmentId(currentUserId, apartment.getId());
                     userMembers.addAll(memberships.stream().map(ApartmentMemberEntity::getUser).toList());
                 } else {
-                    // El inquilino ha dejado el apartamento: puede revisar a todos los miembros actuales + al propietario
                     List<ApartmentMemberEntity> currentMembers = apartmentMemberService.findCurrentTenantsByApartmentId(apartment.getId());
                     userMembers.add(apartmentService.findLandlordByApartmentId(apartment.getId()));
                     userMembers.addAll(currentMembers.stream().map(ApartmentMemberEntity::getUser).toList());
                 }
                 userMembers.removeIf(u -> u.getId().equals(currentUserId));
             }
-            userMembers.removeAll(getNotReviewableUsers(apartment.getId()));
-            if(!userMembers.isEmpty()) {
-                result.add(new PendingReviewApartment(apartment, userMembers));
+
+            // Para cada candidato, comprobar estado de reseñas mutuas
+            List<PendingUserInfo> pendingUsers = new ArrayList<>();
+            for (UserEntity candidate : userMembers) {
+                boolean youReviewedThem = reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(
+                        currentUserId, candidate.getId(), apartment.getId()).isPresent();
+                boolean hasReviewedYou = reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(
+                        candidate.getId(), currentUserId, apartment.getId()).isPresent();
+
+                // Si ambos se han valorado, la publicación mutua ya se activó — no mostrar
+                if (youReviewedThem && hasReviewedYou) continue;
+
+                pendingUsers.add(new PendingUserInfo(candidate, hasReviewedYou, youReviewedThem));
+            }
+
+            if(!pendingUsers.isEmpty()) {
+                result.add(new PendingReviewApartment(apartment, pendingUsers));
             }
         }
         return result;
     }
 
-    public record PendingReviewApartment(ApartmentEntity apartment, List<UserEntity> pendingUsers) {}
+    public record PendingUserInfo(UserEntity user, boolean hasReviewedYou, boolean youReviewedThem) {}
+    public record PendingReviewApartment(ApartmentEntity apartment, List<PendingUserInfo> pendingUsers) {}
 
 }

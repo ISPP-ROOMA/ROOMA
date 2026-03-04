@@ -151,11 +151,11 @@ public class ApartmentMemberService {
     }
 
     public List<ApartmentMemberEntity> findOverlappingMemberships(Integer userId, Integer apartmentId, LocalDate joinDate, LocalDate leaveDate) {
-        return apartmentMemberRepository.findOverlappingMemberships(userId, apartmentId, joinDate, leaveDate);
+        return apartmentMemberRepository.findOverlappingMemberships(userId, apartmentId, joinDate, leaveDate, LocalDate.now().minusDays(30));
     }
 
     public List<ApartmentMemberEntity> findOtherOverlappingMemberships(Integer excludeUserId, Integer apartmentId, LocalDate joinDate, LocalDate leaveDate) {
-        return apartmentMemberRepository.findOtherOverlappingMemberships(excludeUserId, apartmentId, joinDate, leaveDate);
+        return apartmentMemberRepository.findOtherOverlappingMemberships(excludeUserId, apartmentId, joinDate, leaveDate, LocalDate.now().minusDays(30));
     }
 
     public ApartmentMemberEntity findByUserIdAndApartmentId(Integer userId, Integer apartmentId) {
@@ -172,19 +172,19 @@ public class ApartmentMemberService {
     }
 
     public List<ApartmentMemberEntity> findPastLandlordMembershipsByUserIdAndApartmentId(Integer currentUserId, Integer apartmentId) {
-        return apartmentMemberRepository.findPastLandlordMembershipsByUserIdAndApartmentId(currentUserId, apartmentId);
+        return apartmentMemberRepository.findPastLandlordMembershipsByUserIdAndApartmentId(currentUserId, apartmentId, LocalDate.now().minusDays(30));
     }
 
     public List<ApartmentMemberEntity> findPastTenantMembershipsByUserIdAndApartmentId(Integer currentUserId, Integer apartmentId) {
-        return apartmentMemberRepository.findPastTenantMembershipsByUserIdAndApartmentId(currentUserId, apartmentId);
+        return apartmentMemberRepository.findPastTenantMembershipsByUserIdAndApartmentId(currentUserId, apartmentId, LocalDate.now().minusDays(30));
     }
 
     public List<ApartmentEntity> findLastApartmentsByTenantIdAndApartmentId(Integer userId) {
-        return apartmentMemberRepository.findLastApartmentsByTenantIdAndApartmentId(userId);
+        return apartmentMemberRepository.findLastApartmentsByTenantIdAndApartmentId(userId, LocalDate.now().minusDays(30));
     }
 
     public List<ApartmentEntity> findLastApartmentsByLandlordIdAndApartmentId(Integer userId) {
-        return apartmentMemberRepository.findLastApartmentsByLandlordIdAndApartmentId(userId);
+        return apartmentMemberRepository.findLastApartmentsByLandlordIdAndApartmentId(userId, LocalDate.now().minusDays(30));
     }
 
 }
