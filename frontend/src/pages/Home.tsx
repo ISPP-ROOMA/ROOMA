@@ -55,7 +55,7 @@ export default function Home() {
   const handleSwipe = async (apartmentId: number, interest: boolean) => {
     setApartments((prev) => prev.filter((apt) => apt.id !== apartmentId))
     try {
-      await swipeApartment(Number(userId), apartmentId, interest)
+      await swipeApartment(apartmentId, interest)
       if (interest) {
         showToast('¡Solicitud enviada correctamente!', 'success')
       }
