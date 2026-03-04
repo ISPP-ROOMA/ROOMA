@@ -9,6 +9,7 @@ public record ApartmentMemberDTO(
         Integer id,
         Integer apartmentId,
         Integer userId,
+        String userEmail,
         String role,
         LocalDate joinDate
 ) {
@@ -17,6 +18,7 @@ public record ApartmentMemberDTO(
                 member.getId(),
                 member.getApartment().getId(),
                 member.getUser().getId(),
+                member.getUser().getEmail(),
                 member.getRole().name(),
                 member.getJoinDate()
         );

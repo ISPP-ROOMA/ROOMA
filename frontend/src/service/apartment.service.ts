@@ -13,6 +13,7 @@ export interface ApartmentMemberDTO {
   id: number
   apartmentId: number
   userId: number
+  userEmail: string
   role: string
   joinDate: string
 }

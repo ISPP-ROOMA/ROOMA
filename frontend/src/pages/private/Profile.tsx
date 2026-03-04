@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getUserProfile, getUser } from '../../service/users.service'
+import { getUserProfile } from '../../service/users.service'
 import type { User } from '../../service/users.service'
-import { getAllApartments, type ApartmentDTO } from '../../service/apartment.service'
-import { api } from '../../service/api'
+import { getAllApartments, type ApartmentDTO, type ApartmentMemberDTO } from '../../service/apartment.service'
 
 const ROLE_LABELS: Record<string, string> = {
   LANDLORD: 'Propietario',
@@ -15,11 +14,7 @@ export default function Profile() {
   const [userData, setUserData] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentApartment, setCurrentApartment] = useState<ApartmentDTO | null>(null)
-  const [roommates, setRoommates] = useState<Array<{
-    user: User
-    role: string
-    joinDate?: string
-  }> | null>(null)
+  const [roommates, setRoommates] = useState<ApartmentMemberDTO[]>([])
 
   useEffect(() => {
     const profile = async () => {
@@ -33,51 +28,7 @@ export default function Profile() {
           )
           setCurrentApartment(found ?? null)
           if (found && found.members && found.members.length) {
-            const members = found.members
-
-            try {
-              console.debug('Apartment members from API:', members)
-              const usersWithMeta = await Promise.all(
-                members.map(async (m) => {
-                  const u = await getUser(m.userId)
-                  return {
-                    user: u as User | undefined,
-                    role: m.role,
-                    joinDate: m.joinDate,
-                    userId: m.userId,
-                  }
-                })
-              )
-
-              console.debug('Fetched users for members:', usersWithMeta)
-
-              const missing = usersWithMeta.filter((x) => !x.user)
-              if (missing.length > 0) {
-                try {
-                  const allResp = await api.get('/users')
-                  const allUsers = allResp.data
-                  const mapped = usersWithMeta.map((x) => {
-                    if (!x.user) {
-                      const foundUser = allUsers.find((u: any) => Number(u.id) === Number(x.userId))
-                      return { ...x, user: foundUser }
-                    }
-                    return x
-                  })
-                  console.debug('Fallback mapped users:', mapped)
-                  setRoommates(mapped.filter((x) => x.user && Number(x.user.id) !== Number(res.id)))
-                  return
-                } catch (e) {
-                  console.warn('Fallback fetch all users failed', e)
-                }
-              }
-
-              setRoommates(
-                usersWithMeta.filter((x) => x.user && Number(x.user.id) !== Number(res.id)) as any
-              )
-            } catch (e) {
-              console.error('Error fetching roommates', e)
-              setRoommates([])
-            }
+            setRoommates(found.members.filter((m) => Number(m.userId) !== Number(res.id)))
           } else {
             setRoommates([])
           }
@@ -133,15 +84,15 @@ export default function Profile() {
                 </div>
                 <div className="mt-3">
                   <h5 className="font-medium">Compañeros de piso</h5>
-                  {roommates && roommates.length > 0 ? (
+                  {roommates.length > 0 ? (
                     <ul className="mt-2 space-y-2 text-sm">
                       {roommates.map((r) => (
-                        <li key={r.user?.id} className="flex items-center gap-3">
+                        <li key={r.userId} className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
-                            {r.user?.email ? r.user.email[0].toUpperCase() : '?'}
+                            {r.userEmail ? r.userEmail[0].toUpperCase() : '?'}
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-medium">{r.user?.email}</span>
+                            <span className="font-medium">{r.userEmail}</span>
                             <span className="text-xs text-gray-500">{r.role}</span>
                           </div>
                         </li>
