@@ -121,7 +121,7 @@ export default function Profile() {
                     to={
                       userData.role === 'LANDLORD'
                         ? `/apartments/${currentApartment.id}`
-                        : `/properties/${currentApartment.id}`
+                        : `/my-home`
                     }
                     className="btn btn-sm btn-primary"
                   >
