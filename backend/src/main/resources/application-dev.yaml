@@ -33,7 +33,7 @@ jwt:
   secret-key: ${JWT_SECRET_KEY:q5X1xZK8F0z+Y3nZ8KpZ9+0rK0z8ZKJ4dZpZq8W1k3M=}
 
 cors:
-  allowed-origins: "http://localhost:5173"
+  allowed-origins: "http://localhost:5174"
   
 cloudinary:
   cloud_name: ${CLOUDINARY_CLOUD_NAME}
