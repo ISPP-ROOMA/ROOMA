@@ -1,0 +1,160 @@
+package com.example.demo.Review;
+
+import java.time.LocalDateTime;
+
+import com.example.demo.Apartment.ApartmentEntity;
+import com.example.demo.User.UserEntity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+@Entity
+@Table(name = "reviews", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"review_member_id", "reviewed_member_id"})
+})
+public class ReviewEntity {
+
+    @Id
+    @SequenceGenerator(name = "reviews_seq", sequenceName = "reviews_seq", initialValue = 100)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "reviews_seq")
+    private Integer id;
+
+    @NotNull
+    @Max(5)
+    @Min(1)
+    @Column(nullable = false)
+    private Integer rating;
+
+    @NotNull
+    @Size(max = 500)
+    @Column(length = 500)
+    private String comment;
+
+    @Size(max = 500)
+    @Column(length = 500)
+    private String response;
+
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "review_member_id")
+    private UserEntity reviewMember;
+
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "reviewed_member_id")
+    private UserEntity reviewedMember;
+
+    @NotNull
+    @Column(nullable = false)
+    private Boolean published;
+
+    @NotNull
+    @Column(nullable = false)
+    private LocalDateTime reviewDate;
+
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "apartment_id")
+    private ApartmentEntity apartment;
+
+    public ReviewEntity() {
+    }
+
+    public ReviewEntity(Integer id, Integer rating, String comment, String response, UserEntity reviewMember,
+            UserEntity reviewedMember, Boolean published, LocalDateTime reviewDate, ApartmentEntity apartment) {
+        this.id = id;
+        this.rating = rating;
+        this.comment = comment;
+        this.response = response;
+        this.reviewMember = reviewMember;
+        this.reviewedMember = reviewedMember;
+        this.published = published;
+        this.reviewDate = reviewDate;
+        this.apartment = apartment;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public UserEntity getReviewMember() {
+        return reviewMember;
+    }
+
+    public void setReviewMember(UserEntity reviewMember) {
+        this.reviewMember = reviewMember;
+    }
+
+    public UserEntity getReviewedMember() {
+        return reviewedMember;
+    }
+
+    public void setReviewedMember(UserEntity reviewedMember) {
+        this.reviewedMember = reviewedMember;
+    }
+
+    public Boolean getPublished() {
+        return published;
+    }
+
+    public void setPublished(Boolean published) {
+        this.published = published;
+    }
+
+    public LocalDateTime getReviewDate() {
+        return reviewDate;
+    }
+
+    public void setReviewDate(LocalDateTime reviewDate) {
+        this.reviewDate = reviewDate;
+    }
+
+    public String getResponse() {
+        return response;
+    }
+
+    public void setResponse(String response) {
+        this.response = response;
+    }
+
+    public ApartmentEntity getApartment() {
+        return apartment;
+    }
+
+    public void setApartment(ApartmentEntity apartment) {
+        this.apartment = apartment;
+    }
+
+}

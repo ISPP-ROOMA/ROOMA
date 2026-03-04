@@ -28,7 +28,7 @@ public class ApartmentMatchEntity {
             initialValue = 100)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "apartment_matches_seq")
     private Integer id;
-
+    
     @Column()
     private Boolean candidateInterest;
 

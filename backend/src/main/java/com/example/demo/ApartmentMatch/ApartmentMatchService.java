@@ -337,10 +337,10 @@ public class ApartmentMatchService {
                 throw new ConflictException("Cannot accept the invitation because the apartment is not active");
             }
             if(!apartmentMemberService.existsByUserIdAndRole(match.getApartment().getUser().getId(), MemberRole.HOMEBODY)) {
-                apartmentMemberService.addMember(match.getApartment().getId(), match.getApartment().getUser().getId(), MemberRole.HOMEBODY, null);
+                apartmentMemberService.addMember(match.getApartment().getId(), match.getApartment().getUser().getId(), null);
             }
             match.setMatchStatus(MatchStatus.SUCCESSFUL);
-            apartmentMemberService.addMember(match.getApartment().getId(), currentUser.getId(), MemberRole.RENTER, null);
+            apartmentMemberService.addMember(match.getApartment().getId(), currentUser.getId(), null);
         } else {
             match.setMatchStatus(MatchStatus.REJECTED);
         }

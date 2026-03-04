@@ -20,7 +20,10 @@ import MyHome from './pages/private/MyHome'
 import DebtDetail from './pages/private/payments/DebtDetail'
 import Invoices from './pages/private/payments/Invoices'
 import PaymentSuccess from './pages/private/payments/PaymentSuccess'
+import MyReviews from './pages/private/MyReviews'
 import Profile from './pages/private/Profile'
+import ReviewContractFinished from './pages/private/ReviewContractFinished'
+import SelectReviewTarget from './pages/private/SelectReviewTarget'
 import LandlordMatchDetailPage from './pages/private/requests/LandlordMatchDetailPage'
 import LandlordRequestDetailPage from './pages/private/requests/LandlordRequestDetailPage'
 import LandlordRequestsPage from './pages/private/requests/LandlordRequestsPage'
@@ -28,7 +31,7 @@ import TenantRequestsPage from './pages/private/requests/TenantRequestsPage'
 import PropertyDetails from './pages/PropertyDetails'
 import Register from './pages/Register'
 import { hasSessionHint, refreshToken } from './service/auth.service'
-import { getPendingReviews } from './service/review.service'
+import { getPendingReviewApartments } from './service/review.service'
 import { useAuthStore } from './store/authStore'
 
 function App() {
@@ -40,8 +43,6 @@ function App() {
     location.pathname === '/register' ||
     (location.pathname === '/' && !token)
   const didTryRefresh = useRef(false)
-
-  const [show_reviews_alert, setShowReviewsAlert] = useState(false)
 
   const [pendingContract, setPendingContract] = useState<{
     contractId: number
@@ -63,16 +64,23 @@ function App() {
   }, [token])
 
   useEffect(() => {
-    if (token && show_reviews_alert) {
-      void getPendingReviews()
+    if (token) {
+      void getPendingReviewApartments()
         .then((data) => {
           if (data && data.length > 0) {
-            setPendingContract(data[0])
+            const apt = data.find((a) => a.pendingUsers.some((u) => !u.youReviewedThem))
+            if (apt) {
+              setPendingContract({
+                contractId: apt.apartmentId,
+                apartmentAddress: apt.apartmentUbication ?? apt.apartmentTitle,
+                endDate: '',
+              })
+            }
           }
         })
         .catch(console.error)
     }
-  }, [token, show_reviews_alert])
+  }, [token])
 
   let publicRoutes = <></>
   let privateRoutes = <></>
@@ -168,7 +176,31 @@ function App() {
           path="/reviews/new/:contractId"
           element={
             <PrivateRoute>
+              <ReviewContractFinished />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/reviews/new/:contractId/select"
+          element={
+            <PrivateRoute>
+              <SelectReviewTarget />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/reviews/new/:contractId/form/:userId"
+          element={
+            <PrivateRoute>
               <LeaveReview />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/my-reviews"
+          element={
+            <PrivateRoute>
+              <MyReviews />
             </PrivateRoute>
           }
         />
@@ -208,12 +240,7 @@ function App() {
         )}
 
         {/* Only show Navbar if not on Home screen unauthenticated */}
-        {(token || location.pathname !== '/') && (
-          <Navbar
-            show_reviews_alert={show_reviews_alert}
-            setShowReviewsAlert={setShowReviewsAlert}
-          />
-        )}
+        {(token || location.pathname !== '/') && <Navbar />}
 
         <main className="mx-auto flex-grow w-full pb-20 md:pb-0 relative z-0">
           <Routes>
@@ -256,11 +283,11 @@ function App() {
                     </PrivateRoute>
                   }
                 />
-                {adminRoutes} {/* Inyectamos si existen rutas adicionales de trunk */}
+                {adminRoutes}
               </>
             )}
 
-            {/* Rutas de Landlord (Dueño) */}
+            {/* Rutas de Landlord */}
             {role === 'LANDLORD' && (
               <>
                 <Route
@@ -352,7 +379,6 @@ function App() {
               </>
             )}
 
-            {/* Otras rutas inyectadas de trunk */}
             {privateRoutes}
             {publicRoutes}
           </Routes>

@@ -3,6 +3,7 @@ import {
   useAnimation,
   useMotionValue,
   useTransform,
+  type PanInfo,
 } from 'framer-motion'
 import { Check, MapPin, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -31,7 +32,12 @@ export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: Swi
     controls.start({ scale: 1, opacity: 1, x: 0, y: 0 })
   }, [controls])
 
-  const handleDragEnd = async (_: any, info: any) => {
+  const handleDragStart = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    dragStartY.current = info.point.y
+  }
+
+  const handleDragEnd = async (_: MouseEvent | TouchEvent | PointerEvent,
+  info: PanInfo) => {
     const ox = info.offset.x
     const oy = info.offset.y
 

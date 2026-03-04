@@ -55,11 +55,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/bills/apartment/**").hasAnyRole("LANDLORD","ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/bills/apartment/**").hasAnyRole("LANDLORD","ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/bills/debts/{debtId}/pay").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/users/{id}").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/users/profile").authenticated()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/apartments/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/apartments/**").hasRole("LANDLORD")
                         .requestMatchers(HttpMethod.PUT, "/api/apartments/**").hasRole("LANDLORD")
                         .requestMatchers(HttpMethod.DELETE, "/api/apartments/**").hasRole("LANDLORD")
+                        .requestMatchers("/api/reviews/**").authenticated()
                         .anyRequest().authenticated()
                 );
 

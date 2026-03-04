@@ -1,15 +1,21 @@
 package com.example.demo.MemberApartment;
 
-import jakarta.validation.Valid;
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.example.demo.MemberApartment.DTOs.CreateApartmentMember;
 import com.example.demo.MemberApartment.DTOs.ApartmentMemberDTO;
-import com.example.demo.MemberApartment.DTOs.UpdateApartmentMember;
+import com.example.demo.MemberApartment.DTOs.CreateApartmentMember;
 
-import java.util.List;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/apartments/{apartmentId}/members")
@@ -34,23 +40,9 @@ public class ApartmentMemberController {
         ApartmentMemberEntity member = apartmentMemberService.addMember(
                 apartmentId,
                 request.userId(),
-                request.role(),
                 request.joinDate());
 
         return new ResponseEntity<>(ApartmentMemberDTO.fromEntity(member), HttpStatus.CREATED);
-    }
-
-    @PutMapping("/{memberId}")
-    public ResponseEntity<ApartmentMemberDTO> updateRole(
-            @PathVariable Integer apartmentId,
-            @PathVariable Integer memberId,
-            @Valid @RequestBody UpdateApartmentMember request) {
-        ApartmentMemberEntity member = apartmentMemberService.updateRole(
-                apartmentId,
-                memberId,
-                request.role());
-
-        return ResponseEntity.ok(ApartmentMemberDTO.fromEntity(member));
     }
 
     @DeleteMapping("/{memberId}")

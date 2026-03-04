@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.Auth.DTOs.AuthRequest;
 import com.example.demo.Auth.DTOs.AuthResponse;
 import com.example.demo.Auth.DTOs.AuthResult;
+import com.example.demo.Auth.DTOs.LoginRequest;
 import com.example.demo.Auth.DTOs.RefreshTokenRequest;
 import com.example.demo.Auth.DTOs.ValidateTokenResponse;
 
@@ -43,23 +44,22 @@ public class AuthController {
         cookie.setSecure(false);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
-        AuthResponse authResponse = new AuthResponse(registerRes.accessToken(), registerRes.role(),
-                registerRes.userId());
+        AuthResponse authResponse = new AuthResponse(registerRes.accessToken(), registerRes.role(), registerRes.userId());
         response.addCookie(cookie);
         return ResponseEntity.ok().body(authResponse);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request, HttpServletResponse response) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         AuthResult loginRes = authService.login(request.email(), request.password(), request.deviceId());
         Cookie cookie = new Cookie("refresh_token", loginRes.refreshToken());
         cookie.setMaxAge(secondsExpirationRt);
         cookie.setSecure(false);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
-        AuthResponse AuthResponse = new AuthResponse(loginRes.accessToken(), loginRes.role(), loginRes.userId());
+        AuthResponse authResp = new AuthResponse(loginRes.accessToken(), loginRes.role(), loginRes.userId());
         response.addCookie(cookie);
-        return ResponseEntity.ok().body(AuthResponse);
+        return ResponseEntity.ok().body(authResp);
     }
 
     @PostMapping("/refresh")
@@ -72,9 +72,9 @@ public class AuthController {
         cookie.setSecure(false);
         cookie.setHttpOnly(true);
         cookie.setPath("/");
-        AuthResponse AuthResponse = new AuthResponse(refreshRes.accessToken(), refreshRes.role(), refreshRes.userId());
+        AuthResponse authResp = new AuthResponse(refreshRes.accessToken(), refreshRes.role(), refreshRes.userId());
         response.addCookie(cookie);
-        return ResponseEntity.ok().body(AuthResponse);
+        return ResponseEntity.ok().body(authResp);
     }
 
     @PostMapping("/logout")

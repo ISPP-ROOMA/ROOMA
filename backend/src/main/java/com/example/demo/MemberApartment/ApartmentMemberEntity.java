@@ -1,10 +1,22 @@
 package com.example.demo.MemberApartment;
 
+import java.time.LocalDate;
+
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.User.UserEntity;
-import jakarta.persistence.*;
 
-import java.time.LocalDate;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "apartment_members")
@@ -60,14 +72,6 @@ public class ApartmentMemberEntity {
         this.user = user;
     }
 
-    public MemberRole getRole() {
-        return role;
-    }
-
-    public void setRole(MemberRole role) {
-        this.role = role;
-    }
-
     public LocalDate getJoinDate() {
         return joinDate;
     }
@@ -83,4 +87,16 @@ public class ApartmentMemberEntity {
     public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
     }
-}
+
+    public boolean isActive() {
+        return endDate == null || endDate.isAfter(LocalDate.now());
+    }
+
+    public MemberRole getRole() {
+        return role;
+    }
+
+    public void setRole(MemberRole role) {
+        this.role = role;
+    }
+}   

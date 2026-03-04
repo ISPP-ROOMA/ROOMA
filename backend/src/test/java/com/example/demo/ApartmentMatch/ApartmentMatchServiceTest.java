@@ -28,6 +28,7 @@ import com.example.demo.MemberApartment.MemberRole;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 
+
 @ExtendWith(MockitoExtension.class)
 public class ApartmentMatchServiceTest {
 
@@ -200,8 +201,8 @@ public class ApartmentMatchServiceTest {
         ApartmentMatchEntity result = apartmentMatchService.respondToInvitation(matchId, true);
 
         assertEquals(MatchStatus.SUCCESSFUL, result.getMatchStatus());
-        verify(apartmentMemberService).addMember(match.getApartment().getId(), landlordId, MemberRole.HOMEBODY, null);
-        verify(apartmentMemberService).addMember(match.getApartment().getId(), candidateId, MemberRole.RENTER, null);
+        verify(apartmentMemberService).addMember(match.getApartment().getId(), landlordId, null);
+        verify(apartmentMemberService).addMember(match.getApartment().getId(), candidateId, null);
         verify(apartmentMatchRepository).save(match);
     }
 
@@ -220,7 +221,7 @@ public class ApartmentMatchServiceTest {
         ApartmentMatchEntity result = apartmentMatchService.respondToInvitation(matchId, false);
 
         assertEquals(MatchStatus.REJECTED, result.getMatchStatus());
-        verify(apartmentMemberService, never()).addMember(any(Integer.class), any(Integer.class), any(MemberRole.class), any());
+        verify(apartmentMemberService, never()).addMember(any(Integer.class), any(Integer.class), any());
         verify(apartmentMatchRepository).save(match);
     }
 
@@ -239,7 +240,7 @@ public class ApartmentMatchServiceTest {
             () -> apartmentMatchService.respondToInvitation(matchId, true));
 
         assertNotNull(exception);
-        verify(apartmentMemberService, never()).addMember(any(Integer.class), any(Integer.class), any(MemberRole.class), any());
+        verify(apartmentMemberService, never()).addMember(any(Integer.class), any(Integer.class), any());
         verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
     }
 

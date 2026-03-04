@@ -6,5 +6,5 @@ public enum MatchStatus {
     REJECTED,
     INVITED,
     SUCCESSFUL,
-    CANCELED
+    CANCELED,
 }
