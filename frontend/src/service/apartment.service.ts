@@ -18,6 +18,7 @@ export interface ApartmentMemberDTO {
 }
 
 export interface ApartmentDTO {
+  imageUrl: string
   id: number
   title: string
   description: string
