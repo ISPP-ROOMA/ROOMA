@@ -32,9 +32,11 @@ export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: Swi
     controls.start({ scale: 1, opacity: 1, x: 0, y: 0 })
   }, [controls])
 
+  /*
   const handleDragStart = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     dragStartY.current = info.point.y
   }
+  */
 
   const handleDragEnd = async (_: MouseEvent | TouchEvent | PointerEvent,
   info: PanInfo) => {
