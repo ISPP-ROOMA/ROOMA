@@ -1,5 +1,11 @@
 package com.example.demo.MemberApartment;
 
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentRepository;
 import com.example.demo.Exceptions.BadRequestException;
@@ -8,12 +14,6 @@ import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserRepository;
 import com.example.demo.User.UserService;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Service
 public class ApartmentMemberService {
@@ -34,7 +34,7 @@ public class ApartmentMemberService {
     }
 
     @Transactional
-    public ApartmentMemberEntity addMember(Integer apartmentId, Integer userId, MemberRole role, LocalDate joinDate) {
+    public ApartmentMemberEntity addMember(Integer apartmentId, Integer userId, LocalDate joinDate) {
         ApartmentEntity apartment = apartmentRepository.findById(apartmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
 
@@ -44,17 +44,23 @@ public class ApartmentMemberService {
         if (apartmentMemberRepository.existsByApartmentIdAndUserId(apartmentId, userId)) {
             throw new BadRequestException("User already belongs to this apartment");
         }
+        checkUserIsCurrentMemberInOtherApartment(userId);
 
         ApartmentMemberEntity member = new ApartmentMemberEntity();
         member.setApartment(apartment);
         member.setUser(user);
-        member.setRole(role);
         member.setJoinDate(joinDate != null ? joinDate : LocalDate.now());
 
         return apartmentMemberRepository.save(member);
     }
+    private void checkUserIsCurrentMemberInOtherApartment(Integer userId) {
+        List<ApartmentMemberEntity> activeMemberships = findActiveMembershipsByUserId(userId);
+        if (!activeMemberships.isEmpty()) {
+            throw new BadRequestException("User is already a member of another apartment");
+        }
+    }
 
-@Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public List<ApartmentMemberEntity> listMembers(Integer apartmentId) {
 
         ApartmentEntity apartment = apartmentRepository.findById(apartmentId)
@@ -84,20 +90,6 @@ public class ApartmentMemberService {
         return members;
     }
 
-
-    @Transactional
-    public ApartmentMemberEntity updateRole(Integer apartmentId, Integer memberId, MemberRole role) {
-        ApartmentMemberEntity member = apartmentMemberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
-
-        if (!member.getApartment().getId().equals(apartmentId)) {
-            throw new ResourceNotFoundException("Member not found in the apartment");
-        }
-
-        member.setRole(role);
-        return apartmentMemberRepository.save(member);
-    }
-
     @Transactional
     public void removeMember(Integer apartmentId, Integer memberId) {
         ApartmentMemberEntity member = apartmentMemberRepository.findById(memberId)
@@ -109,4 +101,90 @@ public class ApartmentMemberService {
 
         apartmentMemberRepository.delete(member);
     }
+
+    public List<ApartmentMemberEntity> findActiveApartmentMembers(Integer userId) {
+        return apartmentMemberRepository.findActiveApartmentMembers(userId);
+    }
+
+    public List<ApartmentMemberEntity> findCurrentTenantsByApartmentId(Integer apartmentId) {
+        return apartmentMemberRepository.findCurrentTenantsByApartmentId(apartmentId);
+    }
+
+    public ApartmentMemberEntity findLastMembershipByUserId(Integer userId) {
+        return apartmentMemberRepository.findLastMembershipByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("No past memberships found for this user"));
+    }
+
+    public void checkUserIsCurrentMember(Integer apartmentId, Integer userId) {
+        boolean isMember = apartmentMemberRepository.existsByApartmentIdAndUserId(apartmentId, userId);
+        if (!isMember) {
+            throw new BadRequestException("User is not a current member of this apartment");
+        }
+    }
+
+    public void checkUserIsTenant(Integer apartmentId, Integer userId) {
+        List<ApartmentMemberEntity> tenants = findCurrentTenantsByApartmentId(apartmentId);
+        boolean isTenant = tenants.stream()
+                .anyMatch(m -> m.getUser() != null && m.getUser().getId().equals(userId));
+        if (!isTenant) {
+            throw new BadRequestException("User is not a tenant of this apartment");
+        }
+    }
+    public void checkUserIsLastMemberInApartment(Integer apartmentId, Integer userId) {
+        ApartmentMemberEntity member = findByUserIdAndApartmentId(userId, apartmentId);
+        LocalDate cutoffDate = LocalDate.now().minusDays(30);
+        if (member.getLeaveDate() != null && member.getLeaveDate().isBefore(cutoffDate)) {
+            throw new BadRequestException("User is not the last member of this apartment");
+        }
+    }
+
+    public List<ApartmentMemberEntity> findActiveMembershipsByUserId(Integer userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Role role = user.getRole();
+
+        List<ApartmentMemberEntity> activeMemberships = apartmentMemberRepository.findActiveMembershipsByUserId(userId);
+        if (role.equals(Role.TENANT) && activeMemberships.size() > 1) {
+            throw new BadRequestException("Tenants cannot be members of more than one apartment at the same time");
+        }
+        return activeMemberships;
+    }
+
+    public List<ApartmentMemberEntity> findOverlappingMemberships(Integer userId, Integer apartmentId, LocalDate joinDate, LocalDate leaveDate) {
+        return apartmentMemberRepository.findOverlappingMemberships(userId, apartmentId, joinDate, leaveDate, LocalDate.now().minusDays(30));
+    }
+
+    public List<ApartmentMemberEntity> findOtherOverlappingMemberships(Integer excludeUserId, Integer apartmentId, LocalDate joinDate, LocalDate leaveDate) {
+        return apartmentMemberRepository.findOtherOverlappingMemberships(excludeUserId, apartmentId, joinDate, leaveDate, LocalDate.now().minusDays(30));
+    }
+
+    public ApartmentMemberEntity findByUserIdAndApartmentId(Integer userId, Integer apartmentId) {
+        return apartmentMemberRepository.findByUserIdAndApartmentId(userId, apartmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Membership not found for user in this apartment"));
+    }
+
+    public List<ApartmentMemberEntity> listMembersInternal(Integer apartmentId) {
+        return apartmentMemberRepository.findByApartmentId(apartmentId);
+    }
+
+    public List<ApartmentMemberEntity> findAllByUserId(Integer userId) {
+        return apartmentMemberRepository.findAllByUserId(userId);
+    }
+
+    public List<ApartmentMemberEntity> findPastLandlordMembershipsByUserIdAndApartmentId(Integer currentUserId, Integer apartmentId) {
+        return apartmentMemberRepository.findPastLandlordMembershipsByUserIdAndApartmentId(currentUserId, apartmentId, LocalDate.now().minusDays(30));
+    }
+
+    public List<ApartmentMemberEntity> findPastTenantMembershipsByUserIdAndApartmentId(Integer currentUserId, Integer apartmentId) {
+        return apartmentMemberRepository.findPastTenantMembershipsByUserIdAndApartmentId(currentUserId, apartmentId, LocalDate.now().minusDays(30));
+    }
+
+    public List<ApartmentEntity> findLastApartmentsByTenantIdAndApartmentId(Integer userId) {
+        return apartmentMemberRepository.findLastApartmentsByTenantIdAndApartmentId(userId, LocalDate.now().minusDays(30));
+    }
+
+    public List<ApartmentEntity> findLastApartmentsByLandlordIdAndApartmentId(Integer userId) {
+        return apartmentMemberRepository.findLastApartmentsByLandlordIdAndApartmentId(userId, LocalDate.now().minusDays(30));
+    }
+
 }

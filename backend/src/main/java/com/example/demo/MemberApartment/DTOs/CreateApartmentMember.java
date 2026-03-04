@@ -1,12 +1,11 @@
 package com.example.demo.MemberApartment.DTOs;
 
-import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
-import com.example.demo.MemberApartment.MemberRole;
+
+import jakarta.validation.constraints.NotNull;
 
 public record CreateApartmentMember(
         @NotNull Integer userId,
-        @NotNull MemberRole role,
         LocalDate joinDate
 ) {
 }

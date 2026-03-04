@@ -10,10 +10,10 @@ DELETE FROM users;
 
 -- Arrendadores (LANDLORD)
 INSERT INTO users (id, email, password, role, hobbies, schedule, profession) VALUES 
-(1, 'landlord1@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'LANDLORD', 'Lectura, Cine', N'Mañanas libres', 'Inversor Inmobiliario'),
+(1, 'landlord1@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'LANDLORD', 'Lectura, Cine', 'Mañanas libres', 'Inversor Inmobiliario'),
 (2, 'landlord2@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'LANDLORD', 'Deportes', 'Horario de oficina', 'Arquitecta'),
 (3, 'landlord3@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'LANDLORD', 'Golf, Viajes', 'Flexible', 'Abogado'),
-(4, 'landlord4@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'LANDLORD', 'Cocina, Arte', N'Mañanas', 'Empresaria'),
+(4, 'landlord4@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'LANDLORD', 'Cocina, Arte', 'Mañanas', 'Empresaria'),
 (5, 'landlord5@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'LANDLORD', 'Música, Cine', 'Tarde', 'Músico');
 
 -- Inquilinos (TENANT)
@@ -22,7 +22,7 @@ INSERT INTO users (id, email, password, role, hobbies, schedule, profession) VAL
 (7,  'tenant2@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Fotografía, Viajes', 'Horario intensivo mañana', 'Diseñadora Gráfica'),
 (8,  'tenant3@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Cocina, Yoga', 'Teletrabajo', 'Desarrollador Software'),
 (9,  'tenant4@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Lectura, Cine', 'Horario rotativo', 'Enfermero'),
-(10, 'tenant5@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Running, Senderismo', N'Mañanas', 'Periodista');
+(10, 'tenant5@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Running, Senderismo', 'Mañanas', 'Periodista');
 
 
 -- ==========================================
@@ -85,17 +85,14 @@ INSERT INTO apartment_photos (id, apartment_id, orden, portada, public_id, url) 
 -- APARTMENT MEMBERS
 -- ==========================================
 
--- Piso 1 — tenant1 y tenant2
-INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date) VALUES 
-(1, 1, 6, 'HOMEBODY', '2023-09-01'),
-(2, 1, 7, 'RENTER',   '2023-09-15');
+-- Piso 1 — tenant1 y tenant2 (con leave_date para reviews)
+INSERT INTO apartment_members (id, apartment_id, user_id, join_date, leave_date) VALUES 
+(1, 1, 6, '2023-09-01', '2026-03-02'),
+(2, 1, 7, '2023-09-15', NULL),
+(5, 1, 9, '2024-01-01', '2025-01-01');
 
 -- Piso 2 — tenant3 solo
-INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date) VALUES 
-(3, 2, 8, 'HOMEBODY', '2024-01-10');
-
--- Piso 5 — tenant4 solo
-INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date) VALUES 
-(4, 5, 9, 'HOMEBODY', '2024-03-01');
+INSERT INTO apartment_members (id, apartment_id, user_id, join_date) VALUES 
+(3, 2, 8, '2024-01-10');
 
 -- Resto de pisos disponibles para swipe (sin inquilinos aún)

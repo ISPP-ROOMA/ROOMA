@@ -23,12 +23,11 @@ public class ApartmentMemberEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private MemberRole role;
-
     @Column(nullable = false)
     private LocalDate joinDate;
+
+    @Column(nullable = true)
+    private LocalDate leaveDate;
 
     public ApartmentMemberEntity() {
     }
@@ -57,14 +56,6 @@ public class ApartmentMemberEntity {
         this.user = user;
     }
 
-    public MemberRole getRole() {
-        return role;
-    }
-
-    public void setRole(MemberRole role) {
-        this.role = role;
-    }
-
     public LocalDate getJoinDate() {
         return joinDate;
     }
@@ -72,4 +63,16 @@ public class ApartmentMemberEntity {
     public void setJoinDate(LocalDate joinDate) {
         this.joinDate = joinDate;
     }
-}
+
+    public LocalDate getLeaveDate() {
+        return leaveDate;
+    }
+
+    public void setLeaveDate(LocalDate leaveDate) {
+        this.leaveDate = leaveDate;
+    }
+
+    public boolean isActive() {
+        return leaveDate == null || leaveDate.isAfter(LocalDate.now());
+    }
+}   

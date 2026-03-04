@@ -1,14 +1,9 @@
-import { Bell, Building2, Home, LayoutList, LogOut, UserCircle, Users } from 'lucide-react'
+﻿import { Building2, Home, LayoutList, LogOut, Star, UserCircle, Users } from 'lucide-react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { logout } from '../service/auth.service'
 import { useAuthStore } from '../store/authStore'
 
-interface NavbarProps {
-  show_reviews_alert: boolean
-  setShowReviewsAlert: (value: boolean) => void
-}
-
-export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: NavbarProps) {
+export default function Navbar() {
   const navigate = useNavigate()
   const { token, role } = useAuthStore()
 
@@ -29,6 +24,7 @@ export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: Navb
       return [
         { to: '/mis-solicitudes', label: 'Solicitudes', icon: <LayoutList size={22} /> },
         { to: '/', label: 'Inicio', icon: <Home size={22} />, end: true },
+        { to: '/my-reviews', label: 'Valoraciones', icon: <Star size={22} /> },
         { to: '/profile', label: 'Perfil', icon: <UserCircle size={22} /> },
       ]
     }
@@ -36,6 +32,7 @@ export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: Navb
       return [
         { to: '/apartments/my', label: 'Inmuebles', icon: <Building2 size={22} /> },
         { to: '/', label: 'Inicio', icon: <Home size={22} />, end: true },
+        { to: '/my-reviews', label: 'Valoraciones', icon: <Star size={22} /> },
         { to: '/apartments/publish', label: 'Publicar', icon: <LayoutList size={22} /> },
         { to: '/profile', label: 'Perfil', icon: <UserCircle size={22} /> },
       ]
@@ -69,8 +66,7 @@ export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: Navb
             to={item.to}
             end={item.end}
             className={({ isActive }) =>
-              `flex items-center gap-1.5 px-8 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${isActive ? 'bg-primary/10 text-primary' : 'text-base-content/60 hover:bg-base-200 hover:text-base-content'
-              }`
+              `flex items-center gap-1.5 px-8 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${isActive ? 'bg-primary/10 text-primary' : 'text-base-content/60 hover:bg-base-200 hover:text-base-content'}`
             }
           >
             {item.icon}
@@ -81,16 +77,6 @@ export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: Navb
 
       {/* Right actions */}
       <div className="flex items-center gap-2">
-        {token && role === 'TENANT' && (
-          <button
-            onClick={() => setShowReviewsAlert(!show_reviews_alert)}
-            className={`btn btn-xs ${show_reviews_alert ? 'btn-error' : 'btn-ghost'} gap-1`}
-            title={show_reviews_alert ? 'Desactivar alertas' : 'Activar alertas de reseña'}
-          >
-            <Bell size={14} />
-            {show_reviews_alert ? 'Alertas ON' : 'Alertas'}
-          </button>
-        )}
         {token ? (
           <button
             onClick={handleLogout}
@@ -112,8 +98,7 @@ export default function Navbar({ show_reviews_alert, setShowReviewsAlert }: Navb
           to={item.to}
           end={item.end}
           className={({ isActive }) =>
-            `flex flex-col items-center gap-0.5 px-3 py-1 rounded-2xl transition-all duration-200 ${isActive ? activeCls : inactiveCls
-            }`
+            `flex flex-col items-center gap-0.5 px-3 py-1 rounded-2xl transition-all duration-200 ${isActive ? activeCls : inactiveCls}`
           }
         >
           {({ isActive }) => (

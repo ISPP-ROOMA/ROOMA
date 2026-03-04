@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.Apartment.DTOs.CreateApartment;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
+import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
@@ -96,6 +97,24 @@ public class ApartmentService {
     @Transactional(readOnly = true)
     public List<ApartmentEntity> search(String ubication, Double minPrice, Double maxPrice, ApartmentState state) {
         return apartmentsRepository.search(ubication, minPrice, maxPrice, state);
+    }
+    
+    @Transactional(readOnly = true)
+    public void checkUserIsLandlord(Integer apartmentId, Integer userId) {
+        UserEntity landlord = apartmentsRepository.findLandlordByApartmentId(apartmentId).orElse(null);
+        if (landlord == null || !landlord.getId().equals(userId)) {
+            throw new BadRequestException("User is not the landlord of this apartment");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public UserEntity findLandlordByApartmentId(Integer apartmentId) {
+        return apartmentsRepository.findLandlordByApartmentId(apartmentId).orElseThrow(() -> new ResourceNotFoundException("Landlord not found for this apartment"));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ApartmentEntity> findAllByUserId(Integer userId) {
+        return apartmentsRepository.findAllByUserId(userId);
     }
 
     @Transactional(readOnly = true)

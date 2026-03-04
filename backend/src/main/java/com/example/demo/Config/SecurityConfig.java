@@ -54,6 +54,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/apartments/**").hasRole("LANDLORD")
                         .requestMatchers(HttpMethod.PUT, "/api/apartments/**").hasRole("LANDLORD")
                         .requestMatchers(HttpMethod.DELETE, "/api/apartments/**").hasRole("LANDLORD")
+                        .requestMatchers("/api/reviews/**").authenticated()
                         .anyRequest().authenticated()
                 );
 
