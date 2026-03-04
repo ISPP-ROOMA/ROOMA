@@ -6,6 +6,7 @@ import com.example.demo.Jwt.JwtAuthenticationFilter;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -16,6 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -49,6 +51,10 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
                         .requestMatchers("/api/users/profile").authenticated()
+                        .requestMatchers("/api/bills/me/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/bills/apartment/**").hasAnyRole("LANDLORD","ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/bills/apartment/**").hasAnyRole("LANDLORD","ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/bills/debts/{debtId}/pay").authenticated()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/apartments/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/apartments/**").hasRole("LANDLORD")

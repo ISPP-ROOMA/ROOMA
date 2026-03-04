@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
 import com.example.demo.User.UserEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,6 +28,7 @@ public class ApartmentEntity {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "apartments_seq")
     private Integer id;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "apartment", fetch = FetchType.EAGER)
     private List<ApartmentPhotoEntity> photos;
 
@@ -48,6 +50,7 @@ public class ApartmentEntity {
     @Enumerated(EnumType.STRING)
     private ApartmentState state;
 
+    @JsonIgnore
     @ManyToOne(optional = true, fetch = FetchType.EAGER)
     private UserEntity user;
 

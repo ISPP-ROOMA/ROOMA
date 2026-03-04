@@ -1,6 +1,7 @@
 package com.example.demo.ApartmentPhoto;
 
 import com.example.demo.Apartment.ApartmentEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,6 +27,7 @@ public class ApartmentPhotoEntity {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "apartment_id", nullable = false)
+    @JsonIgnore
     private ApartmentEntity apartment;
 
     @Column(nullable = false)

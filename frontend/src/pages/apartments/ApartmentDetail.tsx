@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { getApartment, type Apartment } from '../../service/apartments.service'
 
 export default function ApartmentDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [apartment, setApartment] = useState<Apartment | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -56,10 +57,47 @@ export default function ApartmentDetail() {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Link to="/apartments/my" className="btn btn-ghost">
             Volver
           </Link>
+
+          <button
+            onClick={() => navigate(`/apartments/${id}/bills`)}
+            className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2.5 rounded-full shadow-md transition text-sm"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"
+              />
+            </svg>
+            Ver Facturas
+          </button>
+
+          <button
+            onClick={() => navigate(`/apartments/${id}/new-bill`)}
+            className="flex items-center gap-2 bg-white border-2 border-teal-600 text-teal-700 hover:bg-teal-50 font-semibold px-5 py-2.5 rounded-full shadow-sm transition text-sm"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Añadir Factura
+          </button>
         </div>
       </div>
     </div>

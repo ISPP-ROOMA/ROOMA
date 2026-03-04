@@ -57,16 +57,13 @@ export const createApartment = async (
   images: File[]
 ): Promise<Apartment> => {
   const formData = new FormData()
-  
-  formData.append(
-    'data',
-    new Blob([JSON.stringify(data)], { type: 'application/json' })
-  )
-  
+
+  formData.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }))
+
   images.forEach((file) => {
     formData.append('images', file)
   })
-  
+
   try {
     const response = await api.post<Apartment>('/apartments', formData)
     return response.data

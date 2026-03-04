@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.Apartment.ApartmentEntity;
-import com.example.demo.Apartment.ApartmentRepository;
+import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.User.Role;
@@ -19,27 +19,24 @@ import com.example.demo.User.UserService;
 public class ApartmentMemberService {
 
     private final ApartmentMemberRepository apartmentMemberRepository;
-    private final ApartmentRepository apartmentRepository;
-    private final UserRepository userRepository;
+    private final ApartmentService apartmentService;
     private final UserService userService;
-
+    private final UserRepository userRepository;
     public ApartmentMemberService(ApartmentMemberRepository apartmentMemberRepository,
-                                 ApartmentRepository apartmentRepository,
-                                 UserRepository userRepository,
-                                 UserService userService) {
+                                 ApartmentService apartmentService,
+                                 UserService userService,
+                                 UserRepository userRepository) {
         this.apartmentMemberRepository = apartmentMemberRepository;
-        this.apartmentRepository = apartmentRepository;
-        this.userRepository = userRepository;
+        this.apartmentService = apartmentService;
         this.userService = userService;
+        this.userRepository = userRepository;
     }
 
-    @Transactional
+    @Transactional 
     public ApartmentMemberEntity addMember(Integer apartmentId, Integer userId, LocalDate joinDate) {
-        ApartmentEntity apartment = apartmentRepository.findById(apartmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
+        ApartmentEntity apartment = apartmentService.findById(apartmentId);
 
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        UserEntity user = userService.findById(userId);
 
         if (apartmentMemberRepository.existsByApartmentIdAndUserId(apartmentId, userId)) {
             throw new BadRequestException("User already belongs to this apartment");
@@ -63,8 +60,7 @@ public class ApartmentMemberService {
     @Transactional(readOnly = true)
     public List<ApartmentMemberEntity> listMembers(Integer apartmentId) {
 
-        ApartmentEntity apartment = apartmentRepository.findById(apartmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
+        ApartmentEntity apartment = apartmentService.findById(apartmentId);
 
         UserEntity currentUser = userService.findByEmail(userService.findCurrentUser())
                 .orElseThrow(() -> new ResourceNotFoundException("Current user not found"));
@@ -88,6 +84,28 @@ public class ApartmentMemberService {
         }
 
         return members;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ApartmentMemberEntity> findCurrentMembers(Integer apartmentId) {
+        ApartmentEntity apartment = apartmentService.findById(apartmentId);
+
+        List<ApartmentMemberEntity> members = apartmentMemberRepository.findByApartmentIdAndEndDateIsNull(apartment.getId());
+        return members;
+    }
+
+
+    @Transactional
+    public ApartmentMemberEntity updateRole(Integer apartmentId, Integer memberId, MemberRole role) {
+        ApartmentMemberEntity member = apartmentMemberRepository.findById(memberId)
+                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+
+        if (!member.getApartment().getId().equals(apartmentId)) {
+            throw new ResourceNotFoundException("Member not found in the apartment");
+        }
+
+        member.setRole(role);
+        return apartmentMemberRepository.save(member);
     }
 
     @Transactional
@@ -133,7 +151,7 @@ public class ApartmentMemberService {
     public void checkUserIsLastMemberInApartment(Integer apartmentId, Integer userId) {
         ApartmentMemberEntity member = findByUserIdAndApartmentId(userId, apartmentId);
         LocalDate cutoffDate = LocalDate.now().minusDays(30);
-        if (member.getLeaveDate() != null && member.getLeaveDate().isBefore(cutoffDate)) {
+        if (member.getEndDate() != null && member.getEndDate().isBefore(cutoffDate)) {
             throw new BadRequestException("User is not the last member of this apartment");
         }
     }
@@ -150,12 +168,12 @@ public class ApartmentMemberService {
         return activeMemberships;
     }
 
-    public List<ApartmentMemberEntity> findOverlappingMemberships(Integer userId, Integer apartmentId, LocalDate joinDate, LocalDate leaveDate) {
-        return apartmentMemberRepository.findOverlappingMemberships(userId, apartmentId, joinDate, leaveDate, LocalDate.now().minusDays(30));
+    public List<ApartmentMemberEntity> findOverlappingMemberships(Integer userId, Integer apartmentId, LocalDate joinDate, LocalDate getEndDate) {
+        return apartmentMemberRepository.findOverlappingMemberships(userId, apartmentId, joinDate, getEndDate, LocalDate.now().minusDays(30));
     }
 
-    public List<ApartmentMemberEntity> findOtherOverlappingMemberships(Integer excludeUserId, Integer apartmentId, LocalDate joinDate, LocalDate leaveDate) {
-        return apartmentMemberRepository.findOtherOverlappingMemberships(excludeUserId, apartmentId, joinDate, leaveDate, LocalDate.now().minusDays(30));
+    public List<ApartmentMemberEntity> findOtherOverlappingMemberships(Integer excludeUserId, Integer apartmentId, LocalDate joinDate, LocalDate getEndDate) {
+        return apartmentMemberRepository.findOtherOverlappingMemberships(excludeUserId, apartmentId, joinDate, getEndDate, LocalDate.now().minusDays(30));
     }
 
     public ApartmentMemberEntity findByUserIdAndApartmentId(Integer userId, Integer apartmentId) {
@@ -187,4 +205,9 @@ public class ApartmentMemberService {
         return apartmentMemberRepository.findLastApartmentsByLandlordIdAndApartmentId(userId, LocalDate.now().minusDays(30));
     }
 
+
+    @Transactional(readOnly = true)
+    public boolean existsByUserIdAndRole(Integer userId, MemberRole role) {
+        return apartmentMemberRepository.existsByUserIdAndRole(userId, role);
+    }
 }

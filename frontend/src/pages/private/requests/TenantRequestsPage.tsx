@@ -1,15 +1,16 @@
 import { AnimatePresence } from 'framer-motion'
-import { Loader2, X } from 'lucide-react'
+import { CalendarDays, Loader2, MessageCircle, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import ApartmentDetailModal from '../../components/ApartmentDetailModal'
-import type { ApartmentDTO, ApartmentMatchDTO, MatchStatus } from '../../service/apartment.service'
+import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
+import type { ApartmentDTO, ApartmentMatchDTO, MatchStatus } from '../../../service/apartment.service'
 import {
   cancelApartmentMatch,
   getMatchesForCandidate,
-} from '../../service/apartment.service'
-import { getApartment } from '../../service/apartments.service'
-import { useAuthStore } from '../../store/authStore'
+  respondToInvitation,
+} from '../../../service/apartment.service'
+import { getApartment } from '../../../service/apartments.service'
+import { useAuthStore } from '../../../store/authStore'
 
 type ActiveTab = 'pending' | 'match'
 
@@ -29,6 +30,8 @@ function statusLabel(status: MatchStatus): string {
       return 'Pendiente'
     case 'MATCH':
       return '¡Match!'
+    case 'INVITED':
+      return 'Invitado'
     case 'SUCCESSFUL':
       return 'Aceptada'
     case 'REJECTED':
@@ -43,6 +46,7 @@ function statusBadgeClass(status: MatchStatus): string {
     case 'ACTIVE':
       return 'border border-[#050505] bg-white text-[#050505]'
     case 'MATCH':
+    case 'INVITED':
     case 'SUCCESSFUL':
       return 'border-0 bg-[#008080] text-white'
     case 'REJECTED':
@@ -72,7 +76,7 @@ async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatc
 }
 
 
-export default function MyRequests() {
+export default function TenantRequestsPage() {
   const { userId } = useAuthStore()
   const navigate = useNavigate()
 
@@ -82,6 +86,7 @@ export default function MyRequests() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [cancellingId, setCancellingId] = useState<number | null>(null)
+  const [invitationActionId, setInvitationActionId] = useState<number | null>(null)
   const [selectedApartment, setSelectedApartment] = useState<(ApartmentDTO & { imageUrl: string }) | null>(null)
   const [modalLoading, setModalLoading] = useState<number | null>(null)
 
@@ -91,20 +96,20 @@ export default function MyRequests() {
     setError(null)
     try {
       const id = Number(userId)
-      const [activeMatches, successMatches, fullMatches] = await Promise.all([
+      const [activeMatches, invitedMatches, fullMatches] = await Promise.all([
         getMatchesForCandidate(id, 'ACTIVE'),
-        getMatchesForCandidate(id, 'SUCCESSFUL'),
+        getMatchesForCandidate(id, 'INVITED'),
         getMatchesForCandidate(id, 'MATCH'),
       ])
 
-      const [enrichedPending, enrichedSuccess, enrichedFull] = await Promise.all([
+      const [enrichedPending, enrichedInvited, enrichedFull] = await Promise.all([
         enrichMatches(activeMatches),
-        enrichMatches(successMatches),
+        enrichMatches(invitedMatches),
         enrichMatches(fullMatches),
       ])
 
       setPendingItems(enrichedPending)
-      setMatchItems([...enrichedFull, ...enrichedSuccess])
+      setMatchItems([...enrichedFull, ...enrichedInvited])
     } catch (err) {
       console.error('Error loading requests', err)
       setError('No se pudieron cargar tus solicitudes. Inténtalo de nuevo.')
@@ -148,6 +153,19 @@ export default function MyRequests() {
       console.error('Error loading apartment details', err)
     } finally {
       setModalLoading(null)
+    }
+  }
+
+  const handleInvitationResponse = async (matchId: number, accepted: boolean) => {
+    setInvitationActionId(matchId)
+    setMatchItems((prev) => prev.filter((i) => i.matchId !== matchId))
+    try {
+      await respondToInvitation(matchId, accepted)
+    } catch (err) {
+      console.error('Error responding to invitation', err)
+      void fetchData()
+    } finally {
+      setInvitationActionId(null)
     }
   }
 
@@ -244,7 +262,7 @@ export default function MyRequests() {
               const isCancelled =
                 item.matchStatus === 'CANCELED' || item.matchStatus === 'REJECTED'
               const isMatch =
-                item.matchStatus === 'MATCH' || item.matchStatus === 'SUCCESSFUL'
+                item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED'
 
               return (
                 <article
@@ -305,10 +323,60 @@ export default function MyRequests() {
 
                     <div className="my-3 h-px w-full bg-[#DDDBCB]" />
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-2">
                       <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.matchStatus)}`}>
                         {statusLabel(item.matchStatus)}
                       </span>
+                      {item.matchStatus === 'MATCH' && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center"
+                            aria-label="Abrir chat"
+                          >
+                            <MessageCircle size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            className="h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center"
+                            aria-label="Agendar cita"
+                          >
+                            <CalendarDays size={16} />
+                          </button>
+                        </div>
+                      )}
+                      {item.matchStatus === 'INVITED' && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-error btn-outline"
+                            onClick={() => {
+                              void handleInvitationResponse(item.matchId, false)
+                            }}
+                            disabled={invitationActionId === item.matchId}
+                          >
+                            {invitationActionId === item.matchId ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              'Rechazar'
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-success"
+                            onClick={() => {
+                              void handleInvitationResponse(item.matchId, true)
+                            }}
+                            disabled={invitationActionId === item.matchId}
+                          >
+                            {invitationActionId === item.matchId ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              'Aceptar'
+                            )}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </article>

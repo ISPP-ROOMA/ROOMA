@@ -55,6 +55,10 @@ export const registerUser = async (loginData: LoginData): Promise<AuthResponse> 
     const response = await api.post<AuthResponse>('/auth/register', payload)
     if (response.data.token) {
       markSessionHint()
+      const userId = await fetchCurrentUserId(response.data.token)
+      if (userId !== null) {
+        response.data.userId = typeof userId === 'string' ? parseInt(userId, 10) : userId
+      }
     }
     return response.data
   } catch (error) {
@@ -72,6 +76,10 @@ export const loginUser = async (loginData: LoginData): Promise<AuthResponse> => 
     const response = await api.post<AuthResponse>('/auth/login', payload)
     if (response.data.token) {
       markSessionHint()
+      const userId = await fetchCurrentUserId(response.data.token)
+      if (userId !== null) {
+        response.data.userId = typeof userId === 'string' ? parseInt(userId, 10) : userId
+      }
     }
     return response.data
   } catch (error) {
@@ -101,6 +109,40 @@ export const refreshToken = async (): Promise<AuthResponse | undefined> => {
   })()
 
   return refreshInFlight
+}
+
+const fetchCurrentUserId = async (token: string): Promise<string | number | null> => {
+  try {
+    const response = await api.get<{ id?: string | number }>('/users/profile', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    return response.data.id ?? null
+  } catch (error) {
+    console.error('Error fetching current user id:', error)
+    return null
+  }
+}
+
+export const ensureCurrentUserId = async (): Promise<string | number | null> => {
+  const currentUserId = useAuthStore.getState().userId
+  if (currentUserId) {
+    return currentUserId
+  }
+
+  const token = useAuthStore.getState().token
+  if (!token) {
+    return null
+  }
+
+  const userId = await fetchCurrentUserId(token)
+  if (userId !== null) {
+    useAuthStore.setState({ userId })
+  }
+
+  return userId
 }
 
 export const logout = async (): Promise<void> => {

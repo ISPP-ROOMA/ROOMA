@@ -68,7 +68,7 @@ public class ReviewService {
         }
 
         LocalDate cutoffDate = LocalDate.now().minusDays(30);
-        if (reviewedMember.getLeaveDate() != null && reviewedMember.getLeaveDate().isBefore(cutoffDate)) {
+        if (reviewedMember.getEndDate() != null && reviewedMember.getEndDate().isBefore(cutoffDate)) {
             throw new BadRequestException("Can only review users who left in the last 30 days");
         }
 
@@ -116,9 +116,9 @@ public class ReviewService {
         if (isLandlord) {
             reviewedUser = apartmentService.findLandlordByApartmentId(apartmentId);
         } else {
-            LocalDate leaveDate = reviewerMember.getLeaveDate() != null ? reviewerMember.getLeaveDate() : LocalDate.now();
+            LocalDate endDate = reviewerMember.getEndDate() != null ? reviewerMember.getEndDate() : LocalDate.now();
             List<ApartmentMemberEntity> overlappingMemberships = apartmentMemberService.findOtherOverlappingMemberships(
-                    reviewerUser.getId(), apartmentId, reviewerMember.getJoinDate(), leaveDate);
+                    reviewerUser.getId(), apartmentId, reviewerMember.getJoinDate(), endDate);
 
             boolean sharedFlat = overlappingMemberships.stream()
                     .anyMatch(m -> m.getUser().getId().equals(reviewedUserId));
@@ -270,7 +270,7 @@ public class ReviewService {
             } else {
                 // Comprobar si el inquilino ha dejado el apartamento o sigue activo
                 ApartmentMemberEntity currentMembership = apartmentMemberService.findByUserIdAndApartmentId(currentUserId, apartment.getId());
-                boolean isActive = currentMembership.getLeaveDate() == null || currentMembership.getLeaveDate().isAfter(LocalDate.now());
+                boolean isActive = currentMembership.getEndDate() == null || currentMembership.getEndDate().isAfter(LocalDate.now());
                 
                 if (isActive) {
                     List<ApartmentMemberEntity> memberships = apartmentMemberService.findPastTenantMembershipsByUserIdAndApartmentId(currentUserId, apartment.getId());

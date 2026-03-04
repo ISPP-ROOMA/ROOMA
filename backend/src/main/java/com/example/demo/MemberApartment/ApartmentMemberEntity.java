@@ -1,10 +1,22 @@
 package com.example.demo.MemberApartment;
 
+import java.time.LocalDate;
+
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.User.UserEntity;
-import jakarta.persistence.*;
 
-import java.time.LocalDate;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "apartment_members")
@@ -23,11 +35,15 @@ public class ApartmentMemberEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MemberRole role;
+
     @Column(nullable = false)
     private LocalDate joinDate;
 
     @Column(nullable = true)
-    private LocalDate leaveDate;
+    private LocalDate endDate;
 
     public ApartmentMemberEntity() {
     }
@@ -64,15 +80,23 @@ public class ApartmentMemberEntity {
         this.joinDate = joinDate;
     }
 
-    public LocalDate getLeaveDate() {
-        return leaveDate;
+    public LocalDate getEndDate() {
+        return endDate;
     }
 
-    public void setLeaveDate(LocalDate leaveDate) {
-        this.leaveDate = leaveDate;
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
     }
 
     public boolean isActive() {
-        return leaveDate == null || leaveDate.isAfter(LocalDate.now());
+        return endDate == null || endDate.isAfter(LocalDate.now());
+    }
+
+    public MemberRole getRole() {
+        return role;
+    }
+
+    public void setRole(MemberRole role) {
+        this.role = role;
     }
 }   

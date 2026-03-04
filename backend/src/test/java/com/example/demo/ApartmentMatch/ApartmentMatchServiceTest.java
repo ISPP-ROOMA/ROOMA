@@ -1,26 +1,33 @@
 package com.example.demo.ApartmentMatch;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.junit.jupiter.api.Test;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.junit.jupiter.api.Assertions.*;
-
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
+
 import com.example.demo.Apartment.ApartmentEntity;
+import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.Apartment.ApartmentState;
 import com.example.demo.Exceptions.ConflictException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
-import com.example.demo.Apartment.ApartmentService;
+import com.example.demo.MemberApartment.ApartmentMemberService;
+import com.example.demo.MemberApartment.MemberRole;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
+
 
 @ExtendWith(MockitoExtension.class)
 public class ApartmentMatchServiceTest {
@@ -34,670 +41,285 @@ public class ApartmentMatchServiceTest {
     private ApartmentService apartmentService;
 
     @Mock
+    private ApartmentMemberService apartmentMemberService;
+
+    @Mock
     private UserService userService;
 
     @BeforeEach
     public void setUp() {
-        apartmentMatchService = new ApartmentMatchService(apartmentMatchRepository, apartmentService, userService);
+        apartmentMatchService = new ApartmentMatchService(apartmentMatchRepository, apartmentService, apartmentMemberService, userService);
     }
+
     @Test
-    public void testProcessSwipe_FirstInteraction_CandidateInterestedCreatesActiveMatch() {
-        Integer candidateId = 1;
-        Integer apartmentId = 2;
+    @DisplayName("processSwipe: interest=true creates ACTIVE match")
+    public void processSwipe_InterestTrue_CreatesActiveMatch() {
+        Integer apartmentId = 10;
+        UserEntity tenant = createUser(1);
+        ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.ACTIVE, 2);
 
-        UserEntity user = new UserEntity();
-        user.setId(candidateId);
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-        apt.setState(ApartmentState.ACTIVE);
+        when(userService.findCurrentUserEntity()).thenReturn(tenant);
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(tenant.getId(), apartmentId)).thenReturn(Optional.empty());
+        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        when(userService.findById(candidateId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.empty());
-        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(i -> i.getArgument(0));
-
-        ApartmentMatchEntity result = apartmentMatchService.processSwipe(candidateId, apartmentId, true, true);
+        ApartmentMatchEntity result = apartmentMatchService.processSwipe(apartmentId, true);
 
         assertNotNull(result);
+        assertEquals(tenant, result.getCandidate());
+        assertEquals(apartment, result.getApartment());
         assertEquals(Boolean.TRUE, result.getCandidateInterest());
         assertNull(result.getLandlordInterest());
         assertEquals(MatchStatus.ACTIVE, result.getMatchStatus());
+        assertNotNull(result.getMatchDate());
+        verify(apartmentMatchRepository).save(any(ApartmentMatchEntity.class));
     }
 
     @Test
-    public void testProcessSwipe_FirstInteraction_LandlordInterestedCreatesActiveMatch() {
-        Integer candidateId = 2;
-        Integer apartmentId = 3;
+    @DisplayName("processSwipe: interest=false creates REJECTED match")
+    public void processSwipe_InterestFalse_CreatesRejectedMatch() {
+        Integer apartmentId = 11;
+        UserEntity tenant = createUser(3);
+        ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.ACTIVE, 4);
 
-        UserEntity user = new UserEntity();
-        user.setId(candidateId);
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-        apt.setState(ApartmentState.ACTIVE);
+        when(userService.findCurrentUserEntity()).thenReturn(tenant);
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(tenant.getId(), apartmentId)).thenReturn(Optional.empty());
+        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        when(userService.findById(candidateId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.empty());
-        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(i -> i.getArgument(0));
-
-        ApartmentMatchEntity result = apartmentMatchService.processSwipe(candidateId, apartmentId, false, false);
-        assertNotNull(result);
-        assertNull(result.getCandidateInterest());
-        assertEquals(Boolean.FALSE, result.getLandlordInterest());
-        assertEquals(MatchStatus.REJECTED, result.getMatchStatus());
-    }
-
-    @Test
-    public void testProcessSwipe_FirstInteraction_Rejected() {
-        Integer candidateId = 5;
-        Integer apartmentId = 6;
-
-        UserEntity user = new UserEntity();
-        user.setId(candidateId);
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-        apt.setState(ApartmentState.ACTIVE);
-
-        when(userService.findById(candidateId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.empty());
-        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(i -> i.getArgument(0));
-
-        ApartmentMatchEntity result = apartmentMatchService.processSwipe(candidateId, apartmentId, true, false);
+        ApartmentMatchEntity result = apartmentMatchService.processSwipe(apartmentId, false);
 
         assertNotNull(result);
         assertEquals(Boolean.FALSE, result.getCandidateInterest());
         assertNull(result.getLandlordInterest());
         assertEquals(MatchStatus.REJECTED, result.getMatchStatus());
+        assertNotNull(result.getMatchDate());
+        verify(apartmentMatchRepository).save(any(ApartmentMatchEntity.class));
     }
 
     @Test
-    public void testProcessSwipe_SecondInteraction_BothInterested_MakesMatch() {
-        Integer candidateId = 3;
-        Integer apartmentId = 4;
+    @DisplayName("processSwipe: throws when apartment does not exist")
+    public void processSwipe_ApartmentNotFound_Throws() {
+        Integer apartmentId = 12;
+        UserEntity tenant = createUser(5);
 
-        UserEntity user = new UserEntity();
-        user.setId(candidateId);
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-        apt.setState(ApartmentState.ACTIVE);
+        when(userService.findCurrentUserEntity()).thenReturn(tenant);
+        when(apartmentService.findById(apartmentId)).thenThrow(new ResourceNotFoundException("Apartment not found"));
 
-        ApartmentMatchEntity existing = new ApartmentMatchEntity();
-        existing.setCandidateInterest(true);
-        existing.setLandlordInterest(null);
-        existing.setMatchStatus(MatchStatus.ACTIVE);
-        existing.setCandidate(user);
-        existing.setApartment(apt);
+        ResourceNotFoundException exception = assertThrows(
+            ResourceNotFoundException.class,
+            () -> apartmentMatchService.processSwipe(apartmentId, true));
+        assertNotNull(exception);
+        verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
+    }
 
-        when(userService.findById(candidateId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.of(existing));
-        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(i -> i.getArgument(0));
+    @Test
+    @DisplayName("processLandlordAction: interest=true sets MATCH")
+    public void processLandlordAction_InterestTrue_SetsMatch() {
+        Integer matchId = 16;
+        UserEntity landlord = createUser(20);
+        ApartmentMatchEntity match = createMatch(matchId, MatchStatus.ACTIVE, 21, 20, ApartmentState.ACTIVE);
 
-        ApartmentMatchEntity result = apartmentMatchService.processSwipe(candidateId, apartmentId, false, true);
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+        when(userService.findCurrentUserEntity()).thenReturn(landlord);
+        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertNotNull(result);
-        assertEquals(Boolean.TRUE, result.getCandidateInterest());
+        ApartmentMatchEntity result = apartmentMatchService.processLandlordAction(matchId, true);
+
         assertEquals(Boolean.TRUE, result.getLandlordInterest());
         assertEquals(MatchStatus.MATCH, result.getMatchStatus());
+        verify(apartmentMatchRepository).save(match);
     }
 
     @Test
-    public void testProcessSwipe_SecondInteraction_LandlordRejects_MakesRejected() {
-        Integer candidateId = 4;
-        Integer apartmentId = 5;
+    @DisplayName("processLandlordAction: throws when current user is not landlord")
+    public void processLandlordAction_NotLandlord_ThrowsConflict() {
+        Integer matchId = 17;
+        ApartmentMatchEntity match = createMatch(matchId, MatchStatus.ACTIVE, 22, 23, ApartmentState.ACTIVE);
+        UserEntity anotherUser = createUser(24);
 
-        UserEntity user = new UserEntity();
-        user.setId(candidateId);
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-        apt.setState(ApartmentState.ACTIVE);
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+        when(userService.findCurrentUserEntity()).thenReturn(anotherUser);
 
-        ApartmentMatchEntity existing = new ApartmentMatchEntity();
-        existing.setCandidateInterest(true);
-        existing.setLandlordInterest(null);
-        existing.setMatchStatus(MatchStatus.ACTIVE);
-        existing.setCandidate(user);
-        existing.setApartment(apt);
+        ConflictException exception = assertThrows(
+            ConflictException.class,
+            () -> apartmentMatchService.processLandlordAction(matchId, true));
 
-        when(userService.findById(candidateId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.of(existing));
-        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(i -> i.getArgument(0));
+        assertNotNull(exception);
+        verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
+    }
 
-        ApartmentMatchEntity result = apartmentMatchService.processSwipe(candidateId, apartmentId, false, false);
+    @Test
+    @DisplayName("sendInvitation: sets INVITED for MATCH and active apartment")
+    public void sendInvitation_ValidMatch_SetsInvited() {
+        Integer matchId = 18;
+        UserEntity landlord = createUser(30);
+        ApartmentMatchEntity match = createMatch(matchId, MatchStatus.MATCH, 31, 30, ApartmentState.ACTIVE);
 
-        assertNotNull(result);
-        assertEquals(Boolean.TRUE, result.getCandidateInterest());
-        assertEquals(Boolean.FALSE, result.getLandlordInterest());
+        when(userService.findCurrentUserEntity()).thenReturn(landlord);
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ApartmentMatchEntity result = apartmentMatchService.sendInvitation(matchId);
+
+        assertEquals(MatchStatus.INVITED, result.getMatchStatus());
+        verify(apartmentMatchRepository).save(match);
+    }
+
+    @Test
+    @DisplayName("sendInvitation: throws when current user is not landlord")
+    public void sendInvitation_NotLandlord_ThrowsAccessDenied() {
+        Integer matchId = 19;
+        UserEntity notLandlord = createUser(33);
+        ApartmentMatchEntity match = createMatch(matchId, MatchStatus.MATCH, 32, 34, ApartmentState.ACTIVE);
+
+        when(userService.findCurrentUserEntity()).thenReturn(notLandlord);
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+
+        AccessDeniedException exception = assertThrows(
+            AccessDeniedException.class,
+            () -> apartmentMatchService.sendInvitation(matchId));
+
+        assertNotNull(exception);
+        verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
+    }
+
+    @Test
+    @DisplayName("respondToInvitation: accepted adds members and sets SUCCESSFUL")
+    public void respondToInvitation_Accepted_AddsMembersAndSetsSuccessful() {
+        Integer matchId = 20;
+        Integer candidateId = 40;
+        Integer landlordId = 41;
+        ApartmentMatchEntity match = createMatch(matchId, MatchStatus.INVITED, candidateId, landlordId, ApartmentState.ACTIVE);
+        UserEntity candidate = createUser(candidateId);
+
+        when(userService.findCurrentUserEntity()).thenReturn(candidate);
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+        when(apartmentMemberService.existsByUserIdAndRole(landlordId, MemberRole.HOMEBODY)).thenReturn(false);
+        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ApartmentMatchEntity result = apartmentMatchService.respondToInvitation(matchId, true);
+
+        assertEquals(MatchStatus.SUCCESSFUL, result.getMatchStatus());
+        verify(apartmentMemberService).addMember(match.getApartment().getId(), landlordId, null);
+        verify(apartmentMemberService).addMember(match.getApartment().getId(), candidateId, null);
+        verify(apartmentMatchRepository).save(match);
+    }
+
+    @Test
+    @DisplayName("respondToInvitation: rejected sets REJECTED and does not add members")
+    public void respondToInvitation_Rejected_SetsRejectedWithoutMembers() {
+        Integer matchId = 21;
+        Integer candidateId = 50;
+        ApartmentMatchEntity match = createMatch(matchId, MatchStatus.INVITED, candidateId, 51, ApartmentState.ACTIVE);
+        UserEntity candidate = createUser(candidateId);
+
+        when(userService.findCurrentUserEntity()).thenReturn(candidate);
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ApartmentMatchEntity result = apartmentMatchService.respondToInvitation(matchId, false);
+
         assertEquals(MatchStatus.REJECTED, result.getMatchStatus());
+        verify(apartmentMemberService, never()).addMember(any(Integer.class), any(Integer.class), any());
+        verify(apartmentMatchRepository).save(match);
     }
 
     @Test
-    public void testProcessSwipe_SecondInteraction_CandidateRejects_MakesRejected() {
-        Integer candidateId = 4;
-        Integer apartmentId = 5;
+    @DisplayName("respondToInvitation: throws when current user is not candidate")
+    public void respondToInvitation_NotCandidate_ThrowsAccessDenied() {
+        Integer matchId = 22;
+        ApartmentMatchEntity match = createMatch(matchId, MatchStatus.INVITED, 60, 61, ApartmentState.ACTIVE);
+        UserEntity otherUser = createUser(62);
 
-        UserEntity user = new UserEntity();
-        user.setId(candidateId);
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-        apt.setState(ApartmentState.ACTIVE);
+        when(userService.findCurrentUserEntity()).thenReturn(otherUser);
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
 
-        ApartmentMatchEntity existing = new ApartmentMatchEntity();
-        existing.setCandidateInterest(null);
-        existing.setLandlordInterest(true);
-        existing.setMatchStatus(MatchStatus.ACTIVE);
-        existing.setCandidate(user);
-        existing.setApartment(apt);
+        AccessDeniedException exception = assertThrows(
+            AccessDeniedException.class,
+            () -> apartmentMatchService.respondToInvitation(matchId, true));
 
-        when(userService.findById(candidateId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.of(existing));
-        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(i -> i.getArgument(0));
-
-        ApartmentMatchEntity result = apartmentMatchService.processSwipe(candidateId, apartmentId, true, false);
-
-        assertNotNull(result);
-        assertEquals(Boolean.FALSE, result.getCandidateInterest());
-        assertEquals(Boolean.TRUE, result.getLandlordInterest());
-        assertEquals(MatchStatus.REJECTED, result.getMatchStatus());
+        assertNotNull(exception);
+        verify(apartmentMemberService, never()).addMember(any(Integer.class), any(Integer.class), any());
+        verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
     }
 
     @Test
-    public void testProcessSwipe_SecondInteraction_MatchAlreadyMatched_Throws() {
-        Integer candidateId = 4;
-        Integer apartmentId = 5;
-
-        UserEntity user = new UserEntity();
-        user.setId(candidateId);
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-        apt.setState(ApartmentState.ACTIVE);
-
-        ApartmentMatchEntity existing = new ApartmentMatchEntity();
-        existing.setCandidateInterest(null);
-        existing.setLandlordInterest(false);
-        existing.setMatchStatus(MatchStatus.MATCH);
-        existing.setCandidate(user);
-        existing.setApartment(apt);
-
-        when(userService.findById(candidateId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.of(existing));
-
-        assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.processSwipe(candidateId, apartmentId, true, true);
-        });
-    }
-
-    @Test
-    public void testProcessSwipe_SecondInteraction_MatchAlreadySuccessful_Throws() {
-        Integer candidateId = 4;
-        Integer apartmentId = 5;
-
-        UserEntity user = new UserEntity();
-        user.setId(candidateId);
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-        apt.setState(ApartmentState.ACTIVE);
-
-        ApartmentMatchEntity existing = new ApartmentMatchEntity();
-        existing.setCandidateInterest(null);
-        existing.setLandlordInterest(true);
-        existing.setMatchStatus(MatchStatus.SUCCESSFUL);
-        existing.setCandidate(user);
-        existing.setApartment(apt);
-
-        when(userService.findById(candidateId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.of(existing));
-
-        assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.processSwipe(candidateId, apartmentId, true, false);
-        });
-    }
-
-    @Test
-    public void testProcessSwipe_SecondInteraction_MatchAlreadyCanceled_Throws() {
-        Integer candidateId = 4;
-        Integer apartmentId = 5;
-
-        UserEntity user = new UserEntity();
-        user.setId(candidateId);
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-        apt.setState(ApartmentState.ACTIVE);
-
-        ApartmentMatchEntity existing = new ApartmentMatchEntity();
-        existing.setCandidateInterest(null);
-        existing.setLandlordInterest(false);
-        existing.setMatchStatus(MatchStatus.CANCELED);
-        existing.setCandidate(user);
-        existing.setApartment(apt);
-
-        when(userService.findById(candidateId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.of(existing));
-
-        assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.processSwipe(candidateId, apartmentId, true, true);
-        });
-    }
-
-    @Test
-    public void testProcessSwipe_DuplicateInteraction_Throws() {
-        Integer candidateId = 5;
-        Integer apartmentId = 6;
-
-        UserEntity user = new UserEntity();
-        user.setId(candidateId);
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-        apt.setState(ApartmentState.ACTIVE);
-
-        ApartmentMatchEntity existing = new ApartmentMatchEntity();
-        existing.setCandidateInterest(true);
-        existing.setLandlordInterest(null);
-        existing.setMatchStatus(MatchStatus.ACTIVE);
-        existing.setCandidate(user);
-        existing.setApartment(apt);
-
-        when(userService.findById(candidateId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.of(existing));
-
-        assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.processSwipe(candidateId, apartmentId, true, true);
-        });
-    }
-
-    @Test
-    public void testProcessSwipe_DuplicateInteraction2_Throws() {
-        Integer candidateId = 5;
-        Integer apartmentId = 6;
-
-        UserEntity user = new UserEntity();
-        user.setId(candidateId);
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-        apt.setState(ApartmentState.ACTIVE);
-
-        ApartmentMatchEntity existing = new ApartmentMatchEntity();
-        existing.setCandidateInterest(null);
-        existing.setLandlordInterest(true);
-        existing.setMatchStatus(MatchStatus.ACTIVE);
-        existing.setCandidate(user);
-        existing.setApartment(apt);
-
-        when(userService.findById(candidateId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.of(existing));
-
-        assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.processSwipe(candidateId, apartmentId, false, true);
-        });
-    }
-
-    @Test
-    public void testProcessSwipe_SwipeOnInactiveApartment_Throws() {
-        Integer candidateId = 6;
-        Integer apartmentId = 7;
-
-        UserEntity user = new UserEntity();
-        user.setId(candidateId);
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-        apt.setState(ApartmentState.CLOSED);
-
-        when(userService.findById(candidateId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.processSwipe(candidateId, apartmentId, true, true);
-        });
-    }
-
-    @Test
-    public void testProcessSwipe_CandidateNotFound_Throws() {
-        Integer candidateId = 7;
-        Integer apartmentId = 8;
-
-        when(userService.findById(candidateId)).thenReturn(null);
-        assertThrows(ResourceNotFoundException.class, () -> {
-            apartmentMatchService.processSwipe(candidateId, apartmentId, true, true);
-        });
-    }
-
-    @Test
-    public void testProcessSwipe_ApartmentNotFound_Throws() {
-        Integer candidateId = 8;
-        Integer apartmentId = 9;
-
-        UserEntity user = new UserEntity();
-        user.setId(candidateId);
-
-        when(userService.findById(candidateId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(null);
-        assertThrows(ResourceNotFoundException.class, () -> {
-            apartmentMatchService.processSwipe(candidateId, apartmentId, true, true);
-        });
-    }  
-
-    @Test
-    public void testFinalizeMatchProcess_DeletesMatchesAndClosesApartment() {
-        Integer apartmentId = 7;
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-        apt.setState(ApartmentState.ACTIVE);
-
-        ApartmentMatchEntity m = new ApartmentMatchEntity();
-        m.setApartment(apt);
-
-        List<ApartmentMatchEntity> matches = Arrays.asList(m);
-
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        when(apartmentMatchRepository.findByApartmentId(apartmentId)).thenReturn(matches);
-
-        apartmentMatchService.finalizeMatchProcess(apartmentId);
-
-        verify(apartmentMatchRepository).deleteAll(matches);
-        assertEquals(ApartmentState.CLOSED, apt.getState());
-        verify(apartmentService).save(apt);
-    }
-
-    @Test
-    public void testFinalizeMatchProcess_ApartmentStateMatching_Throws() {
-        Integer apartmentId = 8;
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-        apt.setState(ApartmentState.MATCHING);
-
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-
-        assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.finalizeMatchProcess(apartmentId);
-        });
-    }
-
-    @Test
-    public void testFinalizeMatchProcess_ApartmentNotFound_Throws() {
-        Integer apartmentId = 9;
-
-        when(apartmentService.findById(apartmentId)).thenReturn(null);
-        assertThrows(ResourceNotFoundException.class, () -> {
-            apartmentMatchService.finalizeMatchProcess(apartmentId);
-        });
-    }
-
-    @Test
-    public void testFinalizeMatchProcess_NoMatchesFound_Throws() {
-        Integer apartmentId = 10;
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-        apt.setState(ApartmentState.ACTIVE);
-
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        when(apartmentMatchRepository.findByApartmentId(apartmentId)).thenReturn(Arrays.asList());
-        assertThrows(ResourceNotFoundException.class, () -> {
-            apartmentMatchService.finalizeMatchProcess(apartmentId);
-        });
-    }
-
-
-    @Test
-    public void testSuccessfulMatch_FinalizesMatch() {
-        Integer matchId = 8;
-        ApartmentMatchEntity m = new ApartmentMatchEntity();
-        m.setMatchStatus(MatchStatus.MATCH);
-
-        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
-        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(i -> i.getArgument(0));
-
-        ApartmentMatchEntity res = apartmentMatchService.successfulMatch(matchId);
-
-        assertEquals(MatchStatus.SUCCESSFUL, res.getMatchStatus());
-    }
-
-    @Test
-    public void testSuccessfulMatch_AlreadySuccessful_Throws() {
-        Integer matchId = 8;
-        ApartmentMatchEntity m = new ApartmentMatchEntity();
-        m.setMatchStatus(MatchStatus.SUCCESSFUL);
-
-        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
-
-        assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.successfulMatch(matchId);
-        });
-    }
-
-    @Test
-    public void testSuccessfulMatch_NotInMatchStatus_Throws() {
-        Integer matchId = 8;
-        ApartmentMatchEntity m = new ApartmentMatchEntity();
-        m.setMatchStatus(MatchStatus.ACTIVE);
-
-        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
-
-        assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.successfulMatch(matchId);
-        });
-    }
-
-    @Test
-    public void testCancelMatch_CancelsMatch() {
-        Integer matchId = 9;
-        ApartmentMatchEntity m = new ApartmentMatchEntity();
-        m.setMatchStatus(MatchStatus.MATCH);
-
-        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
-        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(i -> i.getArgument(0));
-
-        ApartmentMatchEntity res = apartmentMatchService.cancelMatch(matchId);
-
-        assertEquals(MatchStatus.CANCELED, res.getMatchStatus());
-    }
-
-    @Test
-    public void testCancelMatch_AlreadyCanceled_Throws() {
-        Integer matchId = 9;
-        ApartmentMatchEntity m = new ApartmentMatchEntity();
-        m.setMatchStatus(MatchStatus.CANCELED);
-
-        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
-
-        assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.cancelMatch(matchId);
-        });
-    }
-
-    @Test
-    public void testCancelMatch_AlreadyRejected_Throws() {
-        Integer matchId = 9;
-        ApartmentMatchEntity m = new ApartmentMatchEntity();
-        m.setMatchStatus(MatchStatus.REJECTED);
-
-        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
-
-        assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.cancelMatch(matchId);
-        });
-    }
-
-    @Test
-    public void testCancelMatch_AlreadyActive_Throws() {
-        Integer matchId = 9;
-        ApartmentMatchEntity m = new ApartmentMatchEntity();
-        m.setMatchStatus(MatchStatus.ACTIVE);
-
-        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
-
-        assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.cancelMatch(matchId);
-        });
-    }
-
-    @Test
-    public void testCancelMatch_AlreadySuccessful_Throws() {
-        Integer matchId = 9;
-        ApartmentMatchEntity m = new ApartmentMatchEntity();
-        m.setMatchStatus(MatchStatus.SUCCESSFUL);
-
-        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(m));
-
-        assertThrows(ConflictException.class, () -> {
-            apartmentMatchService.cancelMatch(matchId);
-        });
-    }
-
-    @Test
-    public void testFindMatchesByCandidateIdAndMatchStatus() {
-        Integer candidateId = 5;
-        MatchStatus status = MatchStatus.MATCH;
-
-        List<ApartmentMatchEntity> expectedMatches = Arrays.asList(
-                new ApartmentMatchEntity(),
-                new ApartmentMatchEntity()
-        );
-
-        when(apartmentMatchRepository.findByCandidateIdAndMatchStatus(candidateId, status)).thenReturn(expectedMatches);
-
-        List<ApartmentMatchEntity> result = apartmentMatchService.findMatchesByCandidateIdAndMatchStatus(candidateId, status);
-
-        assertEquals(expectedMatches, result);
-    }
-
-    @Test
-    public void testFindMatchesByApartmentIdAndMatchStatus() {
-        Integer apartmentId = 6;
-        MatchStatus status = MatchStatus.ACTIVE;
-
-        List<ApartmentMatchEntity> expectedMatches = Arrays.asList(
-                new ApartmentMatchEntity(),
-                new ApartmentMatchEntity(),
-                new ApartmentMatchEntity()
-        );
-
-        when(apartmentMatchRepository.findByApartmentIdAndMatchStatus(apartmentId, status)).thenReturn(expectedMatches);
-
-        List<ApartmentMatchEntity> result = apartmentMatchService.findMatchesByApartmentIdAndMatchStatus(apartmentId, status);
-
-        assertEquals(expectedMatches, result); 
-    }
-
-    @Test
-    public void testFindAparmentMatchById() {
-        Integer matchId = 10;
-        ApartmentMatchEntity expectedMatch = new ApartmentMatchEntity();
-        expectedMatch.setId(matchId);
-
-        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(expectedMatch));
-
-        ApartmentMatchEntity result = apartmentMatchService.findApartmentMatchById(matchId);
-        assertTrue(result != null);
-        assertEquals(expectedMatch, result);   
-    }
-
-    @Test
-    public void testFindAparmentMatchById_NotFound() {
-        Integer matchId = 11;
-
-        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.empty());
-
-       
-        assertThrows(ResourceNotFoundException.class, () -> {
-            apartmentMatchService.findApartmentMatchById(matchId);
-        });
-    }
-
-    @Test
-    public void testFindApartmentMatchByCandidateAndApartment() {
-        Integer candidateId = 12;
+    @DisplayName("processSwipe: throws when apartment is not ACTIVE")
+    public void processSwipe_ApartmentNotActive_Throws() {
         Integer apartmentId = 13;
+        UserEntity tenant = createUser(6);
+        ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.CLOSED, 7);
 
-        UserEntity user = new UserEntity();
-        user.setId(candidateId);
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
+        when(userService.findCurrentUserEntity()).thenReturn(tenant);
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
 
-        ApartmentMatchEntity expectedMatch = new ApartmentMatchEntity();
-        expectedMatch.setCandidate(user);
-        expectedMatch.setApartment(apt);
-
-        when(userService.findById(candidateId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-
-        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.of(expectedMatch));
-        ApartmentMatchEntity result = apartmentMatchService.findApartmentMatchByCandidateAndApartment(candidateId, apartmentId);
-        assertTrue(result != null);
-        assertEquals(expectedMatch, result);
-    
+        ConflictException exception = assertThrows(
+            ConflictException.class,
+            () -> apartmentMatchService.processSwipe(apartmentId, true));
+        assertNotNull(exception);
+        verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
     }
 
     @Test
-    public void testFindApartmentMatchByCandidateAndApartment_ApartmentNotFound() {
-        Integer candidateId = 14;
+    @DisplayName("processSwipe: throws when tenant swipes own apartment")
+    public void processSwipe_OwnApartment_ThrowsAccessDenied() {
+        Integer userId = 8;
+        Integer apartmentId = 14;
+        UserEntity tenant = createUser(userId);
+        ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.ACTIVE, userId);
+
+        when(userService.findCurrentUserEntity()).thenReturn(tenant);
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+
+        AccessDeniedException exception = assertThrows(
+            AccessDeniedException.class,
+            () -> apartmentMatchService.processSwipe(apartmentId, true));
+        assertNotNull(exception);
+        verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
+    }
+
+    @Test
+    @DisplayName("processSwipe: throws when tenant already swiped apartment")
+    public void processSwipe_AlreadySwiped_Throws() {
         Integer apartmentId = 15;
-        when(userService.findById(candidateId)).thenReturn(new UserEntity());
-        when(apartmentService.findById(apartmentId)).thenReturn(null);
-        assertThrows(ResourceNotFoundException.class, () -> {
-            apartmentMatchService.findApartmentMatchByCandidateAndApartment(candidateId, apartmentId);
-        });
+        UserEntity tenant = createUser(9);
+        ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.ACTIVE, 10);
+        ApartmentMatchEntity existingMatch = new ApartmentMatchEntity();
+
+        when(userService.findCurrentUserEntity()).thenReturn(tenant);
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(tenant.getId(), apartmentId))
+                .thenReturn(Optional.of(existingMatch));
+
+        ConflictException exception = assertThrows(
+            ConflictException.class,
+            () -> apartmentMatchService.processSwipe(apartmentId, false));
+        assertNotNull(exception);
+        verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
     }
 
-    @Test
-    public void testFindApartmentMatchByCandidateAndApartment_CandidateNotFound() {
-        Integer candidateId = 16;
-        Integer apartmentId = 17;
-        when(userService.findById(candidateId)).thenReturn(null);
-        assertThrows(ResourceNotFoundException.class, () -> {
-            apartmentMatchService.findApartmentMatchByCandidateAndApartment(candidateId, apartmentId);
-        });
-    }
-
-    @Test
-    public void testFindApartmentMatchByCandidateAndApartment_MatchNotFound() {
-        Integer candidateId = 18;
-        Integer apartmentId = 19;
-
+    private UserEntity createUser(Integer id) {
         UserEntity user = new UserEntity();
-        user.setId(candidateId);
-        ApartmentEntity apt = new ApartmentEntity();
-        apt.setId(apartmentId);
-
-        when(userService.findById(candidateId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apt);
-        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidateId, apartmentId)).thenReturn(Optional.empty());
-        assertThrows(ResourceNotFoundException.class, () -> {
-            apartmentMatchService.findApartmentMatchByCandidateAndApartment(candidateId, apartmentId);
-        });
+        user.setId(id);
+        return user;
     }
 
-    @Test
-    public void testFindAllApartmentMatches() {
-        List<ApartmentMatchEntity> expectedMatches = Arrays.asList(
-                new ApartmentMatchEntity(),
-                new ApartmentMatchEntity(),
-                new ApartmentMatchEntity()
-        );
-
-        when(apartmentMatchRepository.findAll()).thenReturn(expectedMatches);
-
-        List<ApartmentMatchEntity> result = apartmentMatchService.findAllApartmentMatches();
-
-        assertEquals(expectedMatches, result);
+    private ApartmentEntity createApartment(Integer apartmentId, ApartmentState state, Integer landlordId) {
+        UserEntity landlord = createUser(landlordId);
+        ApartmentEntity apartment = new ApartmentEntity();
+        apartment.setId(apartmentId);
+        apartment.setState(state);
+        apartment.setUser(landlord);
+        return apartment;
     }
 
-    @Test
-    public void testSaveApartmentMatch() {
-        ApartmentMatchEntity matchToSave = new ApartmentMatchEntity();
-        matchToSave.setId(20);
-
-        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(i -> i.getArgument(0));
-
-        ApartmentMatchEntity result = apartmentMatchService.saveApartmentMatch(matchToSave);
-
-        assertNotNull(result);
-        assertEquals(matchToSave, result);
+    private ApartmentMatchEntity createMatch(Integer id, MatchStatus status, Integer candidateId, Integer landlordId, ApartmentState apartmentState) {
+        ApartmentMatchEntity match = new ApartmentMatchEntity();
+        match.setId(id);
+        match.setCandidate(createUser(candidateId));
+        match.setApartment(createApartment(100 + id, apartmentState, landlordId));
+        match.setMatchStatus(status);
+        return match;
     }
 }

@@ -22,12 +22,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.Apartment.DTOs.ApartmentDTO;
+import com.example.demo.Apartment.DTOs.ApartmentHomeDTO;
 import com.example.demo.Apartment.DTOs.CreateApartment;
 import com.example.demo.Apartment.DTOs.UpdateApartment;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
 import com.example.demo.MemberApartment.ApartmentMemberEntity;
-import com.example.demo.MemberApartment.ApartmentMemberRepository;
+import com.example.demo.MemberApartment.ApartmentMemberService;
 import com.example.demo.MemberApartment.DTOs.ApartmentMemberDTO;
 
 import jakarta.validation.Valid;
@@ -37,19 +38,22 @@ import jakarta.validation.Valid;
 public class ApartmentController {
 
     private final ApartmentService apartmentsService;
-    private final ApartmentMemberRepository apartmentMemberRepository;
+    private final ApartmentMemberService apartmentMemberService;
     private final ApartmentPhotoService apartmentPhotoService;
+    private final ApartmentHomeService apartmentHomeService;
 
-    public ApartmentController(ApartmentService apartmentsService,
-            ApartmentMemberRepository apartmentMemberRepository,
-            ApartmentPhotoService apartmentPhotoService) {
+    public ApartmentController(ApartmentService apartmentsService, 
+                               ApartmentMemberService apartmentMemberService,
+                               ApartmentPhotoService apartmentPhotoService,
+                               ApartmentHomeService apartmentHomeService) {
         this.apartmentsService = apartmentsService;
-        this.apartmentMemberRepository = apartmentMemberRepository;
+        this.apartmentMemberService = apartmentMemberService;
         this.apartmentPhotoService = apartmentPhotoService;
+        this.apartmentHomeService = apartmentHomeService;
     }
 
     private ApartmentDTO mapToDTOWithMembers(ApartmentEntity apartment) {
-        List<ApartmentMemberEntity> members = apartmentMemberRepository.findByApartmentId(apartment.getId());
+        List<ApartmentMemberEntity> members = apartmentMemberService.findCurrentMembers(apartment.getId());
         List<ApartmentMemberDTO> memberDTOs = ApartmentMemberDTO.fromEntityList(members);
         return ApartmentDTO.fromApartmentEntityWithMembers(apartment, memberDTOs);
     }
@@ -60,6 +64,13 @@ public class ApartmentController {
                 .map(this::mapToDTOWithMembers)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(apartments);
+    }
+
+    @GetMapping("/me/home")
+    @PreAuthorize("hasAnyRole('TENANT','ADMIN')")
+    public ResponseEntity<ApartmentHomeDTO> getMyHomeSnapshot() {
+        ApartmentHomeDTO dto = apartmentHomeService.getCurrentUserHome();
+        return ResponseEntity.ok(dto);
     }
 
     @PreAuthorize("hasRole('LANDLORD')")

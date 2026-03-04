@@ -1,8 +1,11 @@
 package com.example.demo.ApartmentMatch;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,6 +14,8 @@ import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.Apartment.ApartmentState;
 import com.example.demo.Exceptions.ConflictException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
+import com.example.demo.MemberApartment.ApartmentMemberService;
+import com.example.demo.MemberApartment.MemberRole;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 
@@ -19,19 +24,15 @@ public class ApartmentMatchService {
 
     private final ApartmentMatchRepository apartmentMatchRepository;
     private final ApartmentService apartmentService;
+    private final ApartmentMemberService apartmentMemberService;
     private final UserService userService;
 
     @Autowired
-    public ApartmentMatchService(ApartmentMatchRepository apartmentMatchRepository, ApartmentService apartmentService,
-            UserService userService) {
+    public ApartmentMatchService(ApartmentMatchRepository apartmentMatchRepository, ApartmentService apartmentService, ApartmentMemberService apartmentMemberService, UserService userService) {
         this.apartmentMatchRepository = apartmentMatchRepository;
         this.apartmentService = apartmentService;
+        this.apartmentMemberService = apartmentMemberService;
         this.userService = userService;
-    }
-
-    public ApartmentMatchEntity findApartmentMatchById(Integer id) {
-        return apartmentMatchRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Apartment match not found"));
     }
 
     public ApartmentMatchEntity findApartmentMatchByCandidateAndApartment(Integer candidateId, Integer apartmentId) {
@@ -139,26 +140,6 @@ public class ApartmentMatchService {
         }
     }
 
-    @Transactional
-    public void finalizeMatchProcess(Integer apartmentId) {
-        ApartmentEntity apartment = apartmentService.findById(apartmentId);
-        if (apartment == null) {
-            throw new ResourceNotFoundException("Apartment not found");
-        }
-        if (apartment.getState() == ApartmentState.MATCHING) {
-            throw new ConflictException("Only apartments that are not matching can be finalized");
-        }
-        List<ApartmentMatchEntity> matches = apartmentMatchRepository.findByApartmentId(apartmentId);
-
-        if (matches.isEmpty()) {
-            throw new ResourceNotFoundException("No matches found for this apartment");
-        }
-
-        apartmentMatchRepository.deleteAll(matches);
-        apartment.setState(ApartmentState.CLOSED);
-        apartmentService.save(apartment);
-    }
-
     public List<ApartmentMatchEntity> findMatchesByCandidateIdAndMatchStatus(Integer candidateId, MatchStatus status) {
         return apartmentMatchRepository.findByCandidateIdAndMatchStatus(candidateId, status);
     }
@@ -196,4 +177,174 @@ public class ApartmentMatchService {
         apartmentMatchRepository.save(match);
         return match;
     }
+
+    @Transactional
+    public void finalizeMatchProcess(Integer apartmentId) {
+        ApartmentEntity apartment = apartmentService.findById(apartmentId);
+
+        if(apartment.getState() == ApartmentState.MATCHING) {
+            throw new ConflictException("Only apartments that are not matching can be finalized");
+        }
+        List<ApartmentMatchEntity> matches = apartmentMatchRepository.findByApartmentId(apartmentId);
+
+        if (matches.isEmpty()) {
+            throw new ResourceNotFoundException("No matches found for this apartment");
+        }
+
+        apartmentMatchRepository.deleteAll(matches);
+        apartment.setState(ApartmentState.CLOSED);
+        apartmentService.save(apartment);
+    }
+
+    @Transactional
+    public ApartmentMatchEntity processSwipe(Integer apartmentId, boolean interest) {
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        ApartmentEntity apartment = apartmentService.findById(apartmentId);
+        
+        if(apartment.getState() != ApartmentState.ACTIVE) {
+            throw new ConflictException("Cannot swipe on an apartment that is not active");
+        }
+        if(apartment.getUser().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You cannot swipe on your own apartment");
+        }
+        if(apartmentMatchRepository.findByCandidateIdAndApartmentId(currentUser.getId(), apartmentId).isPresent()) {
+            throw new ConflictException("You have already swiped on this apartment");
+        }
+        
+        ApartmentMatchEntity apartmentMatch = createApartmentMatch(currentUser, apartment, interest);
+        return apartmentMatchRepository.save(apartmentMatch);
+    }
+
+    public ApartmentMatchEntity createApartmentMatch(UserEntity candidate, ApartmentEntity apartment, boolean interest) { 
+        ApartmentMatchEntity newMatch = new ApartmentMatchEntity();
+        newMatch.setCandidateInterest(interest);
+        newMatch.setLandlordInterest(null);
+        newMatch.setCandidate(candidate);
+        newMatch.setApartment(apartment);
+        newMatch.setMatchDate(LocalDateTime.now(ZoneId.of("Europe/Madrid")));
+
+        if(interest){
+            newMatch.setMatchStatus(MatchStatus.ACTIVE);
+        } else {
+            newMatch.setMatchStatus(MatchStatus.REJECTED);
+        }
+        return newMatch;
+    }
+
+    @Transactional
+    public ApartmentMatchEntity processLandlordAction(Integer matchId, boolean interest) {
+        ApartmentMatchEntity match = apartmentMatchRepository.findById(matchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
+        if (match.getMatchStatus() != MatchStatus.ACTIVE) {
+            throw new ConflictException("Only matches with status ACTIVE can be processed by the landlord");
+        }
+        if (!match.getApartment().getUser().getId().equals(userService.findCurrentUserEntity().getId())) {
+            throw new ConflictException("Only the landlord of the apartment can process this action");
+        }
+        if (match.getApartment().getState() != ApartmentState.ACTIVE) {
+            throw new ConflictException("Cannot process the match because the apartment is not active");
+        }
+        match.setLandlordInterest(interest);
+        if (interest) {
+            match.setMatchStatus(MatchStatus.MATCH);
+        } else {
+            match.setMatchStatus(MatchStatus.REJECTED);
+        }
+        return apartmentMatchRepository.save(match);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ApartmentMatchEntity> findInterestedCandidatesByApartmentIdAndStatus(Integer apartmentId, MatchStatus status) {
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        ApartmentEntity apartment = apartmentService.findById(apartmentId);
+        if (!apartment.getUser().getId().equals(currentUser.getId())) {
+            throw new ConflictException("Only the landlord of the apartment can view the interested candidates");
+        }
+        return apartmentMatchRepository.findByApartmentIdAndMatchStatus(apartmentId, status);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ApartmentMatchEntity> findInterestedCandidatesByUserIdAndStatus(Integer userId, MatchStatus status) {
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        if (!currentUser.getId().equals(userId)) {
+            throw new ConflictException("You can only view your own interested candidates");
+        }
+        return apartmentMatchRepository.findByUserIdAndMatchStatus(userId, status);
+    }
+
+    @Transactional(readOnly = true)
+    List<ApartmentMatchEntity> findTenantRequestByUserIdAndStatus(MatchStatus status) {
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        if (!currentUser.getId().equals(currentUser.getId())) {
+            throw new ConflictException("You can only view your own Request");
+        }
+        return apartmentMatchRepository.findTenantRequestByUserIdAndStatus(currentUser.getId(), status);
+    }
+
+    @Transactional(readOnly = true)
+    public ApartmentMatchEntity findMyMatchForTenant(Integer apartmentMatchId){
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        ApartmentMatchEntity match = apartmentMatchRepository.findById(apartmentMatchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
+        if (!match.getCandidate().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You can only view your own matches");
+        }
+        return match;
+    }
+
+    @Transactional(readOnly = true)
+    public ApartmentMatchEntity findMyMatchForLandlord(Integer apartmentMatchId){
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        ApartmentMatchEntity match = apartmentMatchRepository.findById(apartmentMatchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
+        if (!match.getApartment().getUser().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You can only view matches for your own apartments");
+        }
+        return match;
+    }
+
+    @Transactional
+    public ApartmentMatchEntity sendInvitation(Integer apartmentMatchId) {
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        ApartmentMatchEntity match = apartmentMatchRepository.findById(apartmentMatchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
+        if (!match.getApartment().getUser().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("Only the landlord of the apartment can send an invitation");
+        }
+        if (match.getMatchStatus() != MatchStatus.MATCH) {
+            throw new ConflictException("Only matches with status MATCH can be invited");
+        }
+        if (match.getApartment().getState() != ApartmentState.ACTIVE) {
+            throw new ConflictException("Cannot send an invitation because the apartment is not active");
+        }
+        match.setMatchStatus(MatchStatus.INVITED);
+        return apartmentMatchRepository.save(match);
+    }
+
+    @Transactional
+    public ApartmentMatchEntity respondToInvitation(Integer apartmentMatchId, boolean accepted) {
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        ApartmentMatchEntity match = apartmentMatchRepository.findById(apartmentMatchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
+        if (!match.getCandidate().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("Only the candidate can respond to the invitation");
+        }
+        if (match.getMatchStatus() != MatchStatus.INVITED) {
+            throw new ConflictException("Only matches with status INVITED can be responded to");
+        }
+        if (accepted) {
+            if (match.getApartment().getState() != ApartmentState.ACTIVE) {
+                throw new ConflictException("Cannot accept the invitation because the apartment is not active");
+            }
+            if(!apartmentMemberService.existsByUserIdAndRole(match.getApartment().getUser().getId(), MemberRole.HOMEBODY)) {
+                apartmentMemberService.addMember(match.getApartment().getId(), match.getApartment().getUser().getId(), null);
+            }
+            match.setMatchStatus(MatchStatus.SUCCESSFUL);
+            apartmentMemberService.addMember(match.getApartment().getId(), currentUser.getId(), null);
+        } else {
+            match.setMatchStatus(MatchStatus.REJECTED);
+        }
+        return apartmentMatchRepository.save(match);
+    }
+   
 }

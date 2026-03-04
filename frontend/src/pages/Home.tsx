@@ -25,7 +25,7 @@ function HeroWrapper({ children }: { children: React.ReactNode }) {
 }
 
 export default function Home() {
-  const { token, userId, role } = useAuthStore()
+  const { token, role, userId } = useAuthStore()
   const { showToast } = useToast()
   const [apartments, setApartments] = useState<ApartmentDTO[]>([])
   const [loading, setLoading] = useState(true)
@@ -55,11 +55,9 @@ export default function Home() {
   const handleSwipe = async (apartmentId: number, interest: boolean) => {
     setApartments((prev) => prev.filter((apt) => apt.id !== apartmentId))
     try {
-      if (userId) {
-        await swipeApartment(Number(userId), apartmentId, interest)
-        if (interest) {
-          showToast('¡Solicitud enviada correctamente!', 'success')
-        }
+      await swipeApartment(apartmentId, interest)
+      if (interest) {
+        showToast('¡Solicitud enviada correctamente!', 'success')
       }
     } catch (error: unknown) {
       const axiosError = error as { response?: { status: number; data: unknown } }

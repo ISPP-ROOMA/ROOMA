@@ -6,7 +6,7 @@ export interface ApartmentInfo {
   ubication: string
   ownerEmail: string
   ownerId: number
-  members: { userId: number; joinDate: string; leaveDate?: string }[]
+  members: { userId: number; joinDate: string; endDate?: string }[]
 }
 
 export interface CreateReviewPayload {
@@ -56,10 +56,10 @@ export const getApartmentInfo = async (apartmentId: number): Promise<ApartmentIn
       ownerEmail: apt.user?.email ?? 'Desconocido',
       ownerId: apt.user?.id ?? 0,
       members: (apt.members ?? []).map(
-        (m: { userId: number; joinDate: string; leaveDate?: string }) => ({
+        (m: { userId: number; joinDate: string; endDate?: string }) => ({
           userId: m.userId,
           joinDate: m.joinDate,
-          leaveDate: m.leaveDate,
+          endDate: m.endDate,
         })
       ),
     }

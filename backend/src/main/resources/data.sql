@@ -1,11 +1,19 @@
--- Limpiar datos existentes
+-- Limpiar datos existentes (opcional pero recomendado en desarrollo)
+DELETE FROM tenant_debts;
+DELETE FROM bills;
+DELETE FROM apartment_matches;
 DELETE FROM apartment_members;
+DELETE FROM reglas_vivienda;
 DELETE FROM apartment_photos;
+DELETE FROM refresh_tokens;
 DELETE FROM apartments;
 DELETE FROM users;
 
 -- ==========================================
 -- USERS
+-- Todas las contraseñas están en texto plano o deberás actualizarlas según el encoder.
+-- Por defecto Spring Security suele usar BCrypt. Aquí se asume texto plano '123456' si el encoder lo permite,
+-- o tendrías que registrar uno nuevo usando la UI.
 -- ==========================================
 
 -- Arrendadores (LANDLORD)
@@ -26,73 +34,156 @@ INSERT INTO users (id, email, password, role, hobbies, schedule, profession) VAL
 
 
 -- ==========================================
--- APARTMENTS (18 pisos en 10 ciudades)
+-- APARTMENTS
 -- ==========================================
 
 INSERT INTO apartments (id, title, description, price, bills, ubication, state, user_id) VALUES 
--- Landlord 1 — Madrid
-(1,  'Piso céntrico luminoso',            'Amplio piso de 3 habitaciones en el centro de Madrid. Muy luminoso y con buena ventilación. Salón grande y cocina equipada. Buscamos persona tranquila y responsable.',        350.0, 'Agua e Internet incluidos',       'Madrid Centro',           'ACTIVE', 1),
-(2,  'Habitación barrio universitario',   'Se alquila habitación para estudiantes, cerca del campus universitario. Ambiente de estudio y respeto. Piso de 4 habitaciones con sala de estudio.',                           250.0, 'Gastos a compartir (aprox 30€)', 'Valencia Benimaclet',     'ACTIVE', 1),
-(3,  N'Estudio moderno Malasaña',          N'Estudio completamente reformado con cocina integrada y baño en suite. Ideal para profesional joven. A 5 min del metro Tribunal.',                                              620.0, 'Todos los gastos incluidos',     N'Madrid Malasaña',         'ACTIVE', 1),
-(4,  'Habitación doble Lavapiés',         'Piso compartido de 4 habitaciones en Lavapiés. Muy buen ambiente multicultural. Sala común amplia con sofá, TV 55" y zona de trabajo.',                                       290.0, 'Agua y luz a partes iguales',   'Madrid Lavapiés',         'ACTIVE', 1),
--- Landlord 2 — Barcelona
-(5,  'Ático con terraza Barcelona',       'Precioso ático moderno con gran terraza para hacer barbacoas y disfrutar del sol. Vistas a la ciudad. Preferible gente trabajadora y ordenada.',                               450.0, 'Todo incluido',                 'Barcelona Eixample',      'ACTIVE', 2),
-(6,  'Piso con vistas al mar',            'Amplia habitación en piso con vistas parciales al Mediterráneo. Salón luminoso y cocina completa. A 10 min caminando de la Barceloneta.',                                     480.0, 'Gastos no incluidos',           'Barcelona Barceloneta',   'ACTIVE', 2),
-(7,  'Habitación Gràcia con carácter',    'Habitación en piso de artistas en el barrio de Gràcia. Ambiente creativo y tranquilo. Terraza comunitaria con plantas. Bienvenidos todos los perfiles.',                      380.0, 'Internet incluido',             'Barcelona Gràcia',        'ACTIVE', 2),
--- Landlord 3 — Sevilla y alrededores
-(8,  'Piso compartido centro Sevilla',    'Habitación en piso de 3 personas en el corazón de Sevilla. A pasos de la Catedral y el Barrio de Santa Cruz. Perfecto para disfrutar la ciudad.',                            280.0, 'Agua e Internet incluidos',     'Sevilla Centro',          'ACTIVE', 3),
-(9,  'Estudio Triana',                    N'Encantador estudio en el clásico barrio de Triana. Cocina americana, baño reformado y mucha luz natural. Muy tranquilo a pesar de estar bien ubicado.',                       520.0, 'Gastos incluidos excepto luz',  'Sevilla Triana',          'ACTIVE', 3),
-(10, 'Habitación en villa con piscina',   'Habitación en chalet adosado con piscina comunitaria y jardín. Perfecto para personas que valoran el espacio y el aire libre. Zona muy tranquila.',                          350.0, 'Gastos no incluidos',           'Sevilla Palomares',       'ACTIVE', 3),
--- Landlord 4 — Norte y Granada
-(11, 'Loft industrial Bilbao',            N'Espectacular loft de diseño industrial reformado. Techos altos de 4m, ventanales enormes y mobiliario de diseño. A 5 min del Museo Guggenheim.',                             700.0, 'Todo incluido',                 'Bilbao Abando',           'ACTIVE', 4),
-(12, 'Piso zona universitaria Granada',   'Habitación cómoda y soleada en piso de 5 personas cerca de la UGR. Ambiente estudiantil y buen rollo garantizado. Terraza con vistas a Sierra Nevada.',                     210.0, 'Gastos a compartir',            'Granada Universidad',     'ACTIVE', 4),
-(13, 'Apartamento moderno Málaga',        'Apartamento completamente equipado a 5 minutos de la Costa del Sol. Piscina comunitaria, parking disponible y zona de barbacoa.',                                            550.0, 'Agua e Internet incluidos',     'Málaga Centro',           'ACTIVE', 4),
--- Landlord 5 — Levante y resto
-(14, 'Habitación luminosa Alicante',      'Habitación exterior con mucha luz en piso reformado. A 15 min de la playa y cerca de todos los servicios. Buscamos persona ordenada y tranquila.',                          300.0, 'Internet incluido',             'Alicante Centro',         'ACTIVE', 5),
-(15, 'Piso compartido Zaragoza',          'Bonito piso de 3 habitaciones en el centro de Zaragoza, cerca de la Plaza del Pilar. Muy bien comunicado con bus y tranvía. Ambiente familiar.',                             270.0, 'Agua incluida',                 'Zaragoza Centro',         'ACTIVE', 5),
-(16, 'Estudio amueblado San Sebastián',   'Acogedor estudio totalmente amueblado a 5 minutos de La Concha. Ideal para profesional. Edificio con ascensor y portero físico. Recién reformado.',                         750.0, 'Todo incluido',                 'San Sebastián Centro',    'ACTIVE', 5),
-(17, 'Habitación piso moderno Murcia',    'Piso reformado de 4 habitaciones, cocina americana y salón con Smart TV. Cerca de la Universidad de Murcia y el centro comercial.',                                          220.0, 'Gastos a partes iguales',       'Murcia El Carmen',        'ACTIVE', 5),
-(18, 'Duplex con jardín Valencia',        'Amplio dúplex con jardín privado en zona residencial tranquila del barrio de Ruzafa. Perfecto para quien valora el espacio exterior y la naturaleza.',                       580.0, 'Gastos no incluidos',           'Valencia Ruzafa',         'ACTIVE', 5);
-
+(1, 'Piso céntrico luminoso', 'Amplio piso de 3 habitaciones en el centro de la ciudad. Muy luminoso y con buena ventilación. Buscamos a alguien tranquilo.', 350.0, 'Agua e Internet incluidos', 'Madrid Centro', 'ACTIVE', 1),
+(2, 'Habitación en barrio universitario', 'Se alquila habitación para estudiantes, cerca del campus universitario. Ambiente de estudio y respeto.', 250.0, 'Gastos a compartir (aprox 30€)', 'Valencia Benimaclet', 'ACTIVE', 1),
+(3, 'Ático con terraza', 'Precioso ático moderno con gran terraza para hacer barbacoas. Preferible gente trabajadora.', 450.0, 'Todo incluido', 'Barcelona Eixample', 'ACTIVE', 2);
 
 -- ==========================================
--- APARTMENT PHOTOS (portada — orden=1)
--- Imágenes de Unsplash (reales, no requieren autenticación)
+-- APARTMENT PHOTOS
+-- Rellena url/public_id con tus valores
 -- ==========================================
 
 INSERT INTO apartment_photos (id, apartment_id, orden, portada, public_id, url) VALUES
-(1,  1,  1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(2,  2,  1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(3,  3,  1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(4,  4,  1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(5,  5,  1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(6,  6,  1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(7,  7,  1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(8,  8,  1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(9,  9,  1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(10, 10, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(11, 11, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(12, 12, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(13, 13, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(14, 14, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(15, 15, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(16, 16, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(17, 17, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(18, 18, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg');
-
+(1, 1, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
+(2, 2, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
+(3, 3, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg');
 
 -- ==========================================
 -- APARTMENT MEMBERS
+-- role: HOMEBODY, RENTER
 -- ==========================================
 
--- Piso 1 — tenant1 y tenant2 (con leave_date para reviews)
-INSERT INTO apartment_members (id, apartment_id, user_id, join_date, leave_date) VALUES 
-(1, 1, 6, '2023-09-01', '2026-03-02'),
-(2, 1, 7, '2023-09-15', NULL),
-(5, 1, 9, '2024-01-01', '2025-01-01');
+-- Piso 1 — tenant1 y tenant2
+INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date, end_date) VALUES 
+(1, 1, 6, 'HOMEBODY', '2023-09-01', NULL),
+(2, 1, 7, 'RENTER',   '2023-09-15', NULL);
 
 -- Piso 2 — tenant3 solo
-INSERT INTO apartment_members (id, apartment_id, user_id, join_date) VALUES 
-(3, 2, 8, '2024-01-10');
+INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date, end_date) VALUES 
+(3, 2, 8, 'HOMEBODY', '2024-01-10', NULL);
 
--- Resto de pisos disponibles para swipe (sin inquilinos aún)
+-- Piso 5 — tenant4 solo
+INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date, end_date) VALUES 
+(4, 5, 9, 'HOMEBODY', '2024-03-01', NULL);
+
+INSERT INTO apartment_photos (id, apartment_id, orden, portada, public_id, url) VALUES
+(4, 1, 2, false, '/rooma/apartments/oaazdrxh77fvjcm1t1dz_2.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099622/rooma/apartments/oaazdrxh77fvjcm1t1dz_2.jpg'),
+(5, 1, 3, false, '/rooma/apartments/oaazdrxh77fvjcm1t1dz_3.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099623/rooma/apartments/oaazdrxh77fvjcm1t1dz_3.jpg'),
+(6, 4, 1, true, '/rooma/apartments/studio1.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099624/rooma/apartments/studio1.jpg'),
+(7, 5, 1, true, '/rooma/apartments/room1.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099625/rooma/apartments/room1.jpg');
+
+-- ==========================================
+-- MÁS APARTMENT MEMBERS (ampliar compañeros)
+-- ==========================================
+-- Añadir un tercer miembro al piso 1 y ocupar el piso 3 con un inquilino (tenant4)
+INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date, end_date) VALUES
+(4, 1, 5, 'RENTER', '2024-03-01', NULL),
+(5, 3, 6, 'HOMEBODY', '2024-02-15', NULL),
+(6, 4, 7, 'HOMEBODY', '2024-11-01', NULL),
+(7, 5, 8, 'RENTER', '2025-01-20', NULL);
+
+-- ==========================================
+-- FACTURAS (bills) y deudas por inquilino (tenant_debts)
+-- ==========================================
+
+-- === Piso 1 (apartment_id=1, landlord user_id=1) ===
+-- Miembros activos: tenant1(3), tenant2(4), tenant3(5), tenant7(10), tenant8(11), tenant9(12)
+
+-- Bill 1: Alquiler Julio — vencida (urgente)
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(1, 'Alquiler', 2100.00, 'PENDING', '2025-07-01', 1, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(1, 350.00, 'PENDING', 3, 1),
+(2, 350.00, 'PENDING', 4, 1),
+(3, 350.00, 'PENDING', 5, 1),
+(4, 350.00, 'PENDING', 10, 1),
+(5, 350.00, 'PENDING', 11, 1),
+(6, 350.00, 'PENDING', 12, 1);
+
+-- Bill 2: Electricidad Mayo — ya pagada
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(2, 'Electricidad', 132.00, 'PAID', '2025-05-15', 1, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(7, 22.00, 'PAID', 3, 2),
+(8, 22.00, 'PAID', 4, 2),
+(9, 22.00, 'PAID', 5, 2),
+(10, 22.00, 'PAID', 10, 2),
+(11, 22.00, 'PAID', 11, 2),
+(12, 22.00, 'PAID', 12, 2);
+
+-- Bill 3: Agua Junio — vence pronto
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(3, 'Agua', 78.00, 'PENDING', '2025-08-05', 1, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(13, 13.00, 'PENDING', 3, 3),
+(14, 13.00, 'PENDING', 4, 3),
+(15, 13.00, 'PENDING', 5, 3),
+(16, 13.00, 'PENDING', 10, 3),
+(17, 13.00, 'PENDING', 11, 3),
+(18, 13.00, 'PENDING', 12, 3);
+
+-- Bill 4: Internet Julio — vence en el futuro
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(4, 'Internet', 54.00, 'PENDING', '2025-09-01', 1, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(19, 9.00, 'PENDING', 3, 4),
+(20, 9.00, 'PENDING', 4, 4),
+(21, 9.00, 'PENDING', 5, 4),
+(22, 9.00, 'PENDING', 10, 4),
+(23, 9.00, 'PENDING', 11, 4),
+(24, 9.00, 'PENDING', 12, 4);
+
+-- Bill 5: Gas Abril — pagada
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(5, 'Gas', 96.00, 'PAID', '2025-04-20', 1, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(25, 16.00, 'PAID', 3, 5),
+(26, 16.00, 'PAID', 4, 5),
+(27, 16.00, 'PAID', 5, 5),
+(28, 16.00, 'PAID', 10, 5),
+(29, 16.00, 'PAID', 11, 5),
+(30, 16.00, 'PAID', 12, 5);
+
+-- Bill 6: Comunidad Julio — vencida (urgente)
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(6, 'Comunidad', 300.00, 'PENDING', '2025-07-05', 1, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(31, 50.00, 'PENDING', 3, 6),
+(32, 50.00, 'PENDING', 4, 6),
+(33, 50.00, 'PENDING', 5, 6),
+(34, 50.00, 'PENDING', 10, 6),
+(35, 50.00, 'PENDING', 11, 6),
+(36, 50.00, 'PENDING', 12, 6);
+
+-- Bill 7: Alquiler Junio — parcialmente pagada (tenant1 ya pagó)
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(7, 'Alquiler', 2100.00, 'PENDING', '2025-06-01', 1, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(37, 350.00, 'PAID', 3, 7),
+(38, 350.00, 'PENDING', 4, 7),
+(39, 350.00, 'PENDING', 5, 7),
+(40, 350.00, 'PENDING', 10, 7),
+(41, 350.00, 'PENDING', 11, 7),
+(42, 350.00, 'PENDING', 12, 7);
+
+-- === Piso 2 (apartment_id=2, landlord user_id=1) ===
+-- Miembro: tenant3 (id 5)
+-- Bill 8: Alquiler piso 2
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(8, 'Alquiler', 250.00, 'PAID', '2025-06-05', 2, 1);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(43, 250.00, 'PAID', 5, 8);
+
+-- === Piso 3 (apartment_id=3, landlord user_id=2) ===
+-- Miembro: tenant4 (id 6)
+-- Bill 9: Alquiler piso 3
+INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, user_id) VALUES
+(9, 'Alquiler', 450.00, 'PENDING', '2025-08-01', 3, 2);
+INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
+(44, 450.00, 'PENDING', 6, 9);
+
+-- Notas: los ids aquí son de ejemplo y deben ajustarse si tu base de datos aplica secuencias automáticas.

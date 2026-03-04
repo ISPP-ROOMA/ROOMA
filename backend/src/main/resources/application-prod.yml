@@ -13,10 +13,15 @@ spring:
     password: ${DB_PASS}
     driver-class-name: org.postgresql.Driver
 
+  sql:
+    init:
+      mode: always
+
   jpa:
+    defer-datasource-initialization: true
     show-sql: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
       properties:
         hibernate:
           dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -28,6 +33,9 @@ jwt:
   expiration-at: ${JWT_EXPIRATION_AT:900000}
   expiration-rt: ${JWT_EXPIRATION_RT:604800000}
   secret-key: ${JWT_SECRET}
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS}
 
 cloudinary:
   cloud_name: ${CLOUDINARY_CLOUD_NAME}

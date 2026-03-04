@@ -1,5 +1,5 @@
-﻿import { useEffect, useRef, useState } from 'react'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import PrivateRoute from './components/PrivateRoute'
 import ReviewModal from './components/ReviewModal'
@@ -9,15 +9,25 @@ import User from './pages/admin/User'
 import Users from './pages/admin/Users'
 import ApartmentDetail from './pages/apartments/ApartmentDetail'
 import Apartments from './pages/apartments/Apartments'
+import ApartmentBills from './pages/apartments/billing/ApartmentBills'
+import LandlordBillDetail from './pages/apartments/billing/LandlordBillDetail'
+import NewBill from './pages/apartments/billing/NewBill'
 import PublishFlowContainer from './pages/apartments/publish/PublishFlowContainer'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import LeaveReview from './pages/private/LeaveReview'
-import MyRequests from './pages/private/MyRequests'
+import MyHome from './pages/private/MyHome'
+import DebtDetail from './pages/private/payments/DebtDetail'
+import Invoices from './pages/private/payments/Invoices'
+import PaymentSuccess from './pages/private/payments/PaymentSuccess'
 import MyReviews from './pages/private/MyReviews'
 import Profile from './pages/private/Profile'
 import ReviewContractFinished from './pages/private/ReviewContractFinished'
 import SelectReviewTarget from './pages/private/SelectReviewTarget'
+import LandlordMatchDetailPage from './pages/private/requests/LandlordMatchDetailPage'
+import LandlordRequestDetailPage from './pages/private/requests/LandlordRequestDetailPage'
+import LandlordRequestsPage from './pages/private/requests/LandlordRequestsPage'
+import TenantRequestsPage from './pages/private/requests/TenantRequestsPage'
 import PropertyDetails from './pages/PropertyDetails'
 import Register from './pages/Register'
 import { hasSessionHint, refreshToken } from './service/auth.service'
@@ -117,7 +127,48 @@ function App() {
           path="/mis-solicitudes"
           element={
             <PrivateRoute>
-              <MyRequests />
+              <Navigate
+                to={
+                  role === 'LANDLORD'
+                    ? '/mis-solicitudes/recibidas'
+                    : role === 'TENANT'
+                      ? '/mis-solicitudes/enviadas'
+                      : '/profile'
+                }
+                replace
+              />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/mis-solicitudes/enviadas"
+          element={
+            <PrivateRoute allowedRoles={['TENANT']}>
+              <TenantRequestsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/mis-solicitudes/recibidas"
+          element={
+            <PrivateRoute allowedRoles={['LANDLORD']}>
+              <LandlordRequestsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/mis-solicitudes/recibidas/:apartmentMatchId"
+          element={
+            <PrivateRoute allowedRoles={['LANDLORD']}>
+              <LandlordRequestDetailPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/mis-solicitudes/recibidas/:apartmentMatchId/match"
+          element={
+            <PrivateRoute allowedRoles={['LANDLORD']}>
+              <LandlordMatchDetailPage />
             </PrivateRoute>
           }
         />
@@ -260,6 +311,68 @@ function App() {
                   element={
                     <PrivateRoute allowedRoles={['LANDLORD']}>
                       <ApartmentDetail />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/apartments/:id/new-bill"
+                  element={
+                    <PrivateRoute allowedRoles={['LANDLORD']}>
+                      <NewBill />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/apartments/:id/bills"
+                  element={
+                    <PrivateRoute allowedRoles={['LANDLORD']}>
+                      <ApartmentBills />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/apartments/:id/bills/:billId"
+                  element={
+                    <PrivateRoute allowedRoles={['LANDLORD']}>
+                      <LandlordBillDetail />
+                    </PrivateRoute>
+                  }
+                />
+              </>
+            )}
+
+            {/* Rutas de Tenant (Inquilino) */}
+            {role === 'TENANT' && (
+              <>
+                <Route
+                  path="/my-home"
+                  element={
+                    <PrivateRoute allowedRoles={['TENANT']}>
+                      <MyHome />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/invoices"
+                  element={
+                    <PrivateRoute allowedRoles={['TENANT']}>
+                      <Invoices />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/invoices/:debtId"
+                  element={
+                    <PrivateRoute allowedRoles={['TENANT']}>
+                      <DebtDetail />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/invoices/:debtId/success"
+                  element={
+                    <PrivateRoute allowedRoles={['TENANT']}>
+                      <PaymentSuccess />
                     </PrivateRoute>
                   }
                 />

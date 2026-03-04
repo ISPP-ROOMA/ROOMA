@@ -64,16 +64,17 @@ export default function PublishFlowContainer() {
         ? formData.includedBills.join(', ')
         : 'No incluidos'
 
-      await createApartment({
-        title: `Piso en ${formData.neighborhood || 'Sin barrio'}`,
-        description: `Disponible desde ${formData.availableDate || 'fecha por definir'}. Fianza: ${formData.deposit} mes(es).`,
-        price: parsedPrice,
-        bills: billsText,
-        ubication: formData.street || 'Sin dirección',
-        state: 'ACTIVE',
-      },
-      formData.images
-    )
+      await createApartment(
+        {
+          title: `Piso en ${formData.neighborhood || 'Sin barrio'}`,
+          description: `Disponible desde ${formData.availableDate || 'fecha por definir'}. Fianza: ${formData.deposit} mes(es).`,
+          price: parsedPrice,
+          bills: billsText,
+          ubication: formData.street || 'Sin dirección',
+          state: 'ACTIVE',
+        },
+        formData.images
+      )
 
       navigate('/apartments/my')
     } catch (err) {
@@ -111,10 +112,12 @@ export default function PublishFlowContainer() {
       case 1:
         return <StepPricing data={formData} updateFields={updateFields} />
       case 2:
-        return <StepPhotos
-                  images={formData.images}
-                  onChangeImages={(images) => setFormData((prev) => ({ ...prev, images }))}
-                />
+        return (
+          <StepPhotos
+            images={formData.images}
+            onChangeImages={(images) => setFormData((prev) => ({ ...prev, images }))}
+          />
+        )
       case 3:
         return <StepRules />
       default:

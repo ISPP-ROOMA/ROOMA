@@ -3,10 +3,12 @@ import { api } from './api'
 
 export interface User {
   id?: string | number
-  name: string
+  name?: string
   email: string
   role: string
-  name?: string
+  hobbies?: string
+  schedule?: string
+  profession?: string
 }
 
 export interface UsersResponse {
