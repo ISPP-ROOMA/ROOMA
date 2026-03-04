@@ -22,7 +22,7 @@ const LANDLORD_CATEGORIES = [
   { key: 'respect', label: 'Respeto' },
   { key: 'payment', label: 'Puntualidad en pagos' },
   { key: 'communication', label: 'Comunicación' },
-  { key: 'coexistence', label: 'Convivencia' },
+  { key: 'responsibility', label: 'Responsabilidad' },
 ]
 
 const TENANT_TO_TENANT_CATEGORIES = [
@@ -106,6 +106,9 @@ export default function LeaveReview() {
     if (!apartment) return 'esta persona'
     if (isReviewingLandlord) {
       return apartment.ownerEmail.split('@')[0]
+    }
+    if (isLandlord) {
+      return 'tu inquilino/a'
     }
     return 'tu compañero/a'
   }

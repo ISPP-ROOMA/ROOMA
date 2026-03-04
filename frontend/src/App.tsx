@@ -15,7 +15,7 @@ import MyRequests from './pages/private/MyRequests'
 import PropertyDetails from './pages/PropertyDetails'
 import { ToastProvider } from './context/ToastContext'
 import ReviewModal from './components/ReviewModal'
-import { getPendingReviews } from './service/review.service'
+import { getPendingReviewApartments } from './service/review.service'
 import LeaveReview from './pages/private/LeaveReview'
 import ReviewContractFinished from './pages/private/ReviewContractFinished'
 import SelectReviewTarget from './pages/private/SelectReviewTarget'
@@ -37,10 +37,17 @@ function App() {
 
   useEffect(() => {
     if (token) {
-      void getPendingReviews()
+      void getPendingReviewApartments()
         .then((data) => {
           if (data && data.length > 0) {
-            setPendingContract(data[0])
+            const apt = data.find((a) => a.pendingUsers.some((u) => !u.youReviewedThem))
+            if (apt) {
+              setPendingContract({
+                contractId: apt.apartmentId,
+                apartmentAddress: apt.apartmentUbication ?? apt.apartmentTitle,
+                endDate: '',
+              })
+            }
           }
         })
         .catch(console.error)

@@ -6,6 +6,8 @@ import {
   Eye,
   EyeOff,
   MessageSquare,
+  Reply,
+  Send,
   Star,
   Users as UsersIcon,
 } from 'lucide-react'
@@ -17,6 +19,7 @@ import {
   getMadeReviews,
   getPendingReviewApartments,
   getReceivedReviews,
+  respondToReview,
 } from '../../service/review.service'
 
 type Tab = 'received' | 'made' | 'pending'
@@ -36,7 +39,15 @@ function StarDisplay({ rating }: { rating: number }) {
   )
 }
 
-function ReviewCard({ review, type }: { review: ReviewDTO; type: Tab }) {
+function ReviewCard({
+  review,
+  type,
+  onResponseSent,
+}: {
+  review: ReviewDTO
+  type: Tab
+  onResponseSent?: (reviewId: number, response: string) => void
+}) {
   const personEmail = type === 'received' ? review.reviewerEmail : review.reviewedEmail
   const personName = personEmail.split('@')[0]
   const date = new Date(review.reviewDate).toLocaleDateString('es-ES', {
@@ -46,6 +57,25 @@ function ReviewCard({ review, type }: { review: ReviewDTO; type: Tab }) {
   })
 
   const commentText = review.comment?.split('\n\n[Desglose:')[0] ?? ''
+
+  const [showResponseForm, setShowResponseForm] = useState(false)
+  const [responseText, setResponseText] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const canRespond = type === 'received' && review.published && !review.response
+  const hasResponse = review.response && review.response.trim().length > 0
+
+  const handleSubmitResponse = async () => {
+    if (!responseText.trim() || submitting) return
+    setSubmitting(true)
+    const result = await respondToReview(review.id, responseText.trim())
+    setSubmitting(false)
+    if (result) {
+      setShowResponseForm(false)
+      setResponseText('')
+      onResponseSent?.(review.id, responseText.trim())
+    }
+  }
 
   return (
     <div className="rounded-2xl border border-[#E5E7EB] bg-white px-5 py-4">
@@ -65,6 +95,17 @@ function ReviewCard({ review, type }: { review: ReviewDTO; type: Tab }) {
         <p className="mt-3 text-[0.95rem] leading-relaxed text-[#374151]">{commentText}</p>
       )}
 
+      {/* Response (if exists) */}
+      {hasResponse && (
+        <div className="mt-3 rounded-xl border border-[#E5E7EB] bg-[#FAFAF7] px-4 py-3">
+          <p className="flex items-center gap-1.5 text-[0.8rem] font-semibold text-[#6B7280]">
+            <Reply size={13} />
+            {type === 'received' ? 'Tu respuesta' : 'Respuesta'}
+          </p>
+          <p className="mt-1 text-[0.9rem] leading-relaxed text-[#374151]">{review.response}</p>
+        </div>
+      )}
+
       {/* Published status */}
       <div className="mt-3 flex items-center gap-2">
         {review.published ? (
@@ -79,6 +120,52 @@ function ReviewCard({ review, type }: { review: ReviewDTO; type: Tab }) {
           </span>
         )}
       </div>
+
+      {/* Respond button */}
+      {canRespond && !showResponseForm && (
+        <button
+          onClick={() => setShowResponseForm(true)}
+          className="mt-3 flex items-center gap-1.5 rounded-lg border border-[#0C8A80]/20 px-3 py-2 text-[0.85rem] font-medium text-[#0C8A80] transition-colors hover:bg-[#0C8A80]/5"
+        >
+          <Reply size={14} />
+          Responder
+        </button>
+      )}
+
+      {/* Response form */}
+      {showResponseForm && (
+        <div className="mt-3 space-y-2">
+          <textarea
+            value={responseText}
+            onChange={(e) => setResponseText(e.target.value.slice(0, 500))}
+            placeholder="Escribe tu respuesta..."
+            rows={3}
+            className="w-full resize-none rounded-xl border border-[#E5E7EB] bg-[#FAFAF7] px-4 py-3 text-[0.9rem] text-[#374151] placeholder-[#9CA3AF] outline-none transition-colors focus:border-[#0C8A80]"
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-[0.75rem] text-[#9CA3AF]">{responseText.length}/500</span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setShowResponseForm(false)
+                  setResponseText('')
+                }}
+                className="rounded-lg px-3 py-1.5 text-[0.85rem] font-medium text-[#6B7280] transition-colors hover:bg-[#F0EDE0]"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSubmitResponse}
+                disabled={!responseText.trim() || submitting}
+                className="flex items-center gap-1.5 rounded-lg bg-[#0C8A80] px-4 py-1.5 text-[0.85rem] font-medium text-white transition-colors hover:bg-[#0A7A71] disabled:opacity-50"
+              >
+                <Send size={13} />
+                {submitting ? 'Enviando…' : 'Enviar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -102,7 +189,13 @@ export default function MyReviews() {
       .finally(() => setLoading(false))
   }, [])
 
+  const handleResponseSent = (reviewId: number, response: string) => {
+    setReceivedReviews((prev) => prev.map((r) => (r.id === reviewId ? { ...r, response } : r)))
+  }
+
   const reviews = tab === 'received' ? receivedReviews : madeReviews
+
+  const pendingCount = pendingApartments.reduce((acc, a) => acc + a.pendingUsers.length, 0)
 
   if (loading) {
     return (
@@ -163,9 +256,9 @@ export default function MyReviews() {
             }`}
           >
             Pendientes
-            {pendingApartments.length > 0 && (
+            {pendingCount > 0 && (
               <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#F59E0B] text-[0.7rem] font-bold text-white">
-                {pendingApartments.reduce((acc, a) => acc + a.pendingUsers.length, 0)}
+                {pendingCount}
               </span>
             )}
           </button>
@@ -195,30 +288,62 @@ export default function MyReviews() {
                   </p>
                   <p className="mt-0.5 text-[0.85rem] text-[#9CA3AF]">{apt.apartmentUbication}</p>
                   <div className="mt-3 space-y-2">
-                    {apt.pendingUsers.map((user) => (
-                      <button
-                        key={user.id}
-                        onClick={() => navigate(`/reviews/new/${apt.apartmentId}/form/${user.id}`)}
-                        className="flex w-full items-center gap-3 rounded-xl border border-[#E5E7EB] bg-[#FAFAF7] px-4 py-3 text-left transition-colors hover:border-[#0C8A80]/30 hover:bg-[#F0EDE0]"
-                      >
-                        <div className="grid h-9 w-9 place-items-center rounded-full bg-[#0C8A80]/10">
-                          {user.role === 'LANDLORD' ? (
-                            <Crown size={16} className="text-[#0C8A80]" />
-                          ) : (
-                            <UsersIcon size={16} className="text-[#0C8A80]" />
-                          )}
+                    {apt.pendingUsers.map((user) =>
+                      user.youReviewedThem ? (
+                        /* Ya valoraste a esta persona — esperando su valoración */
+                        <div
+                          key={user.id}
+                          className="flex w-full items-center gap-3 rounded-xl border border-[#F59E0B]/30 bg-[#FFFBEB] px-4 py-3"
+                        >
+                          <div className="grid h-9 w-9 place-items-center rounded-full bg-[#F59E0B]/10">
+                            {user.role === 'LANDLORD' ? (
+                              <Crown size={16} className="text-[#F59E0B]" />
+                            ) : (
+                              <UsersIcon size={16} className="text-[#F59E0B]" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-[0.95rem] font-medium text-[#111827]">
+                              {user.email.split('@')[0]}
+                            </p>
+                            <p className="text-[0.8rem] text-[#92400E]">
+                              Tu valoración está esperando a ser revelada
+                            </p>
+                          </div>
+                          <EyeOff size={16} className="text-[#F59E0B]" />
                         </div>
-                        <div className="flex-1">
-                          <p className="text-[0.95rem] font-medium text-[#111827]">
-                            {user.email.split('@')[0]}
-                          </p>
-                          <p className="text-[0.8rem] text-[#9CA3AF]">
-                            {user.role === 'LANDLORD' ? 'Propietario' : 'Compañero/a'}
-                          </p>
-                        </div>
-                        <ChevronRight size={18} className="text-[#9CA3AF]" />
-                      </button>
-                    ))}
+                      ) : (
+                        /* Todavía no has valorado a esta persona */
+                        <button
+                          key={user.id}
+                          onClick={() =>
+                            navigate(`/reviews/new/${apt.apartmentId}/form/${user.id}`)
+                          }
+                          className="flex w-full items-center gap-3 rounded-xl border border-[#E5E7EB] bg-[#FAFAF7] px-4 py-3 text-left transition-colors hover:border-[#0C8A80]/30 hover:bg-[#F0EDE0]"
+                        >
+                          <div className="grid h-9 w-9 place-items-center rounded-full bg-[#0C8A80]/10">
+                            {user.role === 'LANDLORD' ? (
+                              <Crown size={16} className="text-[#0C8A80]" />
+                            ) : (
+                              <UsersIcon size={16} className="text-[#0C8A80]" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-[0.95rem] font-medium text-[#111827]">
+                              {user.email.split('@')[0]}
+                            </p>
+                            <p className="text-[0.8rem] text-[#9CA3AF]">
+                              {user.hasReviewedYou
+                                ? '¡Ya te ha valorado! Valóralo para revelar ambas'
+                                : user.role === 'LANDLORD'
+                                  ? 'Propietario'
+                                  : 'Compañero/a'}
+                            </p>
+                          </div>
+                          <ChevronRight size={18} className="text-[#9CA3AF]" />
+                        </button>
+                      )
+                    )}
                   </div>
                 </div>
               ))
@@ -239,7 +364,14 @@ export default function MyReviews() {
               </p>
             </div>
           ) : (
-            reviews.map((review) => <ReviewCard key={review.id} review={review} type={tab} />)
+            reviews.map((review) => (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                type={tab}
+                onResponseSent={tab === 'received' ? handleResponseSent : undefined}
+              />
+            ))
           )}
         </div>
       </div>

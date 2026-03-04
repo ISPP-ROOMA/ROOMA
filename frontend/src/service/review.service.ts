@@ -34,12 +34,8 @@ export interface ReviewableUser {
   id: number
   email: string
   role: string
-}
-
-export interface PendingReview {
-  contractId: number
-  apartmentAddress: string
-  endDate: string
+  hasReviewedYou: boolean
+  youReviewedThem: boolean
 }
 
 export interface PendingReviewApartment {
@@ -113,20 +109,6 @@ export const getReviewableUsers = async (apartmentId: number): Promise<Reviewabl
   }
 }
 
-export const getPendingReviews = async (): Promise<PendingReview[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        {
-          contractId: 1,
-          apartmentAddress: 'Madrid Centro',
-          endDate: '2026-02-25',
-        },
-      ])
-    }, 800)
-  })
-}
-
 export const getPendingReviewApartments = async (): Promise<PendingReviewApartment[]> => {
   try {
     const res = await api.get<PendingReviewApartment[]>('/reviews/pending')
@@ -134,5 +116,18 @@ export const getPendingReviewApartments = async (): Promise<PendingReviewApartme
   } catch (error) {
     console.error('Error fetching pending review apartments:', error)
     return []
+  }
+}
+
+export const respondToReview = async (
+  reviewId: number,
+  response: string
+): Promise<ReviewDTO | null> => {
+  try {
+    const res = await api.put<ReviewDTO>(`/reviews/${reviewId}/respond`, { response })
+    return res.data
+  } catch (error) {
+    console.error('Error responding to review:', error)
+    return null
   }
 }
