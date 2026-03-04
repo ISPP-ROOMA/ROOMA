@@ -1,8 +1,11 @@
 -- Limpiar datos existentes (opcional pero recomendado en desarrollo)
 DELETE FROM tenant_debts;
 DELETE FROM bills;
+DELETE FROM apartment_matches;
 DELETE FROM apartment_members;
+DELETE FROM reglas_vivienda;
 DELETE FROM apartment_photos;
+DELETE FROM refresh_tokens;
 DELETE FROM apartments;
 DELETE FROM users;
 
