@@ -87,7 +87,6 @@ export default function LeaveReview() {
   const isLandlord = role === 'LANDLORD'
 
   const isReviewingLandlord = apartment ? apartment.ownerId === reviewedUserId : false
-  const isReviewingTenant = !isReviewingLandlord
 
   const categories = isLandlord
     ? LANDLORD_CATEGORIES
