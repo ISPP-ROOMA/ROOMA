@@ -27,7 +27,7 @@ public record RoommateDTO(
                 user.getHobbies(),
                 user.getSchedule(),
                 user.getProfileImageUrl(),
-                member.getRole().name(),
+                member.getRole() != null ? member.getRole().name() : null,
                 member.getJoinDate(),
                 user.getId().equals(currentUserId)
         );

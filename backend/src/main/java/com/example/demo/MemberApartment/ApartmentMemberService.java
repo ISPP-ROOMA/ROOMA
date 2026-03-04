@@ -47,6 +47,7 @@ public class ApartmentMemberService {
         member.setApartment(apartment);
         member.setUser(user);
         member.setJoinDate(joinDate != null ? joinDate : LocalDate.now());
+        member.setRole(user.getRole() == Role.LANDLORD ? MemberRole.HOMEBODY : MemberRole.RENTER);
 
         return apartmentMemberRepository.save(member);
     }

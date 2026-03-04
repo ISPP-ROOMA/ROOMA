@@ -150,15 +150,26 @@ export const getMatchesForCandidate = async (
   }
 }
 
+interface ApartmentMatchLandlordResponseDTO {
+  id: number
+  apartment: { id: number }
+  matchStatus: MatchStatus
+}
+
 export const getMatchesForLandlord = async (
   landlordId: number,
   status: MatchStatus
 ): Promise<ApartmentMatchDTO[]> => {
   try {
-    const response = await api.get<ApartmentMatchDTO[]>(
+    const response = await api.get<ApartmentMatchLandlordResponseDTO[]>(
       `/apartments-matches/${landlordId}/interested-candidates/${status}`
     )
-    return response.data
+    return response.data.map((item) => ({
+      id: item.id,
+      candidateId: 0,
+      apartmentId: item.apartment.id,
+      matchStatus: item.matchStatus,
+    }))
   } catch (error) {
     console.error('Error fetching landlord matches:', error)
     return []

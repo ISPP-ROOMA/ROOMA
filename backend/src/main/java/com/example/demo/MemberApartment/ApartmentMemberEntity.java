@@ -36,7 +36,7 @@ public class ApartmentMemberEntity {
     private UserEntity user;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private MemberRole role;
 
     @Column(nullable = false)

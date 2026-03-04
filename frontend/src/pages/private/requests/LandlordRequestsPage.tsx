@@ -1,7 +1,7 @@
 import { AnimatePresence } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
 import type { ApartmentDTO, ApartmentMatchDTO, MatchStatus } from '../../../service/apartment.service'
 import {
@@ -90,6 +90,7 @@ async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatc
 export default function LandlordRequestsPage() {
   const { userId } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('pending')
   const [pendingItems, setPendingItems] = useState<EnrichedMatch[]>([])
@@ -130,7 +131,7 @@ export default function LandlordRequestsPage() {
 
   useEffect(() => {
     void fetchData()
-  }, [fetchData])
+  }, [fetchData, location.key])
 
   const handleReject = async (matchId: number) => {
     setUpdatingId(matchId)
@@ -174,7 +175,7 @@ export default function LandlordRequestsPage() {
       return
     }
 
-    if (item.matchStatus === 'MATCH') {
+    if (item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED' || item.matchStatus === 'SUCCESSFUL') {
       navigate(`/mis-solicitudes/recibidas/${item.matchId}/match`)
       return
     }
