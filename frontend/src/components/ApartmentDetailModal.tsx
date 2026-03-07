@@ -531,12 +531,12 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
       <motion.div
         initial={{ scale: 0.82, borderRadius: '24px', opacity: 0 }}
         animate={modalControls}
-        className="absolute inset-0 bg-base-100 overflow-hidden will-change-transform origin-center"
+        className="absolute inset-0 sm:inset-4 lg:inset-8 bg-base-100 overflow-hidden will-change-transform origin-center sm:rounded-2xl shadow-2xl"
       >
         {/* Close button – always visible */}
         <button
           onClick={dismiss}
-          className="absolute top-4 right-4 z-30 btn btn-circle btn-sm bg-black/30 text-white hover:bg-black/50 backdrop-blur-md border-none shadow-lg"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30 btn btn-circle btn-sm bg-black/30 text-white hover:bg-black/50 backdrop-blur-md border-none shadow-lg"
         >
           <X size={18} />
         </button>
@@ -561,7 +561,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
               currentIndex={currentPhoto}
               onIndexChange={setCurrentPhoto}
               onOpenLightbox={photos.length > 0 ? () => setLightboxOpen(true) : undefined}
-              height="h-72 sm:h-80"
+              height="h-64 sm:h-80 md:h-[26rem]"
             />
 
             {/* Title + Price overlay */}
@@ -587,9 +587,9 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
           </div>
 
           {/* ─── Content ─── */}
-          <div className="max-w-2xl mx-auto px-5 py-6 space-y-8">
+          <div className="max-w-2xl mx-auto px-4 sm:px-5 py-6 space-y-8">
             {/* Quick stats */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-base-200 rounded-2xl p-4 flex flex-col items-center text-center gap-1">
                 <Banknote size={20} className="text-primary" />
                 <span className="text-lg font-bold">{apartment.price}€</span>

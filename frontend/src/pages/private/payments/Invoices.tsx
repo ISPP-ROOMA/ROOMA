@@ -116,8 +116,8 @@ export default function Invoices() {
   return (
     <div className="min-h-dvh bg-[#F7F4EB] pb-8">
       {/* ─── Header ──────────────────────────────────────── */}
-      <header className="sticky top-0 z-30 bg-[#F7F4EB] px-4 pt-5 pb-2">
-        <div className="max-w-xl mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-30 bg-[#F7F4EB]/95 backdrop-blur-sm px-3 sm:px-4 pt-2.5 sm:pt-5 pb-2">
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-2">
           <button
             onClick={() => navigate('/my-home')}
             className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm"
@@ -127,7 +127,7 @@ export default function Invoices() {
             </svg>
           </button>
 
-          <h1 className="text-lg font-bold text-teal-700">Mis Pagos</h1>
+          <h1 className="text-[15px] sm:text-lg font-bold text-teal-700 text-center">Mis Pagos</h1>
 
           {/* notification bell */}
           <div className="relative w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm">
@@ -141,24 +141,24 @@ export default function Invoices() {
         </div>
 
         {locationPill && (
-          <div className="max-w-xl mx-auto flex justify-center mt-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 text-xs text-gray-500 shadow-sm">
+          <div className="max-w-3xl mx-auto flex justify-center mt-2 px-2">
+            <span className="inline-flex max-w-full items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/80 text-[11px] text-gray-600 shadow-sm text-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              {locationPill}
+              <span className="truncate max-w-[220px] sm:max-w-none">{locationPill}</span>
             </span>
           </div>
         )}
       </header>
 
-      <main className="max-w-xl mx-auto px-4 mt-4 space-y-5">
+      <main className="max-w-3xl mx-auto px-3 sm:px-4 mt-3 sm:mt-4 space-y-4 sm:space-y-5 pb-14">
         {/* ─── Tab selector ───────────────────────────────── */}
         <div className="flex bg-gray-200/70 rounded-full p-1">
           <button
             onClick={() => setTab('pending')}
-            className={`flex-1 py-2 text-sm font-semibold rounded-full transition ${
+            className={`flex-1 py-1.5 sm:py-2 text-[13px] sm:text-sm font-semibold rounded-full transition ${
               tab === 'pending' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
             }`}
           >
@@ -166,7 +166,7 @@ export default function Invoices() {
           </button>
           <button
             onClick={() => setTab('history')}
-            className={`flex-1 py-2 text-sm font-semibold rounded-full transition ${
+            className={`flex-1 py-1.5 sm:py-2 text-[13px] sm:text-sm font-semibold rounded-full transition ${
               tab === 'history' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
             }`}
           >
@@ -180,12 +180,12 @@ export default function Invoices() {
         {tab === 'pending' && (
           <>
             {/* Total card */}
-            <div className="bg-teal-700 rounded-3xl p-6 text-white flex items-center justify-between">
+            <div className="bg-teal-700 rounded-3xl p-4 sm:p-6 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
               <div>
-                <p className="text-sm text-teal-100">Total pendiente</p>
-                <p className="text-4xl font-extrabold mt-1">
+                <p className="text-xs sm:text-sm text-teal-100 uppercase tracking-wide">Total pendiente</p>
+                <p className="text-[34px] sm:text-4xl font-extrabold mt-1 leading-none">
                   {fmtCurrency(totalPending)}{' '}
-                  <span className="text-xl font-medium text-teal-200">€</span>
+                  <span className="text-lg sm:text-xl font-medium text-teal-200">€</span>
                 </p>
               </div>
               {pending.length > 1 && (
@@ -304,19 +304,23 @@ function DebtCard({ debt, onTap }: { debt: TenantDebtDTO; onTap: () => void }) {
         urg.urgent ? 'border-l-4 border-red-500' : ''
       }`}
     >
-      <div className="flex items-center gap-3 px-4 py-3">
-        <span className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-lg ${icon.bg}`}>
+      <div className="flex items-start sm:items-center gap-3 px-3.5 sm:px-4 py-3">
+        <span className={`shrink-0 w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-base sm:text-lg ${icon.bg}`}>
           {icon.emoji}
         </span>
 
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-800 text-sm truncate">{debt.bill?.reference ?? '—'}</p>
-          <p className={`text-xs font-medium ${urg.color}`}>
+          <p className="font-semibold text-gray-800 text-sm sm:text-[15px] leading-tight truncate">
+            {debt.bill?.reference ?? '—'}
+          </p>
+          <p className={`text-xs font-semibold ${urg.color}`}>
             {urg.label || fmtDate(debt.bill?.duDate)}
           </p>
         </div>
 
-        <p className="font-bold text-gray-900">{fmtCurrency(Number(debt.amount ?? 0))} €</p>
+        <p className="font-bold text-gray-900 text-sm sm:text-base text-right whitespace-nowrap mr-1">
+          {fmtCurrency(Number(debt.amount ?? 0))} €
+        </p>
 
         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -326,7 +330,7 @@ function DebtCard({ debt, onTap }: { debt: TenantDebtDTO; onTap: () => void }) {
       <div className="px-4 pb-3">
         <button
           onClick={(e) => { e.stopPropagation(); onTap() }}
-          className={`w-full py-2.5 rounded-xl text-sm font-semibold transition ${
+          className={`w-full py-2 rounded-xl text-[13px] sm:text-sm font-semibold transition ${
             urg.urgent
               ? 'bg-teal-700 text-white hover:bg-teal-800'
               : 'bg-white border border-teal-600 text-teal-700 hover:bg-teal-50'

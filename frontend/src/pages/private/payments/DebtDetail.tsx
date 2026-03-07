@@ -123,8 +123,8 @@ export default function DebtDetail() {
   return (
     <div className="min-h-dvh bg-[#F7F4EB] flex flex-col">
       {/* ─── Header ───────────────────────────────────────── */}
-      <header className="sticky top-0 z-30 bg-[#F7F4EB] px-4 pt-5 pb-3">
-        <div className="max-w-xl mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-30 bg-[#F7F4EB]/95 backdrop-blur-sm px-4 pt-3 sm:pt-5 pb-3">
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
           <button
             onClick={() => navigate('/invoices')}
             className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm"
@@ -141,16 +141,16 @@ export default function DebtDetail() {
       </header>
 
       {/* ─── Body ─────────────────────────────────────────── */}
-      <main className="flex-1 max-w-xl mx-auto w-full px-4 mt-2 space-y-5 pb-32">
+      <main className="flex-1 max-w-3xl mx-auto w-full px-4 mt-2 space-y-5 pb-32">
         {/* Badge */}
         <div className="flex justify-center">
-          <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badge.cls}`}>
+          <span className={`text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide ${badge.cls}`}>
             {badge.text}
           </span>
         </div>
 
         {/* Amount hero */}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center rounded-3xl bg-white/60 border border-white px-4 py-5">
           <span className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl ${icon.bg} mb-3`}>
             {icon.emoji}
           </span>
@@ -162,7 +162,7 @@ export default function DebtDetail() {
         </div>
 
         {/* Detail card */}
-        <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="divide-y divide-gray-100">
             <DetailRow label="Concepto" value={debt.bill?.reference ?? '—'} />
             <DetailRow label="Fecha de vencimiento" value={fmtDate(debt.bill?.duDate)} />
@@ -177,11 +177,11 @@ export default function DebtDetail() {
         </div>
 
         {/* Note */}
-        <div className="bg-amber-50/70 rounded-2xl px-4 py-3 flex gap-2">
+        <div className="bg-amber-50/90 border border-amber-100 rounded-2xl px-4 py-3.5 flex gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
           </svg>
-          <p className="text-xs text-amber-800 leading-relaxed">
+          <p className="text-xs text-amber-900 leading-relaxed">
             Este importe corresponde a tu parte proporcional de la factura total. Al pulsar "Pagar ahora" se registrará como pagado.
           </p>
         </div>
@@ -189,12 +189,12 @@ export default function DebtDetail() {
 
       {/* ─── Sticky footer ────────────────────────────────── */}
       {isPending && (
-        <div className="fixed bottom-0 inset-x-0 bg-[#F7F4EB] border-t border-gray-200/50 px-4 py-4 z-40">
-          <div className="max-w-xl mx-auto">
+        <div className="fixed bottom-0 inset-x-0 bg-[#F7F4EB]/95 backdrop-blur-sm border-t border-gray-200/60 px-4 py-4 z-40 shadow-[0_-6px_24px_rgba(0,0,0,0.06)]">
+          <div className="max-w-3xl mx-auto">
             <button
               onClick={() => void handlePay()}
               disabled={isPaying}
-              className="w-full py-3.5 rounded-2xl bg-teal-700 text-white font-semibold text-base transition hover:bg-teal-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-2xl bg-teal-700 text-white font-semibold text-base tracking-wide transition hover:bg-teal-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isPaying ? (
                 <>
@@ -229,9 +229,11 @@ function DetailRow({
   valueClass?: string
 }) {
   return (
-    <div className={`flex items-center justify-between px-5 py-3.5 ${highlight ? 'bg-teal-50/50' : ''}`}>
-      <span className="text-sm text-gray-500">{label}</span>
-      <span className={`text-sm font-medium text-right ${valueClass ?? 'text-gray-900'}`}>{value}</span>
+    <div
+      className={`flex flex-col items-start gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between ${highlight ? 'bg-teal-50/50' : ''}`}
+    >
+      <span className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-500">{label}</span>
+      <span className={`text-sm font-semibold text-right ${valueClass ?? 'text-gray-900'}`}>{value}</span>
     </div>
   )
 }

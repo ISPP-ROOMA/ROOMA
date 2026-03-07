@@ -1,4 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod'
+﻿import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
@@ -7,8 +7,8 @@ import { getDeviceId, registerUser } from '../service/auth.service'
 import { useAuthStore } from '../store/authStore'
 
 const registerSchema = z.object({
-  email: z.email('Email no válido'),
-  password: z.string().min(4, 'La contraseña debe tener al menos 4 caracteres'),
+  email: z.email('Email no valido'),
+  password: z.string().min(4, 'La contrasena debe tener al menos 4 caracteres'),
   role: z.enum(['TENANT', 'LANDLORD'], { message: 'Selecciona un tipo de cuenta' }),
 })
 
@@ -62,26 +62,26 @@ export default function Register() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[85vh] w-full px-4">
-      <div className="card w-full max-w-md bg-base-100/40 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/20 rounded-xl">
+    <div className="flex items-center justify-center mt-4 sm:mt-6 p-3 sm:p-4">
+      <div className="card w-full max-w-md bg-base-100 shadow">
         <div className="card-body">
           <h2 className="card-title justify-center text-2xl">Crear cuenta</h2>
-          <p className="text-center text-sm text-gray-500 mb-2">Elige cómo quieres usar Rooma</p>
+          <p className="text-center text-sm text-gray-500 mb-2">Elige como quieres usar Rooma</p>
 
           <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
-            {/* Role selector */}
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-semibold">Tipo de cuenta</span>
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setValue('role', 'TENANT', { shouldValidate: true })}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${selectedRole === 'TENANT'
-                    ? 'border-primary bg-primary/5 shadow-sm'
-                    : 'border-base-300 hover:border-base-content/20'
-                    }`}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+                    selectedRole === 'TENANT'
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-base-300 hover:border-base-content/20'
+                  }`}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -98,15 +98,16 @@ export default function Register() {
                     />
                   </svg>
                   <span className="font-semibold text-sm">Inquilino</span>
-                  <span className="text-xs text-gray-400 text-center">Busco piso o habitación</span>
+                  <span className="text-[11px] text-gray-500 text-center">Busco piso o habitacion</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setValue('role', 'LANDLORD', { shouldValidate: true })}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${selectedRole === 'LANDLORD'
-                    ? 'border-primary bg-primary/5 shadow-sm'
-                    : 'border-base-300 hover:border-base-content/20'
-                    }`}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+                    selectedRole === 'LANDLORD'
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-base-300 hover:border-base-content/20'
+                  }`}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -123,9 +124,7 @@ export default function Register() {
                     />
                   </svg>
                   <span className="font-semibold text-sm">Propietario</span>
-                  <span className="text-xs text-gray-400 text-center">
-                    Publico pisos o habitaciones
-                  </span>
+                  <span className="text-[11px] text-gray-500 text-center">Publico pisos o habitaciones</span>
                 </button>
               </div>
               {errors.role && <p className="text-error text-sm mt-1">{errors.role.message}</p>}
@@ -147,54 +146,37 @@ export default function Register() {
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Contraseña</span>
+                <span className="label-text">Contrasena</span>
               </label>
               <input
                 {...register('password')}
                 id="password"
                 type={isPasswordVisible ? 'text' : 'password'}
-                placeholder="Mínimo 4 caracteres"
+                placeholder="Minimo 4 caracteres"
                 className="input input-bordered w-full rounded-2xl"
               />
-              {errors.password && (
-                <p className="text-error text-sm mt-1">{errors.password.message}</p>
-              )}
-            </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Role</span>
-              </label>
-              <select
-                {...register('role')}
-                id="role"
-                className="select select-bordered w-full rounded-2xl"
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Selecciona un rol
-                </option>
-                <option value="TENANT">Inquilino (TENANT)</option>
-                <option value="LANDLORD">Arrendador (LANDLORD)</option>
-              </select>
-              {errors.role && <p className="text-error text-sm mt-1">{errors.role.message}</p>}
+              {errors.password && <p className="text-error text-sm mt-1">{errors.password.message}</p>}
             </div>
 
             {error && <p className="text-error text-center">{error}</p>}
 
-            <div className="flex items-center justify-between">
-              <button type="button" onClick={togglePassword} className="btn btn-link btn-sm px-0">
-                {isPasswordVisible ? 'Ocultar contraseña' : 'Ver contraseña'}
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={togglePassword}
+                className="btn btn-link btn-sm px-0 self-start order-2"
+              >
+                {isPasswordVisible ? 'Ocultar contrasena' : 'Ver contrasena'}
               </button>
-              <button type="submit" className="btn btn-primary rounded-2xl px-6 border-none">
+              <button type="submit" className="btn btn-primary w-full order-1 rounded-2xl border-none">
                 Registrarse
               </button>
             </div>
 
             <p className="text-center text-sm text-gray-500">
-              ¿Ya tienes cuenta?{' '}
+              Ya tienes cuenta?{' '}
               <Link to="/login" className="link link-primary">
-                Inicia sesión
+                Inicia sesion
               </Link>
             </p>
           </form>
