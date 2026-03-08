@@ -113,77 +113,90 @@ export default function Profile() {
   const roleLabel = ROLE_LABELS[userData.role] || userData.role
 
   return (
-    <section className="min-h-[70vh] bg-base-200 px-3 py-4 sm:px-4 sm:py-6">
+    <section className="min-h-[70vh] bg-[#F5F1E3] px-3 py-4 sm:px-4 sm:py-6">
       <div className="mx-auto w-full max-w-lg space-y-4">
-        <article className="rounded-2xl bg-base-100 shadow-md p-5 sm:p-6 text-center">
-          <div className="mx-auto mb-3 w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary text-white flex items-center justify-center text-2xl sm:text-3xl font-bold">
-            {initial}
+        <article className="overflow-hidden rounded-3xl border border-[#E6E2D5] bg-white shadow-[0_10px_30px_rgba(17,24,39,0.08)]">
+          <div className="h-16 bg-gradient-to-r from-[#0F9E97] via-[#21B2A9] to-[#8DD8CC]" />
+          <div className="-mt-8 px-5 pb-6 text-center sm:px-6">
+            <div className="mx-auto mb-3 grid h-20 w-20 place-items-center rounded-full border-4 border-white bg-[#0F9E97] text-2xl font-bold text-white shadow-sm sm:h-24 sm:w-24 sm:text-3xl">
+              {initial}
+            </div>
+            <p className="text-base font-semibold text-[#0F172A] break-all sm:text-lg">{userData.email}</p>
+            <div className="mt-2 inline-flex rounded-full border border-[#A2E0D8] bg-[#E6F7F5] px-3 py-1 text-xs font-semibold text-[#0C8A80]">
+              {roleLabel}
+            </div>
           </div>
-          <p className="text-base sm:text-lg font-semibold break-all">{userData.email}</p>
-          <div className="badge badge-primary badge-outline mt-2">{roleLabel}</div>
         </article>
 
         {currentApartment ? (
-          <article className="rounded-2xl bg-base-100 shadow-md p-4 sm:p-5 space-y-4">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-base-content/60">Vives en</p>
-              <h2 className="mt-1 text-lg sm:text-xl font-semibold leading-tight break-words">
+          <article className="rounded-3xl border border-[#E6E2D5] bg-white p-4 shadow-[0_10px_30px_rgba(17,24,39,0.08)] sm:p-5">
+            <div className="rounded-2xl bg-[#F8F6EF] p-4">
+              <p className="text-[11px] uppercase tracking-[0.14em] text-[#8B7355]">Vives en</p>
+              <h2 className="mt-1 text-3xl font-bold leading-tight text-[#0F172A] break-words">
                 {currentApartment.title}
               </h2>
-              <p className="mt-1 text-sm text-base-content/70">{currentApartment.ubication}</p>
+              <p className="mt-1 text-base text-[#475569]">{currentApartment.ubication}</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <Link
                 to={
                   userData.role === 'LANDLORD'
                     ? `/apartments/${currentApartment.id}`
                     : `/properties/${currentApartment.id}`
                 }
-                className="btn btn-primary w-full"
+                className="btn h-12 w-full rounded-2xl border-none bg-gradient-to-r from-[#0F9E97] to-[#13B2A6] px-5 text-base font-semibold text-white shadow-[0_10px_22px_rgba(15,158,151,0.25)] hover:brightness-105"
               >
                 Ver detalle
               </Link>
-              <Link to="/invoices" className="btn btn-outline w-full">
+              <Link
+                to="/invoices"
+                className="btn h-12 w-full rounded-2xl border border-[#CFC8B8] bg-white px-5 text-base font-semibold text-[#0F172A] hover:border-[#0F9E97] hover:text-[#0C8A80]"
+              >
                 Facturas
               </Link>
             </div>
 
-            <div>
+            <div className="mt-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold">Compañeros de piso</h3>
-                <span className="text-xs text-base-content/60">{roommates?.length ?? 0} personas</span>
+                <h3 className="text-2xl font-semibold text-[#0F172A]">Compañeros de piso</h3>
+                <span className="rounded-full bg-[#F1EEE3] px-2.5 py-1 text-xs font-medium text-[#7A6F5A]">
+                  {roommates?.length ?? 0} personas
+                </span>
               </div>
+
               {roommates && roommates.length > 0 ? (
                 <ul className="mt-3 space-y-2.5">
                   {roommates.map((r) => (
                     <li
                       key={r.user.id}
-                      className="rounded-xl border border-base-200 px-3 py-2 flex items-center gap-3"
+                      className="flex items-center gap-3 rounded-2xl border border-[#ECE7D9] bg-[#FCFBF7] px-3 py-2.5"
                     >
-                      <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold shrink-0">
+                      <div className="grid h-10 w-10 place-items-center rounded-full bg-[#0F9E97] text-sm font-semibold text-white shrink-0">
                         {r.user.email ? r.user.email[0].toUpperCase() : '?'}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{r.user.email}</p>
-                        <p className="text-xs text-base-content/60">{r.role}</p>
+                        <p className="truncate text-sm font-semibold text-[#0F172A]">{r.user.email}</p>
+                        <p className="text-xs text-[#64748B]">{r.role}</p>
                       </div>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="mt-2 text-sm text-base-content/60">No hay compañeros de piso registrados.</p>
+                <p className="mt-2 rounded-xl border border-dashed border-[#D5CEBD] bg-[#FCFBF7] px-3 py-3 text-sm text-[#64748B]">
+                  No hay compañeros de piso registrados.
+                </p>
               )}
             </div>
           </article>
         ) : (
-          <article className="rounded-2xl bg-base-100 shadow-md p-5 text-sm text-base-content/70">
+          <article className="rounded-3xl border border-[#E6E2D5] bg-white p-5 text-sm text-[#64748B] shadow-[0_10px_30px_rgba(17,24,39,0.08)]">
             No estás viviendo en ningún apartamento registrado.
           </article>
         )}
 
         <div className="pt-1">
-          <Link to="/" className="link link-hover text-sm">
+          <Link to="/" className="text-sm font-medium text-[#0C8A80] underline-offset-2 hover:underline">
             {'<-'} Volver al inicio
           </Link>
         </div>
