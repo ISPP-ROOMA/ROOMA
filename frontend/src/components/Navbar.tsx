@@ -14,7 +14,10 @@ export default function Navbar() {
   const moreRef = useRef<HTMLDivElement>(null)
 
   // Close "más" menu on route change or outside click
-  useEffect(() => { setMoreOpen(false) }, [location.pathname])
+  useEffect(() => {
+    const t = setTimeout(() => { setMoreOpen(false) }, 0)
+    return () => { clearTimeout(t) }
+  }, [location.pathname])
   useEffect(() => {
     if (!moreOpen) return
     const handler = (e: MouseEvent) => {

@@ -1,0 +1,84 @@
+
+> frontend@0.0.0 lint
+> eslint .
+
+
+/home/juan/ROOMA/frontend/src/components/ApartmentDetailModal.tsx
+  134:26  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/home/juan/ROOMA/frontend/src/components/ApartmentDetailModal.tsx:134:26
+  132 |   }
+  133 |
+> 134 |   const containerWidth = containerRef.current?.offsetWidth ?? 400
+      |                          ^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  135 |
+  136 |   return (
+  137 |     <div                                                                                                                                                                                                                    react-hooks/refs
+  134:26  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/home/juan/ROOMA/frontend/src/components/ApartmentDetailModal.tsx:134:26
+  132 |   }
+  133 |
+> 134 |   const containerWidth = containerRef.current?.offsetWidth ?? 400
+      |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  135 |
+  136 |   return (
+  137 |     <div                                                                                                                                                                                                       react-hooks/refs
+  151:57  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/home/juan/ROOMA/frontend/src/components/ApartmentDetailModal.tsx:151:57
+  149 |         style={{
+  150 |           width: `${images.length * 100}%`,
+> 151 |           transform: `translateX(calc(${-currentIndex * containerWidth}px + ${offset}px))`,
+      |                                                         ^^^^^^^^^^^^^^ Cannot access ref value during render
+  152 |           transition: offset === 0 ? 'transform 0.35s cubic-bezier(.25,.8,.25,1)' : 'none',
+  153 |         }}
+  154 |       >             react-hooks/refs
+  155:21  error  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/home/juan/ROOMA/frontend/src/components/ApartmentDetailModal.tsx:155:21
+  153 |         }}
+  154 |       >
+> 155 |         {images.map((img, idx) => (
+      |                     ^^^^^^^^^^^^^^^
+> 156 |           <div
+      | ^^^^^^^^^^^^^^
+> 157 |             key={img.id ?? idx}
+      …
+      | ^^^^^^^^^^^^^^
+> 167 |           </div>
+      | ^^^^^^^^^^^^^^
+> 168 |         ))}
+      | ^^^^^^^^^^ Cannot access ref value during render
+  169 |       </div>
+  170 |
+  171 |       {/* Arrow buttons (desktop) */}  react-hooks/refs
+
+/home/juan/ROOMA/frontend/src/components/Navbar.tsx
+  17:21  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/juan/ROOMA/frontend/src/components/Navbar.tsx:17:21
+  15 |
+  16 |   // Close "más" menu on route change or outside click
+> 17 |   useEffect(() => { setMoreOpen(false) }, [location.pathname])
+     |                     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  18 |   useEffect(() => {
+  19 |     if (!moreOpen) return
+  20 |     const handler = (e: MouseEvent) => {  react-hooks/set-state-in-effect
+
+✖ 5 problems (5 errors, 0 warnings)
+

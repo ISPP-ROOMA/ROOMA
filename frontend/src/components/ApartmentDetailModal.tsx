@@ -60,7 +60,8 @@ function SwipeGallery({
 
   // Reset offset when index changes externally
   useEffect(() => {
-    setOffset(0)
+    const t = setTimeout(() => { setOffset(0) }, 0)
+    return () => { clearTimeout(t) }
   }, [currentIndex])
 
   const go = (dir: 1 | -1) => {
@@ -131,8 +132,6 @@ function SwipeGallery({
     )
   }
 
-  const containerWidth = containerRef.current?.offsetWidth ?? 400
-
   return (
     <div
       ref={containerRef}
@@ -148,7 +147,7 @@ function SwipeGallery({
         className="absolute inset-y-0 flex will-change-transform"
         style={{
           width: `${images.length * 100}%`,
-          transform: `translateX(calc(${-currentIndex * containerWidth}px + ${offset}px))`,
+          transform: `translateX(calc(${-currentIndex * (100 / images.length)}% + ${offset}px))`,
           transition: offset === 0 ? 'transform 0.35s cubic-bezier(.25,.8,.25,1)' : 'none',
         }}
       >
@@ -156,7 +155,7 @@ function SwipeGallery({
           <div
             key={img.id ?? idx}
             className="h-full shrink-0"
-            style={{ width: `${containerWidth}px` }}
+            style={{ width: `${100 / images.length}%` }}
           >
             <img
               src={img.url}
@@ -196,9 +195,8 @@ function SwipeGallery({
               key={idx}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => onIndexChange(idx)}
-              className={`rounded-full transition-all ${
-                idx === currentIndex ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50 hover:bg-white/70'
-              }`}
+              className={`rounded-full transition-all ${idx === currentIndex ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50 hover:bg-white/70'
+                }`}
             />
           ))}
         </div>
@@ -294,11 +292,10 @@ function Lightbox({
             <button
               key={photo.id}
               onClick={() => setIdx(i)}
-              className={`shrink-0 w-16 h-12 rounded-lg overflow-hidden transition-all ring-2 ${
-                i === idx
-                  ? 'ring-white scale-105 opacity-100'
-                  : 'ring-transparent opacity-40 hover:opacity-70'
-              }`}
+              className={`shrink-0 w-16 h-12 rounded-lg overflow-hidden transition-all ring-2 ${i === idx
+                ? 'ring-white scale-105 opacity-100'
+                : 'ring-transparent opacity-40 hover:opacity-70'
+                }`}
             >
               <img
                 src={photo.url}
@@ -476,7 +473,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
     dragStartY.current = e.clientY
     isDragging.current = true
     currentDragY.current = 0
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+      ; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
   }
 
   const handlePointerMove = (e: React.PointerEvent) => {
@@ -671,11 +668,10 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
                         setCurrentPhoto(idx)
                         setLightboxOpen(true)
                       }}
-                      className={`group relative aspect-[4/3] rounded-xl overflow-hidden ring-2 transition-all ${
-                        idx === currentPhoto
-                          ? 'ring-primary shadow-lg'
-                          : 'ring-transparent hover:ring-primary/40'
-                      }`}
+                      className={`group relative aspect-[4/3] rounded-xl overflow-hidden ring-2 transition-all ${idx === currentPhoto
+                        ? 'ring-primary shadow-lg'
+                        : 'ring-transparent hover:ring-primary/40'
+                        }`}
                     >
                       <img
                         src={photo.url}
