@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getUserProfile } from '../../service/users.service'
+import { getUserProfile, deleteUser } from '../../service/users.service'
 import type { User } from '../../service/users.service'
 import { getAllApartments, type ApartmentDTO, type ApartmentMemberDTO } from '../../service/apartment.service'
 
@@ -15,6 +15,7 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(true)
   const [currentApartment, setCurrentApartment] = useState<ApartmentDTO | null>(null)
   const [roommates, setRoommates] = useState<ApartmentMemberDTO[]>([])
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     const profile = async () => {
@@ -46,20 +47,90 @@ export default function Profile() {
 
   if (!userData) return <p className="text-center mt-10 text-red-500">Error al cargar el perfil</p>
 
-  const initial = userData.email ? userData.email[0].toUpperCase() : '?'
+  const initial = userData.name && userData.name.length > 0
+    ? userData.name[0].toUpperCase()
+    : (userData.email ? userData.email[0].toUpperCase() : '?')
   const roleLabel = ROLE_LABELS[userData.role] || userData.role
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true)
+    const success = await deleteUser()
+    setIsDeleting(false)
+    if (success) {
+      // Typically, auth logout state must be cleared. If not handled at api level, we should.
+      // But Assuming it's handled or we just reload
+      window.location.href = '/'
+    } else {
+      alert('Error eliminando la cuenta')
+    }
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] p-4">
-      <div className="card w-full max-w-sm bg-base-100 shadow-lg">
-        <div className="card-body items-center text-center">
-          <div className="avatar">
-            <div className="w-24 h-24 rounded-full bg-primary text-white flex items-center justify-center text-3xl font-bold">
-              {initial}
+      <div className="card w-full max-w-2xl bg-base-100 shadow-lg">
+        <div className="card-body">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-6 border-b pb-6">
+            <div className="avatar">
+              <div className="w-24 h-24 rounded-full bg-primary text-white flex items-center justify-center text-3xl font-bold overflow-hidden">
+                {userData.profilePic ? (
+                  <img src={userData.profilePic} alt="Perfil" className="object-cover w-full h-full" />
+                ) : (
+                  initial
+                )}
+              </div>
+            </div>
+
+            <div className="flex-1 text-center md:text-left">
+              <h2 className="text-2xl font-bold">
+                {userData.name || userData.surname
+                  ? `${userData.name || ''} ${userData.surname || ''}`.trim()
+                  : 'Usuario sin nombre'}
+              </h2>
+              <p className="text-gray-500">{userData.email}</p>
+              <div className="badge badge-primary badge-outline mt-2">{roleLabel}</div>
+            </div>
+
+            <div className="flex flex-col gap-2 mt-4 md:mt-0 w-full md:w-auto">
+              <Link to="/profile/edit" className="btn btn-sm btn-outline btn-primary w-full">
+                Editar Perfil
+              </Link>
+              <button
+                className="btn btn-sm btn-outline btn-error w-full"
+                onClick={() => (document.getElementById('delete_modal') as HTMLDialogElement)?.showModal()}
+              >
+                Eliminar Cuenta
+              </button>
             </div>
           </div>
-          <p className="text-lg font-semibold">{userData.email}</p>
-          <div className="badge badge-primary badge-outline mt-1">{roleLabel}</div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <div>
+              <span className="text-xs text-gray-500 font-semibold uppercase">Teléfono</span>
+              <p className="font-medium">{userData.phone || 'No especificado'}</p>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500 font-semibold uppercase">Fecha de Nacimiento</span>
+              <p className="font-medium">
+                {userData.birthDate ? new Date(userData.birthDate).toLocaleDateString() : 'No especificada'}
+              </p>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500 font-semibold uppercase">Género</span>
+              <p className="font-medium">{userData.gender || 'No especificado'}</p>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500 font-semibold uppercase">Fumador</span>
+              <p className="font-medium">
+                {userData.smoker === true ? 'Sí' : userData.smoker === false ? 'No' : 'No especificado'}
+              </p>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500 font-semibold uppercase">Fecha de Alta</span>
+              <p className="font-medium">
+                {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Desconocida'}
+              </p>
+            </div>
+          </div>
 
           {currentApartment ? (
             <div className="w-full mt-4">
@@ -112,13 +183,39 @@ export default function Profile() {
             </div>
           )}
 
-          <div className="flex flex-col gap-2 mt-4 w-full">
+          <div className="flex flex-col items-center gap-2 mt-6 w-full">
             <Link to="/" className="link">
               ← Volver al inicio
             </Link>
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <dialog id="delete_modal" className="modal modal-bottom sm:modal-middle">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg text-error">Relevante: ¡Acción irreversible!</h3>
+          <p className="py-4">
+            ¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer y perderás
+            todo el acceso y tus datos asociados.
+          </p>
+          <div className="modal-action">
+            <form method="dialog" className="flex gap-2">
+              <button className="btn">Cancelar</button>
+              <button
+                className="btn btn-error"
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Eliminando...' : 'Sí, eliminar cuenta'}
+              </button>
+            </form>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
     </div>
   )
 }
