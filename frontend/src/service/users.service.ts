@@ -3,17 +3,9 @@ import { api } from './api'
 
 export interface User {
   id?: string | number
-  name?: string
-  surname?: string
   email: string
   role: string
-  birthDate?: string | Date
-  phone?: string
   profilePic?: string
-  gender?: string
-  smoker?: boolean
-  createdAt?: string | Date
-  // Existing fields
   hobbies?: string
   schedule?: string
   profession?: string
@@ -32,16 +24,10 @@ export interface UserResponse {
 }
 
 export type UpdateUserPayload = {
-  name?: string
-  surname?: string
   email: string
-  role: string
+  role?: string
   password?: string
-  birthDate?: string | Date
-  phone?: string
   profilePic?: string
-  gender?: string
-  smoker?: boolean
   hobbies?: string
   schedule?: string
   profession?: string
