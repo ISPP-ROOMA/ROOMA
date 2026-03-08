@@ -22,6 +22,7 @@ import Invoices from './pages/private/payments/Invoices'
 import PaymentSuccess from './pages/private/payments/PaymentSuccess'
 import MyReviews from './pages/private/MyReviews'
 import Profile from './pages/private/Profile'
+import ProfileEdit from './pages/private/ProfileEdit'
 import ReviewContractFinished from './pages/private/ReviewContractFinished'
 import SelectReviewTarget from './pages/private/SelectReviewTarget'
 import LandlordMatchDetailPage from './pages/private/requests/LandlordMatchDetailPage'
@@ -120,6 +121,14 @@ function App() {
           element={
             <PrivateRoute>
               <Profile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile/edit"
+          element={
+            <PrivateRoute>
+              <ProfileEdit />
             </PrivateRoute>
           }
         />
