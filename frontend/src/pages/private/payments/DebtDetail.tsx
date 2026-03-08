@@ -189,7 +189,7 @@ export default function DebtDetail() {
 
       {/* ─── Sticky footer ────────────────────────────────── */}
       {isPending && (
-        <div className="fixed bottom-0 inset-x-0 bg-[#F7F4EB]/95 backdrop-blur-sm border-t border-gray-200/60 px-4 py-4 z-40 shadow-[0_-6px_24px_rgba(0,0,0,0.06)]">
+        <div className="fixed inset-x-0 bottom-[4.75rem] md:bottom-0 bg-[#F7F4EB]/95 backdrop-blur-sm border-t border-gray-200/60 px-4 py-4 z-40 shadow-[0_-6px_24px_rgba(0,0,0,0.06)]">
           <div className="max-w-3xl mx-auto">
             <button
               onClick={() => void handlePay()}

@@ -62,30 +62,51 @@ export default function Register() {
   }
 
   return (
-    <div className="flex items-center justify-center mt-4 sm:mt-6 p-3 sm:p-4">
-      <div className="card w-full max-w-md bg-base-100 shadow">
-        <div className="card-body">
-          <h2 className="card-title justify-center text-2xl">Crear cuenta</h2>
-          <p className="text-center text-sm text-gray-500 mb-2">Elige como quieres usar Rooma</p>
+    <div className="mx-auto flex w-full max-w-md items-center justify-center px-3 pb-24 pt-4 sm:px-4 sm:pt-6">
+      <div className="relative w-full overflow-hidden rounded-[30px] border border-base-300/80 bg-base-100/95 p-5 shadow-[0_22px_55px_rgba(0,0,0,0.16)] backdrop-blur-sm sm:p-6">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-primary/10 to-transparent" />
+
+        <div className="relative mb-5 text-center">
+          <div className="mx-auto mb-3 inline-flex items-center rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-primary">
+             Rooma
+          </div>
+          <h2 className="text-3xl font-semibold tracking-tight text-base-content">Crear cuenta</h2>
+          <p className="mt-2 text-sm text-base-content/65">Elige como quieres usar Rooma</p>
+        </div>
 
           <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
             <div className="form-control">
-              <label className="label">
-                <span className="label-text font-semibold">Tipo de cuenta</span>
+              <label className="label pb-0 mb-3">
+                <span className="label-text font-semibold tracking-wide text-base-content/85">
+                  Tipo de cuenta
+                </span>
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setValue('role', 'TENANT', { shouldValidate: true })}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+                  className={`group relative flex min-h-[124px] flex-col items-center justify-center gap-1.5 rounded-3xl border px-4 py-3 transition-all duration-200 ${
                     selectedRole === 'TENANT'
-                      ? 'border-primary bg-primary/5 shadow-sm'
-                      : 'border-base-300 hover:border-base-content/20'
+                      ? 'border-primary bg-primary/10 ring-2 ring-primary/20 shadow-[0_10px_24px_rgba(0,128,128,0.2)]'
+                      : 'border-base-300 bg-base-100 hover:border-primary/35 hover:bg-base-200/50'
                   }`}
                 >
+                  <span
+                    className={`absolute right-3 top-3 grid h-5 w-5 place-items-center rounded-full border text-[10px] font-bold ${
+                      selectedRole === 'TENANT'
+                        ? 'border-primary bg-primary text-primary-content'
+                        : 'border-base-300 bg-base-100 text-transparent'
+                    }`}
+                  >
+                    ✓
+                  </span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-8 w-8 text-primary"
+                    className={`h-8 w-8 transition-transform duration-200 ${
+                      selectedRole === 'TENANT'
+                        ? 'text-primary scale-105'
+                        : 'text-base-content/50 group-hover:text-primary/80'
+                    }`}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -97,21 +118,36 @@ export default function Register() {
                       d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
                     />
                   </svg>
-                  <span className="font-semibold text-sm">Inquilino</span>
-                  <span className="text-[11px] text-gray-500 text-center">Busco piso o habitacion</span>
+                  <span className="mt-1 font-semibold text-base">Inquilino</span>
+                  <span className="text-[11px] text-base-content/55 text-center">
+                    Busco piso o habitacion
+                  </span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setValue('role', 'LANDLORD', { shouldValidate: true })}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+                  className={`group relative flex min-h-[124px] flex-col items-center justify-center gap-1.5 rounded-3xl border px-4 py-3 transition-all duration-200 ${
                     selectedRole === 'LANDLORD'
-                      ? 'border-primary bg-primary/5 shadow-sm'
-                      : 'border-base-300 hover:border-base-content/20'
+                      ? 'border-primary bg-primary/10 ring-2 ring-primary/20 shadow-[0_10px_24px_rgba(0,128,128,0.2)]'
+                      : 'border-base-300 bg-base-100 hover:border-primary/35 hover:bg-base-200/50'
                   }`}
                 >
+                  <span
+                    className={`absolute right-3 top-3 grid h-5 w-5 place-items-center rounded-full border text-[10px] font-bold ${
+                      selectedRole === 'LANDLORD'
+                        ? 'border-primary bg-primary text-primary-content'
+                        : 'border-base-300 bg-base-100 text-transparent'
+                    }`}
+                  >
+                    ✓
+                  </span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-8 w-8 text-primary"
+                    className={`h-8 w-8 transition-transform duration-200 ${
+                      selectedRole === 'LANDLORD'
+                        ? 'text-primary scale-105'
+                        : 'text-base-content/50 group-hover:text-primary/80'
+                    }`}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -123,8 +159,10 @@ export default function Register() {
                       d="M3 11.5L12 4l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-8.5z"
                     />
                   </svg>
-                  <span className="font-semibold text-sm">Propietario</span>
-                  <span className="text-[11px] text-gray-500 text-center">Publico pisos o habitaciones</span>
+                  <span className="mt-1 font-semibold text-base">Propietario</span>
+                  <span className="text-[11px] text-base-content/55 text-center">
+                    Publico pisos o habitaciones
+                  </span>
                 </button>
               </div>
               {errors.role && <p className="text-error text-sm mt-1">{errors.role.message}</p>}
@@ -132,55 +170,61 @@ export default function Register() {
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Email</span>
+                <span className="label-text font-medium text-base-content/85">Email</span>
               </label>
               <input
                 {...register('email')}
                 id="email"
                 type="text"
                 placeholder="tu@email.com"
-                className="input input-bordered w-full rounded-2xl"
+                className="input input-bordered h-12 w-full rounded-2xl border-base-300 bg-base-100/90 px-4 text-base-content placeholder:text-base-content/45 focus:border-primary focus:outline-none"
               />
               {errors.email && <p className="text-error text-sm mt-1">{errors.email.message}</p>}
             </div>
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Contrasena</span>
+                <span className="label-text font-medium text-base-content/85">Contrasena</span>
               </label>
               <input
                 {...register('password')}
                 id="password"
                 type={isPasswordVisible ? 'text' : 'password'}
                 placeholder="Minimo 4 caracteres"
-                className="input input-bordered w-full rounded-2xl"
+                className="input input-bordered h-12 w-full rounded-2xl border-base-300 bg-base-100/90 px-4 text-base-content placeholder:text-base-content/45 focus:border-primary focus:outline-none"
               />
               {errors.password && <p className="text-error text-sm mt-1">{errors.password.message}</p>}
             </div>
 
-            {error && <p className="text-error text-center">{error}</p>}
+            {error && (
+              <p className="rounded-xl border border-error/30 bg-error/10 px-3 py-2 text-center text-sm text-error">
+                {error}
+              </p>
+            )}
 
             <div className="flex flex-col gap-2">
               <button
                 type="button"
                 onClick={togglePassword}
-                className="btn btn-link btn-sm px-0 self-start order-2"
+                className="btn btn-link btn-sm h-auto min-h-0 self-start px-0 text-primary/80 hover:text-primary"
               >
                 {isPasswordVisible ? 'Ocultar contrasena' : 'Ver contrasena'}
               </button>
-              <button type="submit" className="btn btn-primary w-full order-1 rounded-2xl border-none">
+              <button
+                type="submit"
+                className="btn btn-primary order-1 h-12 w-full rounded-2xl border-none text-base font-semibold shadow-[0_12px_24px_rgba(0,128,128,0.26)] hover:translate-y-[-1px] hover:shadow-[0_14px_30px_rgba(0,128,128,0.34)]"
+              >
                 Registrarse
               </button>
             </div>
 
-            <p className="text-center text-sm text-gray-500">
+            <p className="pt-1 text-center text-sm text-base-content/65">
               Ya tienes cuenta?{' '}
               <Link to="/login" className="link link-primary">
                 Inicia sesion
               </Link>
             </p>
           </form>
-        </div>
       </div>
     </div>
   )

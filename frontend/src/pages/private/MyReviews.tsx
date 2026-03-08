@@ -210,7 +210,7 @@ export default function MyReviews() {
       data-theme="light"
       className="mx-auto min-h-dvh w-full max-w-md bg-[#F5F1E3] text-[#1E293B]"
     >
-      <div className="px-6 pt-8 pb-10">
+      <div className="px-5 pt-7 pb-28 sm:px-6">
         {/* Header */}
         <header className="flex items-center gap-3">
           <button
@@ -220,16 +220,16 @@ export default function MyReviews() {
           >
             <ArrowLeft size={24} strokeWidth={2.5} />
           </button>
-          <h1 className="text-[1.75rem] font-extrabold leading-none tracking-tight text-[#111827]">
+          <h1 className="text-[1.55rem] font-extrabold leading-none tracking-tight text-[#111827] sm:text-[1.75rem]">
             Mis Valoraciones
           </h1>
         </header>
 
         {/* Tabs */}
-        <div className="mt-6 flex rounded-2xl border border-[#E5E7EB] bg-white p-1">
+        <div className="mt-5 flex rounded-2xl border border-[#E5E7EB] bg-white p-1">
           <button
             onClick={() => setTab('received')}
-            className={`flex-1 rounded-xl py-3 text-[0.85rem] font-semibold transition-colors ${
+            className={`flex-1 rounded-xl py-2.5 text-[0.78rem] font-semibold transition-colors sm:py-3 sm:text-[0.85rem] ${
               tab === 'received'
                 ? 'bg-[#0C8A80] text-white shadow-sm'
                 : 'text-[#6B7280] hover:text-[#111827]'
@@ -239,7 +239,7 @@ export default function MyReviews() {
           </button>
           <button
             onClick={() => setTab('made')}
-            className={`flex-1 rounded-xl py-3 text-[0.85rem] font-semibold transition-colors ${
+            className={`flex-1 rounded-xl py-2.5 text-[0.78rem] font-semibold transition-colors sm:py-3 sm:text-[0.85rem] ${
               tab === 'made'
                 ? 'bg-[#0C8A80] text-white shadow-sm'
                 : 'text-[#6B7280] hover:text-[#111827]'
@@ -249,7 +249,7 @@ export default function MyReviews() {
           </button>
           <button
             onClick={() => setTab('pending')}
-            className={`relative flex-1 rounded-xl py-3 text-[0.85rem] font-semibold transition-colors ${
+            className={`relative flex-1 rounded-xl py-2.5 text-[0.78rem] font-semibold transition-colors sm:py-3 sm:text-[0.85rem] ${
               tab === 'pending'
                 ? 'bg-[#0C8A80] text-white shadow-sm'
                 : 'text-[#6B7280] hover:text-[#111827]'
