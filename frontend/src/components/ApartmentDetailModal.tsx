@@ -57,11 +57,19 @@ function SwipeGallery({
   const dragDelta = useRef(0)
   const dirLock = useRef<'h' | 'v' | null>(null)
   const [offset, setOffset] = useState(0)
+  const [containerWidth, setContainerWidth] = useState(400)
 
-  // Reset offset when index changes externally
   useEffect(() => {
-    setOffset(0)
-  }, [currentIndex])
+    const measure = () => {
+      if (containerRef.current?.offsetWidth) {
+        setContainerWidth(containerRef.current.offsetWidth)
+      }
+    }
+
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [])
 
   const go = (dir: 1 | -1) => {
     const next = currentIndex + dir
@@ -130,8 +138,6 @@ function SwipeGallery({
       </div>
     )
   }
-
-  const containerWidth = containerRef.current?.offsetWidth ?? 400
 
   return (
     <div

@@ -11,6 +11,13 @@ const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Administrador',
 }
 
+type RoommateWithMeta = {
+  user?: User
+  role: string
+  joinDate?: string
+  userId: number
+}
+
 export default function Profile() {
   const [userData, setUserData] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -39,7 +46,7 @@ export default function Profile() {
             const members = found.members
 
             try {
-              const usersWithMeta = await Promise.all(
+              const usersWithMeta: RoommateWithMeta[] = await Promise.all(
                 members.map(async (m) => {
                   const u = await getUser(m.userId)
                   return {
@@ -54,16 +61,21 @@ export default function Profile() {
               const missing = usersWithMeta.filter((x) => !x.user)
               if (missing.length > 0) {
                 try {
-                  const allResp = await api.get('/users')
+                  const allResp = await api.get<User[]>('/users')
                   const allUsers = allResp.data
                   const mapped = usersWithMeta.map((x) => {
                     if (!x.user) {
-                      const foundUser = allUsers.find((u: any) => Number(u.id) === Number(x.userId))
+                      const foundUser = allUsers.find((u) => Number(u.id) === Number(x.userId))
                       return { ...x, user: foundUser }
                     }
                     return x
                   })
-                  setRoommates(mapped.filter((x) => x.user && Number(x.user.id) !== Number(res.id)))
+                  setRoommates(
+                    mapped.filter(
+                      (x): x is { user: User; role: string; joinDate?: string; userId: number } =>
+                        !!x.user && Number(x.user.id) !== Number(res.id)
+                    )
+                  )
                   return
                 } catch (e) {
                   console.warn('Fallback fetch all users failed', e)
@@ -71,7 +83,10 @@ export default function Profile() {
               }
 
               setRoommates(
-                usersWithMeta.filter((x) => x.user && Number(x.user.id) !== Number(res.id)) as any
+                usersWithMeta.filter(
+                  (x): x is { user: User; role: string; joinDate?: string; userId: number } =>
+                    !!x.user && Number(x.user.id) !== Number(res.id)
+                )
               )
             } catch (e) {
               console.error('Error fetching roommates', e)
