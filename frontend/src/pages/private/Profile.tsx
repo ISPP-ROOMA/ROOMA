@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { getUserProfile, deleteUser } from '../../service/users.service'
 import type { User } from '../../service/users.service'
 import { getAllApartments, type ApartmentDTO, type ApartmentMemberDTO } from '../../service/apartment.service'
@@ -11,6 +11,7 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 export default function Profile() {
+  const navigate = useNavigate()
   const [userData, setUserData] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentApartment, setCurrentApartment] = useState<ApartmentDTO | null>(null)
@@ -59,7 +60,7 @@ export default function Profile() {
     if (success) {
       // Typically, auth logout state must be cleared. If not handled at api level, we should.
       // But Assuming it's handled or we just reload
-      window.location.href = '/'
+      navigate('/')
     } else {
       alert('Error eliminando la cuenta')
     }
@@ -206,7 +207,10 @@ export default function Profile() {
               <button className="btn">Cancelar</button>
               <button
                 className="btn btn-error"
-                onClick={handleDeleteAccount}
+                onClick={(e) => {
+                  e.preventDefault()
+                  void handleDeleteAccount()
+                }}
                 disabled={isDeleting}
               >
                 {isDeleting ? 'Eliminando...' : 'Sí, eliminar cuenta'}

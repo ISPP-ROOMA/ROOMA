@@ -60,8 +60,8 @@ function SwipeGallery({
 
   // Reset offset when index changes externally
   useEffect(() => {
-    const t = setTimeout(() => setOffset(0), 0)
-    return () => clearTimeout(t)
+    const t = setTimeout(() => { setOffset(0) }, 0)
+    return () => { clearTimeout(t) }
   }, [currentIndex])
 
   const go = (dir: 1 | -1) => {

@@ -15,8 +15,8 @@ export default function Navbar() {
 
   // Close "más" menu on route change or outside click
   useEffect(() => {
-    const t = setTimeout(() => setMoreOpen(false), 0)
-    return () => clearTimeout(t)
+    const t = setTimeout(() => { setMoreOpen(false) }, 0)
+    return () => { clearTimeout(t) }
   }, [location.pathname])
   useEffect(() => {
     if (!moreOpen) return
