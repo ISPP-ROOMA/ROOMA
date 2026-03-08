@@ -96,7 +96,9 @@ export default function Profile() {
               </Link>
               <button
                 className="btn btn-sm btn-outline btn-error w-full"
-                onClick={() => (document.getElementById('delete_modal') as HTMLDialogElement)?.showModal()}
+                onClick={() => {
+                  ; (document.getElementById('delete_modal') as HTMLDialogElement).showModal()
+                }}
               >
                 Eliminar Cuenta
               </button>

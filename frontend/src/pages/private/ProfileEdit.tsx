@@ -61,7 +61,7 @@ export default function ProfileEdit() {
                 setIsLoading(false)
             }
         }
-        fetchProfile()
+        void fetchProfile()
     }, [reset, role])
 
     const onSubmit = async (data: ProfileFormValues) => {
