@@ -3,17 +3,16 @@ import { api } from './api'
 
 export interface User {
   id?: string | number
-  name?: string
-  surname?: string
   email: string
   role: string
-  birthDate?: string | Date
-  phone?: string
+  name?: string
+  surname?: string
   profilePic?: string
+  phone?: string
+  birthDate?: string | Date
   gender?: string
   smoker?: boolean
   createdAt?: string | Date
-  // Existing fields
   hobbies?: string
   schedule?: string
   profession?: string
@@ -32,14 +31,14 @@ export interface UserResponse {
 }
 
 export type UpdateUserPayload = {
+  email: string
   name?: string
   surname?: string
-  email: string
-  role: string
+  role?: string
   password?: string
-  birthDate?: string | Date
-  phone?: string
   profilePic?: string
+  phone?: string
+  birthDate?: string | Date
   gender?: string
   smoker?: boolean
   hobbies?: string
@@ -113,6 +112,30 @@ export const updateUserProfile = async (data: UpdateUserPayload): Promise<User |
 export const deleteUser = async (): Promise<boolean> => {
   try {
     await api.delete('/users/profile')
+    return true
+  } catch (error) {
+    console.error(error)
+    return false
+  }
+}
+
+export const uploadProfilePicture = async (file: File): Promise<string | undefined> => {
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await api.post<string>('/images/user/me/profile-picture', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  } catch (error) {
+    console.error(error)
+    return undefined
+  }
+}
+
+export const deleteProfilePicture = async (): Promise<boolean> => {
+  try {
+    await api.post('/images/user/me/delete-profile-picture')
     return true
   } catch (error) {
     console.error(error)

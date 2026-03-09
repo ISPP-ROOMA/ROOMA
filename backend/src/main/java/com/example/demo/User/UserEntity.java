@@ -9,6 +9,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import jakarta.persistence.PrePersist;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -29,6 +32,24 @@ public class UserEntity {
     @Column(nullable = false)
     private Role role;
 
+    @Column
+    private String name;
+
+    @Column
+    private String surname;
+
+    @Column
+    private LocalDate birthDate;
+
+    @Column
+    private String phone;
+
+    @Column
+    private String gender;
+
+    @Column
+    private Boolean smoker;
+
     private String profileImageUrl;
 
     private String profileImagePublicId;
@@ -42,7 +63,26 @@ public class UserEntity {
     @Column
     private String profession;
 
+    @Column
+    private String accountStatus;
+
+    @Column
+    private LocalDateTime createdAt;
+
+    @Column
+    private LocalDateTime lastConnectionAt;
+
     public UserEntity() {
+    }
+
+    @PrePersist
+    public void prePersist() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (accountStatus == null || accountStatus.isBlank()) {
+            accountStatus = "ACTIVE";
+        }
     }
 
     // Imágenes
@@ -112,6 +152,54 @@ public class UserEntity {
         this.role = role;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getSurname() {
+        return surname;
+    }
+
+    public void setSurname(String surname) {
+        this.surname = surname;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public Boolean getSmoker() {
+        return smoker;
+    }
+
+    public void setSmoker(Boolean smoker) {
+        this.smoker = smoker;
+    }
+
     public String getProfileImageUrl() {
         return profileImageUrl;
     }
@@ -150,5 +238,29 @@ public class UserEntity {
 
     public void setProfession(String profession) {
         this.profession = profession;
+    }
+
+    public String getAccountStatus() {
+        return accountStatus;
+    }
+
+    public void setAccountStatus(String accountStatus) {
+        this.accountStatus = accountStatus;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getLastConnectionAt() {
+        return lastConnectionAt;
+    }
+
+    public void setLastConnectionAt(LocalDateTime lastConnectionAt) {
+        this.lastConnectionAt = lastConnectionAt;
     }
 }

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getUserProfile, deleteUser } from '../../service/users.service'
 import type { User } from '../../service/users.service'
 import { getAllApartments, type ApartmentDTO, type ApartmentMemberDTO } from '../../service/apartment.service'
+import { useAuthStore } from '../../store/authStore'
 
 const ROLE_LABELS: Record<string, string> = {
   LANDLORD: 'Propietario',
@@ -58,8 +59,7 @@ export default function Profile() {
     const success = await deleteUser()
     setIsDeleting(false)
     if (success) {
-      // Typically, auth logout state must be cleared. If not handled at api level, we should.
-      // But Assuming it's handled or we just reload
+      useAuthStore.getState().logout()
       navigate('/')
     } else {
       alert('Error eliminando la cuenta')
@@ -128,12 +128,33 @@ export default function Profile() {
               </p>
             </div>
             <div>
+              <span className="text-xs text-gray-500 font-semibold uppercase">Profesión</span>
+              <p className="font-medium">{userData.profession || 'No especificada'}</p>
+            </div>
+            <div>
               <span className="text-xs text-gray-500 font-semibold uppercase">Fecha de Alta</span>
               <p className="font-medium">
                 {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Desconocida'}
               </p>
             </div>
           </div>
+
+          {(userData.hobbies || userData.schedule) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              {userData.hobbies && (
+                <div>
+                  <span className="text-xs text-gray-500 font-semibold uppercase">Hobbies</span>
+                  <p className="font-medium">{userData.hobbies}</p>
+                </div>
+              )}
+              {userData.schedule && (
+                <div>
+                  <span className="text-xs text-gray-500 font-semibold uppercase">Horario / Rutina</span>
+                  <p className="font-medium">{userData.schedule}</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {currentApartment ? (
             <div className="w-full mt-4">

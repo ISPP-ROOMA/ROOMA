@@ -3,6 +3,7 @@ package com.example.demo.Auth;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Optional;
 
@@ -83,6 +84,9 @@ public class AuthService {
             throw new InvalidPasswordException("Invalid password");
         }
 
+        user.setLastConnectionAt(LocalDateTime.now());
+        userService.save(user);
+
         String accessToken = jwtService.generateAccessTokenFromEmail(user.getEmail());
         String refreshToken = jwtService.generateRefreshTokenFromEmail(user.getEmail());
 
@@ -108,6 +112,9 @@ public class AuthService {
         String email = jwtService.getEmailFromToken(refreshToken);
         UserEntity user = userService.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setLastConnectionAt(LocalDateTime.now());
+        userService.save(user);
 
         RefreshTokenEntity storedToken = refreshTokenService.findByUserAndDeviceId(user, deviceId);
 
