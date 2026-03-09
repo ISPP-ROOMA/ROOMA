@@ -1,9 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
-import { getUserProfile, updateUserProfile } from '../../service/users.service'
+import { getUserProfile, updateUserProfile, uploadProfilePicture, deleteProfilePicture } from '../../service/users.service'
 import type { UpdateUserPayload, User } from '../../service/users.service'
 import { useAuthStore } from '../../store/authStore'
 
@@ -14,9 +14,21 @@ const profileSchema = z.object({
     role: z.string(),
     phone: z.string().optional(),
     birthDate: z.string().optional(),
-    profilePic: z.string().url({ message: 'Debe ser una URL válida' }).optional().or(z.literal('')),
     gender: z.string().optional(),
     smoker: z.string().optional(),
+    hobbies: z.string().optional(),
+    schedule: z.string().optional(),
+    profession: z.string().optional(),
+    password: z.string().min(4, { message: 'Mínimo 4 caracteres' }).optional().or(z.literal('')),
+    confirmPassword: z.string().optional().or(z.literal('')),
+}).refine((data) => {
+    if (data.password && data.password.length > 0) {
+        return data.password === data.confirmPassword
+    }
+    return true
+}, {
+    message: 'Las contraseñas no coinciden',
+    path: ['confirmPassword'],
 })
 
 type ProfileFormValues = z.infer<typeof profileSchema>
@@ -27,6 +39,9 @@ export default function ProfileEdit() {
     const [isLoading, setIsLoading] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [userData, setUserData] = useState<User | null>(null)
+    const [profilePicPreview, setProfilePicPreview] = useState<string | null>(null)
+    const [isUploadingPic, setIsUploadingPic] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     const {
         register,
@@ -43,6 +58,7 @@ export default function ProfileEdit() {
                 const res = await getUserProfile()
                 if (res) {
                     setUserData(res)
+                    setProfilePicPreview(res.profilePic || null)
                     reset({
                         name: res.name || '',
                         surname: res.surname || '',
@@ -50,9 +66,13 @@ export default function ProfileEdit() {
                         role: res.role || role || 'TENANT',
                         phone: res.phone || '',
                         birthDate: res.birthDate ? new Date(res.birthDate).toISOString().split('T')[0] : '',
-                        profilePic: res.profilePic || '',
                         gender: res.gender || '',
-                        smoker: res.smoker !== undefined ? String(res.smoker) : '',
+                        smoker: res.smoker !== undefined && res.smoker !== null ? String(res.smoker) : '',
+                        hobbies: res.hobbies || '',
+                        schedule: res.schedule || '',
+                        profession: res.profession || '',
+                        password: '',
+                        confirmPassword: '',
                     })
                 }
             } catch (error) {
@@ -64,6 +84,34 @@ export default function ProfileEdit() {
         void fetchProfile()
     }, [reset, role])
 
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setIsUploadingPic(true)
+        const url = await uploadProfilePicture(file)
+        if (url) {
+            setProfilePicPreview(url)
+            setUserData((prev) => prev ? { ...prev, profilePic: url } : prev)
+        } else {
+            alert('Error al subir la imagen')
+        }
+        setIsUploadingPic(false)
+        if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+
+    const handleDeletePic = async () => {
+        setIsUploadingPic(true)
+        const success = await deleteProfilePicture()
+        if (success) {
+            setProfilePicPreview(null)
+            setUserData((prev) => prev ? { ...prev, profilePic: undefined } : prev)
+        } else {
+            alert('Error al eliminar la imagen')
+        }
+        setIsUploadingPic(false)
+    }
+
     const onSubmit = async (data: ProfileFormValues) => {
         setIsSubmitting(true)
 
@@ -71,12 +119,15 @@ export default function ProfileEdit() {
             name: data.name,
             surname: data.surname,
             email: data.email,
-            role: data.role,
             phone: data.phone,
             birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
-            profilePic: data.profilePic || undefined,
+            profilePic: profilePicPreview || undefined,
             gender: data.gender,
             smoker: data.smoker === 'true' ? true : data.smoker === 'false' ? false : undefined,
+            hobbies: data.hobbies || undefined,
+            schedule: data.schedule || undefined,
+            profession: data.profession || undefined,
+            password: data.password && data.password.length > 0 ? data.password : undefined,
         }
 
         const updated = await updateUserProfile(payload)
@@ -92,11 +143,55 @@ export default function ProfileEdit() {
 
     if (!userData) return <p className="text-center mt-10 text-red-500">Error al cargar el perfil</p>
 
+    const initial = userData.name && userData.name.length > 0
+        ? userData.name[0].toUpperCase()
+        : (userData.email ? userData.email[0].toUpperCase() : '?')
+
     return (
         <div className="flex flex-col items-center justify-center min-h-[70vh] p-4">
             <div className="card w-full max-w-2xl bg-base-100 shadow-lg">
                 <div className="card-body">
                     <h2 className="text-2xl font-bold mb-6 text-center">Editar Perfil</h2>
+
+                    {/* Profile Picture Section */}
+                    <div className="flex flex-col items-center gap-3 mb-6">
+                        <div className="avatar">
+                            <div className="w-28 h-28 rounded-full bg-primary text-white flex items-center justify-center text-4xl font-bold overflow-hidden ring ring-primary ring-offset-base-100 ring-offset-2">
+                                {profilePicPreview ? (
+                                    <img src={profilePicPreview} alt="Perfil" className="object-cover w-full h-full" />
+                                ) : (
+                                    initial
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                className={`btn btn-sm btn-outline btn-primary ${isUploadingPic ? 'loading' : ''}`}
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploadingPic}
+                            >
+                                {isUploadingPic ? 'Subiendo...' : 'Cambiar foto'}
+                            </button>
+                            {profilePicPreview && (
+                                <button
+                                    type="button"
+                                    className={`btn btn-sm btn-outline btn-error ${isUploadingPic ? 'loading' : ''}`}
+                                    onClick={() => void handleDeletePic()}
+                                    disabled={isUploadingPic}
+                                >
+                                    Eliminar foto
+                                </button>
+                            )}
+                        </div>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => void handleFileChange(e)}
+                        />
+                    </div>
 
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -185,20 +280,19 @@ export default function ProfileEdit() {
                                 )}
                             </div>
 
-                            {/* Profile Pic URL */}
+                            {/* Profession */}
                             <div className="form-control w-full">
                                 <label className="label">
-                                    <span className="label-text">URL de Foto de Perfil</span>
+                                    <span className="label-text">Profesión</span>
                                 </label>
                                 <input
                                     type="text"
-                                    placeholder="https://..."
-                                    className={`input input-bordered w-full ${errors.profilePic ? 'input-error' : ''}`}
-                                    {...register('profilePic')}
+                                    className={`input input-bordered w-full ${errors.profession ? 'input-error' : ''}`}
+                                    {...register('profession')}
                                 />
-                                {errors.profilePic && (
+                                {errors.profession && (
                                     <label className="label">
-                                        <span className="label-text-alt text-error">{errors.profilePic.message}</span>
+                                        <span className="label-text-alt text-error">{errors.profession.message}</span>
                                     </label>
                                 )}
                             </div>
@@ -241,6 +335,82 @@ export default function ProfileEdit() {
                                 {errors.smoker && (
                                     <label className="label">
                                         <span className="label-text-alt text-error">{errors.smoker.message}</span>
+                                    </label>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Hobbies */}
+                        <div className="form-control w-full">
+                            <label className="label">
+                                <span className="label-text">Hobbies</span>
+                            </label>
+                            <textarea
+                                className={`textarea textarea-bordered w-full ${errors.hobbies ? 'textarea-error' : ''}`}
+                                placeholder="Ej: Leer, cocinar, deporte..."
+                                rows={2}
+                                {...register('hobbies')}
+                            />
+                            {errors.hobbies && (
+                                <label className="label">
+                                    <span className="label-text-alt text-error">{errors.hobbies.message}</span>
+                                </label>
+                            )}
+                        </div>
+
+                        {/* Schedule */}
+                        <div className="form-control w-full">
+                            <label className="label">
+                                <span className="label-text">Horario / Rutina</span>
+                            </label>
+                            <textarea
+                                className={`textarea textarea-bordered w-full ${errors.schedule ? 'textarea-error' : ''}`}
+                                placeholder="Ej: Trabajo de 9 a 18, noches tranquilas..."
+                                rows={2}
+                                {...register('schedule')}
+                            />
+                            {errors.schedule && (
+                                <label className="label">
+                                    <span className="label-text-alt text-error">{errors.schedule.message}</span>
+                                </label>
+                            )}
+                        </div>
+
+                        {/* Password Change Section */}
+                        <div className="divider">Cambiar Contraseña</div>
+                        <p className="text-sm text-gray-500 -mt-2">Deja en blanco si no quieres cambiarla</p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="form-control w-full">
+                                <label className="label">
+                                    <span className="label-text">Nueva Contraseña</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    className={`input input-bordered w-full ${errors.password ? 'input-error' : ''}`}
+                                    placeholder="••••••••"
+                                    {...register('password')}
+                                />
+                                {errors.password && (
+                                    <label className="label">
+                                        <span className="label-text-alt text-error">{errors.password.message}</span>
+                                    </label>
+                                )}
+                            </div>
+
+                            <div className="form-control w-full">
+                                <label className="label">
+                                    <span className="label-text">Confirmar Contraseña</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    className={`input input-bordered w-full ${errors.confirmPassword ? 'input-error' : ''}`}
+                                    placeholder="••••••••"
+                                    {...register('confirmPassword')}
+                                />
+                                {errors.confirmPassword && (
+                                    <label className="label">
+                                        <span className="label-text-alt text-error">{errors.confirmPassword.message}</span>
                                     </label>
                                 )}
                             </div>
