@@ -102,7 +102,7 @@ export default function PropertyDetails() {
   }
 
   return (
-    <section className="px-4 py-6 pb-28 max-w-4xl mx-auto bg-[#F5F1E3] min-h-[calc(100vh-64px)] text-[#050505]">
+    <section className="px-4 pt-20 pb-28 max-w-4xl mx-auto bg-[#F5F1E3] min-h-[calc(100vh-64px)] text-[#050505]">
       <header className="flex items-center justify-between mb-6">
         <Link to="/" className="btn btn-ghost btn-sm">
           Volver

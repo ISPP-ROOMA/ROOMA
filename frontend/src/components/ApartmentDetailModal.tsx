@@ -562,7 +562,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
 	              height="h-72 sm:h-80"
 	            />
 
-	            <div className="absolute top-4 right-4 z-20">
+	            <div className="absolute top-16 right-3 z-20">
 	              <FavoriteButton apartmentId={apartment.id} />
 	            </div>
 
