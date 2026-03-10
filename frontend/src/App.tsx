@@ -30,7 +30,6 @@ import LandlordMatchDetailPage from './pages/private/requests/LandlordMatchDetai
 import LandlordRequestDetailPage from './pages/private/requests/LandlordRequestDetailPage'
 import LandlordRequestsPage from './pages/private/requests/LandlordRequestsPage'
 import TenantRequestsPage from './pages/private/requests/TenantRequestsPage'
-import PropertyDetails from './pages/PropertyDetails'
 import Register from './pages/Register'
 import { hasSessionHint, refreshToken } from './service/auth.service'
 import { getPendingReviewApartments } from './service/review.service'
@@ -255,7 +254,6 @@ function App() {
         <main className="mx-auto flex-grow w-full pb-20 md:pb-0 relative z-0">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/properties/:id" element={<PropertyDetails />} />
 
             {!token && (
               <>
