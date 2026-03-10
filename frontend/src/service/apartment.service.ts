@@ -107,10 +107,7 @@ export const searchApartments = async (
   }
 }
 
-export const swipeApartment = async (
-  apartmentId: number,
-  interest: boolean,
-): Promise<unknown> => {
+export const swipeApartment = async (apartmentId: number, interest: boolean): Promise<unknown> => {
   try {
     const response = await api.post(
       `/apartments-matches/swipe/apartment/${apartmentId}/tenant`,
@@ -218,10 +215,7 @@ export const respondToInvitation = async (
   )
 }
 
-
-export const sendInvitationToMatch = async (
-  apartmentMatchId: number
-): Promise<void> => {
+export const sendInvitationToMatch = async (apartmentMatchId: number): Promise<void> => {
   await api.post(`/apartments-matches/apartmentMatch/${apartmentMatchId}/send-invitation`)
 }
 
@@ -239,9 +233,7 @@ export const getLandlordMatchDetails = async (
   }
 }
 
-export const getDeckForCandidate = async (
-  candidateId: number
-): Promise<ApartmentDTO[]> => {
+export const getDeckForCandidate = async (candidateId: number): Promise<ApartmentDTO[]> => {
   try {
     const response = await api.get<ApartmentDTO[]>(`/apartments/deck/${candidateId}`)
     return response.data

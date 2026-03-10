@@ -80,12 +80,7 @@ export default function FavoriteButton({
       aria-pressed={isFavorite}
       className={`inline-flex items-center justify-center rounded-full p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 ${isFavorite ? 'bg-primary text-primary-content' : 'bg-base-100/90 text-base-content/70 hover:bg-base-100'} ${disabled || isSubmitting ? 'opacity-60 cursor-not-allowed' : ''} ${className ?? ''}`}
     >
-      <Heart
-        size={18}
-        className={isFavorite ? 'fill-current' : ''}
-        aria-hidden="true"
-      />
+      <Heart size={18} className={isFavorite ? 'fill-current' : ''} aria-hidden="true" />
     </button>
   )
 }
-

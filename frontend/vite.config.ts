@@ -29,13 +29,13 @@ export default defineConfig({
             src: '/icons/rooma_512.png',
             sizes: '512x512',
             type: 'image/png',
-          }
+          },
         ],
-      }
-    })
+      },
+    }),
   ],
   server: {
     host: true,
     port: 5173,
-  }
+  },
 })

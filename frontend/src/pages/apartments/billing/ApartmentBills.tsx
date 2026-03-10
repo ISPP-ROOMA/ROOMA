@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import {
-  getApartmentBills,
-  type BillDTO,
-  type BillStatus,
-} from '../../../service/billing.service'
+import { getApartmentBills, type BillDTO, type BillStatus } from '../../../service/billing.service'
 
 /* ── helpers ──────────────────────────────────────────────── */
 
@@ -37,12 +33,22 @@ function daysUntil(dateStr?: string): number | null {
 
 function statusMeta(status: BillStatus, duDate?: string) {
   if (status === 'PAID')
-    return { label: 'Pagada', bg: 'bg-emerald-50', text: 'text-emerald-700', ring: 'ring-emerald-200' }
+    return {
+      label: 'Pagada',
+      bg: 'bg-emerald-50',
+      text: 'text-emerald-700',
+      ring: 'ring-emerald-200',
+    }
   const days = daysUntil(duDate)
   if (days !== null && days < 0)
     return { label: 'Vencida', bg: 'bg-red-50', text: 'text-red-700', ring: 'ring-red-200' }
   if (days !== null && days <= 3)
-    return { label: 'Próx. vencimiento', bg: 'bg-orange-50', text: 'text-orange-700', ring: 'ring-orange-200' }
+    return {
+      label: 'Próx. vencimiento',
+      bg: 'bg-orange-50',
+      text: 'text-orange-700',
+      ring: 'ring-orange-200',
+    }
   return { label: 'Pendiente', bg: 'bg-amber-50', text: 'text-amber-700', ring: 'ring-amber-200' }
 }
 
@@ -89,17 +95,14 @@ export default function ApartmentBills() {
           const db = daysUntil(b.duDate) ?? 999
           return da - db
         }),
-    [bills],
+    [bills]
   )
 
-  const paid = useMemo(
-    () => bills.filter((b) => b.status === 'PAID'),
-    [bills],
-  )
+  const paid = useMemo(() => bills.filter((b) => b.status === 'PAID'), [bills])
 
   const totalPending = useMemo(
     () => pending.reduce((s, b) => s + Number(b.totalAmount ?? 0), 0),
-    [pending],
+    [pending]
   )
 
   const list = tab === 'pending' ? pending : paid
@@ -120,14 +123,27 @@ export default function ApartmentBills() {
           onClick={() => navigate(`/apartments/${id}`)}
           className="mb-4 flex items-center gap-1 text-teal-100 hover:text-white transition text-sm"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           Volver al piso
         </button>
 
         <h1 className="text-2xl font-bold">Facturas del piso</h1>
-        <p className="text-teal-100 text-sm mt-1">{bills.length} factura{bills.length !== 1 ? 's' : ''} en total</p>
+        <p className="text-teal-100 text-sm mt-1">
+          {bills.length} factura{bills.length !== 1 ? 's' : ''} en total
+        </p>
 
         {totalPending > 0 && (
           <div className="mt-4 bg-white/15 backdrop-blur rounded-2xl px-5 py-3">
@@ -147,9 +163,7 @@ export default function ApartmentBills() {
               key={t}
               onClick={() => setTab(t)}
               className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm ${
-                active
-                  ? 'bg-white text-teal-700 shadow-md'
-                  : 'bg-white/60 text-gray-500'
+                active ? 'bg-white text-teal-700 shadow-md' : 'bg-white/60 text-gray-500'
               }`}
             >
               {t === 'pending' ? 'Pendientes' : 'Pagadas'}{' '}
@@ -164,7 +178,9 @@ export default function ApartmentBills() {
         {list.length === 0 && (
           <div className="text-center py-16 text-gray-400">
             <p className="text-5xl mb-3">{tab === 'pending' ? '🎉' : '📭'}</p>
-            <p className="font-medium">{tab === 'pending' ? 'No hay facturas pendientes' : 'Sin historial'}</p>
+            <p className="font-medium">
+              {tab === 'pending' ? 'No hay facturas pendientes' : 'Sin historial'}
+            </p>
           </div>
         )}
 
@@ -181,7 +197,9 @@ export default function ApartmentBills() {
               className="w-full bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition flex items-center gap-4 text-left"
             >
               {/* icon */}
-              <div className={`w-12 h-12 ${icon.bg} rounded-xl flex items-center justify-center text-2xl shrink-0`}>
+              <div
+                className={`w-12 h-12 ${icon.bg} rounded-xl flex items-center justify-center text-2xl shrink-0`}
+              >
                 {icon.emoji}
               </div>
 
@@ -189,13 +207,13 @@ export default function ApartmentBills() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-gray-800 truncate">{bill.reference}</span>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ring-1 ${st.bg} ${st.text} ${st.ring}`}>
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ring-1 ${st.bg} ${st.text} ${st.ring}`}
+                  >
                     {st.label}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Vence {fmtDate(bill.duDate)}
-                </p>
+                <p className="text-xs text-gray-400 mt-0.5">Vence {fmtDate(bill.duDate)}</p>
                 {totalCount > 0 && (
                   <div className="flex items-center gap-2 mt-1.5">
                     {/* mini progress bar */}
@@ -218,8 +236,19 @@ export default function ApartmentBills() {
               </div>
 
               {/* chevron */}
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-gray-300 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
           )
@@ -233,7 +262,13 @@ export default function ApartmentBills() {
           className="bg-teal-600 hover:bg-teal-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition"
           title="Nueva factura"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-7 w-7"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
         </button>

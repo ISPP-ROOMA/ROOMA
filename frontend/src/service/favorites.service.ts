@@ -39,9 +39,7 @@ export const removeFavorite = async (apartmentId: number): Promise<FavoriteToggl
   return response.data
 }
 
-export const getFavoriteApartmentIds = async (
-  apartmentIds: number[]
-): Promise<number[]> => {
+export const getFavoriteApartmentIds = async (apartmentIds: number[]): Promise<number[]> => {
   if (!apartmentIds.length) {
     return []
   }
@@ -52,4 +50,3 @@ export const getFavoriteApartmentIds = async (
   const response = await api.get<FavoriteIdsResponse>(`/favorites/ids?${params.toString()}`)
   return response.data.favoriteApartmentIds ?? []
 }
-

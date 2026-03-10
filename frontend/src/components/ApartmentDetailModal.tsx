@@ -61,8 +61,12 @@ function SwipeGallery({
 
   // Reset offset when index changes externally
   useEffect(() => {
-    const t = setTimeout(() => { setOffset(0) }, 0)
-    return () => { clearTimeout(t) }
+    const t = setTimeout(() => {
+      setOffset(0)
+    }, 0)
+    return () => {
+      clearTimeout(t)
+    }
   }, [currentIndex])
 
   const go = (dir: 1 | -1) => {
@@ -196,8 +200,9 @@ function SwipeGallery({
               key={idx}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => onIndexChange(idx)}
-              className={`rounded-full transition-all ${idx === currentIndex ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50 hover:bg-white/70'
-                }`}
+              className={`rounded-full transition-all ${
+                idx === currentIndex ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50 hover:bg-white/70'
+              }`}
             />
           ))}
         </div>
@@ -293,10 +298,11 @@ function Lightbox({
             <button
               key={photo.id}
               onClick={() => setIdx(i)}
-              className={`shrink-0 w-16 h-12 rounded-lg overflow-hidden transition-all ring-2 ${i === idx
-                ? 'ring-white scale-105 opacity-100'
-                : 'ring-transparent opacity-40 hover:opacity-70'
-                }`}
+              className={`shrink-0 w-16 h-12 rounded-lg overflow-hidden transition-all ring-2 ${
+                i === idx
+                  ? 'ring-white scale-105 opacity-100'
+                  : 'ring-transparent opacity-40 hover:opacity-70'
+              }`}
             >
               <img
                 src={photo.url}
@@ -474,7 +480,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
     dragStartY.current = e.clientY
     isDragging.current = true
     currentDragY.current = 0
-      ; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
   }
 
   const handlePointerMove = (e: React.PointerEvent) => {
@@ -541,8 +547,8 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
 
         {/* ─── Single scroll container ─── */}
         <div ref={scrollRef} className="h-full overflow-y-auto overscroll-none">
-	          {/* Drag handle (desktop pull-to-dismiss) */}
-	          <div
+          {/* Drag handle (desktop pull-to-dismiss) */}
+          <div
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
@@ -552,19 +558,19 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
             <div className="w-10 h-1.5 rounded-full bg-base-content/20" />
           </div>
 
-	          {/* ─── Hero Gallery ─── */}
-	          <div className="relative" data-gallery>
-	            <SwipeGallery
-	              images={galleryImages}
-	              currentIndex={currentPhoto}
-	              onIndexChange={setCurrentPhoto}
-	              onOpenLightbox={photos.length > 0 ? () => setLightboxOpen(true) : undefined}
-	              height="h-72 sm:h-80"
-	            />
+          {/* ─── Hero Gallery ─── */}
+          <div className="relative" data-gallery>
+            <SwipeGallery
+              images={galleryImages}
+              currentIndex={currentPhoto}
+              onIndexChange={setCurrentPhoto}
+              onOpenLightbox={photos.length > 0 ? () => setLightboxOpen(true) : undefined}
+              height="h-72 sm:h-80"
+            />
 
-	            <div className="absolute top-16 right-3 z-20">
-	              <FavoriteButton apartmentId={apartment.id} />
-	            </div>
+            <div className="absolute top-16 right-3 z-20">
+              <FavoriteButton apartmentId={apartment.id} />
+            </div>
 
             {/* Title + Price overlay */}
             <div className="absolute bottom-0 inset-x-0 px-5 pb-4 pt-16 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none z-[5]">
@@ -673,10 +679,11 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
                         setCurrentPhoto(idx)
                         setLightboxOpen(true)
                       }}
-                      className={`group relative aspect-[4/3] rounded-xl overflow-hidden ring-2 transition-all ${idx === currentPhoto
-                        ? 'ring-primary shadow-lg'
-                        : 'ring-transparent hover:ring-primary/40'
-                        }`}
+                      className={`group relative aspect-[4/3] rounded-xl overflow-hidden ring-2 transition-all ${
+                        idx === currentPhoto
+                          ? 'ring-primary shadow-lg'
+                          : 'ring-transparent hover:ring-primary/40'
+                      }`}
                     >
                       <img
                         src={photo.url}

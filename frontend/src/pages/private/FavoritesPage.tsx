@@ -61,9 +61,7 @@ export default function FavoritesPage() {
           />
         </svg>
       </div>
-      <p className="text-gray-500 text-lg font-medium">
-        Todavía no tienes propiedades favoritas.
-      </p>
+      <p className="text-gray-500 text-lg font-medium">Todavía no tienes propiedades favoritas.</p>
       <p className="text-gray-400 text-sm mt-1">
         Explora pisos y marca tus preferidos para verlos aquí.
       </p>
@@ -123,9 +121,7 @@ export default function FavoritesPage() {
                       <FavoriteButton
                         apartmentId={fav.apartmentId}
                         initialIsFavorite={fav.isFavorite}
-                        onChange={(isFavorite) =>
-                          handleFavoriteChange(fav.apartmentId, isFavorite)
-                        }
+                        onChange={(isFavorite) => handleFavoriteChange(fav.apartmentId, isFavorite)}
                       />
                     </div>
                   </div>
@@ -152,10 +148,7 @@ export default function FavoritesPage() {
               )
 
               return isUnavailable ? (
-                <div
-                  key={fav.apartmentId}
-                  className="opacity-80 cursor-not-allowed"
-                >
+                <div key={fav.apartmentId} className="opacity-80 cursor-not-allowed">
                   {CardInner}
                 </div>
               ) : (
@@ -174,4 +167,3 @@ export default function FavoritesPage() {
     </div>
   )
 }
-
