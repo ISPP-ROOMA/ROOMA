@@ -1,6 +1,7 @@
 -- ==========================================
 -- 1. LIMPIEZA DE DATOS (Orden jerárquico)
 -- ==========================================
+DELETE FROM reviews;
 DELETE FROM tenant_debts;
 DELETE FROM bills;
 DELETE FROM apartment_matches;
