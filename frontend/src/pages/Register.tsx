@@ -78,10 +78,11 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setValue('role', 'TENANT', { shouldValidate: true })}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${selectedRole === 'TENANT'
-                    ? 'border-primary bg-primary/5 shadow-sm'
-                    : 'border-base-300 hover:border-base-content/20'
-                    }`}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+                    selectedRole === 'TENANT'
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-base-300 hover:border-base-content/20'
+                  }`}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -103,10 +104,11 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setValue('role', 'LANDLORD', { shouldValidate: true })}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${selectedRole === 'LANDLORD'
-                    ? 'border-primary bg-primary/5 shadow-sm'
-                    : 'border-base-300 hover:border-base-content/20'
-                    }`}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+                    selectedRole === 'LANDLORD'
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-base-300 hover:border-base-content/20'
+                  }`}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"

@@ -1,4 +1,14 @@
-﻿import { Building2, Home, LayoutList, LogOut, MoreHorizontal, Star, UserCircle, Users } from 'lucide-react'
+﻿import {
+  Building2,
+  Heart,
+  Home,
+  LayoutList,
+  LogOut,
+  MoreHorizontal,
+  Star,
+  UserCircle,
+  Users,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { logout } from '../service/auth.service'
@@ -15,8 +25,12 @@ export default function Navbar() {
 
   // Close "más" menu on route change or outside click
   useEffect(() => {
-    const t = setTimeout(() => { setMoreOpen(false) }, 0)
-    return () => { clearTimeout(t) }
+    const t = setTimeout(() => {
+      setMoreOpen(false)
+    }, 0)
+    return () => {
+      clearTimeout(t)
+    }
   }, [location.pathname])
   useEffect(() => {
     if (!moreOpen) return
@@ -44,8 +58,9 @@ export default function Navbar() {
     }
     if (role === 'TENANT') {
       return [
-        { to: '/mis-solicitudes', label: 'Solicitudes', icon: <LayoutList size={22} /> },
         { to: '/', label: 'Inicio', icon: <Home size={22} />, end: true },
+        { to: '/mis-solicitudes', label: 'Solicitudes', icon: <LayoutList size={22} /> },
+        { to: '/favorites', label: 'Favoritos', icon: <Heart size={22} /> },
         { to: '/my-reviews', label: 'Valoraciones', icon: <Star size={22} /> },
         { to: '/profile', label: 'Perfil', icon: <UserCircle size={22} /> },
       ]
@@ -83,7 +98,10 @@ export default function Navbar() {
   const desktopNav = (
     <header className="hidden md:flex sticky top-0 z-50 w-full items-center justify-between px-8 py-3 bg-base-100/80 backdrop-blur-md border-b border-base-200 shadow-sm">
       {/* Brand (Left) */}
-      <NavLink to="/" className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary select-none z-10 w-32">
+      <NavLink
+        to="/"
+        className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary select-none z-10 w-32"
+      >
         <img src="/Logo Rooma.jpeg" alt="Rooma" className="h-8 w-8 rounded-xl object-cover" />
         Rooma
       </NavLink>
@@ -136,12 +154,12 @@ export default function Navbar() {
               <span className={`transition-transform duration-200 ${isActive ? 'scale-110' : ''}`}>
                 {item.icon}
               </span>
-              <span className={`text-[10px] font-semibold ${isActive ? 'text-primary' : 'text-base-content/40'}`}>
+              <span
+                className={`text-[10px] font-semibold ${isActive ? 'text-primary' : 'text-base-content/40'}`}
+              >
                 {item.label}
               </span>
-              {isActive && (
-                <span className="w-1 h-1 rounded-full bg-primary block" />
-              )}
+              {isActive && <span className="w-1 h-1 rounded-full bg-primary block" />}
             </>
           )}
         </NavLink>
@@ -171,7 +189,10 @@ export default function Navbar() {
                 <>
                   <div className="border-t border-base-200 my-1" />
                   <button
-                    onClick={() => { setMoreOpen(false); handleLogout() }}
+                    onClick={() => {
+                      setMoreOpen(false)
+                      handleLogout()
+                    }}
                     className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-error/80 hover:bg-error/5 hover:text-error transition-colors w-full text-left"
                   >
                     <LogOut size={18} />
@@ -187,7 +208,9 @@ export default function Navbar() {
           >
             <MoreHorizontal size={22} />
             <span className="text-[10px] font-semibold">Más</span>
-            {isMoreActive && !moreOpen && <span className="w-1 h-1 rounded-full bg-primary block" />}
+            {isMoreActive && !moreOpen && (
+              <span className="w-1 h-1 rounded-full bg-primary block" />
+            )}
           </button>
         </div>
       )}

@@ -118,7 +118,8 @@ export default function LandlordMatchDetailPage() {
   const apartmentLocation = details.apartment.ubication ?? 'Ubicación no disponible'
   const tenantEmail = details.tenant?.email ?? 'Email no disponible'
   const tenantProfession = details.tenant?.profession ?? 'Profesión no disponible'
-  const tenantProfileImage = (details.tenant as { profileImageUrl?: string } | undefined)?.profileImageUrl
+  const tenantProfileImage = (details.tenant as { profileImageUrl?: string } | undefined)
+    ?.profileImageUrl
   const tenantAvatar = tenantProfileImage ?? FALLBACK_AVATAR
 
   return (
@@ -152,12 +153,18 @@ export default function LandlordMatchDetailPage() {
       <section className="px-4 sm:px-8">
         <article className="overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm">
           <div className="relative h-72 w-full">
-            <img src={coverImage} alt={details.apartment.title} className="h-full w-full object-cover" />
+            <img
+              src={coverImage}
+              alt={details.apartment.title}
+              className="h-full w-full object-cover"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
 
             <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
               <div className="flex items-end justify-between gap-3">
-                <h2 className="text-2xl font-bold leading-tight line-clamp-2">{details.apartment.title}</h2>
+                <h2 className="text-2xl font-bold leading-tight line-clamp-2">
+                  {details.apartment.title}
+                </h2>
                 <span className="shrink-0 rounded-lg bg-black/35 px-2.5 py-1 text-lg font-semibold backdrop-blur-sm">
                   {apartmentPrice}
                 </span>
@@ -233,9 +240,7 @@ export default function LandlordMatchDetailPage() {
               </button>
             </div>
 
-            {inviteError && (
-              <p className="mt-3 text-sm font-medium text-red-600">{inviteError}</p>
-            )}
+            {inviteError && <p className="mt-3 text-sm font-medium text-red-600">{inviteError}</p>}
           </div>
         </article>
       </section>

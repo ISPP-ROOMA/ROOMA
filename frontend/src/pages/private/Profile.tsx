@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getUserProfile, deleteUser } from '../../service/users.service'
 import type { User } from '../../service/users.service'
-import { getAllApartments, type ApartmentDTO, type ApartmentMemberDTO } from '../../service/apartment.service'
+import {
+  getAllApartments,
+  type ApartmentDTO,
+  type ApartmentMemberDTO,
+} from '../../service/apartment.service'
 import { useAuthStore } from '../../store/authStore'
 
 const ROLE_LABELS: Record<string, string> = {
@@ -49,9 +53,12 @@ export default function Profile() {
 
   if (!userData) return <p className="text-center mt-10 text-red-500">Error al cargar el perfil</p>
 
-  const initial = userData.name && userData.name.length > 0
-    ? userData.name[0].toUpperCase()
-    : (userData.email ? userData.email[0].toUpperCase() : '?')
+  const initial =
+    userData.name && userData.name.length > 0
+      ? userData.name[0].toUpperCase()
+      : userData.email
+        ? userData.email[0].toUpperCase()
+        : '?'
   const roleLabel = ROLE_LABELS[userData.role] || userData.role
 
   const handleDeleteAccount = async () => {
@@ -74,7 +81,11 @@ export default function Profile() {
             <div className="avatar">
               <div className="w-24 h-24 rounded-full bg-primary text-white flex items-center justify-center text-3xl font-bold overflow-hidden">
                 {userData.profilePic ? (
-                  <img src={userData.profilePic} alt="Perfil" className="object-cover w-full h-full" />
+                  <img
+                    src={userData.profilePic}
+                    alt="Perfil"
+                    className="object-cover w-full h-full"
+                  />
                 ) : (
                   initial
                 )}
@@ -98,7 +109,7 @@ export default function Profile() {
               <button
                 className="btn btn-sm btn-outline btn-error w-full"
                 onClick={() => {
-                  ; (document.getElementById('delete_modal') as HTMLDialogElement).showModal()
+                  ;(document.getElementById('delete_modal') as HTMLDialogElement).showModal()
                 }}
               >
                 Eliminar Cuenta
@@ -112,9 +123,13 @@ export default function Profile() {
               <p className="font-medium">{userData.phone || 'No especificado'}</p>
             </div>
             <div>
-              <span className="text-xs text-gray-500 font-semibold uppercase">Fecha de Nacimiento</span>
+              <span className="text-xs text-gray-500 font-semibold uppercase">
+                Fecha de Nacimiento
+              </span>
               <p className="font-medium">
-                {userData.birthDate ? new Date(userData.birthDate).toLocaleDateString() : 'No especificada'}
+                {userData.birthDate
+                  ? new Date(userData.birthDate).toLocaleDateString()
+                  : 'No especificada'}
               </p>
             </div>
             <div>
@@ -124,7 +139,11 @@ export default function Profile() {
             <div>
               <span className="text-xs text-gray-500 font-semibold uppercase">Fumador</span>
               <p className="font-medium">
-                {userData.smoker === true ? 'Sí' : userData.smoker === false ? 'No' : 'No especificado'}
+                {userData.smoker === true
+                  ? 'Sí'
+                  : userData.smoker === false
+                    ? 'No'
+                    : 'No especificado'}
               </p>
             </div>
             <div>
@@ -134,7 +153,9 @@ export default function Profile() {
             <div>
               <span className="text-xs text-gray-500 font-semibold uppercase">Fecha de Alta</span>
               <p className="font-medium">
-                {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Desconocida'}
+                {userData.createdAt
+                  ? new Date(userData.createdAt).toLocaleDateString()
+                  : 'Desconocida'}
               </p>
             </div>
           </div>
@@ -149,7 +170,9 @@ export default function Profile() {
               )}
               {userData.schedule && (
                 <div>
-                  <span className="text-xs text-gray-500 font-semibold uppercase">Horario / Rutina</span>
+                  <span className="text-xs text-gray-500 font-semibold uppercase">
+                    Horario / Rutina
+                  </span>
                   <p className="font-medium">{userData.schedule}</p>
                 </div>
               )}
@@ -220,8 +243,8 @@ export default function Profile() {
         <div className="modal-box">
           <h3 className="font-bold text-lg text-error">Relevante: ¡Acción irreversible!</h3>
           <p className="py-4">
-            ¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer y perderás
-            todo el acceso y tus datos asociados.
+            ¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer y
+            perderás todo el acceso y tus datos asociados.
           </p>
           <div className="modal-action">
             <form method="dialog" className="flex gap-2">

@@ -3,7 +3,11 @@ import { CalendarDays, Loader2, MessageCircle, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
-import type { ApartmentDTO, ApartmentMatchDTO, MatchStatus } from '../../../service/apartment.service'
+import type {
+  ApartmentDTO,
+  ApartmentMatchDTO,
+  MatchStatus,
+} from '../../../service/apartment.service'
 import {
   cancelApartmentMatch,
   getMatchesForCandidate,
@@ -75,7 +79,6 @@ async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatc
   return enriched
 }
 
-
 export default function TenantRequestsPage() {
   const { userId } = useAuthStore()
   const navigate = useNavigate()
@@ -87,7 +90,9 @@ export default function TenantRequestsPage() {
   const [error, setError] = useState<string | null>(null)
   const [cancellingId, setCancellingId] = useState<number | null>(null)
   const [invitationActionId, setInvitationActionId] = useState<number | null>(null)
-  const [selectedApartment, setSelectedApartment] = useState<(ApartmentDTO & { imageUrl: string }) | null>(null)
+  const [selectedApartment, setSelectedApartment] = useState<
+    (ApartmentDTO & { imageUrl: string }) | null
+  >(null)
   const [modalLoading, setModalLoading] = useState<number | null>(null)
 
   const fetchData = useCallback(async () => {
@@ -204,8 +209,9 @@ export default function TenantRequestsPage() {
       <section className="px-4 sm:px-8">
         <div className="flex rounded-xl bg-[#DDDBCB] p-1">
           <button
-            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${activeTab === 'pending' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
-              }`}
+            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${
+              activeTab === 'pending' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
+            }`}
             onClick={() => setActiveTab('pending')}
           >
             Pendientes
@@ -216,8 +222,9 @@ export default function TenantRequestsPage() {
             )}
           </button>
           <button
-            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${activeTab === 'match' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
-              }`}
+            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${
+              activeTab === 'match' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
+            }`}
             onClick={() => setActiveTab('match')}
           >
             Match
@@ -259,17 +266,16 @@ export default function TenantRequestsPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {visibleItems.map((item) => {
-              const isCancelled =
-                item.matchStatus === 'CANCELED' || item.matchStatus === 'REJECTED'
-              const isMatch =
-                item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED'
+              const isCancelled = item.matchStatus === 'CANCELED' || item.matchStatus === 'REJECTED'
+              const isMatch = item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED'
 
               return (
                 <article
                   key={item.matchId}
                   onClick={(e) => void handleCardClick(item, e)}
-                  className={`overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm transition-opacity cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-transform ${isCancelled ? 'opacity-60' : ''
-                    }`}
+                  className={`overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm transition-opacity cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-transform ${
+                    isCancelled ? 'opacity-60' : ''
+                  }`}
                 >
                   {/* Image */}
                   <div className={`relative h-44 w-full ${isCancelled ? 'grayscale' : ''}`}>
@@ -312,8 +318,9 @@ export default function TenantRequestsPage() {
                         {item.title}
                       </h2>
                       <span
-                        className={`shrink-0 text-lg font-semibold ${isCancelled ? 'text-[#050505]/50' : 'text-[#008080]'
-                          }`}
+                        className={`shrink-0 text-lg font-semibold ${
+                          isCancelled ? 'text-[#050505]/50' : 'text-[#008080]'
+                        }`}
                       >
                         {item.price}
                       </span>
@@ -324,7 +331,9 @@ export default function TenantRequestsPage() {
                     <div className="my-3 h-px w-full bg-[#DDDBCB]" />
 
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.matchStatus)}`}>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.matchStatus)}`}
+                      >
                         {statusLabel(item.matchStatus)}
                       </span>
                       {item.matchStatus === 'MATCH' && (

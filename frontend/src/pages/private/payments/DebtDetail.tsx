@@ -12,7 +12,11 @@ const fmtDate = (v?: string) => {
   if (!v) return '—'
   const d = new Date(v)
   if (Number.isNaN(d.getTime())) return v
-  return new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }).format(d)
+  return new Intl.DateTimeFormat('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(d)
 }
 
 function daysUntil(dateStr?: string): number | null {
@@ -57,7 +61,7 @@ export default function DebtDetail() {
   const showToast = toastCtx?.showToast ?? (() => {})
 
   const [debt, setDebt] = useState<TenantDebtDTO | null>(
-    (location.state as { debt?: TenantDebtDTO } | null)?.debt ?? null,
+    (location.state as { debt?: TenantDebtDTO } | null)?.debt ?? null
   )
   const [isLoading, setIsLoading] = useState(!debt)
   const [isPaying, setIsPaying] = useState(false)
@@ -107,7 +111,10 @@ export default function DebtDetail() {
     return (
       <div className="min-h-dvh bg-[#F7F4EB] flex flex-col items-center justify-center gap-4">
         <p className="text-gray-500">No se encontró la deuda.</p>
-        <button onClick={() => navigate('/invoices')} className="text-teal-700 font-semibold text-sm">
+        <button
+          onClick={() => navigate('/invoices')}
+          className="text-teal-700 font-semibold text-sm"
+        >
           ← Volver a Mis Pagos
         </button>
       </div>
@@ -129,8 +136,19 @@ export default function DebtDetail() {
             onClick={() => navigate('/invoices')}
             className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-gray-700"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
 
@@ -151,7 +169,9 @@ export default function DebtDetail() {
 
         {/* Amount hero */}
         <div className="flex flex-col items-center">
-          <span className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl ${icon.bg} mb-3`}>
+          <span
+            className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl ${icon.bg} mb-3`}
+          >
             {icon.emoji}
           </span>
           <p className="text-4xl font-extrabold text-gray-900">
@@ -166,23 +186,42 @@ export default function DebtDetail() {
           <div className="divide-y divide-gray-100">
             <DetailRow label="Concepto" value={debt.bill?.reference ?? '—'} />
             <DetailRow label="Fecha de vencimiento" value={fmtDate(debt.bill?.duDate)} />
-            <DetailRow label="Importe total factura" value={`${fmtCurrency(Number(debt.bill?.totalAmount ?? 0))} €`} />
-            <DetailRow label="Tu parte" value={`${fmtCurrency(Number(debt.amount ?? 0))} €`} highlight />
+            <DetailRow
+              label="Importe total factura"
+              value={`${fmtCurrency(Number(debt.bill?.totalAmount ?? 0))} €`}
+            />
+            <DetailRow
+              label="Tu parte"
+              value={`${fmtCurrency(Number(debt.amount ?? 0))} €`}
+              highlight
+            />
             <DetailRow
               label="Estado"
               value={isPending ? 'Pendiente de pago' : 'Pagado'}
-              valueClass={isPending ? 'text-orange-500 font-semibold' : 'text-green-600 font-semibold'}
+              valueClass={
+                isPending ? 'text-orange-500 font-semibold' : 'text-green-600 font-semibold'
+              }
             />
           </div>
         </div>
 
         {/* Note */}
         <div className="bg-amber-50/70 rounded-2xl px-4 py-3 flex gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 text-amber-500 shrink-0 mt-0.5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+              clipRule="evenodd"
+            />
           </svg>
           <p className="text-xs text-amber-800 leading-relaxed">
-            Este importe corresponde a tu parte proporcional de la factura total. Al pulsar "Pagar ahora" se registrará como pagado.
+            Este importe corresponde a tu parte proporcional de la factura total. Al pulsar "Pagar
+            ahora" se registrará como pagado.
           </p>
         </div>
       </main>
@@ -198,9 +237,25 @@ export default function DebtDetail() {
             >
               {isPaying ? (
                 <>
-                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  <svg
+                    className="animate-spin h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
                   </svg>
                   Procesando…
                 </>
@@ -229,9 +284,13 @@ function DetailRow({
   valueClass?: string
 }) {
   return (
-    <div className={`flex items-center justify-between px-5 py-3.5 ${highlight ? 'bg-teal-50/50' : ''}`}>
+    <div
+      className={`flex items-center justify-between px-5 py-3.5 ${highlight ? 'bg-teal-50/50' : ''}`}
+    >
       <span className="text-sm text-gray-500">{label}</span>
-      <span className={`text-sm font-medium text-right ${valueClass ?? 'text-gray-900'}`}>{value}</span>
+      <span className={`text-sm font-medium text-right ${valueClass ?? 'text-gray-900'}`}>
+        {value}
+      </span>
     </div>
   )
 }

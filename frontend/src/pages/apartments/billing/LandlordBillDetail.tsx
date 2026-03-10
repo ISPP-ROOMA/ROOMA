@@ -98,23 +98,38 @@ export default function LandlordBillDetail() {
   return (
     <div className="min-h-screen bg-[#F7F4EB]">
       {/* ── header ─────────────────────────────────── */}
-      <div className={`px-5 pt-12 pb-10 rounded-b-3xl shadow-lg ${
-        isPaid
-          ? 'bg-gradient-to-br from-emerald-600 to-emerald-500'
-          : 'bg-gradient-to-br from-teal-700 to-teal-600'
-      } text-white`}>
+      <div
+        className={`px-5 pt-12 pb-10 rounded-b-3xl shadow-lg ${
+          isPaid
+            ? 'bg-gradient-to-br from-emerald-600 to-emerald-500'
+            : 'bg-gradient-to-br from-teal-700 to-teal-600'
+        } text-white`}
+      >
         <button
           onClick={() => navigate(`/apartments/${apartmentId}/bills`)}
           className="mb-4 flex items-center gap-1 text-white/70 hover:text-white transition text-sm"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           Facturas
         </button>
 
         <div className="flex items-center gap-3">
-          <div className={`w-14 h-14 ${icon.bg} rounded-2xl flex items-center justify-center text-3xl shadow-sm`}>
+          <div
+            className={`w-14 h-14 ${icon.bg} rounded-2xl flex items-center justify-center text-3xl shadow-sm`}
+          >
             {icon.emoji}
           </div>
           <div>
@@ -128,9 +143,11 @@ export default function LandlordBillDetail() {
             <p className="text-xs text-white/60 uppercase tracking-wide">Importe total</p>
             <p className="text-3xl font-extrabold">{fmtCurrency(bill.totalAmount)} €</p>
           </div>
-          <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-            isPaid ? 'bg-white/25 text-white' : 'bg-white/20 text-white'
-          }`}>
+          <span
+            className={`text-xs font-bold px-3 py-1 rounded-full ${
+              isPaid ? 'bg-white/25 text-white' : 'bg-white/20 text-white'
+            }`}
+          >
             {isPaid ? '✓ Pagada' : 'Pendiente'}
           </span>
         </div>
@@ -211,13 +228,17 @@ function DebtRow({ debt }: { debt: TenantDebtInBill }) {
   const initials = userInitials(email)
 
   return (
-    <div className={`flex items-center gap-3 bg-white rounded-xl p-3.5 shadow-sm ${
-      isPaid ? 'opacity-80' : ''
-    }`}>
+    <div
+      className={`flex items-center gap-3 bg-white rounded-xl p-3.5 shadow-sm ${
+        isPaid ? 'opacity-80' : ''
+      }`}
+    >
       {/* avatar */}
-      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
-        isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
-      }`}>
+      <div
+        className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+          isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+        }`}
+      >
         {initials}
       </div>
 

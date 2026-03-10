@@ -116,7 +116,7 @@ export default function NewBill() {
               /* fallback */
             }
             return { member: m, user, selected: true, customAmount: '' }
-          }),
+          })
         )
 
         setTenants(rows)
@@ -139,7 +139,7 @@ export default function NewBill() {
       tenants
         .filter((t) => !t.selected)
         .reduce((acc, t) => acc + (parseFloat(t.customAmount) || 0), 0),
-    [tenants],
+    [tenants]
   )
 
   const autoPool = Math.max(0, total - manualSum)
@@ -157,17 +157,15 @@ export default function NewBill() {
 
   const locationLabel = apartment?.ubication
     ? apartment.ubication.split(',')[0]?.trim()
-    : apartment?.title ?? ''
+    : (apartment?.title ?? '')
 
   /* ── handlers ──────────────────────────────────────────── */
 
   const toggleTenant = (memberId: number) => {
     setTenants((prev) =>
       prev.map((t) =>
-        t.member.id === memberId
-          ? { ...t, selected: !t.selected, customAmount: '' }
-          : t,
-      ),
+        t.member.id === memberId ? { ...t, selected: !t.selected, customAmount: '' } : t
+      )
     )
   }
 
@@ -175,7 +173,7 @@ export default function NewBill() {
     const num = parseFloat(value)
     if (value !== '' && !Number.isNaN(num) && num < 0) return
     setTenants((prev) =>
-      prev.map((t) => (t.member.id === memberId ? { ...t, customAmount: value } : t)),
+      prev.map((t) => (t.member.id === memberId ? { ...t, customAmount: value } : t))
     )
   }
 
@@ -292,7 +290,12 @@ export default function NewBill() {
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </div>
         </div>
@@ -395,9 +398,7 @@ export default function NewBill() {
                 const displayName = getDisplayName(t.user, t.member.id)
                 const initials = getInitials(displayName)
 
-                const effectiveAmount = t.selected
-                  ? autoShare
-                  : parseFloat(t.customAmount) || 0
+                const effectiveAmount = t.selected ? autoShare : parseFloat(t.customAmount) || 0
 
                 const otherManual = tenants
                   .filter((o) => !o.selected && o.member.id !== t.member.id)

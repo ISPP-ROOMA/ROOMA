@@ -97,7 +97,13 @@ export const refreshToken = async (): Promise<AuthResponse | undefined> => {
     try {
       const response = await api.post<AuthResponse>('/auth/refresh', { deviceId: getDeviceId() })
       markSessionHint()
-      useAuthStore.getState().login({ token: response.data.token, role: response.data.role, userId: response.data.userId })
+      useAuthStore
+        .getState()
+        .login({
+          token: response.data.token,
+          role: response.data.role,
+          userId: response.data.userId,
+        })
       return response.data
     } catch (error) {
       console.error(error)

@@ -68,13 +68,10 @@ export const payDebt = async (debtId: number): Promise<TenantDebtDTO | null> => 
 
 export const createBill = async (
   apartmentId: number,
-  payload: CreateBillPayload,
+  payload: CreateBillPayload
 ): Promise<BillDTO | null> => {
   try {
-    const response = await api.post<BillDTO>(
-      `/bills/apartment/${apartmentId}`,
-      payload,
-    )
+    const response = await api.post<BillDTO>(`/bills/apartment/${apartmentId}`, payload)
     return response.data
   } catch (error) {
     console.error('Error creating bill:', error)
@@ -82,13 +79,9 @@ export const createBill = async (
   }
 }
 
-export const getApartmentMembers = async (
-  apartmentId: number,
-): Promise<ApartmentMemberDTO[]> => {
+export const getApartmentMembers = async (apartmentId: number): Promise<ApartmentMemberDTO[]> => {
   try {
-    const response = await api.get<ApartmentMemberDTO[]>(
-      `/apartments/${apartmentId}/members`,
-    )
+    const response = await api.get<ApartmentMemberDTO[]>(`/apartments/${apartmentId}/members`)
     return response.data
   } catch (error) {
     console.error('Error fetching apartment members:', error)
@@ -96,9 +89,7 @@ export const getApartmentMembers = async (
   }
 }
 
-export const getApartmentBills = async (
-  apartmentId: number,
-): Promise<BillDTO[]> => {
+export const getApartmentBills = async (apartmentId: number): Promise<BillDTO[]> => {
   try {
     const response = await api.get<BillDTO[]>(`/bills/apartment/${apartmentId}`)
     return response.data
