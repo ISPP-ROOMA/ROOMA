@@ -1,4 +1,14 @@
-﻿import { Building2, Home, LayoutList, LogOut, MoreHorizontal, Star, UserCircle, Users } from 'lucide-react'
+﻿import {
+  Building2,
+  Heart,
+  Home,
+  LayoutList,
+  LogOut,
+  MoreHorizontal,
+  Star,
+  UserCircle,
+  Users,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { logout } from '../service/auth.service'
@@ -44,8 +54,9 @@ export default function Navbar() {
     }
     if (role === 'TENANT') {
       return [
-        { to: '/mis-solicitudes', label: 'Solicitudes', icon: <LayoutList size={22} /> },
         { to: '/', label: 'Inicio', icon: <Home size={22} />, end: true },
+        { to: '/mis-solicitudes', label: 'Solicitudes', icon: <LayoutList size={22} /> },
+        { to: '/favorites', label: 'Favoritos', icon: <Heart size={22} /> },
         { to: '/my-reviews', label: 'Valoraciones', icon: <Star size={22} /> },
         { to: '/profile', label: 'Perfil', icon: <UserCircle size={22} /> },
       ]

@@ -17,6 +17,7 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import LeaveReview from './pages/private/LeaveReview'
 import MyHome from './pages/private/MyHome'
+import FavoritesPage from './pages/private/FavoritesPage'
 import DebtDetail from './pages/private/payments/DebtDetail'
 import Invoices from './pages/private/payments/Invoices'
 import PaymentSuccess from './pages/private/payments/PaymentSuccess'
@@ -358,6 +359,14 @@ function App() {
                   element={
                     <PrivateRoute allowedRoles={['TENANT']}>
                       <MyHome />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/favorites"
+                  element={
+                    <PrivateRoute allowedRoles={['TENANT']}>
+                      <FavoritesPage />
                     </PrivateRoute>
                   }
                 />
