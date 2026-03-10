@@ -17,6 +17,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ApartmentDTO, ApartmentPhotoDTO, UserDTO } from '../service/apartment.service'
 import { getApartmentPhotos } from '../service/apartment.service'
 import { api } from '../service/api'
+import FavoriteButton from './FavoriteButton'
 
 interface ApartmentDetailModalProps {
   apartment: ApartmentDTO
@@ -540,8 +541,8 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
 
         {/* ─── Single scroll container ─── */}
         <div ref={scrollRef} className="h-full overflow-y-auto overscroll-none">
-          {/* Drag handle (desktop pull-to-dismiss) */}
-          <div
+	          {/* Drag handle (desktop pull-to-dismiss) */}
+	          <div
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
@@ -551,15 +552,19 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
             <div className="w-10 h-1.5 rounded-full bg-base-content/20" />
           </div>
 
-          {/* ─── Hero Gallery ─── */}
-          <div className="relative" data-gallery>
-            <SwipeGallery
-              images={galleryImages}
-              currentIndex={currentPhoto}
-              onIndexChange={setCurrentPhoto}
-              onOpenLightbox={photos.length > 0 ? () => setLightboxOpen(true) : undefined}
-              height="h-72 sm:h-80"
-            />
+	          {/* ─── Hero Gallery ─── */}
+	          <div className="relative" data-gallery>
+	            <SwipeGallery
+	              images={galleryImages}
+	              currentIndex={currentPhoto}
+	              onIndexChange={setCurrentPhoto}
+	              onOpenLightbox={photos.length > 0 ? () => setLightboxOpen(true) : undefined}
+	              height="h-72 sm:h-80"
+	            />
+
+	            <div className="absolute top-4 right-4 z-20">
+	              <FavoriteButton apartmentId={apartment.id} />
+	            </div>
 
             {/* Title + Price overlay */}
             <div className="absolute bottom-0 inset-x-0 px-5 pb-4 pt-16 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none z-[5]">

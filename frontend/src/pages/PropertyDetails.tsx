@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import FavoriteButton from '../components/FavoriteButton'
 
 type Occupant = {
   name: string
@@ -107,22 +108,25 @@ export default function PropertyDetails() {
           Volver
         </Link>
         <h1 className="text-lg font-semibold text-center flex-1">Detalle de inmueble</h1>
-        <button onClick={handleShare} className="btn btn-ghost btn-sm">
-          <span className="sr-only">Compartir</span>
-          <svg
-            viewBox="0 0 24 24"
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M8 12h8m-8 0l3-3m-3 3l3 3M16 6a2 2 0 110 4 2 2 0 010-4zM16 14a2 2 0 110 4 2 2 0 010-4z"
-            />
-          </svg>
-        </button>
+        <div className="flex items-center gap-2">
+          {id ? <FavoriteButton apartmentId={Number(id)} /> : null}
+          <button onClick={handleShare} className="btn btn-ghost btn-sm">
+            <span className="sr-only">Compartir</span>
+            <svg
+              viewBox="0 0 24 24"
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8 12h8m-8 0l3-3m-3 3l3 3M16 6a2 2 0 110 4 2 2 0 010-4zM16 14a2 2 0 110 4 2 2 0 010-4z"
+              />
+            </svg>
+          </button>
+        </div>
       </header>
 
       <div className="relative mb-6">
