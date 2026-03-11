@@ -1,4 +1,7 @@
 spring:
+  config:
+    import: optional:file:../.env[.properties],optional:file:.env[.properties]
+
   application:
     name: demo
 
@@ -8,7 +11,7 @@ spring:
       max-request-size: ${MAX_REQUEST_SIZE:10MB}
       
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/test}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://127.0.0.1:5432/test}
     username: ${SPRING_DATASOURCE_USERNAME:user}
     password: ${SPRING_DATASOURCE_PASSWORD:user}
     driver-class-name: org.postgresql.Driver

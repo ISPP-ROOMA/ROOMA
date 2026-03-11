@@ -17,6 +17,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ApartmentDTO, ApartmentPhotoDTO, UserDTO } from '../service/apartment.service'
 import { getApartmentPhotos } from '../service/apartment.service'
 import { api } from '../service/api'
+import { getFavoriteApartmentIds } from '../service/favorites.service'
+import { useAuthStore } from '../store/authStore'
 import FavoriteButton from './FavoriteButton'
 
 interface ApartmentDetailModalProps {
@@ -328,10 +330,13 @@ function Lightbox({
    Main Modal
    ─────────────────────────────────────────────────────────────── */
 export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDetailModalProps) {
+  const { token } = useAuthStore()
   const [roommates, setRoommates] = useState<UserDTO[]>([])
   const [photos, setPhotos] = useState<ApartmentPhotoDTO[]>([])
   const [currentPhoto, setCurrentPhoto] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [favoriteApartmentId, setFavoriteApartmentId] = useState<number | null>(null)
+  const initialIsFavorite = Boolean(token && favoriteApartmentId === apartment.id)
 
   // Animation controls
   const modalControls = useAnimation()
@@ -375,6 +380,33 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
     }
     fetchPhotos()
   }, [apartment.id])
+
+  useEffect(() => {
+    if (!token || !apartment.id) {
+      return
+    }
+
+    let cancelled = false
+
+    const loadFavoriteState = async () => {
+      try {
+        const favoriteIds = await getFavoriteApartmentIds([apartment.id])
+        if (!cancelled) {
+          setFavoriteApartmentId(favoriteIds.includes(apartment.id) ? apartment.id : null)
+        }
+      } catch {
+        if (!cancelled) {
+          setFavoriteApartmentId(null)
+        }
+      }
+    }
+
+    void loadFavoriteState()
+
+    return () => {
+      cancelled = true
+    }
+  }, [apartment.id, token])
 
   // ── Animations ─────────────────────────────────────────────────
 
@@ -576,7 +608,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
             />
 
             <div className="absolute top-3 right-3 z-20">
-              <FavoriteButton apartmentId={apartment.id} />
+              <FavoriteButton apartmentId={apartment.id} initialIsFavorite={initialIsFavorite} />
             </div>
 
             {/* Title + Price overlay */}
@@ -844,4 +876,3 @@ function RoommateTag({
     </div>
   )
 }
-

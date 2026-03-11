@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import FavoriteButton from '../components/FavoriteButton'
+import { getFavoriteApartmentIds } from '../service/favorites.service'
+import { useAuthStore } from '../store/authStore'
 
 type Occupant = {
   name: string
@@ -44,6 +46,8 @@ const fallbackProperty: PropertyDetails = {
 
 export default function PropertyDetails() {
   const { id } = useParams()
+  const { token } = useAuthStore()
+  const apartmentId = Number(id)
 
   const property = useMemo<PropertyDetails>(() => {
     if (id === fallbackProperty.id) {
@@ -67,10 +71,42 @@ export default function PropertyDetails() {
 
   const [isLoading] = useState(false)
   const [hasError] = useState(false)
+  const [favoriteApartmentId, setFavoriteApartmentId] = useState<number | null>(null)
   const [isPrivacyUnlocked] = useState(false)
   const images = property.images ?? []
   const occupants = property.occupants ?? []
   const amenities = property.amenities ?? []
+  const initialIsFavorite = Boolean(
+    token && id && !Number.isNaN(apartmentId) && favoriteApartmentId === apartmentId
+  )
+
+  useEffect(() => {
+    const parsedApartmentId = Number(id)
+    if (!id || !token || Number.isNaN(parsedApartmentId)) {
+      return
+    }
+
+    let cancelled = false
+
+    const loadFavoriteState = async () => {
+      try {
+        const favoriteIds = await getFavoriteApartmentIds([parsedApartmentId])
+        if (!cancelled) {
+          setFavoriteApartmentId(favoriteIds.includes(parsedApartmentId) ? parsedApartmentId : null)
+        }
+      } catch {
+        if (!cancelled) {
+          setFavoriteApartmentId(null)
+        }
+      }
+    }
+
+    void loadFavoriteState()
+
+    return () => {
+      cancelled = true
+    }
+  }, [id, token])
 
   const handleShare = () => {
     window.alert('Compartir (demo)')
@@ -109,7 +145,9 @@ export default function PropertyDetails() {
         </Link>
         <h1 className="text-lg font-semibold text-center flex-1">Detalle de inmueble</h1>
         <div className="flex items-center gap-2">
-          {id ? <FavoriteButton apartmentId={Number(id)} /> : null}
+          {id ? (
+            <FavoriteButton apartmentId={apartmentId} initialIsFavorite={initialIsFavorite} />
+          ) : null}
           <button onClick={handleShare} className="btn btn-ghost btn-sm">
             <span className="sr-only">Compartir</span>
             <svg
