@@ -138,7 +138,7 @@ export default function ApartmentBills() {
       </div>
 
       {/* ── tab switcher ───────────────────────────── */}
-      <div className="flex gap-2 px-5 -mt-4">
+      <div className="flex gap-2 px-5 mt-4">
         {(['pending', 'paid'] as Tab[]).map((t) => {
           const active = tab === t
           const count = t === 'pending' ? pending.length : paid.length
@@ -227,7 +227,7 @@ export default function ApartmentBills() {
       </div>
 
       {/* ── FAB: new bill ─────────────────────────── */}
-      <div className="fixed bottom-6 right-6">
+      <div className="fixed bottom-24 md:bottom-6 right-6 z-50">
         <button
           onClick={() => navigate(`/apartments/${id}/new-bill`)}
           className="bg-teal-600 hover:bg-teal-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition"
