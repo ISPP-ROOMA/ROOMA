@@ -155,7 +155,7 @@ export default function DebtDetail() {
             {icon.emoji}
           </span>
           <p className="text-4xl font-extrabold text-gray-900">
-            {fmtCurrency(Number(debt.amount ?? 0))}{' '}
+            {fmtCurrency(Number(debt.amount))}{' '}
             <span className="text-xl font-medium text-gray-400">â‚¬</span>
           </p>
           <p className="text-sm text-gray-500 mt-1">{debt.bill?.reference ?? 'â€”'}</p>
@@ -167,7 +167,7 @@ export default function DebtDetail() {
             <DetailRow label="Concepto" value={debt.bill?.reference ?? 'â€”'} />
             <DetailRow label="Fecha de vencimiento" value={fmtDate(debt.bill?.duDate)} />
             <DetailRow label="Importe total factura" value={`${fmtCurrency(Number(debt.bill?.totalAmount ?? 0))} â‚¬`} />
-            <DetailRow label="Tu parte" value={`${fmtCurrency(Number(debt.amount ?? 0))} â‚¬`} highlight />
+            <DetailRow label="Tu parte" value={`${fmtCurrency(Number(debt.amount))} â‚¬`} highlight />
             <DetailRow
               label="Estado"
               value={isPending ? 'Pendiente de pago' : 'Pagado'}
@@ -205,7 +205,7 @@ export default function DebtDetail() {
                   Procesandoâ€¦
                 </>
               ) : (
-                <>Pagar {fmtCurrency(Number(debt.amount ?? 0))} â‚¬</>
+                <>Pagar {fmtCurrency(Number(debt.amount))} â‚¬</>
               )}
             </button>
           </div>
