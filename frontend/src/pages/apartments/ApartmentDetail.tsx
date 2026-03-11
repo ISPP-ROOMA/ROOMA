@@ -56,19 +56,36 @@ export default function ApartmentDetail() {
     return (
       <div className="min-h-dvh bg-base-200/50 flex flex-col items-center justify-center gap-4">
         <div className="w-20 h-20 rounded-full bg-base-200 flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-10 w-10 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
         </div>
         <p className="text-gray-500 text-lg font-medium">Inmueble no encontrado</p>
-        <Link to="/apartments/my" className="text-teal-600 hover:text-teal-700 font-semibold text-sm transition">
+        <Link
+          to="/apartments/my"
+          className="text-teal-600 hover:text-teal-700 font-semibold text-sm transition"
+        >
           Volver a Mis Inmuebles
         </Link>
       </div>
     )
   }
 
-  const stateInfo = STATE_CONFIG[apartment.state] ?? { label: apartment.state, dotClass: 'bg-gray-400' }
+  const stateInfo = STATE_CONFIG[apartment.state] ?? {
+    label: apartment.state,
+    dotClass: 'bg-gray-400',
+  }
 
   const coverSrc = apartment.coverImageUrl
     ? apartment.coverImageUrl.startsWith('http')
@@ -81,7 +98,6 @@ export default function ApartmentDetail() {
       {/* Header */}
       <header className={HEADER_CLASS}>
         <div className="max-w-4xl mx-auto flex items-center gap-3">
-          
           <div className="min-w-0">
             <h1 className="text-3xl font-bold text-base-content truncate">{apartment.title}</h1>
             <p className="text-gray-400 mt-1 text-sm">Detalle del inmueble</p>
@@ -95,11 +111,27 @@ export default function ApartmentDetail() {
           {/* Cover image */}
           <div className="relative h-56 sm:h-72 w-full bg-gray-100">
             {coverSrc ? (
-              <img src={coverSrc} alt={apartment.title} className="h-full w-full object-cover" loading="lazy" />
+              <img
+                src={coverSrc}
+                alt={apartment.title}
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
             ) : (
               <div className="h-full w-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 11.5L12 4l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-8.5z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-20 w-20 text-gray-300"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M3 11.5L12 4l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-8.5z"
+                  />
                 </svg>
               </div>
             )}
@@ -128,11 +160,15 @@ export default function ApartmentDetail() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
               <div className="bg-base-200 rounded-2xl p-4">
                 <span className="text-xs text-gray-500 font-semibold uppercase">Ubicación</span>
-                <p className="font-medium text-base-content mt-1">{apartment.ubication || 'No especificada'}</p>
+                <p className="font-medium text-base-content mt-1">
+                  {apartment.ubication || 'No especificada'}
+                </p>
               </div>
               <div className="bg-base-200 rounded-2xl p-4">
                 <span className="text-xs text-gray-500 font-semibold uppercase">Gastos</span>
-                <p className="font-medium text-base-content mt-1">{apartment.bills || 'No especificados'}</p>
+                <p className="font-medium text-base-content mt-1">
+                  {apartment.bills || 'No especificados'}
+                </p>
               </div>
             </div>
 
@@ -142,8 +178,19 @@ export default function ApartmentDetail() {
                 onClick={() => navigate(`/apartments/${id}/bills`)}
                 className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-full shadow-md transition text-sm"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"
+                  />
                 </svg>
                 Ver Facturas
               </button>
@@ -152,8 +199,19 @@ export default function ApartmentDetail() {
                 onClick={() => navigate(`/apartments/${id}/new-bill`)}
                 className="flex items-center gap-2 bg-white border-2 border-teal-600 text-teal-700 hover:bg-teal-50 font-semibold px-6 py-3 rounded-full shadow-sm transition text-sm"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
                 </svg>
                 Añadir Factura
               </button>

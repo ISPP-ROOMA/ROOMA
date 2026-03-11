@@ -32,7 +32,10 @@ export default function ReviewContractFinished() {
   const ownerName = ownerEmail.split('@')[0]
 
   return (
-    <div data-theme="light" className="mx-auto min-h-dvh w-full max-w-md bg-[#F5F1E3] text-[#1E293B]">
+    <div
+      data-theme="light"
+      className="mx-auto min-h-dvh w-full max-w-md bg-[#F5F1E3] text-[#1E293B]"
+    >
       <div className="px-5 pt-7 pb-44 sm:px-6">
         <header className="flex items-center gap-3">
           <button
@@ -65,8 +68,10 @@ export default function ReviewContractFinished() {
 
           <p className="mt-4 max-w-[320px] text-[1rem] leading-[1.42] text-[#64748B] sm:mt-5 sm:text-[1.1rem]">
             Tu contrato con <span className="font-semibold text-[#1F2937]">{apartmentName}</span>
-            {apartmentLocation && <span className="text-[#64748B]"> en {apartmentLocation}</span>} ha
-            finalizado. Esperamos que hayas tenido una gran experiencia.
+            {apartmentLocation && (
+              <span className="text-[#64748B]"> en {apartmentLocation}</span>
+            )}{' '}
+            ha finalizado. Esperamos que hayas tenido una gran experiencia.
           </p>
 
           <p className="mt-3 text-[0.95rem] text-[#64748B] sm:text-[1rem]">
@@ -86,7 +91,12 @@ export default function ReviewContractFinished() {
 
           <div className="mt-6 flex items-center justify-between px-1 sm:mt-7">
             {Array.from({ length: 5 }).map((_, index) => (
-              <Star key={index} size={30} className="text-[#BCC4CF] sm:h-9 sm:w-9" strokeWidth={2.25} />
+              <Star
+                key={index}
+                size={30}
+                className="text-[#BCC4CF] sm:h-9 sm:w-9"
+                strokeWidth={2.25}
+              />
             ))}
           </div>
         </section>

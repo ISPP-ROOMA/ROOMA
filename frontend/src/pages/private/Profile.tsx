@@ -22,13 +22,11 @@ export default function Profile() {
   const [userData, setUserData] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentApartment, setCurrentApartment] = useState<ApartmentDTO | null>(null)
-  const [roommates, setRoommates] = useState<
-    Array<{
-      user: User
-      role: string
-      joinDate?: string
-    }> | null
-  >(null)
+  const [roommates, setRoommates] = useState<Array<{
+    user: User
+    role: string
+    joinDate?: string
+  }> | null>(null)
 
   useEffect(() => {
     const profile = async () => {
@@ -121,7 +119,9 @@ export default function Profile() {
             <div className="mx-auto mb-3 grid h-20 w-20 place-items-center rounded-full border-4 border-white bg-[#0F9E97] text-2xl font-bold text-white shadow-sm sm:h-24 sm:w-24 sm:text-3xl">
               {initial}
             </div>
-            <p className="text-base font-semibold text-[#0F172A] break-all sm:text-lg">{userData.email}</p>
+            <p className="text-base font-semibold text-[#0F172A] break-all sm:text-lg">
+              {userData.email}
+            </p>
             <div className="mt-2 inline-flex rounded-full border border-[#A2E0D8] bg-[#E6F7F5] px-3 py-1 text-xs font-semibold text-[#0C8A80]">
               {roleLabel}
             </div>
@@ -176,7 +176,9 @@ export default function Profile() {
                         {r.user.email ? r.user.email[0].toUpperCase() : '?'}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-[#0F172A]">{r.user.email}</p>
+                        <p className="truncate text-sm font-semibold text-[#0F172A]">
+                          {r.user.email}
+                        </p>
                         <p className="text-xs text-[#64748B]">{r.role}</p>
                       </div>
                     </li>
@@ -196,7 +198,10 @@ export default function Profile() {
         )}
 
         <div className="pt-1">
-          <Link to="/" className="text-sm font-medium text-[#0C8A80] underline-offset-2 hover:underline">
+          <Link
+            to="/"
+            className="text-sm font-medium text-[#0C8A80] underline-offset-2 hover:underline"
+          >
             {'<-'} Volver al inicio
           </Link>
         </div>

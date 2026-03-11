@@ -185,7 +185,8 @@ export default function LeaveReview() {
         <h2 className="mt-8 text-[2.2rem] font-extrabold text-[#111827]">Resena enviada</h2>
         <p className="mt-4 text-[1.15rem] leading-relaxed text-[#6B7280]">
           Tu valoracion de <span className="font-semibold text-[#1F2937]">{reviewedName}</span> en{' '}
-          <span className="font-semibold text-[#1F2937]">{apartment?.title}</span> ({apartment?.ubication}) ha sido registrada.
+          <span className="font-semibold text-[#1F2937]">{apartment?.title}</span> (
+          {apartment?.ubication}) ha sido registrada.
         </p>
         <p className="mt-3 text-[1rem] text-[#0C8A80] font-medium">
           Se publicara cuando ambas partes hayan valorado o tras 30 dias.
@@ -213,7 +214,10 @@ export default function LeaveReview() {
       : 'Valora a tu companero/a'
 
   return (
-    <div data-theme="light" className="mx-auto min-h-dvh w-full max-w-md bg-[#F5F1E3] text-[#1E293B]">
+    <div
+      data-theme="light"
+      className="mx-auto min-h-dvh w-full max-w-md bg-[#F5F1E3] text-[#1E293B]"
+    >
       <div className="px-6 pt-8 pb-10">
         <header className="flex items-center gap-3">
           <button
@@ -232,13 +236,16 @@ export default function LeaveReview() {
           <p className="text-[1rem] text-[#6B7280]">Piso</p>
           <p className="text-[1.2rem] font-bold text-[#111827]">{apartment?.title}</p>
           <p className="text-[1rem] text-[#6B7280] mt-1">{apartment?.ubication}</p>
-          <p className="text-[0.95rem] text-[#0C8A80] font-medium mt-2">Valorando a: {reviewedName}</p>
+          <p className="text-[0.95rem] text-[#0C8A80] font-medium mt-2">
+            Valorando a: {reviewedName}
+          </p>
         </div>
 
         <section className="mt-8">
           <h3 className="text-[1.3rem] font-bold text-[#1F2937]">Valora por categorias</h3>
           <p className="mt-1 text-[0.85rem] text-[#9CA3AF]">
-            La nota final sera la media de todas las categorias ({averageRating() > 0 ? `${averageRating()}/5` : '-'})
+            La nota final sera la media de todas las categorias (
+            {averageRating() > 0 ? `${averageRating()}/5` : '-'})
           </p>
           <div className="mt-4 space-y-5">
             {categories.map((cat) => (

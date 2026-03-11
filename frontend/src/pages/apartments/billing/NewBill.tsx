@@ -330,7 +330,11 @@ export default function NewBill() {
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
               onClick={() => {
-                try { dateRef.current?.showPicker() } catch { /* fallback */ }
+                try {
+                  dateRef.current?.showPicker()
+                } catch {
+                  /* fallback */
+                }
               }}
               className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-400 transition"
             />
