@@ -270,7 +270,7 @@ export default function Invoices() {
             ) : (
               <ul className="space-y-3">
                 {history.map((debt) => {
-                  const icon = conceptIcon(debt.bill?.reference ?? '')
+                  const icon = conceptIcon(debt.bill.reference || '')
                   return (
                     <li
                       key={debt.id}
@@ -280,8 +280,8 @@ export default function Invoices() {
                         {icon.emoji}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-800 text-sm truncate">{debt.bill?.reference ?? 'â€”'}</p>
-                        <p className="text-xs text-gray-400">{fmtDate(debt.bill?.duDate)}</p>
+                        <p className="font-semibold text-gray-800 text-sm truncate">{debt.bill.reference || 'â€”'}</p>
+                        <p className="text-xs text-gray-400">{fmtDate(debt.bill.duDate)}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-gray-800 text-sm">{fmtCurrency(Number(debt.amount))} â‚¬</p>
@@ -307,9 +307,9 @@ export default function Invoices() {
 /* â”€â”€ Debt card sub-component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 function DebtCard({ debt, onTap }: { debt: TenantDebtDTO; onTap: () => void }) {
-  const days = daysUntil(debt.bill?.duDate)
+  const days = daysUntil(debt.bill.duDate)
   const urg = urgencyMeta(days)
-  const icon = conceptIcon(debt.bill?.reference ?? '')
+  const icon = conceptIcon(debt.bill.reference || '')
 
   return (
     <li
@@ -325,10 +325,10 @@ function DebtCard({ debt, onTap }: { debt: TenantDebtDTO; onTap: () => void }) {
 
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-800 text-sm sm:text-[15px] leading-tight truncate">
-            {debt.bill?.reference || 'â€”'}
+            {debt.bill.reference || 'â€”'}
           </p>
           <p className={`text-xs font-semibold ${urg.color}`}>
-            {urg.label || fmtDate(debt.bill?.duDate)}
+            {urg.label || fmtDate(debt.bill.duDate)}
           </p>
         </div>
 

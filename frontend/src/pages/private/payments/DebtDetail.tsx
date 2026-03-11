@@ -158,15 +158,15 @@ export default function DebtDetail() {
             {fmtCurrency(Number(debt.amount))}{' '}
             <span className="text-xl font-medium text-gray-400">â‚¬</span>
           </p>
-          <p className="text-sm text-gray-500 mt-1">{debt.bill?.reference || 'â€”'}</p>
+          <p className="text-sm text-gray-500 mt-1">{debt.bill.reference || 'â€”'}</p>
         </div>
 
         {/* Detail card */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="divide-y divide-gray-100">
-            <DetailRow label="Concepto" value={debt.bill?.reference || 'â€”'} />
-            <DetailRow label="Fecha de vencimiento" value={fmtDate(debt.bill?.duDate)} />
-            <DetailRow label="Importe total factura" value={`${fmtCurrency(Number(debt.bill?.totalAmount || 0))} â‚¬`} />
+            <DetailRow label="Concepto" value={debt.bill.reference || 'â€”'} />
+            <DetailRow label="Fecha de vencimiento" value={fmtDate(debt.bill.duDate)} />
+            <DetailRow label="Importe total factura" value={`${fmtCurrency(Number(debt.bill.totalAmount || 0))} â‚¬`} />
             <DetailRow label="Tu parte" value={`${fmtCurrency(Number(debt.amount))} â‚¬`} highlight />
             <DetailRow
               label="Estado"
