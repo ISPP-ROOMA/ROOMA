@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useContext } from 'react'
+import { useEffect, useMemo, useRef, useState, useContext } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getApartment, type Apartment } from '../../../service/apartments.service'
 import {
@@ -83,6 +83,7 @@ export default function NewBill() {
   const [totalAmount, setTotalAmount] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [file, setFile] = useState<File | null>(null)
+  const dateRef = useRef<HTMLInputElement>(null)
 
   /* data */
   const [apartment, setApartment] = useState<Apartment | null>(null)
@@ -324,9 +325,13 @@ export default function NewBill() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Vencimiento</label>
             <input
+              ref={dateRef}
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
+              onClick={() => {
+                try { dateRef.current?.showPicker() } catch { /* fallback */ }
+              }}
               className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-400 transition"
             />
           </div>
@@ -493,7 +498,7 @@ export default function NewBill() {
       </main>
 
       {/* ─── Footer button ──────────────────────────────── */}
-      <div className="fixed bottom-0 inset-x-0 bg-[#F7F4EB]/90 backdrop-blur px-4 py-4">
+      <div className="fixed bottom-16 md:bottom-0 inset-x-0 bg-[#F7F4EB]/90 backdrop-blur px-4 py-4 z-40">
         <div className="max-w-xl mx-auto space-y-1.5">
           {total > 0 && !isDistributionValid && (
             <p className="text-center text-xs text-amber-600 font-medium">

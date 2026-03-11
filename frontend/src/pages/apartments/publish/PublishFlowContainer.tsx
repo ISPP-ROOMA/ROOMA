@@ -15,8 +15,8 @@ import {
   type PublishFormData,
 } from './publishForm'
 
-const WRAPPER_CLASS = 'min-h-dvh bg-base-200/40 flex flex-col'
-const HEADER_CLASS = 'bg-base-100 shadow-sm sticky top-0 z-30'
+const WRAPPER_CLASS = 'h-[calc(100dvh-5rem)] md:h-dvh bg-base-200/40 flex flex-col'
+const HEADER_CLASS = 'bg-base-100 shadow-sm shrink-0 z-30'
 const HEADER_INNER_CLASS = 'max-w-2xl mx-auto px-5 pt-5 pb-4 flex flex-col gap-3'
 const TOP_ROW_CLASS = 'flex items-center gap-4'
 const BACK_BUTTON_CLASS = 'p-1.5 rounded-full hover:bg-base-200 transition'
@@ -24,9 +24,9 @@ const STEP_META_CLASS = 'text-xs font-semibold tracking-widest text-gray-400 upp
 const STEP_TITLE_CLASS = 'text-lg font-bold text-base-content leading-tight mt-0.5'
 const PROGRESS_TRACK_CLASS = 'w-full h-1.5 bg-base-300 rounded-full overflow-hidden'
 const PROGRESS_BAR_CLASS = 'h-full bg-primary rounded-full transition-all duration-500 ease-out'
-const CONTENT_CLASS = 'flex-1 overflow-y-auto px-5 py-6 max-w-2xl mx-auto w-full'
-const FOOTER_CLASS = 'bg-base-100 border-t border-base-300 sticky bottom-0 z-30'
-const FOOTER_INNER_CLASS = 'max-w-2xl mx-auto px-5 py-4 flex items-center gap-4'
+const CONTENT_CLASS = 'flex-1 min-h-0 overflow-y-auto px-5 py-4 max-w-2xl mx-auto w-full'
+const FOOTER_CLASS = 'bg-base-100 border-t border-base-300 shrink-0 z-30'
+const FOOTER_INNER_CLASS = 'max-w-2xl mx-auto px-5 py-3 flex items-center gap-4'
 const PRICE_HINT_CLASS =
   'text-xs font-bold text-base-content/60 uppercase tracking-wide whitespace-nowrap'
 const CONTINUE_BUTTON_CLASS =
