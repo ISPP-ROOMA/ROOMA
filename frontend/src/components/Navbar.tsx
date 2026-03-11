@@ -1,14 +1,4 @@
-﻿import {
-  Building2,
-  Heart,
-  Home,
-  LayoutList,
-  LogOut,
-  MoreHorizontal,
-  Star,
-  UserCircle,
-  Users,
-} from 'lucide-react'
+﻿import { Building2, Heart, Home, LayoutList, LogOut, MoreHorizontal, Star, UserCircle, Users } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { logout } from '../service/auth.service'
@@ -23,15 +13,16 @@ export default function Navbar() {
   const [moreOpen, setMoreOpen] = useState(false)
   const moreRef = useRef<HTMLDivElement>(null)
 
-  // Close "más" menu on route change or outside click
+  // Close "mas" menu on route change or outside click
   useEffect(() => {
-    const t = setTimeout(() => {
+    const id = requestAnimationFrame(() => {
       setMoreOpen(false)
-    }, 0)
+    })
     return () => {
-      clearTimeout(t)
+      cancelAnimationFrame(id)
     }
   }, [location.pathname])
+
   useEffect(() => {
     if (!moreOpen) return
     const handler = (e: MouseEvent) => {
@@ -40,7 +31,9 @@ export default function Navbar() {
       }
     }
     document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+    }
   }, [moreOpen])
 
   const handleLogout = () => {
@@ -58,8 +51,8 @@ export default function Navbar() {
     }
     if (role === 'TENANT') {
       return [
-        { to: '/', label: 'Inicio', icon: <Home size={22} />, end: true },
         { to: '/mis-solicitudes', label: 'Solicitudes', icon: <LayoutList size={22} /> },
+        { to: '/', label: 'Inicio', icon: <Home size={22} />, end: true },
         { to: '/favorites', label: 'Favoritos', icon: <Heart size={22} /> },
         { to: '/my-reviews', label: 'Valoraciones', icon: <Star size={22} /> },
         { to: '/profile', label: 'Perfil', icon: <UserCircle size={22} /> },
@@ -85,12 +78,12 @@ export default function Navbar() {
     return [{ to: '/', label: 'Inicio', icon: <Home size={22} />, end: true }]
   })()
 
-  // Split items for mobile: first N go in the bar, the rest go in "Más"
+  // Split items for mobile: first N go in the bar, the rest go in "mas"
   const primaryItems = navItems.slice(0, MOBILE_MAX_ITEMS)
   const secondaryItems = navItems.slice(MOBILE_MAX_ITEMS)
   const hasMore = secondaryItems.length > 0
 
-  // Whether any secondary item is currently active (to highlight the "Más" button)
+  // Whether any secondary item is currently active (to highlight the "mas" button)
   const isMoreActive = secondaryItems.some((item) =>
     item.end ? location.pathname === item.to : location.pathname.startsWith(item.to)
   )
@@ -98,10 +91,7 @@ export default function Navbar() {
   const desktopNav = (
     <header className="hidden md:flex sticky top-0 z-50 w-full items-center justify-between px-8 py-3 bg-base-100/80 backdrop-blur-md border-b border-base-200 shadow-sm">
       {/* Brand (Left) */}
-      <NavLink
-        to="/"
-        className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary select-none z-10 w-32"
-      >
+      <NavLink to="/" className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary select-none z-10 w-32">
         <img src="/Logo Rooma.jpeg" alt="Rooma" className="h-8 w-8 rounded-xl object-cover" />
         Rooma
       </NavLink>
@@ -154,18 +144,18 @@ export default function Navbar() {
               <span className={`transition-transform duration-200 ${isActive ? 'scale-110' : ''}`}>
                 {item.icon}
               </span>
-              <span
-                className={`text-[10px] font-semibold ${isActive ? 'text-primary' : 'text-base-content/40'}`}
-              >
+              <span className={`text-[10px] font-semibold ${isActive ? 'text-primary' : 'text-base-content/40'}`}>
                 {item.label}
               </span>
-              {isActive && <span className="w-1 h-1 rounded-full bg-primary block" />}
+              {isActive && (
+                <span className="w-1 h-1 rounded-full bg-primary block" />
+              )}
             </>
           )}
         </NavLink>
       ))}
 
-      {/* "Más" overflow button */}
+      {/* "mas" overflow button */}
       {hasMore && (
         <div ref={moreRef} className="relative">
           {/* Popup menu */}
@@ -189,10 +179,7 @@ export default function Navbar() {
                 <>
                   <div className="border-t border-base-200 my-1" />
                   <button
-                    onClick={() => {
-                      setMoreOpen(false)
-                      handleLogout()
-                    }}
+                    onClick={() => { setMoreOpen(false); handleLogout() }}
                     className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-error/80 hover:bg-error/5 hover:text-error transition-colors w-full text-left"
                   >
                     <LogOut size={18} />
@@ -207,10 +194,8 @@ export default function Navbar() {
             className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-2xl transition-all duration-200 ${moreOpen || isMoreActive ? 'text-primary' : 'text-base-content/50 hover:text-base-content'}`}
           >
             <MoreHorizontal size={22} />
-            <span className="text-[10px] font-semibold">Más</span>
-            {isMoreActive && !moreOpen && (
-              <span className="w-1 h-1 rounded-full bg-primary block" />
-            )}
+            <span className="text-[10px] font-semibold">mas</span>
+            {isMoreActive && !moreOpen && <span className="w-1 h-1 rounded-full bg-primary block" />}
           </button>
         </div>
       )}
@@ -235,3 +220,11 @@ export default function Navbar() {
     </>
   )
 }
+
+
+
+
+
+
+
+

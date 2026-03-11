@@ -117,11 +117,13 @@ export default function MyHome() {
   const pendingAmount = Number(billing?.pendingAmount ?? 0)
 
   return (
-    <section className="bg-base-200 min-h-[70vh] py-8 px-4">
+    <section className="bg-base-200 min-h-[70vh] py-6 sm:py-8 px-3 sm:px-4">
       <div className="max-w-6xl mx-auto space-y-6">
-        <header className="bg-white rounded-xl shadow-sm p-6 flex flex-col gap-2">
+        <header className="bg-white rounded-xl shadow-sm p-5 sm:p-6 flex flex-col gap-2">
           <p className="text-sm uppercase tracking-wide text-primary/80">Mi piso</p>
-          <h1 className="text-3xl font-semibold leading-tight">{apartment.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold leading-tight break-words">
+            {apartment.title}
+          </h1>
           <p className="text-base text-base-content/70">{apartment.ubication}</p>
           <div className="flex flex-wrap gap-4 text-sm text-base-content/80">
             <span className="badge badge-outline">{apartment.state}</span>
@@ -140,7 +142,7 @@ export default function MyHome() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
             <article className="bg-white rounded-xl shadow overflow-hidden">
-              <div className="w-full h-80 bg-base-200">
+              <div className="w-full h-56 sm:h-72 lg:h-80 bg-base-200">
                 {heroImage ? (
                   <img
                     src={heroImage}
@@ -159,7 +161,7 @@ export default function MyHome() {
                     <button
                       key={photo.id}
                       onClick={() => setSelectedPhoto(index)}
-                      className={`w-20 h-16 rounded-md overflow-hidden border transition ${index === selectedPhoto ? 'border-primary' : 'border-base-200'}`}
+                      className={`w-16 h-14 sm:w-20 sm:h-16 rounded-md overflow-hidden border transition ${index === selectedPhoto ? 'border-primary' : 'border-base-200'}`}
                     >
                       <img
                         src={photo.url}
@@ -172,7 +174,7 @@ export default function MyHome() {
               )}
             </article>
 
-            <article className="bg-white rounded-xl shadow p-6 space-y-6">
+            <article className="bg-white rounded-xl shadow p-5 sm:p-6 space-y-6">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <p className="text-sm text-base-content/60">Precio mensual</p>
@@ -242,7 +244,7 @@ export default function MyHome() {
                     <li key={roommate.memberId} className="flex items-start gap-3">
                       <RoommateAvatar roommate={roommate} />
                       <div className="flex-1">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
                           <div>
                             <p className="font-semibold">{roommate.email}</p>
                             <p className="text-xs text-base-content/60">
@@ -277,7 +279,7 @@ export default function MyHome() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-sm text-base-content/60 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-base-content/60 pb-6">
           <Link to="/" className="link">
             ← Volver al inicio
           </Link>

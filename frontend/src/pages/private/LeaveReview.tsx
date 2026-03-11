@@ -1,4 +1,4 @@
-import { ArrowLeft, Send, Star } from 'lucide-react'
+﻿import { ArrowLeft, Send, Star } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
@@ -12,23 +12,23 @@ import {
 const TENANT_CATEGORIES = [
   { key: 'kindness', label: 'Amabilidad' },
   { key: 'responsibility', label: 'Responsabilidad' },
-  { key: 'communication', label: 'Comunicación' },
+  { key: 'communication', label: 'Comunicacion' },
   { key: 'maintenance', label: 'Mantenimiento' },
-  { key: 'value', label: 'Relación calidad-precio' },
+  { key: 'value', label: 'Relacion calidad-precio' },
 ]
 
 const LANDLORD_CATEGORIES = [
   { key: 'cleanliness', label: 'Limpieza' },
   { key: 'respect', label: 'Respeto' },
   { key: 'payment', label: 'Puntualidad en pagos' },
-  { key: 'communication', label: 'Comunicación' },
+  { key: 'communication', label: 'Comunicacion' },
   { key: 'responsibility', label: 'Responsabilidad' },
 ]
 
 const TENANT_TO_TENANT_CATEGORIES = [
   { key: 'cleanliness', label: 'Limpieza' },
   { key: 'respect', label: 'Respeto' },
-  { key: 'communication', label: 'Comunicación' },
+  { key: 'communication', label: 'Comunicacion' },
   { key: 'coexistence', label: 'Convivencia' },
   { key: 'responsibility', label: 'Responsabilidad' },
 ]
@@ -85,7 +85,6 @@ export default function LeaveReview() {
   const [comment, setComment] = useState('')
 
   const isLandlord = role === 'LANDLORD'
-
   const isReviewingLandlord = apartment ? apartment.ownerId === reviewedUserId : false
 
   const categories = isLandlord
@@ -103,13 +102,9 @@ export default function LeaveReview() {
 
   const getReviewedName = () => {
     if (!apartment) return 'esta persona'
-    if (isReviewingLandlord) {
-      return apartment.ownerEmail.split('@')[0]
-    }
-    if (isLandlord) {
-      return 'tu inquilino/a'
-    }
-    return 'tu compañero/a'
+    if (isReviewingLandlord) return apartment.ownerEmail.split('@')[0]
+    if (isLandlord) return 'tu inquilino/a'
+    return 'tu companero/a'
   }
 
   const reviewedName = getReviewedName()
@@ -124,14 +119,16 @@ export default function LeaveReview() {
   const handleSubmit = async () => {
     const allCategoriesFilled = categories.every((c) => (categoryRatings[c.key] || 0) > 0)
     if (!allCategoriesFilled) {
-      setError('Por favor, valora todas las categorías.')
+      setError('Por favor, valora todas las categorias.')
       return
     }
+
     const finalRating = averageRating()
     if (finalRating < 1) {
-      setError('Por favor, selecciona al menos una valoración con estrellas.')
+      setError('Por favor, selecciona al menos una valoracion con estrellas.')
       return
     }
+
     if (!reviewedUserId) {
       setError('No se pudo identificar al usuario a valorar.')
       return
@@ -156,15 +153,12 @@ export default function LeaveReview() {
         comment: fullComment.slice(0, 500),
       }
 
-      if (isLandlord) {
-        await submitReviewAsLandlord(payload)
-      } else {
-        await submitReviewAsTenant(payload)
-      }
+      if (isLandlord) await submitReviewAsLandlord(payload)
+      else await submitReviewAsTenant(payload)
 
       setSubmitted(true)
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al enviar la valoración.'
+      const msg = err instanceof Error ? err.message : 'Error al enviar la valoracion.'
       setError(msg)
     } finally {
       setSubmitting(false)
@@ -188,14 +182,13 @@ export default function LeaveReview() {
         <div className="grid h-24 w-24 place-items-center rounded-full bg-[#D6E4DC]">
           <Star size={40} className="fill-[#F59E0B] text-[#F59E0B]" />
         </div>
-        <h2 className="mt-8 text-[2.2rem] font-extrabold text-[#111827]">¡Reseña Enviada!</h2>
+        <h2 className="mt-8 text-[2.2rem] font-extrabold text-[#111827]">Resena enviada</h2>
         <p className="mt-4 text-[1.15rem] leading-relaxed text-[#6B7280]">
-          Tu valoración de <span className="font-semibold text-[#1F2937]">{reviewedName}</span> en{' '}
-          <span className="font-semibold text-[#1F2937]">{apartment?.title}</span> (
-          {apartment?.ubication}) ha sido registrada.
+          Tu valoracion de <span className="font-semibold text-[#1F2937]">{reviewedName}</span> en{' '}
+          <span className="font-semibold text-[#1F2937]">{apartment?.title}</span> ({apartment?.ubication}) ha sido registrada.
         </p>
         <p className="mt-3 text-[1rem] text-[#0C8A80] font-medium">
-          Se publicará cuando ambas partes hayan valorado o tras 30 días.
+          Se publicara cuando ambas partes hayan valorado o tras 30 dias.
         </p>
         <button
           onClick={() => navigate(`/reviews/new/${contractId}/select`)}
@@ -217,15 +210,11 @@ export default function LeaveReview() {
     ? 'Valora a tu inquilino'
     : isReviewingLandlord
       ? 'Valora a tu casero'
-      : 'Valora a tu compañero/a'
+      : 'Valora a tu companero/a'
 
   return (
-    <div
-      data-theme="light"
-      className="mx-auto min-h-dvh w-full max-w-md bg-[#F5F1E3] text-[#1E293B]"
-    >
+    <div data-theme="light" className="mx-auto min-h-dvh w-full max-w-md bg-[#F5F1E3] text-[#1E293B]">
       <div className="px-6 pt-8 pb-10">
-        {/* Header */}
         <header className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
@@ -239,22 +228,17 @@ export default function LeaveReview() {
           </h1>
         </header>
 
-        {/* Apartment info */}
         <div className="mt-6 rounded-2xl bg-white/70 px-5 py-4 border border-[#E5E7EB]">
           <p className="text-[1rem] text-[#6B7280]">Piso</p>
           <p className="text-[1.2rem] font-bold text-[#111827]">{apartment?.title}</p>
           <p className="text-[1rem] text-[#6B7280] mt-1">{apartment?.ubication}</p>
-          <p className="text-[0.95rem] text-[#0C8A80] font-medium mt-2">
-            Valorando a: {reviewedName}
-          </p>
+          <p className="text-[0.95rem] text-[#0C8A80] font-medium mt-2">Valorando a: {reviewedName}</p>
         </div>
 
-        {/* Category ratings */}
         <section className="mt-8">
-          <h3 className="text-[1.3rem] font-bold text-[#1F2937]">Valora por categorías</h3>
+          <h3 className="text-[1.3rem] font-bold text-[#1F2937]">Valora por categorias</h3>
           <p className="mt-1 text-[0.85rem] text-[#9CA3AF]">
-            La nota final será la media de todas las categorías (
-            {averageRating() > 0 ? `${averageRating()}/5` : '—'})
+            La nota final sera la media de todas las categorias ({averageRating() > 0 ? `${averageRating()}/5` : '-'})
           </p>
           <div className="mt-4 space-y-5">
             {categories.map((cat) => (
@@ -270,7 +254,6 @@ export default function LeaveReview() {
           </div>
         </section>
 
-        {/* Comment */}
         <section className="mt-8">
           <h3 className="text-[1.3rem] font-bold text-[#1F2937]">Comentario</h3>
           <textarea
@@ -284,14 +267,12 @@ export default function LeaveReview() {
           <p className="mt-1 text-right text-sm text-[#9CA3AF]">{comment.length}/300</p>
         </section>
 
-        {/* Error */}
         {error && (
           <div className="mt-4 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-[0.95rem] text-red-700">
             {error}
           </div>
         )}
 
-        {/* Submit */}
         <button
           onClick={handleSubmit}
           disabled={submitting}
@@ -301,7 +282,7 @@ export default function LeaveReview() {
             <span className="loading loading-spinner loading-md"></span>
           ) : (
             <>
-              Enviar Valoración
+              Enviar valoracion
               <Send size={20} strokeWidth={2.5} />
             </>
           )}

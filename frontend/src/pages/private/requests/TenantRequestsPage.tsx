@@ -179,7 +179,7 @@ export default function TenantRequestsPage() {
   return (
     <div
       data-theme="light"
-      className="mx-auto w-full max-w-2xl min-h-dvh bg-[#FAF5EE] text-[#050505] pb-28"
+      className="mx-auto w-full max-w-5xl min-h-dvh bg-[#F5F1E3] text-[#050505] pb-28"
     >
       {/* ── Header ── */}
       <header className="sticky top-0 z-10 bg-[#FAF5EE] px-4 sm:px-8 pt-5 pb-4">
@@ -200,7 +200,9 @@ export default function TenantRequestsPage() {
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#050505]">Mis Solicitudes</h1>
+          <h1 className="text-xl sm:text-3xl font-bold text-[#050505] text-center px-2">
+            Mis Solicitudes
+          </h1>
           <div className="h-10 w-10" aria-hidden /> {/* spacer */}
         </div>
       </header>
@@ -264,7 +266,7 @@ export default function TenantRequestsPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {visibleItems.map((item) => {
               const isCancelled = item.matchStatus === 'CANCELED' || item.matchStatus === 'REJECTED'
               const isMatch = item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED'
@@ -278,7 +280,7 @@ export default function TenantRequestsPage() {
                   }`}
                 >
                   {/* Image */}
-                  <div className={`relative h-44 w-full ${isCancelled ? 'grayscale' : ''}`}>
+                  <div className={`relative h-40 sm:h-44 w-full ${isCancelled ? 'grayscale' : ''}`}>
                     <img
                       src={item.imageUrl}
                       alt={item.title}
@@ -314,7 +316,7 @@ export default function TenantRequestsPage() {
                   {/* Info */}
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2">
-                      <h2 className="text-xl font-bold leading-tight text-[#050505] line-clamp-1">
+                      <h2 className="text-lg sm:text-xl font-bold leading-tight text-[#050505] line-clamp-1">
                         {item.title}
                       </h2>
                       <span
@@ -355,10 +357,10 @@ export default function TenantRequestsPage() {
                         </div>
                       )}
                       {item.matchStatus === 'INVITED' && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                           <button
                             type="button"
-                            className="btn btn-xs btn-error btn-outline"
+                            className="btn btn-sm btn-error btn-outline"
                             onClick={() => {
                               void handleInvitationResponse(item.matchId, false)
                             }}
@@ -372,7 +374,7 @@ export default function TenantRequestsPage() {
                           </button>
                           <button
                             type="button"
-                            className="btn btn-xs btn-success"
+                            className="btn btn-sm btn-success"
                             onClick={() => {
                               void handleInvitationResponse(item.matchId, true)
                             }}

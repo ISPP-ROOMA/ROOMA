@@ -136,9 +136,11 @@ function SummaryRow({
   valueClass?: string
 }) {
   return (
-    <div className="flex items-center justify-between px-5 py-3">
+    <div className="flex flex-col items-start gap-1 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
       <span className="text-sm text-gray-500">{label}</span>
-      <span className={`text-sm font-medium ${valueClass ?? 'text-gray-900'}`}>{value}</span>
+      <span className={`text-sm font-medium text-left sm:text-right ${valueClass ?? 'text-gray-900'}`}>
+        {value}
+      </span>
     </div>
   )
 }

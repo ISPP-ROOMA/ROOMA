@@ -58,16 +58,21 @@ function SwipeGallery({
   const dragDelta = useRef(0)
   const dirLock = useRef<'h' | 'v' | null>(null)
   const [offset, setOffset] = useState(0)
+  const [containerWidth, setContainerWidth] = useState(400)
 
-  // Reset offset when index changes externally
   useEffect(() => {
-    const t = setTimeout(() => {
-      setOffset(0)
-    }, 0)
-    return () => {
-      clearTimeout(t)
+    const measure = () => {
+      if (containerRef.current?.offsetWidth) {
+        setContainerWidth(containerRef.current.offsetWidth)
+      }
     }
-  }, [currentIndex])
+
+    measure()
+    window.addEventListener('resize', measure)
+    return () => {
+      window.removeEventListener('resize', measure)
+    }
+  }, [])
 
   const go = (dir: 1 | -1) => {
     const next = currentIndex + dir
@@ -152,7 +157,7 @@ function SwipeGallery({
         className="absolute inset-y-0 flex will-change-transform"
         style={{
           width: `${images.length * 100}%`,
-          transform: `translateX(calc(${-currentIndex * (100 / images.length)}% + ${offset}px))`,
+          transform: `translateX(calc(${-currentIndex * containerWidth}px + ${offset}px))`,
           transition: offset === 0 ? 'transform 0.35s cubic-bezier(.25,.8,.25,1)' : 'none',
         }}
       >
@@ -160,7 +165,7 @@ function SwipeGallery({
           <div
             key={img.id ?? idx}
             className="h-full shrink-0"
-            style={{ width: `${100 / images.length}%` }}
+            style={{ width: `${containerWidth}px` }}
           >
             <img
               src={img.url}
@@ -252,7 +257,9 @@ function Lightbox({
       else if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
+    return () => {
+      window.removeEventListener('keydown', handler)
+    }
   }, [images.length, onClose])
 
   // Auto-scroll thumbnail into view
@@ -535,12 +542,12 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
       <motion.div
         initial={{ scale: 0.82, borderRadius: '24px', opacity: 0 }}
         animate={modalControls}
-        className="absolute inset-0 bg-base-100 overflow-hidden will-change-transform origin-center"
+        className="absolute inset-0 sm:inset-4 lg:inset-8 bg-base-100 overflow-hidden will-change-transform origin-center sm:rounded-2xl shadow-2xl"
       >
         {/* Close button – always visible */}
         <button
           onClick={dismiss}
-          className="absolute top-4 right-4 z-30 btn btn-circle btn-sm bg-black/30 text-white hover:bg-black/50 backdrop-blur-md border-none shadow-lg"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30 btn btn-circle btn-sm bg-black/30 text-white hover:bg-black/50 backdrop-blur-md border-none shadow-lg"
         >
           <X size={18} />
         </button>
@@ -565,10 +572,10 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
               currentIndex={currentPhoto}
               onIndexChange={setCurrentPhoto}
               onOpenLightbox={photos.length > 0 ? () => setLightboxOpen(true) : undefined}
-              height="h-72 sm:h-80"
+              height="h-64 sm:h-80 md:h-[26rem]"
             />
 
-            <div className="absolute top-16 right-3 z-20">
+            <div className="absolute top-3 right-3 z-20">
               <FavoriteButton apartmentId={apartment.id} />
             </div>
 
@@ -595,9 +602,9 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
           </div>
 
           {/* ─── Content ─── */}
-          <div className="max-w-2xl mx-auto px-5 py-6 space-y-8">
+          <div className="max-w-2xl mx-auto px-4 sm:px-5 py-6 space-y-8">
             {/* Quick stats */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-base-200 rounded-2xl p-4 flex flex-col items-center text-center gap-1">
                 <Banknote size={20} className="text-primary" />
                 <span className="text-lg font-bold">{apartment.price}€</span>
@@ -837,3 +844,4 @@ function RoommateTag({
     </div>
   )
 }
+
