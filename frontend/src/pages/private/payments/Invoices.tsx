@@ -325,16 +325,16 @@ function DebtCard({ debt, onTap }: { debt: TenantDebtDTO; onTap: () => void }) {
 
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-800 text-sm sm:text-[15px] leading-tight truncate">
-            {debt.bill?.reference ?? 'â€”'}
+            {debt.bill?.reference || 'â€”'}
           </p>
           <p className={`text-xs font-semibold ${urg.color}`}>
             {urg.label || fmtDate(debt.bill?.duDate)}
           </p>
         </div>
 
-        <p className="font-bold text-gray-900 text-sm sm:text-base text-right whitespace-nowrap mr-1">
-          {fmtCurrency(Number(debt.amount ?? 0))} â‚¬
-        </p>
+          <p className="font-bold text-gray-900 text-sm sm:text-base text-right whitespace-nowrap mr-1">
+            {fmtCurrency(Number(debt.amount || 0))} â‚¬
+          </p>
 
         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
