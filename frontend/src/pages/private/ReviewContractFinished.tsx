@@ -36,7 +36,9 @@ export default function ReviewContractFinished() {
       <div className="px-5 pt-7 pb-44 sm:px-6">
         <header className="flex items-center gap-3">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              navigate(-1)
+            }}
             className="flex h-8 w-8 items-center justify-center text-[#0F172A]"
             aria-label="Volver"
           >
@@ -102,14 +104,18 @@ export default function ReviewContractFinished() {
 
       <footer className="fixed inset-x-0 bottom-[4.75rem] mx-auto w-full max-w-md border-t border-[#E1DED0] bg-[#F5F1E3] px-5 pb-5 pt-4 sm:px-6 md:bottom-0 md:pb-8 md:pt-6">
         <button
-          onClick={() => navigate(`/reviews/new/${contractId}/select`)}
+          onClick={() => {
+            navigate(`/reviews/new/${contractId}/select`)
+          }}
           className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#0C8A80] text-base font-bold text-white shadow-[0_8px_18px_rgba(12,138,128,0.3)] sm:h-14 sm:text-lg"
         >
           Valorar Ahora
           <SquarePen size={20} strokeWidth={2.75} />
         </button>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => {
+            navigate('/')
+          }}
           className="mt-4 block w-full text-center text-base font-semibold text-[#6B7280] sm:mt-5 sm:text-lg"
         >
           Quizas mas tarde

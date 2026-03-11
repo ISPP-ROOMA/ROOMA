@@ -69,7 +69,9 @@ function SwipeGallery({
 
     measure()
     window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
+    return () => {
+      window.removeEventListener('resize', measure)
+    }
   }, [])
 
   const go = (dir: 1 | -1) => {
@@ -255,7 +257,9 @@ function Lightbox({
       else if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
+    return () => {
+      window.removeEventListener('keydown', handler)
+    }
   }, [images.length, onClose])
 
   // Auto-scroll thumbnail into view

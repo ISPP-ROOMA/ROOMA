@@ -1,4 +1,4 @@
-import { Building2, Heart, Home, LayoutList, LogOut, MoreHorizontal, Star, UserCircle, Users } from 'lucide-react'
+ï»¿import { Building2, Heart, Home, LayoutList, LogOut, MoreHorizontal, Star, UserCircle, Users } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { logout } from '../service/auth.service'
@@ -13,10 +13,14 @@ export default function Navbar() {
   const [moreOpen, setMoreOpen] = useState(false)
   const moreRef = useRef<HTMLDivElement>(null)
 
-  // Close "más" menu on route change or outside click
-    useEffect(() => {
-    const id = requestAnimationFrame(() => setMoreOpen(false))
-    return () => cancelAnimationFrame(id)
+  // Close "mas" menu on route change or outside click
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      setMoreOpen(false)
+    })
+    return () => {
+      cancelAnimationFrame(id)
+    }
   }, [location.pathname])
 
   useEffect(() => {
@@ -27,7 +31,9 @@ export default function Navbar() {
       }
     }
     document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+    }
   }, [moreOpen])
 
   const handleLogout = () => {
@@ -72,12 +78,12 @@ export default function Navbar() {
     return [{ to: '/', label: 'Inicio', icon: <Home size={22} />, end: true }]
   })()
 
-  // Split items for mobile: first N go in the bar, the rest go in "Más"
+  // Split items for mobile: first N go in the bar, the rest go in "mas"
   const primaryItems = navItems.slice(0, MOBILE_MAX_ITEMS)
   const secondaryItems = navItems.slice(MOBILE_MAX_ITEMS)
   const hasMore = secondaryItems.length > 0
 
-  // Whether any secondary item is currently active (to highlight the "Más" button)
+  // Whether any secondary item is currently active (to highlight the "mas" button)
   const isMoreActive = secondaryItems.some((item) =>
     item.end ? location.pathname === item.to : location.pathname.startsWith(item.to)
   )
@@ -149,7 +155,7 @@ export default function Navbar() {
         </NavLink>
       ))}
 
-      {/* "Más" overflow button */}
+      {/* "mas" overflow button */}
       {hasMore && (
         <div ref={moreRef} className="relative">
           {/* Popup menu */}
@@ -188,7 +194,7 @@ export default function Navbar() {
             className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-2xl transition-all duration-200 ${moreOpen || isMoreActive ? 'text-primary' : 'text-base-content/50 hover:text-base-content'}`}
           >
             <MoreHorizontal size={22} />
-            <span className="text-[10px] font-semibold">Más</span>
+            <span className="text-[10px] font-semibold">mas</span>
             {isMoreActive && !moreOpen && <span className="w-1 h-1 rounded-full bg-primary block" />}
           </button>
         </div>
@@ -214,6 +220,10 @@ export default function Navbar() {
     </>
   )
 }
+
+
+
+
 
 
 
