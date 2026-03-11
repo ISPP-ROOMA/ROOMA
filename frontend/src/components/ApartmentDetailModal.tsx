@@ -220,7 +220,7 @@ function SwipeGallery({
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={onOpenLightbox}
-          className="absolute top-3 right-3 z-10 btn btn-circle btn-sm bg-black/30 text-white hover:bg-black/50 backdrop-blur-md border-none"
+          className="absolute top-3 left-3 z-10 btn btn-circle btn-sm bg-black/30 text-white hover:bg-black/50 backdrop-blur-md border-none"
         >
           <ZoomIn size={16} />
         </button>
@@ -568,7 +568,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
               height="h-72 sm:h-80"
             />
 
-            <div className="absolute top-16 right-3 z-20">
+            <div className="absolute top-16 left-3 z-20">
               <FavoriteButton apartmentId={apartment.id} />
             </div>
 
@@ -595,7 +595,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
           </div>
 
           {/* ─── Content ─── */}
-          <div className="max-w-2xl mx-auto px-5 py-6 space-y-8">
+          <div className="max-w-2xl mx-auto px-5 py-20 space-y-8">
             {/* Quick stats */}
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-base-200 rounded-2xl p-4 flex flex-col items-center text-center gap-1">
