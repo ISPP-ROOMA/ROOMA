@@ -21,9 +21,14 @@ jobs:
                 username: ${{ github.actor }}
                 password: ${{ secrets.GITHUB_TOKEN }}
 
+            - name: Convert repository name to lowercase
+              id: repo
+              run: echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
             - name: Build and push Docker image
               uses: docker/build-push-action@v3
               with:
-                context: .
+                context: ./backend
+                file: ./backend/docker/Dockerfile.compile
                 push: true
-                tags: ghcr.io/${{ github.repository }}-backend:latest
+                tags: ghcr.io/${{ steps.repo.outputs.name }}-backend:latest
