@@ -10,7 +10,11 @@ const fmtDate = (v?: string) => {
   if (!v) return '—'
   const d = new Date(v)
   if (Number.isNaN(d.getTime())) return v
-  return new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }).format(d)
+  return new Intl.DateTimeFormat('es-ES', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(d)
 }
 
 function conceptIcon(ref: string) {
@@ -46,7 +50,14 @@ export default function PaymentSuccess() {
         <div className="relative">
           <div className="absolute inset-0 w-28 h-28 bg-teal-400/20 rounded-full blur-xl animate-pulse" />
           <div className="relative w-28 h-28 rounded-full bg-teal-600 flex items-center justify-center shadow-lg shadow-teal-600/30">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-14 w-14 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -61,12 +72,13 @@ export default function PaymentSuccess() {
         {/* Summary card */}
         <div className="bg-white rounded-3xl shadow-sm w-full max-w-sm overflow-hidden">
           <div className="flex flex-col items-center py-5 border-b border-gray-100">
-            <span className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${icon.bg} mb-2`}>
+            <span
+              className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${icon.bg} mb-2`}
+            >
               {icon.emoji}
             </span>
             <p className="text-3xl font-extrabold text-gray-900">
-              {fmtCurrency(amount)}{' '}
-              <span className="text-lg font-medium text-gray-400">€</span>
+              {fmtCurrency(amount)} <span className="text-lg font-medium text-gray-400">€</span>
             </p>
           </div>
           <div className="divide-y divide-gray-100">
@@ -83,8 +95,19 @@ export default function PaymentSuccess() {
             disabled
             className="w-full py-3 rounded-2xl border border-teal-600 text-teal-700 font-semibold text-sm transition opacity-50 cursor-not-allowed flex items-center justify-center gap-2"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
             </svg>
             Descargar recibo (próximamente)
           </button>

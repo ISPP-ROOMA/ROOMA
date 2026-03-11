@@ -153,9 +153,13 @@ export async function getReceivedRequests(): Promise<RequestItem[]> {
 }
 
 export async function acceptRequest(apartmentMatchId: number): Promise<void> {
-  await api.post(`/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-request?interest=true`)
+  await api.post(
+    `/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-request?interest=true`
+  )
 }
 
 export async function rejectRequest(apartmentMatchId: number): Promise<void> {
-  await api.post(`/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-request?interest=false`)
+  await api.post(
+    `/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-request?interest=false`
+  )
 }

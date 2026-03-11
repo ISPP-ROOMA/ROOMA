@@ -1,6 +1,7 @@
 -- ==========================================
 -- 1. LIMPIEZA DE DATOS (Orden jerárquico)
 -- ==========================================
+DELETE FROM reviews;
 DELETE FROM tenant_debts;
 DELETE FROM bills;
 DELETE FROM apartment_matches;
@@ -28,8 +29,9 @@ INSERT INTO users (id, email, password, role, hobbies, schedule, profession) VAL
 (7, 'tenant2@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Fotografía, Viajes', 'Mañanas', 'Diseñadora'),
 (8, 'tenant3@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Cocina, Yoga', 'Teletrabajo', 'Developer'),
 (9, 'tenant4@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Lectura, Cine', 'Rotativo', 'Enfermero'),
-(10, 'tenant5@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Running', 'Mañanas', 'Periodista');
-
+(10, 'tenant5@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Running', 'Mañanas', 'Periodista'),
+(11, 'tenant6@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Leer, Cocinar', 'Flexible', 'Docente'),
+(12, 'tenant7@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Pintura, Música', 'Tarde', 'Artista');
 -- ==========================================
 -- 3. APARTAMENTOS
 -- ==========================================
@@ -50,10 +52,12 @@ INSERT INTO apartment_photos (id, apartment_id, orden, portada, public_id, url) 
 -- 5. MIEMBROS (Asignación lógica de inquilinos)
 -- ==========================================
 -- Piso 1: tenant1(6), tenant2(7), tenant3(8)
-INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date) VALUES 
-(1, 1, 6, 'HOMEBODY', '2024-01-01'),
-(2, 1, 7, 'RENTER', '2024-01-01'),
-(3, 1, 8, 'RENTER', '2024-01-01');
+INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date,end_date) VALUES 
+(1, 1, 6, 'HOMEBODY', '2024-01-01', NULL),
+(2, 1, 7, 'RENTER', '2024-01-01', NULL),
+(3, 1, 8, 'RENTER', '2024-01-01', NULL),
+(6, 1, 11, 'RENTER', '2024-01-15', CURRENT_DATE - INTERVAL '7 days'),
+(7, 1, 12, 'RENTER', '2024-01-20', CURRENT_DATE - INTERVAL '3 days');
 
 -- Piso 2: tenant4(9)
 INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date) VALUES 
@@ -95,3 +99,15 @@ INSERT INTO bills (id, reference, total_amount, status, du_date, apartment_id, u
 (4, 'Alquiler Agosto', 450.00, 'PENDING', '2025-08-01', 3, 2);
 INSERT INTO tenant_debts (id, amount, status, user_id, bill_id) VALUES
 (8, 450.00, 'PENDING', 10, 4);
+
+-- ==========================================
+-- 7. RESEÑAS DE MIEMBROS
+-- ==========================================
+
+INSERT INTO reviews (id, rating, comment, review_member_id, reviewed_member_id, apartment_id,published,review_date) VALUES
+(1, 5, 'Excelente inquilino, muy responsable y limpio.', 1, 11, 1, true, CURRENT_DATE - INTERVAL '6 days'),
+(2, 4, 'Buen compañero de piso, aunque a veces un poco desordenado.', 6, 11, 1, true, CURRENT_DATE - INTERVAL '6 days'),
+(3, 5, 'El casero es muy atento y siempre dispuesto a ayudar.', 11, 1, 1, true, CURRENT_DATE - INTERVAL '6 days'),
+(4, 4, 'Buen compañero de piso, aunque hace mucho ruido.', 11, 6, 1, true, CURRENT_DATE - INTERVAL '6 days'),
+(5, 3, 'Inquilino razonable, pero necesita mejorar en la limpieza.', 1, 12, 1, false, CURRENT_DATE - INTERVAL '1 days'),
+(6, 3, 'Compañero de piso razonable, pero necesita mejorar en la limpieza.', 6, 12, 1, false, CURRENT_DATE - INTERVAL '1 days');

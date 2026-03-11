@@ -17,6 +17,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ApartmentDTO, ApartmentPhotoDTO, UserDTO } from '../service/apartment.service'
 import { getApartmentPhotos } from '../service/apartment.service'
 import { api } from '../service/api'
+import FavoriteButton from './FavoriteButton'
 
 interface ApartmentDetailModalProps {
   apartment: ApartmentDTO
@@ -570,6 +571,10 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
               height="h-64 sm:h-80 md:h-[26rem]"
             />
 
+            <div className="absolute top-3 right-3 z-20">
+              <FavoriteButton apartmentId={apartment.id} />
+            </div>
+
             {/* Title + Price overlay */}
             <div className="absolute bottom-0 inset-x-0 px-5 pb-4 pt-16 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none z-[5]">
               <div className="flex items-end justify-between gap-4">
@@ -835,3 +840,4 @@ function RoommateTag({
     </div>
   )
 }
+

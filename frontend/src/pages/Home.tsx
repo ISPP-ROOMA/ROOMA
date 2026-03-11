@@ -61,7 +61,11 @@ export default function Home() {
       }
     } catch (error: unknown) {
       const axiosError = error as { response?: { status: number; data: unknown } }
-      console.error('Failed to register swipe', axiosError?.response?.status, axiosError?.response?.data)
+      console.error(
+        'Failed to register swipe',
+        axiosError?.response?.status,
+        axiosError?.response?.data
+      )
       showToast(`Error al registrar el swipe (${axiosError?.response?.status ?? 'red'})`, 'error')
     }
   }
@@ -70,18 +74,29 @@ export default function Home() {
     return (
       <HeroWrapper>
         <div className="text-center p-4">
-          <img src="/Logo Rooma.jpeg" alt="Logo" className="w-40 h-40 md:w-56 md:h-56 mx-auto mb-10 rounded-[2.5rem] shadow-2xl object-cover" />
+          <img
+            src="/Logo Rooma.jpeg"
+            alt="Logo"
+            className="w-40 h-40 md:w-56 md:h-56 mx-auto mb-10 rounded-[2.5rem] shadow-2xl object-cover"
+          />
           <h1 className="text-6xl md:text-8xl font-black tracking-tight mb-6 text-base-content drop-shadow-lg">
             Bienvenido a <span className="text-primary block sm:inline mt-2 sm:mt-0">Rooma</span>
           </h1>
           <p className="text-base-content/90 font-medium text-xl md:text-2xl lg:text-3xl mb-12 max-w-2xl mx-auto drop-shadow">
-            Encuentra tu piso ideal o publica el tuyo. Regístrate como inquilino o propietario para empezar.
+            Encuentra tu piso ideal o publica el tuyo. Regístrate como inquilino o propietario para
+            empezar.
           </p>
           <div className="flex flex-col sm:flex-row gap-5 justify-center items-center w-full max-w-lg mx-auto">
-            <Link to="/register" className="btn btn-lg rounded-3xl w-full sm:w-auto flex-1 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all text-lg border-none bg-primary text-primary-content">
+            <Link
+              to="/register"
+              className="btn btn-lg rounded-3xl w-full sm:w-auto flex-1 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all text-lg border-none bg-primary text-primary-content"
+            >
               Crear cuenta
             </Link>
-            <Link to="/login" className="btn btn-lg btn-neutral rounded-3xl w-full sm:w-auto flex-1 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all text-lg border-none">
+            <Link
+              to="/login"
+              className="btn btn-lg btn-neutral rounded-3xl w-full sm:w-auto flex-1 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all text-lg border-none"
+            >
               Iniciar sesión
             </Link>
           </div>
@@ -137,10 +152,7 @@ export default function Home() {
           <p className="text-base-content/60 text-base mb-8 leading-relaxed">
             Gestiona los usuarios y la plataforma Rooma.
           </p>
-          <Link
-            to="/users"
-            className="btn btn-primary rounded-2xl w-full gap-2"
-          >
+          <Link to="/users" className="btn btn-primary rounded-2xl w-full gap-2">
             <Users2 size={18} />
             Gestionar usuarios
           </Link>

@@ -1,27 +1,40 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getApartments, type Apartment } from '../../service/apartments.service'
+import FavoriteButton from '../../components/FavoriteButton'
+import { getFavoriteApartmentIds } from '../../service/favorites.service'
+import { useAuthStore } from '../../store/authStore'
 
 const MAIN_CLASS = 'px-6 md:px-12 py-8 max-w-7xl mx-auto'
 const GRID_CLASS = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
 
 export default function BrowseApartments() {
+  const { token } = useAuthStore()
   const [apartments, setApartments] = useState<Apartment[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     const fetchApartments = async () => {
       try {
         const data = await getApartments()
-        setApartments(data.filter((a) => a.state === 'available'))
+        const available = data.filter((a) => a.state === 'available')
+        setApartments(available)
+
+        if (token) {
+          const ids = await getFavoriteApartmentIds(available.map((a) => a.id))
+          setFavoriteIds(new Set(ids))
+        } else {
+          setFavoriteIds(new Set())
+        }
       } catch (error) {
         console.error(error)
       } finally {
         setIsLoading(false)
       }
     }
-    fetchApartments()
-  }, [])
+    void fetchApartments()
+  }, [token])
 
   return (
     <div className="min-h-dvh bg-base-200/50">
@@ -62,10 +75,10 @@ export default function BrowseApartments() {
             {apartments.map((apt) => (
               <Link
                 key={apt.id}
-                to={`/apartments/${apt.id}`}
+                to={`/properties/${apt.id}`}
                 className="bg-base-100 rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition flex flex-col"
               >
-                <div className="h-40 bg-gray-100 flex items-center justify-center">
+                <div className="relative h-40 bg-gray-100 flex items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-12 w-12 text-gray-300"
@@ -80,6 +93,24 @@ export default function BrowseApartments() {
                       d="M3 11.5L12 4l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-8.5z"
                     />
                   </svg>
+
+                  <div className="absolute top-3 right-3">
+                    <FavoriteButton
+                      apartmentId={apt.id}
+                      initialIsFavorite={favoriteIds.has(apt.id)}
+                      onChange={(isFavorite) => {
+                        setFavoriteIds((prev) => {
+                          const next = new Set(prev)
+                          if (isFavorite) {
+                            next.add(apt.id)
+                          } else {
+                            next.delete(apt.id)
+                          }
+                          return next
+                        })
+                      }}
+                    />
+                  </div>
                 </div>
                 <div className="p-5 flex flex-col gap-2 flex-1">
                   <h3 className="font-bold text-base text-base-content line-clamp-1">

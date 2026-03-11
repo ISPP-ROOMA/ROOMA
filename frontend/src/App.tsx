@@ -17,11 +17,13 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import LeaveReview from './pages/private/LeaveReview'
 import MyHome from './pages/private/MyHome'
+import FavoritesPage from './pages/private/FavoritesPage'
 import DebtDetail from './pages/private/payments/DebtDetail'
 import Invoices from './pages/private/payments/Invoices'
 import PaymentSuccess from './pages/private/payments/PaymentSuccess'
 import MyReviews from './pages/private/MyReviews'
 import Profile from './pages/private/Profile'
+import ProfileEdit from './pages/private/ProfileEdit'
 import ReviewContractFinished from './pages/private/ReviewContractFinished'
 import SelectReviewTarget from './pages/private/SelectReviewTarget'
 import LandlordMatchDetailPage from './pages/private/requests/LandlordMatchDetailPage'
@@ -120,6 +122,14 @@ function App() {
           element={
             <PrivateRoute>
               <Profile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile/edit"
+          element={
+            <PrivateRoute>
+              <ProfileEdit />
             </PrivateRoute>
           }
         />
@@ -349,6 +359,14 @@ function App() {
                   element={
                     <PrivateRoute allowedRoles={['TENANT']}>
                       <MyHome />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/favorites"
+                  element={
+                    <PrivateRoute allowedRoles={['TENANT']}>
+                      <FavoritesPage />
                     </PrivateRoute>
                   }
                 />

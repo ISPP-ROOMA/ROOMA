@@ -3,7 +3,11 @@ import { Loader2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
-import type { ApartmentDTO, ApartmentMatchDTO, MatchStatus } from '../../../service/apartment.service'
+import type {
+  ApartmentDTO,
+  ApartmentMatchDTO,
+  MatchStatus,
+} from '../../../service/apartment.service'
 import {
   acceptApartmentMatch,
   getLandlordMatchDetails,
@@ -86,7 +90,6 @@ async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatc
   return enriched
 }
 
-
 export default function LandlordRequestsPage() {
   const { userId } = useAuthStore()
   const navigate = useNavigate()
@@ -98,7 +101,9 @@ export default function LandlordRequestsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
-  const [selectedApartment, setSelectedApartment] = useState<(ApartmentDTO & { imageUrl: string }) | null>(null)
+  const [selectedApartment, setSelectedApartment] = useState<
+    (ApartmentDTO & { imageUrl: string }) | null
+  >(null)
   const [modalLoading, setModalLoading] = useState<number | null>(null)
 
   const fetchData = useCallback(async () => {
@@ -153,10 +158,7 @@ export default function LandlordRequestsPage() {
       await acceptApartmentMatch(matchId)
       const accepted = pendingItems.find((i) => i.matchId === matchId)
       if (accepted) {
-        setMatchItems((prev) => [
-          ...prev,
-          { ...accepted, matchStatus: 'SUCCESSFUL' },
-        ])
+        setMatchItems((prev) => [...prev, { ...accepted, matchStatus: 'SUCCESSFUL' }])
       }
     } catch (err) {
       console.error('Error accepting match', err)
@@ -175,7 +177,11 @@ export default function LandlordRequestsPage() {
       return
     }
 
-    if (item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED' || item.matchStatus === 'SUCCESSFUL') {
+    if (
+      item.matchStatus === 'MATCH' ||
+      item.matchStatus === 'INVITED' ||
+      item.matchStatus === 'SUCCESSFUL'
+    ) {
       navigate(`/mis-solicitudes/recibidas/${item.matchId}/match`)
       return
     }
@@ -231,8 +237,9 @@ export default function LandlordRequestsPage() {
       <section className="px-4 sm:px-8">
         <div className="flex rounded-xl bg-[#DDDBCB] p-1">
           <button
-            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${activeTab === 'pending' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
-              }`}
+            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${
+              activeTab === 'pending' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
+            }`}
             onClick={() => setActiveTab('pending')}
           >
             Pendientes
@@ -243,8 +250,9 @@ export default function LandlordRequestsPage() {
             )}
           </button>
           <button
-            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${activeTab === 'match' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
-              }`}
+            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${
+              activeTab === 'match' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
+            }`}
             onClick={() => setActiveTab('match')}
           >
             Match
@@ -286,17 +294,16 @@ export default function LandlordRequestsPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {visibleItems.map((item) => {
-              const isCancelled =
-                item.matchStatus === 'CANCELED' || item.matchStatus === 'REJECTED'
-              const isMatch =
-                item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED'
+              const isCancelled = item.matchStatus === 'CANCELED' || item.matchStatus === 'REJECTED'
+              const isMatch = item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED'
 
               return (
                 <article
                   key={item.matchId}
                   onClick={(e) => void handleCardClick(item, e)}
-                  className={`overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm transition-opacity cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-transform ${isCancelled ? 'opacity-60' : ''
-                    }`}
+                  className={`overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm transition-opacity cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-transform ${
+                    isCancelled ? 'opacity-60' : ''
+                  }`}
                 >
                   {/* Image */}
                   <div className={`relative h-44 w-full ${isCancelled ? 'grayscale' : ''}`}>
@@ -324,8 +331,9 @@ export default function LandlordRequestsPage() {
                         {item.title}
                       </h2>
                       <span
-                        className={`shrink-0 text-lg font-semibold ${isCancelled ? 'text-[#050505]/50' : 'text-[#008080]'
-                          }`}
+                        className={`shrink-0 text-lg font-semibold ${
+                          isCancelled ? 'text-[#050505]/50' : 'text-[#008080]'
+                        }`}
                       >
                         {item.price}
                       </span>
@@ -337,7 +345,9 @@ export default function LandlordRequestsPage() {
                     <div className="my-3 h-px w-full bg-[#DDDBCB]" />
 
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.matchStatus)}`}>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.matchStatus)}`}
+                      >
                         {statusLabel(item.matchStatus)}
                       </span>
                       {item.matchStatus === 'ACTIVE' && (
@@ -348,7 +358,9 @@ export default function LandlordRequestsPage() {
                             disabled={updatingId === item.matchId}
                           >
                             <span className="flex items-center justify-center gap-1.5">
-                              {updatingId === item.matchId && <Loader2 size={12} className="animate-spin" />}
+                              {updatingId === item.matchId && (
+                                <Loader2 size={12} className="animate-spin" />
+                              )}
                               Rechazar
                             </span>
                           </button>
@@ -358,7 +370,9 @@ export default function LandlordRequestsPage() {
                             disabled={updatingId === item.matchId}
                           >
                             <span className="flex items-center justify-center gap-1.5">
-                              {updatingId === item.matchId && <Loader2 size={12} className="animate-spin" />}
+                              {updatingId === item.matchId && (
+                                <Loader2 size={12} className="animate-spin" />
+                              )}
                               Aceptar
                             </span>
                           </button>

@@ -78,4 +78,33 @@ public class CloudinaryController {
         return ResponseEntity.ok("Profile picture deleted successfully");
     }
 
+    @PostMapping("/user/me/profile-picture")
+    public ResponseEntity<?> uploadMyProfilePicture(@RequestParam("file") MultipartFile file)
+            throws IOException {
+        UserEntity user = userService.findCurrentUserEntity();
+
+        if (user.getProfileImagePublicId() != null) {
+            cloudinaryService.deleteByPublicId(user.getProfileImagePublicId());
+        }
+
+        Map<?, ?> result = cloudinaryService.upload(file, "users");
+        user.setProfileImageUrl((String) result.get("secure_url"));
+        user.setProfileImagePublicId((String) result.get("public_id"));
+        userService.save(user);
+
+        return ResponseEntity.ok(user.getProfileImageUrl());
+    }
+
+    @PostMapping("/user/me/delete-profile-picture")
+    public ResponseEntity<?> deleteMyProfilePicture() throws IOException {
+        UserEntity user = userService.findCurrentUserEntity();
+        if (user.getProfileImagePublicId() != null) {
+            cloudinaryService.deleteByPublicId(user.getProfileImagePublicId());
+        }
+        user.setProfileImageUrl(null);
+        user.setProfileImagePublicId(null);
+        userService.save(user);
+        return ResponseEntity.ok("Profile picture deleted successfully");
+    }
+
 } 

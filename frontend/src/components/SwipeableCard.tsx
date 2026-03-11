@@ -1,10 +1,4 @@
-import {
-  motion,
-  useAnimation,
-  useMotionValue,
-  useTransform,
-  type PanInfo,
-} from 'framer-motion'
+import { motion, useAnimation, useMotionValue, useTransform, type PanInfo } from 'framer-motion'
 import { Check, MapPin, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { ApartmentDTO } from '../service/apartment.service'
@@ -38,8 +32,7 @@ export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: Swi
   }
   */
 
-  const handleDragEnd = async (_: MouseEvent | TouchEvent | PointerEvent,
-  info: PanInfo) => {
+  const handleDragEnd = async (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const ox = info.offset.x
     const oy = info.offset.y
 
@@ -130,7 +123,9 @@ export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: Swi
           <span className="text-base">{apartment.ubication}</span>
         </div>
         <p className="text-2xl font-bold text-primary-content mt-1 drop-shadow">
-          <span className="bg-primary px-2 py-0.5 rounded-lg">{apartment.price} €<span className="text-sm font-normal">/mes</span></span>
+          <span className="bg-primary px-2 py-0.5 rounded-lg">
+            {apartment.price} €<span className="text-sm font-normal">/mes</span>
+          </span>
         </p>
       </div>
 

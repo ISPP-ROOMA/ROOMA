@@ -3,9 +3,16 @@ import { api } from './api'
 
 export interface User {
   id?: string | number
-  name?: string
   email: string
   role: string
+  name?: string
+  surname?: string
+  profilePic?: string
+  phone?: string
+  birthDate?: string | Date
+  gender?: string
+  smoker?: boolean
+  createdAt?: string | Date
   hobbies?: string
   schedule?: string
   profession?: string
@@ -25,8 +32,18 @@ export interface UserResponse {
 
 export type UpdateUserPayload = {
   email: string
-  role: string
+  name?: string
+  surname?: string
+  role?: string
   password?: string
+  profilePic?: string
+  phone?: string
+  birthDate?: string | Date
+  gender?: string
+  smoker?: boolean
+  hobbies?: string
+  schedule?: string
+  profession?: string
 }
 
 export const getUserProfile = async (): Promise<User | undefined> => {
@@ -79,5 +96,49 @@ export const updateUser = async (
     }
 
     return { error: 'No se pudo conectar con el servidor', email: '', role: '' }
+  }
+}
+
+export const updateUserProfile = async (data: UpdateUserPayload): Promise<User | undefined> => {
+  try {
+    const response = await api.put<User>('/users/profile', data)
+    return response.data
+  } catch (error) {
+    console.error(error)
+    return undefined
+  }
+}
+
+export const deleteUser = async (): Promise<boolean> => {
+  try {
+    await api.delete('/users/profile')
+    return true
+  } catch (error) {
+    console.error(error)
+    return false
+  }
+}
+
+export const uploadProfilePicture = async (file: File): Promise<string | undefined> => {
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await api.post<string>('/images/user/me/profile-picture', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  } catch (error) {
+    console.error(error)
+    return undefined
+  }
+}
+
+export const deleteProfilePicture = async (): Promise<boolean> => {
+  try {
+    await api.post('/images/user/me/delete-profile-picture')
+    return true
+  } catch (error) {
+    console.error(error)
+    return false
   }
 }
