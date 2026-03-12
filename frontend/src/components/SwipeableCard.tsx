@@ -1,5 +1,5 @@
 import { motion, useAnimation, useMotionValue, useTransform, type PanInfo } from 'framer-motion'
-import { Check, MapPin, X } from 'lucide-react'
+import { Heart, MapPin, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { ApartmentDTO } from '../service/apartment.service'
 
@@ -133,17 +133,17 @@ export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: Swi
       <div className="absolute bottom-5 inset-x-0 z-50 flex items-center justify-center gap-8">
         <button
           onClick={() => handleManualSwipe(false)}
-          className="btn btn-circle btn-error shadow-xl hover:scale-110 active:scale-95 transition-transform"
+          className="btn btn-circle shadow-xl hover:scale-110 active:scale-95 transition-transform bg-[#e5e7eb] border-[#e5e7eb]"
           style={{ width: 64, height: 64 }}
         >
           <X size={30} />
         </button>
         <button
           onClick={() => handleManualSwipe(true)}
-          className="btn btn-circle btn-success shadow-xl hover:scale-110 active:scale-95 transition-transform text-white"
+          className="btn btn-circle shadow-xl hover:scale-110 active:scale-95 transition-transform text-white bg-[#008080] border-[#008080]"
           style={{ width: 64, height: 64 }}
         >
-          <Check size={30} />
+          <Heart size={30} />
         </button>
       </div>
     </motion.div>

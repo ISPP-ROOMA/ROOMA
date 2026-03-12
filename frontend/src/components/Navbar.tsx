@@ -1,6 +1,6 @@
 ﻿import {
   Building2,
-  Heart,
+  Bookmark,
   Home,
   LayoutList,
   LogOut,
@@ -60,7 +60,7 @@ export default function Navbar() {
       return [
         { to: '/', label: 'Inicio', icon: <Home size={22} />, end: true },
         { to: '/mis-solicitudes', label: 'Solicitudes', icon: <LayoutList size={22} /> },
-        { to: '/favorites', label: 'Favoritos', icon: <Heart size={22} /> },
+        { to: '/favorites', label: 'Favoritos', icon: <Bookmark size={22} /> },
         { to: '/my-reviews', label: 'Valoraciones', icon: <Star size={22} /> },
         { to: '/profile', label: 'Perfil', icon: <UserCircle size={22} /> },
       ]
