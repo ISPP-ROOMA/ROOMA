@@ -132,7 +132,7 @@ public class BillingServiceTests {
     public void getBillsForApartment_ThrowsResourceNotFoundExceptionIfApartmentIdIsInvalid() {
         Integer apartmentId = 1;
 
-        when(billRepository.findByApartmentId(apartmentId)).thenReturn(null);
+        when(apartmentService.findById(apartmentId)).thenReturn(null);
 
         ResourceNotFoundException exception = assertThrows(
             ResourceNotFoundException.class, 
@@ -238,16 +238,16 @@ public class BillingServiceTests {
     }
 
     @Test
-    @DisplayName("getDebtsForCurrentUserByStatus should throw ResourceNotFoundException if status is invalid")
-    public void getDebtsForCurrentUserByStatus_ThrowsResourceNotFoundExceptionIfStatusIsInvalid() {
+    @DisplayName("getDebtsForCurrentUserByStatus should throw IllegalArgumentException if status is invalid")
+    public void getDebtsForCurrentUserByStatus_ThrowsIllegalArgumentExceptionIfStatusIsInvalid() {
         Integer userId = 1;
         UserEntity user = new UserEntity();
         user.setId(userId);
 
         when(userService.findCurrentUserEntity()).thenReturn(user);
 
-        ResourceNotFoundException exception = assertThrows(
-            ResourceNotFoundException.class,
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
             () -> billingService.getDebtsForCurrentUserByStatus(null));
 
         assertNotNull(exception);
@@ -333,7 +333,7 @@ public class BillingServiceTests {
     }
 
     @Test
-    @DisplayName("payDebt should not update bill status if it is already paid")
+    @DisplayName("payDebt should throw ForbiddenException if bill status is already paid")
     public void payDebt_ThrowsForbiddenExceptionIfBillStatusIsAlreadyPaid() {
         Integer debtId = 1;
         Integer userId = 1;
@@ -461,18 +461,18 @@ public class BillingServiceTests {
         when(apartmentService.findById(apartmentId)).thenReturn(null);
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> billingService.createBillAndSplit(new BillEntity(), apartmentId));
-        assertEquals("Apartment not found", exception.getMessage());
+        assertEquals("Apartment not found: " + apartmentId, exception.getMessage());
     }
 
     @Test
-    @DisplayName("createBillAndSplit should throw ResourceNotFoundException if bill is null")
-    public void createBillAndSplit_ThrowsResourceNotFoundExceptionIfBillIsNull() {
+    @DisplayName("createBillAndSplit should throw IllegalArgumentException if bill is null")
+    public void createBillAndSplit_ThrowsIllegalArgumentExceptionIfBillIsNull() {
         Integer apartmentId = 1;
 
         when(apartmentService.findById(apartmentId)).thenReturn(new ApartmentEntity());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> billingService.createBillAndSplit(null, apartmentId));
-        assertEquals("Bill not found", exception.getMessage());
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> billingService.createBillAndSplit(null, apartmentId));
+        assertEquals("Bill cannot be null", exception.getMessage());
     }
 
     @Test
@@ -508,7 +508,7 @@ public class BillingServiceTests {
         when(apartmentMemberService.findCurrentMembers(apartmentId)).thenReturn(List.of());
 
         ForbiddenException exception = assertThrows(ForbiddenException.class, () -> billingService.createBillAndSplit(new BillEntity(), apartmentId));
-        assertEquals("User is not the landlord of the apartment", exception.getMessage());
+        assertEquals("Only landlord can create bills for this apartment", exception.getMessage());
     }
 
     @Test
@@ -547,7 +547,7 @@ public class BillingServiceTests {
         when(tenantDebtRepository.findByUserId(userId)).thenReturn(List.of());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> billingService.getBillingSummaryForUser(userId));
-        assertEquals("User not found", exception.getMessage());
+        assertEquals("User not found: " + userId, exception.getMessage());
     }
 
     @Test
