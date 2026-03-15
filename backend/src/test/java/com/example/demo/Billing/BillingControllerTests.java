@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -179,7 +181,7 @@ public class BillingControllerTests {
 
         when(billingService.getBillsForApartment(apartmentId)).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/bills/apartments/{apartmentId}", apartmentId))
+        mockMvc.perform(get("/api/bills/apartment/{apartmentId}", apartmentId))
                .andExpect(status().isOk());
     }
 
@@ -189,7 +191,7 @@ public class BillingControllerTests {
     public void billsForApartment_UnauthorizedAccess() throws Exception {
         Integer apartmentId = 1;
 
-        mockMvc.perform(get("/api/bills/apartments/{apartmentId}", apartmentId))
+        mockMvc.perform(get("/api/bills/apartment/{apartmentId}", apartmentId))
                .andExpect(status().isForbidden());
 
         verify(billingService, never()).getBillsForApartment(apartmentId);
@@ -203,7 +205,7 @@ public class BillingControllerTests {
 
         when(billingService.getBillsForApartment(apartmentId)).thenThrow(new ResourceNotFoundException("Apartment not found"));
 
-        mockMvc.perform(get("/api/bills/apartments/{apartmentId}", apartmentId))
+        mockMvc.perform(get("/api/bills/apartment/{apartmentId}", apartmentId))
                .andExpect(status().isNotFound());
     }
 
@@ -215,7 +217,7 @@ public class BillingControllerTests {
 
         when(billingService.getBillsForApartment(apartmentId)).thenThrow(new AccessDeniedException("You are not the landlord of this apartment"));
 
-        mockMvc.perform(get("/api/bills/apartments/{apartmentId}", apartmentId))
+        mockMvc.perform(get("/api/bills/apartment/{apartmentId}", apartmentId))
                .andExpect(status().isForbidden());
     }
 
@@ -246,7 +248,7 @@ public class BillingControllerTests {
         BillEntity bill = new BillEntity();
         bill.setId(1);
 
-        when(billingService.createBillAndSplit(bill, apartmentId)).thenReturn(bill);
+        when(billingService.createBillAndSplit(any(BillEntity.class), eq(apartmentId))).thenReturn(bill);
 
         mockMvc.perform(post("/api/bills/apartment/{apartmentId}", apartmentId)
                .contentType("application/json")
@@ -265,7 +267,7 @@ public class BillingControllerTests {
                .content("{\"id\": 1}"))
                .andExpect(status().isForbidden());
 
-        verify(billingService, never()).createBillAndSplit(new BillEntity(), apartmentId);
+        verify(billingService, never()).createBillAndSplit(any(BillEntity.class), eq(apartmentId));
     }
 
     @Test
@@ -273,9 +275,8 @@ public class BillingControllerTests {
     @DisplayName("createBill should return exception if apartment does not exist")
     public void createBill_ReturnsExceptionIfApartmentDoesNotExist() throws Exception {
         Integer apartmentId = 999;
-        BillEntity bill = new BillEntity();
 
-        when(billingService.createBillAndSplit(bill, apartmentId)).thenThrow(new ResourceNotFoundException("Apartment not found"));
+        when(billingService.createBillAndSplit(any(BillEntity.class), eq(apartmentId))).thenThrow(new ResourceNotFoundException("Apartment not found"));
 
         mockMvc.perform(post("/api/bills/apartment/{apartmentId}", apartmentId)
                .contentType("application/json")
@@ -288,9 +289,8 @@ public class BillingControllerTests {
     @DisplayName("createBill should return exception if user is not landlord of the apartment")
     public void createBill_ReturnsExceptionIfUserIsNotLandlord() throws Exception {
         Integer apartmentId = 1;
-        BillEntity bill = new BillEntity();
 
-        when(billingService.createBillAndSplit(bill, apartmentId)).thenThrow(new AccessDeniedException("You are not the landlord of this apartment"));
+        when(billingService.createBillAndSplit(any(BillEntity.class), eq(apartmentId))).thenThrow(new AccessDeniedException("You are not the landlord of this apartment"));
 
         mockMvc.perform(post("/api/bills/apartment/{apartmentId}", apartmentId)
                .contentType("application/json")
@@ -303,9 +303,8 @@ public class BillingControllerTests {
     @DisplayName("createBill should return exception if apartmentId is not valid")
     public void createBill_ReturnsExceptionIfApartmentIdIsNotValid() throws Exception {
         Integer apartmentId = -1;
-        BillEntity bill = new BillEntity();
 
-        when(billingService.createBillAndSplit(bill, apartmentId)).thenThrow(new IllegalArgumentException("Invalid apartment ID"));
+        when(billingService.createBillAndSplit(any(BillEntity.class), eq(apartmentId))).thenThrow(new IllegalArgumentException("Invalid apartment ID"));
 
         mockMvc.perform(post("/api/bills/apartment/{apartmentId}", apartmentId)
                .contentType("application/json")

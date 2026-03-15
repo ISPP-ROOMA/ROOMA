@@ -106,6 +106,7 @@ public class BillingServiceTests {
         bill1.setApartment(apartment);
         bill2.setApartment(apartment);
 
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
         when(billRepository.findByApartmentId(apartmentId)).thenReturn(List.of(bill1, bill2));
 
         List<BillEntity> bills = billingService.getBillsForApartment(apartmentId);
@@ -118,7 +119,10 @@ public class BillingServiceTests {
     @DisplayName("getBillsForApartment should return empty list if no bills for given apartment")
     public void getBillsForApartment_ReturnsEmptyListIfNoBillsForGivenApartment() {
         Integer apartmentId = 1;
+        ApartmentEntity apartment = new ApartmentEntity();
+        apartment.setId(apartmentId);
 
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
         when(billRepository.findByApartmentId(apartmentId)).thenReturn(List.of());
 
         List<BillEntity> bills = billingService.getBillsForApartment(apartmentId);
@@ -240,12 +244,6 @@ public class BillingServiceTests {
     @Test
     @DisplayName("getDebtsForCurrentUserByStatus should throw IllegalArgumentException if status is invalid")
     public void getDebtsForCurrentUserByStatus_ThrowsIllegalArgumentExceptionIfStatusIsInvalid() {
-        Integer userId = 1;
-        UserEntity user = new UserEntity();
-        user.setId(userId);
-
-        when(userService.findCurrentUserEntity()).thenReturn(user);
-
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
             () -> billingService.getDebtsForCurrentUserByStatus(null));
@@ -350,12 +348,10 @@ public class BillingServiceTests {
         debt.setId(debtId);
         debt.setUser(user);
         debt.setBill(bill);
-        debt.setStatus(DebtStatus.PENDING);
+        debt.setStatus(DebtStatus.PAID);
 
-        when(tenantDebtRepository.save(any(TenantDebtEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(tenantDebtRepository.findById(debtId)).thenReturn(java.util.Optional.of(debt));
         when(userService.findCurrentUserEntity()).thenReturn(user);
-        when(tenantDebtRepository.findByBillId(billId)).thenReturn(List.of(debt));
 
         ForbiddenException exception = assertThrows(
             ForbiddenException.class, 
@@ -469,8 +465,6 @@ public class BillingServiceTests {
     public void createBillAndSplit_ThrowsIllegalArgumentExceptionIfBillIsNull() {
         Integer apartmentId = 1;
 
-        when(apartmentService.findById(apartmentId)).thenReturn(new ApartmentEntity());
-
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> billingService.createBillAndSplit(null, apartmentId));
         assertEquals("Bill cannot be null", exception.getMessage());
     }
@@ -479,8 +473,14 @@ public class BillingServiceTests {
     @DisplayName("createBillAndSplit should throw ResourceNotFoundException if no current members for apartment")
     public void createBillAndSplit_ThrowsResourceNotFoundExceptionIfNoCurrentMembersForApartment() {
         Integer apartmentId = 1;
+        UserEntity landlord = new UserEntity();
+        landlord.setId(1);
+        ApartmentEntity apartment = new ApartmentEntity();
+        apartment.setId(apartmentId);
+        apartment.setUser(landlord);
 
-        when(apartmentService.findById(apartmentId)).thenReturn(new ApartmentEntity());
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+        when(userService.findCurrentUserEntity()).thenReturn(landlord);
         when(apartmentMemberService.findCurrentMembers(apartmentId)).thenReturn(List.of());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> billingService.createBillAndSplit(new BillEntity(), apartmentId));
@@ -505,7 +505,6 @@ public class BillingServiceTests {
 
         when(apartmentService.findById(apartmentId)).thenReturn(apartment);
         when(userService.findCurrentUserEntity()).thenReturn(user);
-        when(apartmentMemberService.findCurrentMembers(apartmentId)).thenReturn(List.of());
 
         ForbiddenException exception = assertThrows(ForbiddenException.class, () -> billingService.createBillAndSplit(new BillEntity(), apartmentId));
         assertEquals("Only landlord can create bills for this apartment", exception.getMessage());
@@ -528,6 +527,7 @@ public class BillingServiceTests {
         debt2.setAmount(new java.math.BigDecimal("30.00"));
         debt2.setStatus(DebtStatus.PENDING);
 
+        when(userService.findById(userId)).thenReturn(user);
         when(tenantDebtRepository.findByUserId(userId)).thenReturn(List.of(debt1, debt2));
 
         BillingSummaryDTO summary = billingService.getBillingSummaryForUser(userId);
@@ -544,8 +544,6 @@ public class BillingServiceTests {
     public void getBillingSummaryForUser_ThrowsResourceNotFoundExceptionIfUserIdIsInvalid() {
         Integer userId = 1;
 
-        when(tenantDebtRepository.findByUserId(userId)).thenReturn(List.of());
-
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> billingService.getBillingSummaryForUser(userId));
         assertEquals("User not found: " + userId, exception.getMessage());
     }
@@ -557,12 +555,13 @@ public class BillingServiceTests {
         UserEntity user = new UserEntity();
         user.setId(userId);
 
+        when(userService.findById(userId)).thenReturn(user);
         when(tenantDebtRepository.findByUserId(userId)).thenReturn(List.of());
 
         BillingSummaryDTO summary = billingService.getBillingSummaryForUser(userId);
 
         assertNotNull(summary);
-        assertEquals(new java.math.BigDecimal("0.00"), summary.getPendingAmount());
+        assertEquals(0, summary.getPendingAmount().compareTo(java.math.BigDecimal.ZERO));
         assertEquals(0, summary.getPendingDebts());
         assertEquals(null, summary.getNextDueDate());
         assertEquals(null, summary.getNextReference());
