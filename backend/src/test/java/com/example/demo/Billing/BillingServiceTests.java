@@ -238,6 +238,22 @@ public class BillingServiceTests {
     }
 
     @Test
+    @DisplayName("getDebtsForCurrentUserByStatus should throw ResourceNotFoundException if status is invalid")
+    public void getDebtsForCurrentUserByStatus_ThrowsResourceNotFoundExceptionIfStatusIsInvalid() {
+        Integer userId = 1;
+        UserEntity user = new UserEntity();
+        user.setId(userId);
+
+        when(userService.findCurrentUserEntity()).thenReturn(user);
+
+        ResourceNotFoundException exception = assertThrows(
+            ResourceNotFoundException.class,
+            () -> billingService.getDebtsForCurrentUserByStatus(null));
+
+        assertNotNull(exception);
+    }
+
+    @Test
     @DisplayName("payDebt should mark the debt as paid and update bill status if all debts are paid")
     public void payDebt_MarksDebtAsPaidAndUpdatesBillStatusIfAllDebtsArePaid() {
         Integer debtId = 1;
