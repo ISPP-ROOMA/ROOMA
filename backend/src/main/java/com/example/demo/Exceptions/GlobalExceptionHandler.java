@@ -1,5 +1,7 @@
 package com.example.demo.Exceptions;
 
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -117,6 +119,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> multipartException(MultipartException ex) {
         ErrorResponse message = new ErrorResponse("Petición multipart inválida: " + ex.getMessage(), HttpStatus.BAD_REQUEST.value(), new Date());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+    }
+
+    @ExceptionHandler({AccessDeniedException.class, AuthorizationDeniedException.class})
+    @ResponseStatus(value = HttpStatus.FORBIDDEN)
+    public ResponseEntity<ErrorResponse> accessDeniedException(Exception ex) {
+        ErrorResponse message = new ErrorResponse("Access denied: " + ex.getMessage(), HttpStatus.FORBIDDEN.value(), new Date());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(message);
     }
 
     @ExceptionHandler(Exception.class)

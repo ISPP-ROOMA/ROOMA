@@ -8,4 +8,22 @@ public record BillingSummaryDTO(
         BigDecimal pendingAmount,
         LocalDate nextDueDate,
         String nextReference
-) {}
+) {
+        public BigDecimal getPendingAmount() {
+                return pendingAmount;
+        }
+
+        public int getPendingDebts() {
+                return pendingDebts;
+        }
+
+        public LocalDate getNextDueDate() {
+                return nextDueDate;
+        }
+
+        public String getNextReference() {
+                return nextReference;
+        }
+
+
+}
