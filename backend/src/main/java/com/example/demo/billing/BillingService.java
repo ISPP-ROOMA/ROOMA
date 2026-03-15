@@ -47,6 +47,9 @@ public class BillingService {
 
     @Transactional(readOnly = true)
     public List<BillEntity> getBillsForApartment(Integer apartmentId) {
+        if(apartmentId == null || apartmentService.findById(apartmentId) == null) {
+            throw new ResourceNotFoundException("Apartment not found: " + apartmentId);
+        }
         List<BillEntity> bills = billRepository.findByApartmentId(apartmentId);
         // force eager load of tenantDebts + user to avoid lazy init issues
         for (BillEntity bill : bills) {
@@ -65,6 +68,9 @@ public class BillingService {
     }
 
     public List<TenantDebtEntity> getDebtsForCurrentUserByStatus(DebtStatus status) {
+        if(DebtStatus.PAID != status && DebtStatus.PENDING != status) {
+            throw new IllegalArgumentException("Invalid debt status: " + status);
+        }
         UserEntity currentUser = userService.findCurrentUserEntity();
         return tenantDebtRepository.findByUserIdAndStatus(currentUser.getId(), status);
     }
@@ -78,7 +84,9 @@ public class BillingService {
         if (!debt.getUser().getId().equals(currentUser.getId())) {
             throw new ForbiddenException("Current user is not owner of this debt");
         }
-
+        if (debt.getStatus() == DebtStatus.PAID) {
+            throw new ForbiddenException("Debt is already paid");
+        }
         debt.setStatus(DebtStatus.PAID);
         tenantDebtRepository.save(debt);
 
@@ -96,10 +104,20 @@ public class BillingService {
 
     @Transactional
     public BillEntity createBillAndSplit(BillEntity bill, Integer apartmentId) {
+        if(bill == null) {
+            throw new IllegalArgumentException("Bill cannot be null");
+        }
 
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
+        if (apartment == null) {
+            throw new ResourceNotFoundException("Apartment not found: " + apartmentId);
+        }
 
         UserEntity landlord = userService.findCurrentUserEntity();
+
+        if (!apartment.getUser().getId().equals(landlord.getId())) {
+            throw new ForbiddenException("Only landlord can create bills for this apartment");
+        }
 
         BillEntity billEntity = new BillEntity();
         billEntity.setReference(bill.getReference());
@@ -134,6 +152,9 @@ public class BillingService {
 
     @Transactional(readOnly = true)
     public BillingSummaryDTO getBillingSummaryForUser(Integer userId) {
+        if(userId == null || userService.findById(userId) == null) {
+            throw new ResourceNotFoundException("User not found: " + userId);
+        }
         List<TenantDebtEntity> debts = tenantDebtRepository.findByUserId(userId);
 
         BigDecimal pendingAmount = debts.stream()
