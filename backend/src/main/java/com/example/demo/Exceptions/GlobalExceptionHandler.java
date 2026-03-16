@@ -1,18 +1,21 @@
 package com.example.demo.Exceptions;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -88,6 +91,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> illegalArgumentException(IllegalArgumentException ex) {
+        ErrorResponse message = new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), new Date());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     public ResponseEntity<Map<String, Object>> methodArgumentNotValidException(MethodArgumentNotValidException ex) {
@@ -125,6 +135,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> multipartException(MultipartException ex) {
         ErrorResponse message = new ErrorResponse("Petición multipart inválida: " + ex.getMessage(), HttpStatus.BAD_REQUEST.value(), new Date());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+    }
+
+    @ExceptionHandler({AccessDeniedException.class, AuthorizationDeniedException.class})
+    @ResponseStatus(value = HttpStatus.FORBIDDEN)
+    public ResponseEntity<ErrorResponse> accessDeniedException(Exception ex) {
+        ErrorResponse message = new ErrorResponse("Access denied: " + ex.getMessage(), HttpStatus.FORBIDDEN.value(), new Date());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(message);
     }
 
     @ExceptionHandler(Exception.class)

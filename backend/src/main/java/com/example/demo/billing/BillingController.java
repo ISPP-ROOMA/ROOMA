@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import com.example.demo.Exceptions.ForbiddenException;
+import com.example.demo.Exceptions.ResourceNotFoundException;
+
 @RestController
 @RequestMapping("/api/bills")
 public class BillingController {
@@ -29,20 +32,20 @@ public class BillingController {
 
     @GetMapping("/me/debts/status/{status}")
     @PreAuthorize("hasAnyRole('TENANT','ADMIN')")
-    public ResponseEntity<List<TenantDebtEntity>> myDebtsByStatus(@PathVariable String status) {
+    public ResponseEntity<List<TenantDebtEntity>> myDebtsByStatus(@PathVariable String status) throws IllegalArgumentException {
         DebtStatus ds = DebtStatus.valueOf(status.toUpperCase());
         return ResponseEntity.ok(billingService.getDebtsForCurrentUserByStatus(ds));
     }
 
     @PostMapping("/debts/{debtId}/pay")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<TenantDebtEntity> payDebt(@PathVariable Integer debtId) {
+    public ResponseEntity<TenantDebtEntity> payDebt(@PathVariable Integer debtId) throws ResourceNotFoundException, ForbiddenException {
         return ResponseEntity.ok(billingService.payDebt(debtId));
     }
 
     @GetMapping("/apartment/{apartmentId}")
     @PreAuthorize("hasAnyRole('LANDLORD','ADMIN')")
-    public ResponseEntity<List<BillEntity>> billsForApartment(@PathVariable Integer apartmentId) {
+    public ResponseEntity<List<BillEntity>> billsForApartment(@PathVariable Integer apartmentId) throws ResourceNotFoundException {
         return ResponseEntity.ok(billingService.getBillsForApartment(apartmentId));
     }
 
@@ -54,7 +57,7 @@ public class BillingController {
 
     @PostMapping("/apartment/{apartmentId}")
     @PreAuthorize("hasAnyRole('LANDLORD','ADMIN')")
-    public ResponseEntity<BillEntity> createBill(@RequestBody BillEntity bill, @PathVariable Integer apartmentId) {
+    public ResponseEntity<BillEntity> createBill(@RequestBody BillEntity bill, @PathVariable Integer apartmentId) throws ResourceNotFoundException, ForbiddenException, IllegalArgumentException {
         return ResponseEntity.ok(billingService.createBillAndSplit(bill, apartmentId));
     }
 
