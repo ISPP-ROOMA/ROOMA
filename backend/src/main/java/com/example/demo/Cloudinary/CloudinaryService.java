@@ -37,6 +37,17 @@ public class CloudinaryService {
         return result;
     }
 
+    public Map<String, Object> uploadRaw(MultipartFile multipartFile, String folder) throws IOException {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> params = ObjectUtils.asMap(
+            "folder", "rooma/" + folder,
+            "resource_type", "auto"
+        );
+        @SuppressWarnings("unchecked")
+        Map<String, Object> result = cloudinary.uploader().upload(multipartFile.getBytes(), params);
+        return result;
+    }
+
     public void deleteByPublicId(String publicId) throws IOException {
         cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
     }
