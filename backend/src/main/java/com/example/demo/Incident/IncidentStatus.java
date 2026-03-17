@@ -8,7 +8,10 @@ package com.example.demo.Incident;
 
 public enum IncidentStatus {
     OPEN,
+    RECEIVED,
     IN_PROGRESS,
+    TECHNICIAN_NOTIFIED,
     RESOLVED,
-    CLOSED
+    CLOSED,
+    CLOSED_INACTIVITY
 }
