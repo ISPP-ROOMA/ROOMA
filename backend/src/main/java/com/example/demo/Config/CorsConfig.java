@@ -19,7 +19,7 @@ public class CorsConfig implements CorsConfigurationSource {
     public @Nullable CorsConfiguration getCorsConfiguration( HttpServletRequest request) {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(allowedOrigins);
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         return config;
