@@ -115,6 +115,7 @@ export default function MyHome() {
   const otherRoommates = roommates.filter((mate) => !mate.currentUser)
   const heroImage = galleryPhotos[selectedPhoto]?.url ?? ''
   const pendingAmount = Number(billing?.pendingAmount ?? 0)
+  const incidences = 3
 
   return (
     <section className="bg-base-200 min-h-[70vh] py-6 sm:py-8 px-3 sm:px-4">
@@ -275,6 +276,19 @@ export default function MyHome() {
                   Comparte el enlace de Rooma para invitar a tus compañeros.
                 </p>
               )}
+            </article>
+
+            <article className="bg-white rounded-xl shadow p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">Control de incidencias</h3>
+                  <p className="text-sm text-base-content/60">{incidences} incidencias abiertas</p>
+                </div>
+                <Link to="/apartments/:id/incidences" className="btn btn-sm btn-primary">
+                  Ver incidencias
+                </Link>
+              </div>
+
             </article>
           </div>
         </div>
