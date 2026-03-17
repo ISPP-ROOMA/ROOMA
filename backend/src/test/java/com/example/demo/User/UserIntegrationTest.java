@@ -21,9 +21,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.example.demo.User.DTOs.CreateUser;
 import com.example.demo.User.DTOs.UpdateProfileRequest;
 import com.example.demo.User.DTOs.UpdateUser;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.transaction.Transactional;
-import tools.jackson.databind.ObjectMapper;
 
 @SpringBootTest
 @AutoConfigureMockMvc
