@@ -2,6 +2,9 @@
 -- 1. LIMPIEZA DE DATOS (Orden jerárquico)
 -- ==========================================
 DELETE FROM reviews;
+DELETE FROM incident_status_history;
+DELETE FROM incident_attachments;
+DELETE FROM incidents;
 DELETE FROM tenant_debts;
 DELETE FROM bills;
 DELETE FROM apartment_matches;
@@ -111,3 +114,29 @@ INSERT INTO reviews (id, rating, comment, review_member_id, reviewed_member_id, 
 (4, 4, 'Buen compañero de piso, aunque hace mucho ruido.', 11, 6, 1, true, CURRENT_DATE - INTERVAL '6 days'),
 (5, 3, 'Inquilino razonable, pero necesita mejorar en la limpieza.', 1, 12, 1, false, CURRENT_DATE - INTERVAL '1 days'),
 (6, 3, 'Compañero de piso razonable, pero necesita mejorar en la limpieza.', 6, 12, 1, false, CURRENT_DATE - INTERVAL '1 days');
+
+-- ==========================================
+-- 8. INCIDENCIAS
+-- ==========================================
+INSERT INTO incidents (id, title, description, category, zone, urgency, status, created_at, updated_at, resolved_at, closed_at, rejection_reason, apartment_id, tenant_id, landlord_id)
+VALUES
+(1, 'Fuga debajo del fregadero', 'Pierde agua cada vez que abrimos el grifo de la cocina. Hemos puesto un cubo temporal.', 'PLUMBING', 'KITCHEN', 'HIGH', 'IN_PROGRESS', CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '4 hours', NULL, NULL, NULL, 1, 6, 1),
+(2, 'Microondas no calienta', 'Enciende pero no calienta la comida desde ayer por la noche.', 'APPLIANCES', 'KITCHEN', 'MEDIUM', 'RESOLVED', CURRENT_TIMESTAMP - INTERVAL '5 days', CURRENT_TIMESTAMP - INTERVAL '12 hours', CURRENT_TIMESTAMP - INTERVAL '12 hours', NULL, NULL, 1, 7, 1),
+(3, 'Persiana rota en dormitorio', 'La persiana no sube y entra demasiada luz por la mañana.', 'OTHER', 'BEDROOM', 'LOW', 'CLOSED', CURRENT_TIMESTAMP - INTERVAL '14 days', CURRENT_TIMESTAMP - INTERVAL '3 days', CURRENT_TIMESTAMP - INTERVAL '4 days', CURRENT_TIMESTAMP - INTERVAL '3 days', NULL, 1, 8, 1);
+
+INSERT INTO incident_attachments (incident_id, photo_url) VALUES
+(1, 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4'),
+(2, 'https://images.unsplash.com/photo-1616628182509-6c6c1219f8ff');
+
+INSERT INTO incident_status_history (id, incident_id, status, changed_at, changed_by_user_id, changed_by_email) VALUES
+(1, 1, 'OPEN', CURRENT_TIMESTAMP - INTERVAL '2 days', 6, 'tenant1@test.com'),
+(2, 1, 'RECEIVED', CURRENT_TIMESTAMP - INTERVAL '1 day 20 hours', 1, 'landlord1@test.com'),
+(3, 1, 'IN_PROGRESS', CURRENT_TIMESTAMP - INTERVAL '4 hours', 1, 'landlord1@test.com'),
+(4, 2, 'OPEN', CURRENT_TIMESTAMP - INTERVAL '5 days', 7, 'tenant2@test.com'),
+(5, 2, 'RECEIVED', CURRENT_TIMESTAMP - INTERVAL '4 days 20 hours', 1, 'landlord1@test.com'),
+(6, 2, 'IN_PROGRESS', CURRENT_TIMESTAMP - INTERVAL '2 days', 1, 'landlord1@test.com'),
+(7, 2, 'RESOLVED', CURRENT_TIMESTAMP - INTERVAL '12 hours', 1, 'landlord1@test.com'),
+(8, 3, 'OPEN', CURRENT_TIMESTAMP - INTERVAL '14 days', 8, 'tenant3@test.com'),
+(9, 3, 'IN_PROGRESS', CURRENT_TIMESTAMP - INTERVAL '12 days', 1, 'landlord1@test.com'),
+(10, 3, 'RESOLVED', CURRENT_TIMESTAMP - INTERVAL '4 days', 1, 'landlord1@test.com'),
+(11, 3, 'CLOSED', CURRENT_TIMESTAMP - INTERVAL '3 days', 8, 'tenant3@test.com');
