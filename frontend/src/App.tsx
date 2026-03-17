@@ -20,6 +20,8 @@ import MyHome from './pages/private/MyHome'
 import FavoritesPage from './pages/private/FavoritesPage'
 import DebtDetail from './pages/private/payments/DebtDetail'
 import Invoices from './pages/private/payments/Invoices'
+import ApartmentIncidences from './pages/private/incidences/ApartmentIncidences'
+import IncidentDetail from './pages/private/incidences/IncidentDetail'
 import PaymentSuccess from './pages/private/payments/PaymentSuccess'
 import MyReviews from './pages/private/MyReviews'
 import Profile from './pages/private/Profile'
@@ -346,6 +348,22 @@ function App() {
                     </PrivateRoute>
                   }
                 />
+                <Route
+                  path="/apartments/:id/incidences"
+                  element={
+                    <PrivateRoute allowedRoles={['LANDLORD']}>
+                      <ApartmentIncidences />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/apartments/:id/incidences/:incidentId"
+                  element={
+                    <PrivateRoute allowedRoles={['LANDLORD']}>
+                      <IncidentDetail />
+                    </PrivateRoute>
+                  }
+                />
               </>
             )}
 
@@ -389,6 +407,22 @@ function App() {
                   element={
                     <PrivateRoute allowedRoles={['TENANT']}>
                       <PaymentSuccess />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/apartments/:id/incidences"
+                  element={
+                    <PrivateRoute allowedRoles={['TENANT']}>
+                      <ApartmentIncidences />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/apartments/:id/incidences/:incidentId"
+                  element={
+                    <PrivateRoute allowedRoles={['TENANT']}>
+                      <IncidentDetail />
                     </PrivateRoute>
                   }
                 />
