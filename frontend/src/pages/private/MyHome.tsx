@@ -284,7 +284,7 @@ export default function MyHome() {
                   <h3 className="text-lg font-semibold">Control de incidencias</h3>
                   <p className="text-sm text-base-content/60">{incidences} incidencias abiertas</p>
                 </div>
-                <Link to="/apartments/:id/incidences" className="btn btn-sm btn-primary">
+                <Link to={`/apartments/${apartment.id}/incidences`} className="btn btn-sm btn-primary">
                   Ver incidencias
                 </Link>
               </div>
