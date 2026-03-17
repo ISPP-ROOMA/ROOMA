@@ -1,0 +1,243 @@
+package com.example.demo.Apartment;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.example.demo.Apartment.DTOs.ApartmentDTO;
+import com.example.demo.Apartment.DTOs.ApartmentHomeDTO;
+import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
+import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
+import com.example.demo.Jwt.JwtService;
+import com.example.demo.MemberApartment.ApartmentMemberEntity;
+import com.example.demo.MemberApartment.ApartmentMemberService;
+import com.example.demo.MemberApartment.DTOs.ApartmentMemberDTO;
+
+@WebMvcTest(ApartmentController.class)
+@Import(ApartmentControllerTest.SecurityTestConfig.class)
+public class ApartmentControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private ApartmentService apartmentService;
+
+    @MockitoBean
+    private ApartmentMemberService apartmentMemberService;
+
+    @MockitoBean
+    private ApartmentPhotoService apartmentPhotoService;
+
+    @MockitoBean
+    private ApartmentHomeService apartmentHomeService;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @TestConfiguration
+    @EnableMethodSecurity
+    static class SecurityTestConfig {
+        @Bean
+        SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+            http.csrf(AbstractHttpConfigurer::disable)
+                    .authorizeHttpRequests(auth -> auth
+                            .requestMatchers(HttpMethod.GET, "/api/apartments/**").authenticated()
+                            .requestMatchers(HttpMethod.POST, "/api/apartments/**").hasRole("LANDLORD")
+                            .requestMatchers(HttpMethod.PUT, "/api/apartments/**").hasRole("LANDLORD")
+                            .requestMatchers(HttpMethod.DELETE, "/api/apartments/**").hasRole("LANDLORD")
+                            .anyRequest().authenticated())
+                    .httpBasic(Customizer.withDefaults());
+            return http.build();
+        }
+    }
+
+    @Test
+    @DisplayName("getAllApartments should return 401 when unauthenticated")
+    public void getAllApartments_Unauthenticated() throws Exception {
+        mockMvc.perform(get("/api/apartments"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "TENANT")
+    @DisplayName("getAllApartments should return apartment list for authenticated user")
+    public void getAllApartments_ReturnsOk() throws Exception {
+        ApartmentEntity apartment = apartment(1);
+        ApartmentMemberEntity member = member(100, apartment, 200);
+
+        when(apartmentService.findAll()).thenReturn(List.of(apartment));
+        when(apartmentMemberService.findCurrentMembers(1)).thenReturn(List.of(member));
+
+        mockMvc.perform(get("/api/apartments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].members[0].id").value(100));
+    }
+
+    @Test
+    @WithMockUser(roles = "TENANT")
+    @DisplayName("getMyHomeSnapshot should return 200 for tenant")
+    public void getMyHomeSnapshot_Tenant() throws Exception {
+        ApartmentHomeDTO home = new ApartmentHomeDTO(ApartmentDTO.fromApartmentEntity(apartment(10)), List.of(), List.of(), null);
+        when(apartmentHomeService.getCurrentUserHome()).thenReturn(home);
+
+        mockMvc.perform(get("/api/apartments/me/home"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "LANDLORD")
+    @DisplayName("getMyHomeSnapshot should return 403 for landlord")
+    public void getMyHomeSnapshot_LandlordForbidden() throws Exception {
+        mockMvc.perform(get("/api/apartments/me/home"))
+                .andExpect(status().isForbidden());
+
+        verify(apartmentHomeService, never()).getCurrentUserHome();
+    }
+
+    @Test
+    @WithMockUser(roles = "LANDLORD")
+    @DisplayName("getMyApartments should return 200 for landlord")
+    public void getMyApartments_Landlord() throws Exception {
+        ApartmentEntity apartment = apartment(2);
+        when(apartmentService.findMyApartments()).thenReturn(List.of(apartment));
+        when(apartmentMemberService.findCurrentMembers(2)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/apartments/my"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(2));
+    }
+
+    @Test
+    @WithMockUser(roles = "TENANT")
+    @DisplayName("createApartment should return 403 for tenant")
+    public void createApartment_TenantForbidden() throws Exception {
+        mockMvc.perform(multipart("/api/apartments")
+                        .file(new org.springframework.mock.web.MockMultipartFile(
+                                "data",
+                                "data",
+                                MediaType.APPLICATION_JSON_VALUE,
+                                "{\"title\":\"Flat C\",\"description\":\"Desc\",\"price\":700.0,\"bills\":\"wifi\",\"ubication\":\"Madrid\",\"state\":\"ACTIVE\"}"
+                                        .getBytes(StandardCharsets.UTF_8)
+                        )))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "LANDLORD")
+    @DisplayName("deleteApartment should return 204 when service succeeds")
+    public void deleteApartment_Success() throws Exception {
+        mockMvc.perform(delete("/api/apartments/{id}", 4))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(roles = "LANDLORD")
+    @DisplayName("deleteApartment should return 404 when service throws")
+    public void deleteApartment_NotFound() throws Exception {
+        doThrow(new RuntimeException("boom")).when(apartmentService).deleteById(5);
+
+        mockMvc.perform(delete("/api/apartments/{id}", 5))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(roles = "TENANT")
+    @DisplayName("getApartmentAndPhotos should return apartment and image list")
+    public void getApartmentAndPhotos_ReturnsData() throws Exception {
+        ApartmentEntity apartment = apartment(6);
+        ApartmentPhotoEntity photo = new ApartmentPhotoEntity();
+        photo.setId(66);
+        photo.setUrl("https://img/test.jpg");
+
+        when(apartmentService.findById(6)).thenReturn(apartment);
+        when(apartmentPhotoService.findPhotosByApartmentId(6)).thenReturn(List.of(photo));
+
+        mockMvc.perform(get("/api/apartments/{id}/photos", 6))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.apartment.id").value(6))
+                .andExpect(jsonPath("$.images[0].id").value(66));
+    }
+
+    @Test
+    @WithMockUser(roles = "TENANT")
+    @DisplayName("searchApartments should return mapped list")
+    public void searchApartments_ReturnsMappedList() throws Exception {
+        ApartmentEntity apartment = apartment(7);
+        when(apartmentService.search("Madrid", 300.0, 600.0, ApartmentState.ACTIVE)).thenReturn(List.of(apartment));
+        when(apartmentMemberService.findCurrentMembers(7)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/apartments/search")
+                        .param("ubication", "Madrid")
+                        .param("minPrice", "300")
+                        .param("maxPrice", "600")
+                        .param("state", "ACTIVE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(7));
+    }
+
+    @Test
+    @WithMockUser(roles = "TENANT")
+    @DisplayName("getDeckForCandidate should return mapped list")
+    public void getDeckForCandidate_ReturnsMappedList() throws Exception {
+        ApartmentEntity apartment = apartment(8);
+        when(apartmentService.getDeckForCandidate(9)).thenReturn(List.of(apartment));
+        when(apartmentMemberService.findCurrentMembers(8)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/apartments/deck/{candidateId}", 9))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(8));
+    }
+
+    private ApartmentEntity apartment(Integer id) {
+        ApartmentEntity apartment = new ApartmentEntity();
+        apartment.setId(id);
+        apartment.setTitle("Apartment " + id);
+        apartment.setDescription("desc " + id);
+        apartment.setPrice(500.0);
+        apartment.setBills("wifi");
+        apartment.setUbication("Madrid");
+        apartment.setState(ApartmentState.ACTIVE);
+        return apartment;
+    }
+
+    private ApartmentMemberEntity member(Integer id, ApartmentEntity apartment, Integer userId) {
+        ApartmentMemberEntity member = new ApartmentMemberEntity();
+        member.setId(id);
+        member.setApartment(apartment);
+
+        com.example.demo.User.UserEntity user = new com.example.demo.User.UserEntity();
+        user.setId(userId);
+        member.setUser(user);
+        return member;
+    }
+}
