@@ -1,10 +1,25 @@
-﻿import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
-import { getDeviceId, registerUser } from '../service/auth.service'
+import { getDeviceId, googleLogin, registerUser, type UserRole } from '../service/auth.service'
 import { useAuthStore } from '../store/authStore'
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: Record<string, unknown>) => void
+          renderButton: (element: HTMLElement, config: Record<string, unknown>) => void
+        }
+      }
+    }
+  }
+}
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
 const registerSchema = z.object({
   email: z.email('Email no valido'),
@@ -18,6 +33,8 @@ export default function Register() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+  const googleBtnRef = useRef<HTMLDivElement>(null)
+  const selectedRoleRef = useRef<UserRole | null>(null)
 
   const {
     register,
@@ -30,6 +47,63 @@ export default function Register() {
   })
 
   const selectedRole = useWatch({ control, name: 'role' })
+
+  // Keep a ref in sync so the Google callback always has the latest role
+  useEffect(() => {
+    selectedRoleRef.current = selectedRole ?? null
+  }, [selectedRole])
+
+  const handleGoogleResponse = useCallback(
+    async (response: { credential: string }) => {
+      setError(null)
+
+      const role = selectedRoleRef.current
+      if (!role) {
+        setError('Selecciona un tipo de cuenta antes de continuar con Google')
+        return
+      }
+
+      const res = await googleLogin(response.credential, role)
+
+      if (res.error || !res.token) {
+        setError(res.error ?? 'Error signing in with Google')
+        return
+      }
+
+      useAuthStore.getState().login({
+        token: res.token,
+        role: res.role,
+        userId: res.userId,
+      })
+
+      if (res.role === 'LANDLORD') {
+        navigate('/apartments/my')
+      } else {
+        navigate('/')
+      }
+    },
+    [navigate],
+  )
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || !window.google) return
+
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleResponse,
+    })
+
+    if (googleBtnRef.current) {
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: '100%',
+        text: 'signup_with',
+        shape: 'pill',
+        locale: 'es',
+      })
+    }
+  }, [handleGoogleResponse])
 
   const onSubmit = async (data: RegisterFormData) => {
     const deviceId = getDeviceId()
@@ -219,6 +293,13 @@ export default function Register() {
               Registrarse
             </button>
           </div>
+
+          {GOOGLE_CLIENT_ID && (
+            <>
+              <div className="divider text-base-content/50 text-xs">o</div>
+              <div ref={googleBtnRef} className="flex justify-center" />
+            </>
+          )}
 
           <p className="pt-1 text-center text-sm text-base-content/65">
             Ya tienes cuenta?{' '}

@@ -88,6 +88,26 @@ export const loginUser = async (loginData: LoginData): Promise<AuthResponse> => 
   }
 }
 
+export const googleLogin = async (
+  idToken: string,
+  role?: UserRole,
+): Promise<AuthResponse> => {
+  try {
+    const response = await api.post<AuthResponse>('/auth/google', {
+      idToken,
+      deviceId: getDeviceId(),
+      role: role ?? null,
+    })
+    if (response.data.token) {
+      markSessionHint()
+    }
+    return response.data
+  } catch (error) {
+    console.error(error)
+    return { error: 'Error signing in with Google', token: '', role: 'TENANT', userId: 0 }
+  }
+}
+
 export const refreshToken = async (): Promise<AuthResponse | undefined> => {
   if (refreshInFlight) {
     return refreshInFlight

@@ -1,10 +1,25 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
-import { getDeviceId, loginUser } from '../service/auth.service'
+import { getDeviceId, googleLogin, loginUser } from '../service/auth.service'
 import { useAuthStore } from '../store/authStore'
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: Record<string, unknown>) => void
+          renderButton: (element: HTMLElement, config: Record<string, unknown>) => void
+        }
+      }
+    }
+  }
+}
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
 const schema = z.object({
   email: z.email('Invalid email'),
@@ -17,6 +32,7 @@ export default function Login() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+  const googleBtnRef = useRef<HTMLDivElement>(null)
 
   const {
     register,
@@ -25,6 +41,51 @@ export default function Login() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(schema),
   })
+
+  const handleGoogleResponse = useCallback(
+    async (response: { credential: string }) => {
+      setError(null)
+      const res = await googleLogin(response.credential)
+
+      if (res.error || !res.token) {
+        setError(res.error ?? 'Error signing in with Google')
+        return
+      }
+
+      useAuthStore.getState().login({
+        token: res.token,
+        role: res.role,
+        userId: res.userId,
+      })
+
+      if (res.role === 'LANDLORD') {
+        navigate('/apartments/my')
+        return
+      }
+      navigate('/')
+    },
+    [navigate],
+  )
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || !window.google) return
+
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleResponse,
+    })
+
+    if (googleBtnRef.current) {
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: '100%',
+        text: 'signin_with',
+        shape: 'pill',
+        locale: 'es',
+      })
+    }
+  }, [handleGoogleResponse])
 
   const onSubmit = async (data: LoginFormData) => {
     setError(null)
@@ -104,6 +165,13 @@ export default function Login() {
                 Login
               </button>
             </div>
+
+            {GOOGLE_CLIENT_ID && (
+              <>
+                <div className="divider text-base-content/50 text-xs">o</div>
+                <div ref={googleBtnRef} className="flex justify-center" />
+              </>
+            )}
 
             <p className="text-center text-sm text-gray-500">
               ¿No tienes cuenta?{' '}
