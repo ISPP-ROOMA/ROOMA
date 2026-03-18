@@ -1,4 +1,4 @@
-package com.example.demo.chat.DTOs;
+package com.example.demo.Chat.DTOs;
 
 public record SendMessageDTO(String content) {
 }
