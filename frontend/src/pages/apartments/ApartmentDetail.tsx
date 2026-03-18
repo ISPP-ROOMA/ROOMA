@@ -215,6 +215,27 @@ export default function ApartmentDetail() {
                 </svg>
                 Añadir Factura
               </button>
+
+              <button
+                onClick={() => navigate(`/apartments/${id}/incidences`)}
+                className="ml-auto flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-full shadow-md transition text-sm"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M10.29 3.86L1.82 18a1 1 0 0 0 .86 1.5h18.64a1 1 0 0 0 .86-1.5L13.71 3.86a1 1 0 0 0-1.71 0zM12 9v4m0 4h.01"
+                  />  
+                </svg>
+                Ver Incidencias
+              </button>
             </div>
           </div>
         </div>
