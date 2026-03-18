@@ -51,9 +51,18 @@ INSERT INTO apartments (id, title, description, price, bills, ubication, state, 
 -- 4. FOTOS
 -- ==========================================
 INSERT INTO apartment_photos (id, apartment_id, orden, portada, public_id, url) VALUES
-(1, 1, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(2, 2, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(3, 3, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg');
+-- Apartamento 1
+(1, 1, 1, true,  'rooma/apartments/dgfh1070gkygrbgmrd0w', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773686395/rooma/apartments/dgfh1070gkygrbgmrd0w.jpg'),
+(2, 1, 2, false, 'rooma/apartments/l7zljsfbijp0c3vbgzmc', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773740478/rooma/apartments/l7zljsfbijp0c3vbgzmc.png'),
+(3, 1, 3, false, 'rooma/apartments/fobzzwpkelkznmh9a9wk', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773607514/rooma/apartments/fobzzwpkelkznmh9a9wk.jpg'),
+-- Apartamento 2
+(4, 2, 1, true,  'rooma/apartments/vqihs5t9b0l7uisgz164', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773689916/rooma/apartments/vqihs5t9b0l7uisgz164.jpg'),
+(5, 2, 2, false, 'rooma/apartments/hac2vyrfpeagwsbvomjj', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773600606/rooma/apartments/hac2vyrfpeagwsbvomjj.jpg'),
+(6, 2, 3, false, 'rooma/apartments/fqbfxycztrgz5zrjbz4b', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773600609/rooma/apartments/fqbfxycztrgz5zrjbz4b.jpg'),
+-- Apartamento 3
+(7, 3, 1, true,  'rooma/apartments/a6edjyorif702tyu6886', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773607522/rooma/apartments/a6edjyorif702tyu6886.jpg'),
+(8, 3, 2, false, 'rooma/apartments/l1borh6of0igs4cofpmf', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773607520/rooma/apartments/l1borh6of0igs4cofpmf.jpg'),
+(9, 3, 3, false, 'rooma/apartments/iu4rhbdbaykkgfln46wb', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772642861/rooma/apartments/iu4rhbdbaykkgfln46wb.jpg');
 
 -- ==========================================
 -- 5. MIEMBROS (Asignación lógica de inquilinos)
