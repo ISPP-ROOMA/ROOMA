@@ -5,8 +5,10 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,10 @@ import com.example.demo.User.RefreshTokenService;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 
 @Service
 public class AuthService {
@@ -32,13 +38,17 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final PasswordEncoder passwordEncoder;
+    private final GoogleIdTokenVerifier googleVerifier;
 
     public AuthService(UserService userService, JwtService jwtService, RefreshTokenService refreshTokenService,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder, @Value("${google.client-id}") String googleClientId) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
         this.passwordEncoder = passwordEncoder;
+        this.googleVerifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                .setAudience(Collections.singletonList(googleClientId))
+                .build();
     }
 
     @Transactional
@@ -57,6 +67,7 @@ public class AuthService {
         newUser.setEmail(email);
         newUser.setPassword(passwordEncoder.encode(password));
         newUser.setRole(role);
+        newUser.setAuthProvider("LOCAL");
         userService.save(newUser);
 
         String accessToken = jwtService.generateAccessTokenFromEmail(newUser.getEmail());
@@ -78,6 +89,10 @@ public class AuthService {
         UserEntity user = userService.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        if (user.getPassword() == null) {
+            throw new InvalidPasswordException("This account uses Google Sign-In. Please log in with Google.");
+        }
+
         boolean validPassword = passwordEncoder.matches(password, user.getPassword());
 
         if (!validPassword) {
@@ -97,6 +112,84 @@ public class AuthService {
         rt.setDeviceId(deviceId);
         rt.setUser(user);
 
+        refreshTokenService.save(rt);
+
+        return new AuthResult(accessToken, refreshToken, user.getRole().name(), user.getId());
+    }
+
+    @Transactional
+    public AuthResult googleLogin(String idTokenString, String deviceId, Role role) {
+        GoogleIdToken idToken;
+        try {
+            idToken = googleVerifier.verify(idTokenString);
+        } catch (Exception e) {
+            throw new InvalidPasswordException("Invalid Google token");
+        }
+
+        if (idToken == null) {
+            throw new InvalidPasswordException("Invalid Google token");
+        }
+
+        GoogleIdToken.Payload payload = idToken.getPayload();
+        String googleId = payload.getSubject();
+        String email = payload.getEmail();
+
+        // Try to find existing user by googleId first, then by email
+        Optional<UserEntity> existingByGoogleId = userService.findByGoogleId(googleId);
+        Optional<UserEntity> existingByEmail = userService.findByEmail(email);
+
+        UserEntity user;
+
+        if (existingByGoogleId.isPresent()) {
+            // User already linked with Google
+            user = existingByGoogleId.get();
+        } else if (existingByEmail.isPresent()) {
+            // Existing user (registered via email) — link Google account
+            user = existingByEmail.get();
+            user.setGoogleId(googleId);
+            if (user.getAuthProvider() == null || "LOCAL".equals(user.getAuthProvider())) {
+                user.setAuthProvider("LOCAL_GOOGLE");
+            }
+        } else {
+            // New user — register via Google
+            if (role == null) {
+                throw new InvalidRoleException("Role is required for new Google registrations");
+            }
+            if (role == Role.ADMIN) {
+                throw new InvalidRoleException("Cannot register as admin");
+            }
+
+            user = new UserEntity();
+            user.setEmail(email);
+            user.setGoogleId(googleId);
+            user.setAuthProvider("GOOGLE");
+            user.setRole(role);
+
+            String name = (String) payload.get("given_name");
+            String surname = (String) payload.get("family_name");
+            String picture = (String) payload.get("picture");
+            if (name != null) user.setName(name);
+            if (surname != null) user.setSurname(surname);
+            if (picture != null) user.setProfileImageUrl(picture);
+        }
+
+        user.setLastConnectionAt(LocalDateTime.now());
+        userService.save(user);
+
+        String accessToken = jwtService.generateAccessTokenFromEmail(user.getEmail());
+        String refreshToken = jwtService.generateRefreshTokenFromEmail(user.getEmail());
+
+        // Create or update refresh token for this device
+        RefreshTokenEntity rt;
+        try {
+            rt = refreshTokenService.findByUserAndDeviceId(user, deviceId);
+        } catch (Exception e) {
+            rt = new RefreshTokenEntity();
+        }
+        rt.setToken(hashToken(refreshToken));
+        rt.setExpiration(jwtService.getExpirarationFromToken(refreshToken));
+        rt.setDeviceId(deviceId);
+        rt.setUser(user);
         refreshTokenService.save(rt);
 
         return new AuthResult(accessToken, refreshToken, user.getRole().name(), user.getId());
