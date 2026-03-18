@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
@@ -12,7 +12,7 @@ declare global {
       accounts: {
         id: {
           initialize: (config: Record<string, unknown>) => void
-          renderButton: (element: HTMLElement, config: Record<string, unknown>) => void
+          prompt: () => void
         }
       }
     }
@@ -32,7 +32,7 @@ export default function Login() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
-  const googleBtnRef = useRef<HTMLDivElement>(null)
+  const [googleReady, setGoogleReady] = useState(false)
 
   const {
     register,
@@ -74,18 +74,13 @@ export default function Login() {
       client_id: GOOGLE_CLIENT_ID,
       callback: handleGoogleResponse,
     })
-
-    if (googleBtnRef.current) {
-      window.google.accounts.id.renderButton(googleBtnRef.current, {
-        theme: 'outline',
-        size: 'large',
-        width: '100%',
-        text: 'signin_with',
-        shape: 'pill',
-        locale: 'es',
-      })
-    }
+    setGoogleReady(true)
   }, [handleGoogleResponse])
+
+  const handleGoogleClick = () => {
+    if (!window.google || !googleReady) return
+    window.google.accounts.id.prompt()
+  }
 
   const onSubmit = async (data: LoginFormData) => {
     setError(null)
@@ -166,12 +161,16 @@ export default function Login() {
               </button>
             </div>
 
-            {GOOGLE_CLIENT_ID && (
-              <>
-                <div className="divider text-base-content/50 text-xs">o</div>
-                <div ref={googleBtnRef} className="flex justify-center" />
-              </>
-            )}
+            <div className="divider text-base-content/50 text-xs">o</div>
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={handleGoogleClick}
+                className="btn btn-circle btn-outline h-14 w-14 border-base-300 bg-white hover:bg-base-200 hover:border-base-400 shadow-sm transition-all duration-200"
+              >
+                <img src="/Logo Google.png" alt="Google" className="h-7 w-7" />
+              </button>
+            </div>
 
             <p className="text-center text-sm text-gray-500">
               ¿No tienes cuenta?{' '}
