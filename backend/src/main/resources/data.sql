@@ -2,6 +2,9 @@
 -- 1. LIMPIEZA DE DATOS (Orden jerárquico)
 -- ==========================================
 DELETE FROM reviews;
+DELETE FROM incident_status_history;
+DELETE FROM incident_attachments;
+DELETE FROM incidents;
 DELETE FROM tenant_debts;
 DELETE FROM bills;
 DELETE FROM apartment_matches;
@@ -23,7 +26,7 @@ INSERT INTO users (id, email, password, role, hobbies, schedule, profession) VAL
 (4, 'landlord4@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'LANDLORD', 'Cocina, Arte', 'Mañanas', 'Empresaria'),
 (5, 'landlord5@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'LANDLORD', 'Música, Cine', 'Tarde', 'Músico');
 
--- Tenants (6-10)
+-- Tenants (6-12)
 INSERT INTO users (id, email, password, role, hobbies, schedule, profession) VALUES 
 (6, 'tenant1@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Videojuegos, Música', 'Estudiante de tarde', 'Estudiante'),
 (7, 'tenant2@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Fotografía, Viajes', 'Mañanas', 'Diseñadora'),
@@ -32,6 +35,10 @@ INSERT INTO users (id, email, password, role, hobbies, schedule, profession) VAL
 (10, 'tenant5@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Running', 'Mañanas', 'Periodista'),
 (11, 'tenant6@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Leer, Cocinar', 'Flexible', 'Docente'),
 (12, 'tenant7@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Pintura, Música', 'Tarde', 'Artista');
+
+-- Test User (13)
+INSERT INTO users (id, email, password, role, hobbies, schedule, profession) VALUES
+(13, 'testuser@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Prueba, Testing', 'Flexible', 'Tester');
 -- ==========================================
 -- 3. APARTAMENTOS
 -- ==========================================
@@ -44,9 +51,18 @@ INSERT INTO apartments (id, title, description, price, bills, ubication, state, 
 -- 4. FOTOS
 -- ==========================================
 INSERT INTO apartment_photos (id, apartment_id, orden, portada, public_id, url) VALUES
-(1, 1, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(2, 2, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg'),
-(3, 3, 1, true, '/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772099621/rooma/apartments/oaazdrxh77fvjcm1t1dz.jpg');
+-- Apartamento 1
+(1, 1, 1, true,  'rooma/apartments/dgfh1070gkygrbgmrd0w', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773686395/rooma/apartments/dgfh1070gkygrbgmrd0w.jpg'),
+(2, 1, 2, false, 'rooma/apartments/l7zljsfbijp0c3vbgzmc', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773740478/rooma/apartments/l7zljsfbijp0c3vbgzmc.png'),
+(3, 1, 3, false, 'rooma/apartments/fobzzwpkelkznmh9a9wk', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773607514/rooma/apartments/fobzzwpkelkznmh9a9wk.jpg'),
+-- Apartamento 2
+(4, 2, 1, true,  'rooma/apartments/vqihs5t9b0l7uisgz164', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773689916/rooma/apartments/vqihs5t9b0l7uisgz164.jpg'),
+(5, 2, 2, false, 'rooma/apartments/hac2vyrfpeagwsbvomjj', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773600606/rooma/apartments/hac2vyrfpeagwsbvomjj.jpg'),
+(6, 2, 3, false, 'rooma/apartments/fqbfxycztrgz5zrjbz4b', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773600609/rooma/apartments/fqbfxycztrgz5zrjbz4b.jpg'),
+-- Apartamento 3
+(7, 3, 1, true,  'rooma/apartments/a6edjyorif702tyu6886', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773607522/rooma/apartments/a6edjyorif702tyu6886.jpg'),
+(8, 3, 2, false, 'rooma/apartments/l1borh6of0igs4cofpmf', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773607520/rooma/apartments/l1borh6of0igs4cofpmf.jpg'),
+(9, 3, 3, false, 'rooma/apartments/iu4rhbdbaykkgfln46wb', 'https://res.cloudinary.com/djuqshdey/image/upload/v1772642861/rooma/apartments/iu4rhbdbaykkgfln46wb.jpg');
 
 -- ==========================================
 -- 5. MIEMBROS (Asignación lógica de inquilinos)
@@ -111,3 +127,29 @@ INSERT INTO reviews (id, rating, comment, review_member_id, reviewed_member_id, 
 (4, 4, 'Buen compañero de piso, aunque hace mucho ruido.', 11, 6, 1, true, CURRENT_DATE - INTERVAL '6 days'),
 (5, 3, 'Inquilino razonable, pero necesita mejorar en la limpieza.', 1, 12, 1, false, CURRENT_DATE - INTERVAL '1 days'),
 (6, 3, 'Compañero de piso razonable, pero necesita mejorar en la limpieza.', 6, 12, 1, false, CURRENT_DATE - INTERVAL '1 days');
+
+-- ==========================================
+-- 8. INCIDENCIAS
+-- ==========================================
+INSERT INTO incidents (id, title, description, category, zone, urgency, status, created_at, updated_at, resolved_at, closed_at, rejection_reason, apartment_id, tenant_id, landlord_id)
+VALUES
+(1, 'Fuga debajo del fregadero', 'Pierde agua cada vez que abrimos el grifo de la cocina. Hemos puesto un cubo temporal.', 'PLUMBING', 'KITCHEN', 'HIGH', 'IN_PROGRESS', CURRENT_TIMESTAMP - INTERVAL '2 days', CURRENT_TIMESTAMP - INTERVAL '4 hours', NULL, NULL, NULL, 1, 6, 1),
+(2, 'Microondas no calienta', 'Enciende pero no calienta la comida desde ayer por la noche.', 'APPLIANCES', 'KITCHEN', 'MEDIUM', 'RESOLVED', CURRENT_TIMESTAMP - INTERVAL '5 days', CURRENT_TIMESTAMP - INTERVAL '12 hours', CURRENT_TIMESTAMP - INTERVAL '12 hours', NULL, NULL, 1, 7, 1),
+(3, 'Persiana rota en dormitorio', 'La persiana no sube y entra demasiada luz por la mañana.', 'OTHER', 'BEDROOM', 'LOW', 'CLOSED', CURRENT_TIMESTAMP - INTERVAL '14 days', CURRENT_TIMESTAMP - INTERVAL '3 days', CURRENT_TIMESTAMP - INTERVAL '4 days', CURRENT_TIMESTAMP - INTERVAL '3 days', NULL, 1, 8, 1);
+
+INSERT INTO incident_attachments (incident_id, photo_url) VALUES
+(1, 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4'),
+(2, 'https://images.unsplash.com/photo-1616628182509-6c6c1219f8ff');
+
+INSERT INTO incident_status_history (id, incident_id, status, changed_at, changed_by_user_id, changed_by_email) VALUES
+(1, 1, 'OPEN', CURRENT_TIMESTAMP - INTERVAL '2 days', 6, 'tenant1@test.com'),
+(2, 1, 'RECEIVED', CURRENT_TIMESTAMP - INTERVAL '1 day 20 hours', 1, 'landlord1@test.com'),
+(3, 1, 'IN_PROGRESS', CURRENT_TIMESTAMP - INTERVAL '4 hours', 1, 'landlord1@test.com'),
+(4, 2, 'OPEN', CURRENT_TIMESTAMP - INTERVAL '5 days', 7, 'tenant2@test.com'),
+(5, 2, 'RECEIVED', CURRENT_TIMESTAMP - INTERVAL '4 days 20 hours', 1, 'landlord1@test.com'),
+(6, 2, 'IN_PROGRESS', CURRENT_TIMESTAMP - INTERVAL '2 days', 1, 'landlord1@test.com'),
+(7, 2, 'RESOLVED', CURRENT_TIMESTAMP - INTERVAL '12 hours', 1, 'landlord1@test.com'),
+(8, 3, 'OPEN', CURRENT_TIMESTAMP - INTERVAL '14 days', 8, 'tenant3@test.com'),
+(9, 3, 'IN_PROGRESS', CURRENT_TIMESTAMP - INTERVAL '12 days', 1, 'landlord1@test.com'),
+(10, 3, 'RESOLVED', CURRENT_TIMESTAMP - INTERVAL '4 days', 1, 'landlord1@test.com'),
+(11, 3, 'CLOSED', CURRENT_TIMESTAMP - INTERVAL '3 days', 8, 'tenant3@test.com');
