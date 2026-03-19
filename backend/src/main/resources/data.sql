@@ -141,8 +141,7 @@ ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO incident_attachments (incident_id, photo_url) VALUES
 (1, 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4'),
-(2, 'https://images.unsplash.com/photo-1616628182509-6c6c1219f8ff')
-ON CONFLICT (id) DO NOTHING;
+(2, 'https://images.unsplash.com/photo-1616628182509-6c6c1219f8ff');
 
 INSERT INTO incident_status_history (id, incident_id, status, changed_at, changed_by_user_id, changed_by_email) VALUES
 (1, 1, 'OPEN', CURRENT_TIMESTAMP - INTERVAL '2 days', 6, 'tenant1@test.com'),
