@@ -1,19 +1,3 @@
--- ==========================================
--- 1. LIMPIEZA DE DATOS (Orden jerárquico)
--- ==========================================
-DELETE FROM reviews;
-DELETE FROM incident_status_history;
-DELETE FROM incident_attachments;
-DELETE FROM incidents;
-DELETE FROM tenant_debts;
-DELETE FROM bills;
-DELETE FROM apartment_matches;
-DELETE FROM apartment_members;
-DELETE FROM reglas_vivienda;
-DELETE FROM apartment_photos;
-DELETE FROM refresh_tokens;
-DELETE FROM apartments;
-DELETE FROM users;
 
 -- ==========================================
 -- 2. USUARIOS (IDs 1-10)
