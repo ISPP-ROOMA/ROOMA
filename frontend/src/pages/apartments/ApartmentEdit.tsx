@@ -18,13 +18,27 @@ import {
   uploadApartmentImages,
 } from '../../service/apartment.service'
 
-const PAGE_CLASS = 'min-h-dvh bg-base-200/50'
-const SHELL_CLASS = 'max-w-5xl mx-auto px-4 md:px-8 py-8'
+const PAGE_CLASS = 'h-[calc(100dvh-5rem)] md:h-dvh bg-base-200/40 flex flex-col'
+const SHELL_CLASS =
+  'max-w-2xl mx-auto px-5 pt-5 pb-6 w-full flex-1 min-h-0 overflow-y-auto'
 
-const SECTION_CLASS = 'bg-base-100 rounded-3xl shadow-md p-6 md:p-8 mb-6'
+const HEADER_CARD_CLASS =
+  'bg-base-100 shadow-sm rounded-3xl px-4 py-4 mb-4 flex items-center gap-3'
+const BACK_BUTTON_CLASS = 'p-1.5 rounded-full hover:bg-base-200 transition'
+const HEADER_TEXT_WRAPPER_CLASS = 'flex-1'
+const HEADER_META_CLASS =
+  'text-xs font-semibold tracking-widest text-gray-400 uppercase'
+
+const SECTION_CLASS = 'bg-base-100 rounded-3xl shadow-md p-6 md:p-8 mb-4'
 const SECTION_TITLE_CLASS = 'text-lg font-bold mb-3 flex items-center gap-2'
 
 const FIELD_GRID_CLASS = 'grid grid-cols-1 md:grid-cols-2 gap-4'
+
+const ACTIONS_WRAPPER_CLASS =
+  'bg-base-100 border-t border-base-300 rounded-3xl mt-4 px-4 py-3 flex flex-col md:flex-row gap-3 items-stretch md:items-center'
+const PRIMARY_BUTTON_CLASS =
+  'flex-1 btn bg-primary hover:bg-primary/90 text-primary-content font-semibold text-base py-3.5 rounded-full shadow-md border-0 disabled:opacity-40 disabled:cursor-not-allowed'
+const SECONDARY_BUTTON_CLASS = 'btn btn-ghost rounded-full'
 
 type RulesState = ApartmentRulesDTO
 
@@ -158,7 +172,7 @@ export default function ApartmentEdit() {
             <button
               type="button"
               onClick={() => navigate('/apartments/my')}
-              className="btn btn-outline"
+              className="btn btn-outline rounded-full"
             >
               Volver a Mis Inmuebles
             </button>
@@ -171,18 +185,36 @@ export default function ApartmentEdit() {
   return (
     <div className={PAGE_CLASS}>
       <div className={SHELL_CLASS}>
-        <header className="mb-6">
+        <header className={HEADER_CARD_CLASS}>
           <button
             type="button"
             onClick={() => navigate('/apartments/my')}
-            className="btn btn-ghost btn-sm mb-2"
+            className={BACK_BUTTON_CLASS}
+            aria-label="Volver"
           >
-            ← Volver
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-base-content"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
           </button>
-          <h1 className="text-3xl font-bold text-base-content">Editar anuncio</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Ajusta la información de tu anuncio para mantenerla actualizada.
-          </p>
+
+          <div className={HEADER_TEXT_WRAPPER_CLASS}>
+            <p className={HEADER_META_CLASS}>Gestión de anuncio</p>
+            <h1 className="text-2xl font-bold text-base-content">Editar anuncio</h1>
+            <p className="text-gray-500 text-sm mt-1">
+              Ajusta la información de tu anuncio para mantenerla actualizada.
+            </p>
+          </div>
         </header>
 
         <form onSubmit={onSubmit} className="space-y-6">
@@ -195,12 +227,12 @@ export default function ApartmentEdit() {
 
             <div className={FIELD_GRID_CLASS}>
               <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Título</span>
+                <label className="text-sm font-semibold text-base-content mb-1.5">
+                  Título
                 </label>
                 <input
                   type="text"
-                  className={`input input-bordered w-full ${
+                  className={`input input-bordered w-full rounded-xl bg-base-100 focus:outline-primary ${
                     errors.title ? 'input-error' : ''
                   }`}
                   {...register('title')}
@@ -211,12 +243,12 @@ export default function ApartmentEdit() {
               </div>
 
               <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Ubicación</span>
+                <label className="text-sm font-semibold text-base-content mb-1.5">
+                  Ubicación
                 </label>
                 <input
                   type="text"
-                  className={`input input-bordered w-full ${
+                  className={`input input-bordered w-full rounded-xl bg-base-100 focus:outline-primary ${
                     errors.ubication ? 'input-error' : ''
                   }`}
                   {...register('ubication')}
@@ -227,34 +259,37 @@ export default function ApartmentEdit() {
               </div>
 
               <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Precio mensual</span>
+                <label className="text-sm font-semibold text-base-content block mb-2">
+                  Precio mensual
                 </label>
-                <div className="join w-full">
+                <div className="flex items-end gap-3">
                   <input
                     type="number"
                     step="0.01"
-                    className={`input input-bordered join-item w-full ${
+                    className={`input input-bordered text-2xl md:text-3xl font-extrabold text-base-content w-40 text-center rounded-xl bg-base-100 focus:outline-primary tracking-tight ${
                       errors.price ? 'input-error' : ''
                     }`}
                     {...register('price', { valueAsNumber: true })}
                   />
-                  <span className="join-item px-3 flex items-center bg-base-200 border border-base-300 rounded-r-2xl text-sm text-gray-500">
-                    €/mes
+                  <span className="text-lg font-semibold text-base-content/60 mb-2">
+                    € / mes
                   </span>
                 </div>
+                <p className="text-xs text-base-content/50 mt-1.5">
+                  Ajusta el precio para que sea competitivo en tu zona.
+                </p>
                 {errors.price && (
                   <span className="text-error text-xs mt-1">{errors.price.message}</span>
                 )}
               </div>
 
               <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Gastos</span>
+                <label className="text-sm font-semibold text-base-content mb-1.5">
+                  Gastos
                 </label>
                 <input
                   type="text"
-                  className={`input input-bordered w-full ${
+                  className={`input input-bordered w-full rounded-xl bg-base-100 focus:outline-primary ${
                     errors.bills ? 'input-error' : ''
                   }`}
                   {...register('bills')}
@@ -266,12 +301,12 @@ export default function ApartmentEdit() {
             </div>
 
             <div className="form-control mt-4">
-              <label className="label">
-                <span className="label-text">Descripción</span>
+              <label className="text-sm font-semibold text-base-content mb-1.5">
+                Descripción
               </label>
               <textarea
                 rows={4}
-                className={`textarea textarea-bordered w-full ${
+                className={`textarea textarea-bordered w-full rounded-xl bg-base-100 focus:outline-primary ${
                   errors.description ? 'textarea-error' : ''
                 }`}
                 {...register('description')}
@@ -282,12 +317,12 @@ export default function ApartmentEdit() {
             </div>
 
             <div className="form-control mt-4">
-              <label className="label">
-                <span className="label-text">Perfil ideal</span>
+              <label className="text-sm font-semibold text-base-content mb-1.5">
+                Perfil ideal
               </label>
               <textarea
                 rows={3}
-                className={`textarea textarea-bordered w-full ${
+                className={`textarea textarea-bordered w-full rounded-xl bg-base-100 focus:outline-primary ${
                   errors.idealTenantProfile ? 'textarea-error' : ''
                 }`}
                 placeholder="Describe el tipo de inquilino ideal (hábitos, estilo de vida, etc.)"
@@ -301,11 +336,11 @@ export default function ApartmentEdit() {
             </div>
 
             <div className="form-control mt-4 max-w-xs">
-              <label className="label">
-                <span className="label-text">Disponibilidad</span>
+              <label className="text-sm font-semibold text-base-content mb-1.5">
+                Disponibilidad
               </label>
               <select
-                className={`select select-bordered w-full ${
+                className={`select select-bordered w-full rounded-xl bg-base-100 focus:outline-primary ${
                   errors.state ? 'select-error' : ''
                 }`}
                 {...register('state')}
@@ -447,13 +482,13 @@ export default function ApartmentEdit() {
           </section>
 
           {/* Acciones */}
-          <div className="flex flex-col md:flex-row gap-3 justify-end">
+          <div className={ACTIONS_WRAPPER_CLASS}>
             {saveError && (
               <p className="text-error text-sm md:mr-auto md:self-center">{saveError}</p>
             )}
             <button
               type="button"
-              className="btn btn-ghost"
+              className={SECONDARY_BUTTON_CLASS}
               onClick={() => navigate('/apartments/my')}
               disabled={isSaving}
             >
@@ -461,7 +496,7 @@ export default function ApartmentEdit() {
             </button>
             <button
               type="submit"
-              className={`btn btn-primary ${isSaving ? 'loading' : ''}`}
+              className={`${PRIMARY_BUTTON_CLASS} ${isSaving ? 'loading' : ''}`}
               disabled={isSaving}
             >
               Guardar cambios
