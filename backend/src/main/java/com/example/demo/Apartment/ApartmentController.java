@@ -99,7 +99,7 @@ public class ApartmentController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApartmentEntity> updateApartment(@PathVariable Integer id,
-            @RequestBody UpdateApartment apartment) {
+            @Valid @RequestBody UpdateApartment apartment) {
         ApartmentEntity updatedApartment = apartmentsService.update(id, UpdateApartment.fromDTO(apartment));
         return ResponseEntity.ok(updatedApartment);
     }

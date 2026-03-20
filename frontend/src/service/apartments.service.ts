@@ -1,5 +1,6 @@
 import { api } from './api'
 import { AxiosError } from 'axios'
+import { z } from 'zod'
 export interface Apartment {
   id: number
   title: string
@@ -20,14 +21,37 @@ export interface CreateApartmentPayload {
   state: string
 }
 
-export interface UpdateApartmentPayload {
-  title: string
-  description: string
-  price: number
-  bills: string
-  ubication: string
-  state: string
-}
+export const updateApartmentSchema = z.object({
+  title: z
+    .string()
+    .min(1, 'El título es obligatorio')
+    .max(100, 'El título no puede superar los 100 caracteres'),
+  description: z
+    .string()
+    .min(1, 'La descripción es obligatoria')
+    .max(1000, 'La descripción no puede superar los 1000 caracteres'),
+  price: z
+    .number({
+      invalid_type_error: 'El precio debe ser un número',
+      required_error: 'El precio es obligatorio',
+    })
+    .positive('El precio debe ser mayor que 0'),
+  bills: z
+    .string()
+    .max(255, 'Los gastos no pueden superar los 255 caracteres')
+    .optional()
+    .or(z.literal('')),
+  ubication: z
+    .string()
+    .min(1, 'La ubicación es obligatoria')
+    .max(255, 'La ubicación no puede superar los 255 caracteres'),
+  state: z.enum(['ACTIVE', 'MATCHING', 'CLOSED'], {
+    required_error: 'El estado es obligatorio',
+    invalid_type_error: 'Estado de apartamento inválido',
+  }),
+})
+
+export type UpdateApartmentPayload = z.infer<typeof updateApartmentSchema>
 
 /** Get ALL apartments (public) */
 export const getApartments = async (): Promise<Apartment[]> => {
@@ -82,6 +106,7 @@ export const updateApartment = async (
   id: number,
   data: UpdateApartmentPayload
 ): Promise<Apartment> => {
-  const response = await api.put<Apartment>(`/apartments/${id}`, data)
+  const payload = updateApartmentSchema.parse(data)
+  const response = await api.put<Apartment>(`/apartments/${id}`, payload)
   return response.data
 }
