@@ -2,46 +2,42 @@ import { describe, it, expect } from 'vitest'
 import { updateApartmentSchema } from '../service/apartments.service'
 
 describe('updateApartmentSchema', () => {
-  it('accepts a valid payload', () => {
-    const payload = {
-      title: 'Piso céntrico',
-      description: 'Buen piso para compartir',
-      price: 500,
-      bills: 'Agua e internet incluidos',
-      ubication: 'Madrid Centro',
-      state: 'ACTIVE',
-      idealTenantProfile: 'Personas tranquilas y responsables',
-    }
+  const validBase = {
+    title: 'Piso céntrico',
+    description: 'Buen piso para compartir',
+    price: 500,
+    bills: 'Agua e internet incluidos',
+    ubication: 'Madrid Centro',
+    state: 'ACTIVE' as const,
+    idealTenantProfile: 'Personas tranquilas y responsables',
+  }
 
-    expect(() => updateApartmentSchema.parse(payload)).not.toThrow()
+  it('accepts a valid payload', () => {
+    expect(() => updateApartmentSchema.parse(validBase)).not.toThrow()
   })
 
   it('rejects negative price', () => {
-    const payload = {
-      title: 'Piso',
-      description: 'Desc',
-      price: -1,
-      bills: '',
-      ubication: 'Sevilla',
-      state: 'ACTIVE',
-      idealTenantProfile: '',
-    }
+    const payload = { ...validBase, price: -1, bills: '', idealTenantProfile: '' }
 
     expect(() => updateApartmentSchema.parse(payload)).toThrow()
   })
 
   it('rejects empty title and description', () => {
-    const payload = {
-      title: '',
-      description: '',
-      price: 400,
-      bills: '',
-      ubication: 'Valencia',
-      state: 'ACTIVE',
-      idealTenantProfile: '',
-    }
+    const payload = { ...validBase, title: '', description: '' }
+
+    expect(() => updateApartmentSchema.parse(payload)).toThrow()
+  })
+
+  it('rejects idealTenantProfile longer than 1000 characters', () => {
+    const longProfile = 'a'.repeat(1001)
+    const payload = { ...validBase, idealTenantProfile: longProfile }
+
+    expect(() => updateApartmentSchema.parse(payload)).toThrow()
+  })
+
+  it('rejects invalid state value', () => {
+    const payload = { ...validBase, state: 'INVALID' as any }
 
     expect(() => updateApartmentSchema.parse(payload)).toThrow()
   })
 })
-

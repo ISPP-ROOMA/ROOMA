@@ -37,6 +37,7 @@ import com.example.demo.Apartment.DTOs.ApartmentDTO;
 import com.example.demo.Apartment.DTOs.ApartmentHomeDTO;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
+import com.example.demo.Exceptions.ForbiddenException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.Jwt.JwtService;
 import com.example.demo.MemberApartment.ApartmentMemberEntity;
@@ -346,6 +347,33 @@ public class ApartmentControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(apartmentService, never()).update(any(Integer.class), any(ApartmentEntity.class));
+    }
+
+    @Test
+    @WithMockUser(roles = "LANDLORD")
+    @DisplayName("updateApartment should return 403 when service throws ForbiddenException")
+    public void updateApartment_ForbiddenWhenNotOwner() throws Exception {
+        when(apartmentService.update(any(Integer.class), any(ApartmentEntity.class)))
+                .thenThrow(new ForbiddenException("Only the landlord of this apartment can edit it"));
+
+        String body = """
+            {
+              "title": "Nuevo titulo",
+              "description": "Nueva descripcion",
+              "price": 800.0,
+              "bills": "incluido",
+              "ubication": "Madrid",
+              "state": "ACTIVE",
+              "idealTenantProfile": "Perfil ideal"
+            }
+            """;
+
+        mockMvc.perform(put("/api/apartments/{id}", 21)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Only the landlord of this apartment can edit it"))
+                .andExpect(jsonPath("$.statusCode").value(403));
     }
 
     private ApartmentEntity apartment(Integer id) {
