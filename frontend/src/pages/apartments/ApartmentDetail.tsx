@@ -153,7 +153,19 @@ export default function ApartmentDetail() {
 
             {/* Description */}
             {apartment.description && (
-              <p className="text-gray-600 leading-relaxed mb-6">{apartment.description}</p>
+              <p className="text-gray-600 leading-relaxed mb-4">{apartment.description}</p>
+            )}
+
+            {/* Ideal tenant profile */}
+            {apartment.idealTenantProfile && (
+              <div className="mb-6 bg-base-200 rounded-2xl p-4">
+                <span className="text-xs text-gray-500 font-semibold uppercase">
+                  Perfil ideal del inquilino
+                </span>
+                <p className="font-medium text-base-content mt-1 whitespace-pre-wrap">
+                  {apartment.idealTenantProfile}
+                </p>
+              </div>
             )}
 
             {/* Info grid */}

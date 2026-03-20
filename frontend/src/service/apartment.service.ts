@@ -63,6 +63,7 @@ export interface ApartmentDTO {
   state: string
   coverImageUrl?: string
   members?: ApartmentMemberDTO[]
+   idealTenantProfile?: string
 }
 
 export interface ApartmentHomeDTO {
