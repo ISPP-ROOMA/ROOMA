@@ -105,7 +105,7 @@ export default function Apartments() {
           status={apt.state === 'ACTIVE' || apt.state === 'MATCHING' ? 'active' : 'paused'}
           stats={{ requests: 0, matches: 0 }}
           onEdit={() => {
-            console.log('edit', apt.id)
+            navigate(`/apartments/${apt.id}/edit`)
           }}
           onPause={() => toggleApartmentState(apt)}
         />

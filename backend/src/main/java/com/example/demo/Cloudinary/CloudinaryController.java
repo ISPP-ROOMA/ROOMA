@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
+import com.example.demo.Exceptions.ForbiddenException;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 
@@ -40,9 +42,17 @@ public class CloudinaryController {
     }
 
     @PostMapping("/apartment/{id}")
-    public ResponseEntity<?> uploadApartmentImages(@PathVariable Integer id, @RequestParam("files") MultipartFile[] files)
+    @PreAuthorize("hasRole('LANDLORD')")
+    public ResponseEntity<?> uploadApartmentImages(@PathVariable Integer id,
+                                                   @RequestParam("files") MultipartFile[] files,
+                                                   @RequestParam(name = "replace", defaultValue = "false") boolean replace)
             throws IOException {
         ApartmentEntity apartment = apartmentService.findById(id);
+
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        if (apartment.getUser() == null || !apartment.getUser().getId().equals(currentUser.getId())) {
+            throw new ForbiddenException("Only the landlord of this apartment can manage its photos");
+        }
 
         List<MultipartFile> images = new ArrayList<>();
         if (files != null) {
@@ -51,7 +61,7 @@ public class CloudinaryController {
             }
         }
 
-        apartmentPhotoService.saveImages(apartment, images, false);
+        apartmentPhotoService.saveImages(apartment, images, replace);
         return ResponseEntity.ok("Imágenes subidas correctamente");
     }
 
