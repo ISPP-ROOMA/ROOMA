@@ -14,10 +14,11 @@ public record UpdateApartment(
                 @NotNull @DecimalMin(value = "0.0", inclusive = false) Double price,
                 @Size(max = 255) String bills,
                 @NotBlank @Size(max = 255) String ubication,
-                @NotNull ApartmentState state) {
+                @NotNull ApartmentState state,
+                @Size(max = 1000) String idealTenantProfile) {
 
         public static ApartmentEntity fromDTO(UpdateApartment updatamentApartment) {
-                return new ApartmentEntity(
+                ApartmentEntity apartment = new ApartmentEntity(
                                 updatamentApartment.title(),
                                 updatamentApartment.description(),
                                 updatamentApartment.price(),
@@ -25,5 +26,7 @@ public record UpdateApartment(
                                 updatamentApartment.ubication(),
                                 updatamentApartment.state(),
                                 null);
+                apartment.setIdealTenantProfile(updatamentApartment.idealTenantProfile());
+                return apartment;
         }
 }

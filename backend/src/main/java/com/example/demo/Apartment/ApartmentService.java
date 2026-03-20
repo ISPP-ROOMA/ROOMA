@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.Apartment.DTOs.CreateApartment;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
 import com.example.demo.Exceptions.BadRequestException;
+import com.example.demo.Exceptions.ForbiddenException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
@@ -76,12 +77,20 @@ public class ApartmentService {
     public ApartmentEntity update(Integer id, ApartmentEntity apartments) {
         ApartmentEntity existingApartment = findById(id);
 
+        // Solo el propietario (landlord/anunciante) puede editar el anuncio
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        if (existingApartment.getUser() == null ||
+                !existingApartment.getUser().getId().equals(currentUser.getId())) {
+            throw new ForbiddenException("Only the landlord of this apartment can edit it");
+        }
+
         existingApartment.setTitle(apartments.getTitle());
         existingApartment.setDescription(apartments.getDescription());
         existingApartment.setPrice(apartments.getPrice());
         existingApartment.setBills(apartments.getBills());
         existingApartment.setUbication(apartments.getUbication());
         existingApartment.setState(apartments.getState());
+        existingApartment.setIdealTenantProfile(apartments.getIdealTenantProfile());
 
         return apartmentsRepository.save(existingApartment);
     }
