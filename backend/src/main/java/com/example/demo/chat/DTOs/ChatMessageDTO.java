@@ -1,11 +1,11 @@
-package com.example.demo.chat.DTOs;
+package com.example.demo.Chat.DTOs;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.example.demo.chat.ChatMessageEntity;
-import com.example.demo.chat.MessageStatus;
-import com.example.demo.chat.MessageType;
+import com.example.demo.Chat.ChatMessageEntity;
+import com.example.demo.Chat.MessageStatus;
+import com.example.demo.Chat.MessageType;
 
 public record ChatMessageDTO(
         Integer id,

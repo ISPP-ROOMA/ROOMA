@@ -1,4 +1,4 @@
-package com.example.demo.chat;
+package com.example.demo.Chat;
 
 import java.io.IOException;
 import java.util.List;
@@ -12,12 +12,12 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.ApartmentMatch.ApartmentMatchEntity;
 import com.example.demo.ApartmentMatch.ApartmentMatchRepository;
 import com.example.demo.ApartmentMatch.MatchStatus;
+import com.example.demo.Chat.DTOs.ChatMessageDTO;
 import com.example.demo.Cloudinary.CloudinaryService;
 import com.example.demo.Exceptions.ConflictException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
-import com.example.demo.chat.DTOs.ChatMessageDTO;
 
 @Service
 public class ChatService {

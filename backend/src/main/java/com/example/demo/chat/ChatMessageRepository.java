@@ -1,4 +1,4 @@
-package com.example.demo.chat;
+package com.example.demo.Chat;
 
 import java.util.List;
 

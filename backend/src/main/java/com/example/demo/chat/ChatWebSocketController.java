@@ -1,4 +1,4 @@
-package com.example.demo.chat;
+package com.example.demo.Chat;
 
 import java.security.Principal;
 
@@ -7,8 +7,8 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 
-import com.example.demo.chat.DTOs.ChatMessageDTO;
-import com.example.demo.chat.DTOs.SendMessageDTO;
+import com.example.demo.Chat.DTOs.ChatMessageDTO;
+import com.example.demo.Chat.DTOs.SendMessageDTO;
 
 @Controller
 public class ChatWebSocketController {
