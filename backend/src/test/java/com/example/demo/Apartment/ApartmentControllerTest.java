@@ -29,6 +29,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,6 +37,7 @@ import com.example.demo.Apartment.DTOs.ApartmentDTO;
 import com.example.demo.Apartment.DTOs.ApartmentHomeDTO;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
+import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.Jwt.JwtService;
 import com.example.demo.MemberApartment.ApartmentMemberEntity;
 import com.example.demo.MemberApartment.ApartmentMemberService;
@@ -216,6 +218,134 @@ public class ApartmentControllerTest {
         mockMvc.perform(get("/api/apartments/deck/{candidateId}", 9))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(8));
+    }
+
+    @Test
+    @DisplayName("updateApartment should return 401 when unauthenticated")
+    public void updateApartment_Unauthenticated() throws Exception {
+        String body = """
+            {
+              "title": "Nuevo titulo",
+              "description": "Nueva descripcion",
+              "price": 750.0,
+              "bills": "incluido",
+              "ubication": "Madrid",
+              "state": "ACTIVE",
+              "idealTenantProfile": "Perfil"
+            }
+            """;
+
+        mockMvc.perform(put("/api/apartments/{id}", 10)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "TENANT")
+    @DisplayName("updateApartment should return 403 for non-landlord roles")
+    public void updateApartment_ForbiddenForTenant() throws Exception {
+        String body = """
+            {
+              "title": "Nuevo titulo",
+              "description": "Nueva descripcion",
+              "price": 750.0,
+              "bills": "incluido",
+              "ubication": "Madrid",
+              "state": "ACTIVE",
+              "idealTenantProfile": "Perfil"
+            }
+            """;
+
+        mockMvc.perform(put("/api/apartments/{id}", 11)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isForbidden());
+
+        verify(apartmentService, never()).update(any(Integer.class), any(ApartmentEntity.class));
+    }
+
+    @Test
+    @WithMockUser(roles = "LANDLORD")
+    @DisplayName("updateApartment should return 200 and updated entity for landlord")
+    public void updateApartment_SuccessForLandlord() throws Exception {
+        ApartmentEntity existing = apartment(20);
+        existing.setId(20);
+        existing.setUbication("Sevilla");
+
+        when(apartmentService.update(any(Integer.class), any(ApartmentEntity.class))).thenReturn(existing);
+
+        String body = """
+            {
+              "title": "Nuevo titulo",
+              "description": "Nueva descripcion",
+              "price": 800.0,
+              "bills": "incluido",
+              "ubication": "Sevilla",
+              "state": "ACTIVE",
+              "idealTenantProfile": "Perfil ideal"
+            }
+            """;
+
+        mockMvc.perform(put("/api/apartments/{id}", 20)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(20))
+                .andExpect(jsonPath("$.ubication").value("Sevilla"));
+
+        verify(apartmentService).update(any(Integer.class), any(ApartmentEntity.class));
+    }
+
+    @Test
+    @WithMockUser(roles = "LANDLORD")
+    @DisplayName("updateApartment should return 404 when apartment is not found")
+    public void updateApartment_NotFound() throws Exception {
+        when(apartmentService.update(any(Integer.class), any(ApartmentEntity.class)))
+                .thenThrow(new ResourceNotFoundException("Apartment not found"));
+
+        String body = """
+            {
+              "title": "Nuevo titulo",
+              "description": "Nueva descripcion",
+              "price": 800.0,
+              "bills": "incluido",
+              "ubication": "Madrid",
+              "state": "ACTIVE",
+              "idealTenantProfile": "Perfil ideal"
+            }
+            """;
+
+        mockMvc.perform(put("/api/apartments/{id}", 999)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Apartment not found"))
+                .andExpect(jsonPath("$.statusCode").value(404));
+    }
+
+    @Test
+    @WithMockUser(roles = "LANDLORD")
+    @DisplayName("updateApartment should return 400 when payload is invalid")
+    public void updateApartment_InvalidPayload() throws Exception {
+        // Falta title/description y precio negativo para disparar Bean Validation
+        String body = """
+            {
+              "title": "",
+              "description": "",
+              "price": -10.0,
+              "bills": "incluido",
+              "ubication": "",
+              "state": "ACTIVE"
+            }
+            """;
+
+        mockMvc.perform(put("/api/apartments/{id}", 30)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+
+        verify(apartmentService, never()).update(any(Integer.class), any(ApartmentEntity.class));
     }
 
     private ApartmentEntity apartment(Integer id) {

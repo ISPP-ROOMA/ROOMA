@@ -97,6 +97,7 @@ public class ApartmentController {
         return new ResponseEntity<>(ApartmentDTO.fromApartmentEntity(createdApartment), HttpStatus.CREATED);
     }
 
+    @PreAuthorize("hasRole('LANDLORD')")
     @PutMapping("/{id}")
     public ResponseEntity<ApartmentEntity> updateApartment(@PathVariable Integer id,
             @Valid @RequestBody UpdateApartment apartment) {
