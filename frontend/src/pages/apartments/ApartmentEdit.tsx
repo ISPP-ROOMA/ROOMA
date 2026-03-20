@@ -127,7 +127,7 @@ export default function ApartmentEdit() {
       navigate('/apartments/my')
     } catch (error) {
       console.error('Error saving apartment changes', error)
-      const err = error as AxiosError<any>
+      const err = error as AxiosError<unknown>
       const status = err.response?.status
 
       if (status === 400) {

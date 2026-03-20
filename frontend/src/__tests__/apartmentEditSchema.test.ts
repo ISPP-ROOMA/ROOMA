@@ -36,7 +36,7 @@ describe('updateApartmentSchema', () => {
   })
 
   it('rejects invalid state value', () => {
-    const payload = { ...validBase, state: 'INVALID' as any }
+    const payload: Record<string, unknown> = { ...validBase, state: 'INVALID' }
 
     expect(() => updateApartmentSchema.parse(payload)).toThrow()
   })
