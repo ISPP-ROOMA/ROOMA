@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { AxiosError } from 'axios'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -112,7 +113,18 @@ export default function ApartmentEdit() {
       navigate('/apartments/my')
     } catch (error) {
       console.error('Error saving apartment changes', error)
-      setSaveError('Error al guardar los cambios. Vuelve a intentarlo.')
+      const err = error as AxiosError<any>
+      const status = err.response?.status
+
+      if (status === 400) {
+        setSaveError('Revisa los campos del formulario.')
+      } else if (status === 403) {
+        setSaveError('No tienes permiso para editar este anuncio.')
+      } else if (status === 404) {
+        setSaveError('El anuncio ya no existe o ha sido eliminado.')
+      } else {
+        setSaveError('Error al guardar los cambios. Vuelve a intentarlo.')
+      }
     } finally {
       setIsSaving(false)
     }
@@ -460,4 +472,3 @@ export default function ApartmentEdit() {
     </div>
   )
 }
-
