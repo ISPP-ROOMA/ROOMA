@@ -46,6 +46,12 @@ export interface ApartmentPhotoDTO {
   portada: boolean
 }
 
+export interface ApartmentRulesDTO {
+  permiteMascotas: boolean
+  permiteFumadores: boolean
+  fiestasPermitidas: boolean
+}
+
 export interface ApartmentDTO {
   imageUrl: string
   id: number
@@ -131,6 +137,28 @@ export const getApartmentPhotos = async (apartmentId: number): Promise<Apartment
     console.error('Error fetching apartment photos:', error)
     return []
   }
+}
+
+export const updateApartmentRules = async (
+  apartmentId: number,
+  rules: ApartmentRulesDTO
+): Promise<void> => {
+  await api.put(`/apartments/${apartmentId}/rules`, rules)
+}
+
+export const uploadApartmentImages = async (
+  apartmentId: number,
+  files: File[],
+  replace: boolean
+): Promise<void> => {
+  if (!files.length) return
+  const formData = new FormData()
+  files.forEach((file) => formData.append('files', file))
+  formData.append('replace', String(replace))
+
+  await api.post(`/images/apartment/${apartmentId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
 }
 export const getMatchesForCandidate = async (
   candidateId: number,

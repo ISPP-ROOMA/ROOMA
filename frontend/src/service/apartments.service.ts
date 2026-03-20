@@ -10,6 +10,7 @@ export interface Apartment {
   ubication: string
   state: string
   coverImageUrl?: string
+  idealTenantProfile?: string
 }
 
 export interface CreateApartmentPayload {
@@ -49,6 +50,11 @@ export const updateApartmentSchema = z.object({
     required_error: 'El estado es obligatorio',
     invalid_type_error: 'Estado de apartamento inválido',
   }),
+  idealTenantProfile: z
+    .string()
+    .max(1000, 'El perfil ideal no puede superar los 1000 caracteres')
+    .optional()
+    .or(z.literal('')),
 })
 
 export type UpdateApartmentPayload = z.infer<typeof updateApartmentSchema>

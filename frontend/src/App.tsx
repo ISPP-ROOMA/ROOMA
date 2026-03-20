@@ -9,6 +9,7 @@ import User from './pages/admin/User'
 import Users from './pages/admin/Users'
 import ApartmentDetail from './pages/apartments/ApartmentDetail'
 import Apartments from './pages/apartments/Apartments'
+import ApartmentEdit from './pages/apartments/ApartmentEdit'
 import ApartmentBills from './pages/apartments/billing/ApartmentBills'
 import LandlordBillDetail from './pages/apartments/billing/LandlordBillDetail'
 import NewBill from './pages/apartments/billing/NewBill'
@@ -305,6 +306,14 @@ function App() {
                   element={
                     <PrivateRoute allowedRoles={['LANDLORD']}>
                       <Apartments />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/apartments/:id/edit"
+                  element={
+                    <PrivateRoute allowedRoles={['LANDLORD']}>
+                      <ApartmentEdit />
                     </PrivateRoute>
                   }
                 />
