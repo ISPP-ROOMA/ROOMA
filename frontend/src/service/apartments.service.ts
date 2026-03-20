@@ -32,10 +32,7 @@ export const updateApartmentSchema = z.object({
     .min(1, 'La descripción es obligatoria')
     .max(1000, 'La descripción no puede superar los 1000 caracteres'),
   price: z
-    .number({
-      invalid_type_error: 'El precio debe ser un número',
-      required_error: 'El precio es obligatorio',
-    })
+    .number({ message: 'El precio debe ser un número' })
     .positive('El precio debe ser mayor que 0'),
   bills: z
     .string()
@@ -47,8 +44,7 @@ export const updateApartmentSchema = z.object({
     .min(1, 'La ubicación es obligatoria')
     .max(255, 'La ubicación no puede superar los 255 caracteres'),
   state: z.enum(['ACTIVE', 'MATCHING', 'CLOSED'], {
-    required_error: 'El estado es obligatorio',
-    invalid_type_error: 'Estado de apartamento inválido',
+    message: 'Estado de apartamento inválido',
   }),
   idealTenantProfile: z
     .string()
