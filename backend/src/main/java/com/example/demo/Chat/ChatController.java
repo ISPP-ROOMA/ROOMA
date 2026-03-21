@@ -41,6 +41,11 @@ public class ChatController {
             @PathVariable Integer matchId,
             @AuthenticationPrincipal UserDetails userDetails) {
         List<ChatMessageDTO> messages = chatService.markMessagesAsRead(matchId, userDetails.getUsername());
+        if (!messages.isEmpty()) {
+            for (ChatMessageDTO msg : messages) {
+                messagingTemplate.convertAndSend("/topic/chat/" + matchId, msg);
+            }
+        }
         return ResponseEntity.ok(messages);
     }
 

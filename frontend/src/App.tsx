@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import ChatScreen from './pages/private/chat/chatView'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import PrivateRoute from './components/PrivateRoute'
@@ -373,6 +374,14 @@ function App() {
                     </PrivateRoute>
                   }
                 />
+                  <Route
+                    path="/chat/:matchId"
+                    element={
+                      <PrivateRoute>
+                        <ChatScreen />
+                      </PrivateRoute>
+                    }
+                  />
               </>
             )}
 
@@ -435,6 +444,14 @@ function App() {
                     </PrivateRoute>
                   }
                 />
+                  <Route
+                    path="/chat/:matchId"
+                    element={
+                      <PrivateRoute>
+                        <ChatScreen />
+                      </PrivateRoute>
+                    }
+                  />
               </>
             )}
 
