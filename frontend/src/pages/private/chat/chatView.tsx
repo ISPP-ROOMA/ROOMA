@@ -27,7 +27,7 @@ export default function ChatScreen() {
   const [sendingFile, setSendingFile] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [filePreview, setFilePreview] = useState<string | null>(null)
-  const [fileCaption, setFileCaption] = useState("")
+  const [fileCaption, setFileCaption] = useState('')
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -101,8 +101,8 @@ export default function ChatScreen() {
     const file = e.target.files?.[0]
     if (!file) return
     setSelectedFile(file)
-    setFileCaption("")
-    if (file.type.startsWith("image/")) {
+    setFileCaption('')
+    if (file.type.startsWith('image/')) {
       setFilePreview(URL.createObjectURL(file))
     } else {
       setFilePreview(null)
@@ -116,7 +116,7 @@ export default function ChatScreen() {
       await uploadChatFile(parsedMatchId, selectedFile, fileCaption)
       setSelectedFile(null)
       setFilePreview(null)
-      setFileCaption("")
+      setFileCaption('')
       if (fileInputRef.current) fileInputRef.current.value = ''
     } catch (error) {
       console.error('Error subiendo archivo', error)
@@ -128,7 +128,7 @@ export default function ChatScreen() {
   const handleCancelFile = () => {
     setSelectedFile(null)
     setFilePreview(null)
-    setFileCaption("")
+    setFileCaption('')
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -268,7 +268,9 @@ export default function ChatScreen() {
                 <img src={filePreview} alt="preview" className="max-h-12 max-w-12 rounded" />
               )}
               <div className="flex-1 flex flex-col gap-1">
-                <span className="text-xs text-[#008080] font-medium truncate">{selectedFile.name}</span>
+                <span className="text-xs text-[#008080] font-medium truncate">
+                  {selectedFile.name}
+                </span>
                 <input
                   type="text"
                   value={fileCaption}
