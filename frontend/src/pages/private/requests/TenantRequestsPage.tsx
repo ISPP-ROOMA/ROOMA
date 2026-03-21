@@ -344,6 +344,10 @@ export default function TenantRequestsPage() {
                             type="button"
                             className="h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center"
                             aria-label="Abrir chat"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              navigate(`/chat/${item.matchId}`)
+                            }}
                           >
                             <MessageCircle size={16} />
                           </button>

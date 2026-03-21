@@ -217,8 +217,9 @@ export default function LandlordMatchDetailPage() {
               <button
                 type="button"
                 className="w-full rounded-xl border border-[#DDDBCB] bg-white px-4 py-3 text-sm font-semibold text-[#050505] transition-colors hover:bg-[#F5F1E3]"
+                onClick={() => navigate(`/chat/${details.id}`)}
               >
-                Enviar primer mensaje (Próximamente...)
+                Abrir chat
               </button>
 
               <button
