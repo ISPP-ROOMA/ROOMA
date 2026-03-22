@@ -35,7 +35,14 @@ const clearSessionHint = (): void => {
   localStorage.removeItem(SESSION_HINT_KEY)
 }
 
-export const generateDeviceId = (): string => crypto.randomUUID()
+export const generateDeviceId = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+
+  // Fallback for browsers/environments that do not implement randomUUID.
+  return `device-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`
+}
 
 export const getDeviceId = (): string => {
   let deviceId = localStorage.getItem('deviceId')
