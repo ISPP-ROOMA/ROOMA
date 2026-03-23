@@ -2,6 +2,7 @@ package com.example.demo.Review;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -62,6 +63,21 @@ public class ReviewController {
     @GetMapping("/received")
     public ResponseEntity<List<ReviewDTO>> getReceivedReviews() {
         List<ReviewEntity> reviews = reviewService.findReceivedReviewsByUserId();
+        return ResponseEntity.ok(ReviewDTO.fromEntityList(reviews));
+    }
+
+    @GetMapping("/received/user/{userId}")
+    public ResponseEntity<Page<ReviewDTO>> getReceivedReviewsByUser(
+            @PathVariable Integer userId,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "5") int size) {
+        Page<ReviewEntity> reviews = reviewService.findPublishedReceivedReviewsByUserId(userId, page, size);
+        return ResponseEntity.ok(reviews.map(ReviewDTO::fromEntity));
+    }
+
+    @GetMapping("/received/user/{userId}/all")
+    public ResponseEntity<List<ReviewDTO>> getAllReceivedReviewsByUser(@PathVariable Integer userId) {
+        List<ReviewEntity> reviews = reviewService.findAllPublishedReceivedReviewsByUserId(userId);
         return ResponseEntity.ok(ReviewDTO.fromEntityList(reviews));
     }
 
