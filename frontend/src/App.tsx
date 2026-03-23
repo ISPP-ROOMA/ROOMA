@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import ChatScreen from './pages/private/chat/chatView'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import PrivateRoute from './components/PrivateRoute'
@@ -9,6 +10,7 @@ import User from './pages/admin/User'
 import Users from './pages/admin/Users'
 import ApartmentDetail from './pages/apartments/ApartmentDetail'
 import Apartments from './pages/apartments/Apartments'
+import ApartmentEdit from './pages/apartments/ApartmentEdit'
 import ApartmentBills from './pages/apartments/billing/ApartmentBills'
 import LandlordBillDetail from './pages/apartments/billing/LandlordBillDetail'
 import NewBill from './pages/apartments/billing/NewBill'
@@ -20,6 +22,8 @@ import MyHome from './pages/private/MyHome'
 import FavoritesPage from './pages/private/FavoritesPage'
 import DebtDetail from './pages/private/payments/DebtDetail'
 import Invoices from './pages/private/payments/Invoices'
+import ApartmentIncidences from './pages/private/incidences/ApartmentIncidences'
+import IncidentDetail from './pages/private/incidences/IncidentDetail'
 import PaymentSuccess from './pages/private/payments/PaymentSuccess'
 import MyReviews from './pages/private/MyReviews'
 import Profile from './pages/private/Profile'
@@ -307,6 +311,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="/apartments/:id/edit"
+                  element={
+                    <PrivateRoute allowedRoles={['LANDLORD']}>
+                      <ApartmentEdit />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
                   path="/apartments/publish"
                   element={
                     <PrivateRoute allowedRoles={['LANDLORD']}>
@@ -346,6 +358,38 @@ function App() {
                     </PrivateRoute>
                   }
                 />
+                <Route
+                  path="/apartments/:id/incidences"
+                  element={
+                    <PrivateRoute allowedRoles={['LANDLORD']}>
+                      <ApartmentIncidences />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/apartments/:id/incidences/:incidentId"
+                  element={
+                    <PrivateRoute allowedRoles={['LANDLORD']}>
+                      <IncidentDetail />
+                    </PrivateRoute>
+                  }
+                />
+                  <Route
+                    path="/chat/:matchId"
+                    element={
+                      <PrivateRoute>
+                        <ChatScreen />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/chat/incidents/:incidentId"
+                    element={
+                      <PrivateRoute>
+                        <ChatScreen />
+                      </PrivateRoute>
+                    }
+                  />
               </>
             )}
 
@@ -392,6 +436,38 @@ function App() {
                     </PrivateRoute>
                   }
                 />
+                <Route
+                  path="/apartments/:id/incidences"
+                  element={
+                    <PrivateRoute allowedRoles={['TENANT']}>
+                      <ApartmentIncidences />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/apartments/:id/incidences/:incidentId"
+                  element={
+                    <PrivateRoute allowedRoles={['TENANT']}>
+                      <IncidentDetail />
+                    </PrivateRoute>
+                  }
+                />
+                  <Route
+                    path="/chat/:matchId"
+                    element={
+                      <PrivateRoute>
+                        <ChatScreen />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/chat/incidents/:incidentId"
+                    element={
+                      <PrivateRoute>
+                        <ChatScreen />
+                      </PrivateRoute>
+                    }
+                  />
               </>
             )}
 

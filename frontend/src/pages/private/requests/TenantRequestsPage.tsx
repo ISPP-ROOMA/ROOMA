@@ -2,6 +2,7 @@ import { AnimatePresence } from 'framer-motion'
 import { CalendarDays, Loader2, MessageCircle, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
 import type {
   ApartmentDTO,
@@ -129,13 +130,15 @@ export default function TenantRequestsPage() {
 
   const handleCancel = async (matchId: number) => {
     setCancellingId(matchId)
-    // Optimistic update
-    setPendingItems((prev) => prev.filter((i) => i.matchId !== matchId))
     try {
       await cancelApartmentMatch(matchId)
+      setPendingItems((prev) => prev.filter((i) => i.matchId !== matchId))
     } catch (err) {
       console.error('Error cancelling match', err)
-      // On failure, re-fetch to restore accurate state
+      const message = axios.isAxiosError(err)
+        ? ((err.response?.data as { message?: string } | undefined)?.message ?? 'No se pudo cancelar la solicitud')
+        : 'No se pudo cancelar la solicitud'
+      setError(message)
       void fetchData()
     } finally {
       setCancellingId(null)
@@ -302,7 +305,10 @@ export default function TenantRequestsPage() {
                         className="absolute top-3 right-3 h-8 w-8 rounded-full bg-white/90 text-[#050505]/70 flex items-center justify-center shadow hover:bg-white hover:text-red-500 transition-colors disabled:opacity-50"
                         aria-label="Cancelar solicitud"
                         disabled={cancellingId === item.matchId}
-                        onClick={() => void handleCancel(item.matchId)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          void handleCancel(item.matchId)
+                        }}
                       >
                         {cancellingId === item.matchId ? (
                           <Loader2 size={14} className="animate-spin" />
@@ -344,15 +350,12 @@ export default function TenantRequestsPage() {
                             type="button"
                             className="h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center"
                             aria-label="Abrir chat"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              navigate(`/chat/${item.matchId}`)
+                            }}
                           >
                             <MessageCircle size={16} />
-                          </button>
-                          <button
-                            type="button"
-                            className="h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center"
-                            aria-label="Agendar cita"
-                          >
-                            <CalendarDays size={16} />
                           </button>
                         </div>
                       )}

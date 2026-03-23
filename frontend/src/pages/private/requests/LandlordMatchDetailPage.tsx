@@ -1,4 +1,4 @@
-import { Loader2, MapPin } from 'lucide-react'
+import { Loader2, MapPin, Star } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
@@ -6,6 +6,10 @@ import {
   sendInvitationToMatch,
   type ApartmentMatchTenantDetailsDTO,
 } from '../../../service/apartment.service'
+import {
+  getReceivedReviewsByUser,
+  type ReviewDTO,
+} from '../../../service/review.service'
 
 const FALLBACK_COVER =
   'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80'
@@ -22,6 +26,9 @@ export default function LandlordMatchDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteError, setInviteError] = useState<string | null>(null)
+  const [reviews, setReviews] = useState<ReviewDTO[]>([])
+  const [reviewsLoading, setReviewsLoading] = useState(false)
+  const [reviewsError, setReviewsError] = useState<string | null>(null)
 
   const parsedId = useMemo(() => Number(apartmentMatchId), [apartmentMatchId])
 
@@ -52,6 +59,36 @@ export default function LandlordMatchDetailPage() {
 
     void fetchDetails()
   }, [parsedId])
+
+  useEffect(() => {
+    const tenantId = details?.tenant?.id
+    if (!tenantId) {
+      setReviews([])
+      return
+    }
+
+    const fetchReviews = async () => {
+      setReviewsLoading(true)
+      setReviewsError(null)
+      try {
+        const response = await getReceivedReviewsByUser(tenantId)
+        if (!response) {
+          setReviews([])
+          setReviewsError('No se pudieron cargar las reseñas.')
+          return
+        }
+        setReviews(response)
+      } catch (err) {
+        console.error('Error loading tenant reviews', err)
+        setReviews([])
+        setReviewsError('No se pudieron cargar las reseñas.')
+      } finally {
+        setReviewsLoading(false)
+      }
+    }
+
+    void fetchReviews()
+  }, [details?.tenant?.id])
 
   const handleSendInvitation = async () => {
     if (!details) return
@@ -116,11 +153,19 @@ export default function LandlordMatchDetailPage() {
   const coverImage = details.apartment.coverImageUrl ?? FALLBACK_COVER
   const apartmentPrice = `${details.apartment.price.toLocaleString('es-ES')} €`
   const apartmentLocation = details.apartment.ubication ?? 'Ubicación no disponible'
+  const tenantName = details.tenant?.name?.trim() || details.tenant?.email || 'Inquilino'
   const tenantEmail = details.tenant?.email ?? 'Email no disponible'
+  const tenantGender = details.tenant?.gender ?? 'No especificado'
   const tenantProfession = details.tenant?.profession ?? 'Profesión no disponible'
-  const tenantProfileImage = (details.tenant as { profileImageUrl?: string } | undefined)
-    ?.profileImageUrl
+  const tenantSmoker =
+    details.tenant?.smoker === true
+      ? 'Sí'
+      : details.tenant?.smoker === false
+        ? 'No'
+        : 'No especificado'
+  const tenantProfileImage = details.tenant?.profileImageUrl
   const tenantAvatar = tenantProfileImage ?? FALLBACK_AVATAR
+  const hasReviews = reviews.length > 0
 
   return (
     <div
@@ -178,9 +223,10 @@ export default function LandlordMatchDetailPage() {
           </div>
 
           <div className="p-5">
-            <h3 className="text-lg font-bold text-[#050505]">Información del usuario</h3>
+            <h3 className="text-lg font-bold text-[#050505]">Información del solicitante</h3>
 
-            <div className="mt-4 flex items-center gap-4 rounded-2xl border border-[#DDDBCB] bg-[#F5F1E3] p-4">
+            <div className="mt-4 rounded-2xl border border-[#DDDBCB] bg-[#F5F1E3] p-4">
+              <div className="flex items-center gap-4">
               <img
                 src={tenantAvatar}
                 alt="Foto de perfil del solicitante"
@@ -190,26 +236,99 @@ export default function LandlordMatchDetailPage() {
                 }}
               />
 
-              <div className="min-w-0">
-                <p className="text-sm text-[#050505]/60">Email</p>
-                <p className="font-semibold text-[#050505] break-all">{tenantEmail}</p>
+                <div className="min-w-0">
+                  <p className="text-sm text-[#050505]/60">Nombre</p>
+                  <p className="font-semibold text-[#050505] line-clamp-2">{tenantName}</p>
 
-                <p className="mt-2 text-sm text-[#050505]/60">Profesión</p>
-                <p className="font-medium text-[#050505]">{tenantProfession}</p>
+                  <p className="mt-2 text-sm text-[#050505]/60">Email</p>
+                  <p className="font-semibold text-[#050505] break-all text-sm">{tenantEmail}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <div className="rounded-xl border border-[#DDDBCB] bg-white px-3 py-2">
+                  <p className="text-xs text-[#050505]/60">Género</p>
+                  <p className="mt-1 text-sm font-semibold text-[#050505]">{tenantGender}</p>
+                </div>
+
+                <div className="rounded-xl border border-[#DDDBCB] bg-white px-3 py-2">
+                  <p className="text-xs text-[#050505]/60">Fumador/a</p>
+                  <p className="mt-1 text-sm font-semibold text-[#050505]">{tenantSmoker}</p>
+                </div>
+
+                <div className="rounded-xl border border-[#DDDBCB] bg-white px-3 py-2">
+                  <p className="text-xs text-[#050505]/60">Profesión</p>
+                  <p className="mt-1 text-sm font-semibold text-[#050505] line-clamp-1">
+                    {tenantProfession}
+                  </p>
+                </div>
               </div>
             </div>
 
             <div className="mt-4">
-              <h4 className="text-base font-bold text-[#050505]">Reputación</h4>
+              <h4 className="text-base font-bold text-[#050505]">Reseñas del tenant</h4>
               <div className="mt-2 rounded-2xl border border-[#DDDBCB] bg-[#F5F1E3] p-4">
-                <p className="text-sm text-[#050505]/70">Próximamente...</p>
-              </div>
-            </div>
+                {reviewsLoading && (
+                  <div className="flex items-center gap-2 text-sm text-[#050505]/70">
+                    <Loader2 size={16} className="animate-spin text-[#008080]" />
+                    Cargando reseñas...
+                  </div>
+                )}
 
-            <div className="mt-4">
-              <h4 className="text-base font-bold text-[#050505]">Reseñas de otros caseros</h4>
-              <div className="mt-2 rounded-2xl border border-[#DDDBCB] bg-[#F5F1E3] p-4">
-                <p className="text-sm text-[#050505]/70">Próximamente...</p>
+                {!reviewsLoading && reviewsError && (
+                  <p className="text-sm font-medium text-red-600">{reviewsError}</p>
+                )}
+
+                {!reviewsLoading && !reviewsError && !hasReviews && (
+                  <p className="text-sm text-[#050505]/70">
+                    Este tenant todavía no tiene reseñas publicadas.
+                  </p>
+                )}
+
+                {!reviewsLoading && hasReviews && (
+                  <div>
+                    <p className="mb-2 text-xs text-[#050505]/65">
+                      Desliza hacia la derecha para ver la siguiente reseña.
+                    </p>
+                    <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
+                      {reviews.map((review) => {
+                        const reviewerName =
+                          review.reviewerName?.trim() || review.reviewerEmail || 'Usuario anónimo'
+                        const reviewDate = new Date(review.reviewDate).toLocaleDateString('es-ES', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                        })
+
+                        return (
+                          <article
+                            key={review.id}
+                            className="min-w-full snap-start rounded-xl border border-[#DDDBCB] bg-white p-3"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm font-semibold text-[#050505] line-clamp-1">
+                                {reviewerName}
+                              </p>
+                              <span className="text-xs text-[#050505]/60 shrink-0">{reviewDate}</span>
+                            </div>
+
+                            <div className="mt-2 flex items-center gap-1 text-[#e8a000]">
+                              {Array.from({ length: 5 }, (_, index) => (
+                                <Star
+                                  key={`${review.id}-star-${index}`}
+                                  size={14}
+                                  className={index < review.rating ? 'fill-current' : 'text-[#DDDBCB]'}
+                                />
+                              ))}
+                            </div>
+
+                            <p className="mt-2 text-sm text-[#050505]/85 leading-relaxed">{review.comment}</p>
+                          </article>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -217,8 +336,9 @@ export default function LandlordMatchDetailPage() {
               <button
                 type="button"
                 className="w-full rounded-xl border border-[#DDDBCB] bg-white px-4 py-3 text-sm font-semibold text-[#050505] transition-colors hover:bg-[#F5F1E3]"
+                onClick={() => navigate(`/chat/${details.id}`)}
               >
-                Enviar primer mensaje (Próximamente...)
+                Abrir chat
               </button>
 
               <button

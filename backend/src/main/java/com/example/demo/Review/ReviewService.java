@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.Apartment.ApartmentEntity;
@@ -165,6 +168,19 @@ public class ReviewService {
     public List<ReviewEntity> findReceivedReviewsByUserIdAndApartmentId(Integer apartmentId) {
         UserEntity user = userService.getUserProfile();
         return reviewRepository.findReceivedReviewsByUserIdAndApartmentId(user.getId(), apartmentId);
+    }
+
+    public Page<ReviewEntity> findPublishedReceivedReviewsByUserId(Integer reviewedUserId, int page, int size) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(Math.max(1, size), 20);
+        return reviewRepository.findPublishedReceivedReviewsByUserId(
+                reviewedUserId,
+                PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "reviewDate"))
+        );
+    }
+
+    public List<ReviewEntity> findAllPublishedReceivedReviewsByUserId(Integer reviewedUserId) {
+        return reviewRepository.findAllPublishedReceivedReviewsByUserId(reviewedUserId);
     }
 
     private void checkAndPublishMutualReviews(ReviewEntity review) {

@@ -10,9 +10,11 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 
@@ -27,6 +29,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(message);
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(value = HttpStatus.FORBIDDEN)
+    public ResponseEntity<ErrorResponse> forbiddenException(ForbiddenException ex) {
+        ErrorResponse message = new ErrorResponse(ex.getMessage(), HttpStatus.FORBIDDEN.value(), new Date());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(message);
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
     public ResponseEntity<ErrorResponse> resourceNotFoundException(ResourceNotFoundException ex) {
@@ -36,26 +45,33 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(InvalidPasswordException.class)
-    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    @ResponseStatus(value = HttpStatus.UNAUTHORIZED)
     public ResponseEntity<ErrorResponse> invalidPasswordException(InvalidPasswordException ex) {
-        ErrorResponse message = new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), new Date());
+        ErrorResponse message = new ErrorResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED.value(), new Date());
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(message);
     }
 
     @ExceptionHandler(UserExistsException.class)
-    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    @ResponseStatus(value = HttpStatus.CONFLICT)
     public ResponseEntity<ErrorResponse> userExistsException(UserExistsException ex) {
-        ErrorResponse message = new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), new Date());
+        ErrorResponse message = new ErrorResponse(ex.getMessage(), HttpStatus.CONFLICT.value(), new Date());
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
     }
 
     @ExceptionHandler(InvalidRefreshTokenException.class)
-    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    @ResponseStatus(value = HttpStatus.UNAUTHORIZED)
     public ResponseEntity<ErrorResponse> invalidRefreshTokenException(InvalidRefreshTokenException ex) {
-        ErrorResponse message = new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), new Date());
+        ErrorResponse message = new ErrorResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED.value(), new Date());
 
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(message);
+    }
+
+    @ExceptionHandler(MissingRequestCookieException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> missingRequestCookieException(MissingRequestCookieException ex) {
+        ErrorResponse message = new ErrorResponse("Required cookie 'refresh_token' is missing", HttpStatus.BAD_REQUEST.value(), new Date());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
 
@@ -106,6 +122,13 @@ public class GlobalExceptionHandler {
         errorResponse.put("date", new Date());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> methodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+        ErrorResponse message = new ErrorResponse("Invalid request parameter: " + ex.getName(), HttpStatus.BAD_REQUEST.value(), new Date());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

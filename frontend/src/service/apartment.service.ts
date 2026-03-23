@@ -4,6 +4,10 @@ export interface UserDTO {
   id: number
   email: string
   role: string
+  name?: string
+  gender?: string
+  smoker?: boolean
+  profileImageUrl?: string
   hobbies?: string
   schedule?: string
   profession?: string
@@ -46,6 +50,12 @@ export interface ApartmentPhotoDTO {
   portada: boolean
 }
 
+export interface ApartmentRulesDTO {
+  permiteMascotas: boolean
+  permiteFumadores: boolean
+  fiestasPermitidas: boolean
+}
+
 export interface ApartmentDTO {
   imageUrl: string
   id: number
@@ -57,6 +67,7 @@ export interface ApartmentDTO {
   state: string
   coverImageUrl?: string
   members?: ApartmentMemberDTO[]
+   idealTenantProfile?: string
 }
 
 export interface ApartmentHomeDTO {
@@ -132,6 +143,28 @@ export const getApartmentPhotos = async (apartmentId: number): Promise<Apartment
     return []
   }
 }
+
+export const updateApartmentRules = async (
+  apartmentId: number,
+  rules: ApartmentRulesDTO
+): Promise<void> => {
+  await api.put(`/apartments/${apartmentId}/rules`, rules)
+}
+
+export const uploadApartmentImages = async (
+  apartmentId: number,
+  files: File[],
+  replace: boolean
+): Promise<void> => {
+  if (!files.length) return
+  const formData = new FormData()
+  files.forEach((file) => formData.append('files', file))
+  formData.append('replace', String(replace))
+
+  await api.post(`/images/apartment/${apartmentId}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
 export const getMatchesForCandidate = async (
   candidateId: number,
   status: MatchStatus
@@ -161,7 +194,7 @@ export const getMatchesForLandlord = async (
     const response = await api.get<ApartmentMatchLandlordResponseDTO[]>(
       `/apartments-matches/${landlordId}/interested-candidates/${status}`
     )
-    return response.data.map((item) => ({
+    return response.data.map((item: ApartmentMatchLandlordResponseDTO) => ({
       id: item.id,
       candidateId: 0,
       apartmentId: item.apartment.id,

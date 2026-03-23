@@ -50,6 +50,9 @@ public class ApartmentEntity {
     @Enumerated(EnumType.STRING)
     private ApartmentState state;
 
+    @Column(length = 1000)
+    private String idealTenantProfile;
+
     @JsonIgnore
     @ManyToOne(optional = true, fetch = FetchType.EAGER)
     private UserEntity user;
@@ -131,6 +134,14 @@ public class ApartmentEntity {
 
     public void setUser(UserEntity user) {
         this.user = user;
+    }
+
+    public String getIdealTenantProfile() {
+        return idealTenantProfile;
+    }
+
+    public void setIdealTenantProfile(String idealTenantProfile) {
+        this.idealTenantProfile = idealTenantProfile;
     }
 
     public List<ApartmentPhotoEntity> getPhotos() {

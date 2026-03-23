@@ -24,10 +24,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Transactional
@@ -49,6 +51,11 @@ public class UserService {
     @Transactional(readOnly = true)
     public Optional<UserEntity> findByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<UserEntity> findByGoogleId(String googleId) {
+        return userRepository.findByGoogleId(googleId);
     }
 
     @Transactional
@@ -165,6 +172,7 @@ public class UserService {
     public void deleteCurrentUserProfile() {
         UserEntity currentUser = findCurrentUserEntity();
         try {
+            refreshTokenService.deleteByUser(currentUser);
             userRepository.delete(currentUser);
             userRepository.flush();
         } catch (DataIntegrityViolationException ex) {
