@@ -164,15 +164,32 @@ public class ApartmentMatchService {
 
     @Transactional
     public ApartmentMatchEntity cancelMatch(Integer matchId) {
+        UserEntity currentUser = userService.findCurrentUserEntity();
         ApartmentMatchEntity match = apartmentMatchRepository.findById(matchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
         if (match.getMatchStatus() == MatchStatus.SUCCESSFUL) {
             throw new ConflictException("Cannot cancel a match that has already been finalized as successful");
         } else if (match.getMatchStatus() == MatchStatus.CANCELED) {
             throw new ConflictException("Match is already canceled");
-        } else if (match.getMatchStatus() == MatchStatus.REJECTED || match.getMatchStatus() == MatchStatus.ACTIVE) {
-            throw new ConflictException("Only matches with status MATCH can be canceled");
+        } else if (match.getMatchStatus() == MatchStatus.REJECTED) {
+            throw new ConflictException("Rejected matches cannot be canceled");
         }
+
+        boolean isCandidate = match.getCandidate().getId().equals(currentUser.getId());
+        boolean isLandlord = match.getApartment().getUser().getId().equals(currentUser.getId());
+
+        if (!isCandidate && !isLandlord) {
+            throw new AccessDeniedException("Only the users involved in the match can cancel it");
+        }
+
+        if (match.getMatchStatus() == MatchStatus.ACTIVE && !isCandidate) {
+            throw new AccessDeniedException("Only the candidate can cancel an active request");
+        }
+
+        if (match.getMatchStatus() != MatchStatus.ACTIVE && match.getMatchStatus() != MatchStatus.MATCH) {
+            throw new ConflictException("Only matches with status ACTIVE or MATCH can be canceled");
+        }
+
         match.setMatchStatus(MatchStatus.CANCELED);
         apartmentMatchRepository.save(match);
         return match;

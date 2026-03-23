@@ -159,6 +159,8 @@ public class ApartmentServiceTest {
                 null
         );
 
+        // El servicio ahora verifica que el usuario actual sea el propietario
+        when(userService.findCurrentUserEntity()).thenReturn(owner);
         when(apartmentRepository.findById(400)).thenReturn(Optional.of(existing));
         when(apartmentRepository.save(any(ApartmentEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 

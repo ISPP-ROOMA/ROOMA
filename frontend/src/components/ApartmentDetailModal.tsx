@@ -669,6 +669,19 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
               </p>
             </section>
 
+            {/* Ideal tenant profile */}
+            {apartment.idealTenantProfile && (
+              <section>
+                <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
+                  <span className="w-1 h-5 bg-primary rounded-full" />
+                  Perfil ideal
+                </h3>
+                <p className="text-base-content/75 leading-relaxed whitespace-pre-wrap">
+                  {apartment.idealTenantProfile}
+                </p>
+              </section>
+            )}
+
             {/* Details */}
             <section>
               <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
