@@ -15,6 +15,14 @@ interface ToastContextData {
 // eslint-disable-next-line react-refresh/only-export-components
 export const ToastContext = createContext<ToastContextData | undefined>(undefined)
 
+const generateToastId = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+
+  return `toast-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([])
 
@@ -24,8 +32,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const showToast = useCallback(
     (message: string, type: ToastType = 'info', duration: number = 3000) => {
-      // Usamos la API nativa y segura del navegador en lugar de Math.random()
-      const id = crypto.randomUUID()
+      const id = generateToastId()
 
       setToasts((currentToasts) => [...currentToasts, { id, message, type }])
 
