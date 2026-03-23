@@ -357,13 +357,6 @@ export default function TenantRequestsPage() {
                           >
                             <MessageCircle size={16} />
                           </button>
-                          <button
-                            type="button"
-                            className="h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center"
-                            aria-label="Agendar cita"
-                          >
-                            <CalendarDays size={16} />
-                          </button>
                         </div>
                       )}
                       {item.matchStatus === 'INVITED' && (
