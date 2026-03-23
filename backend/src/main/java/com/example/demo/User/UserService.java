@@ -53,6 +53,11 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<UserEntity> findByGoogleId(String googleId) {
+        return userRepository.findByGoogleId(googleId);
+    }
+
     @Transactional
     public UserEntity update(Integer id, UserEntity user) {
         UserEntity existingUser = findById(id);
