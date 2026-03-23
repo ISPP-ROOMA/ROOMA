@@ -37,7 +37,7 @@ public class ChatMessageEntity {
     @ManyToOne
     private UserEntity sender;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @Column(nullable = false)
