@@ -10,6 +10,7 @@ import com.example.demo.Chat.MessageType;
 public record ChatMessageDTO(
         Integer id,
         Integer matchId,
+    Integer incidentId,
         Integer senderId,
         String senderName,
         String content,
@@ -26,7 +27,8 @@ public record ChatMessageDTO(
         }
         return new ChatMessageDTO(
                 entity.getId(),
-                entity.getApartmentMatch().getId(),
+                entity.getApartmentMatch() != null ? entity.getApartmentMatch().getId() : null,
+                entity.getIncident() != null ? entity.getIncident().getId() : null,
                 entity.getSender().getId(),
                 name,
                 entity.getContent(),
