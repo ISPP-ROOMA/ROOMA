@@ -1,18 +1,13 @@
 package com.example.demo.Chat;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -29,6 +24,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.Chat.DTOs.ChatMessageDTO;
@@ -74,6 +73,7 @@ public class ChatControllerTest {
         ChatMessageDTO message = new ChatMessageDTO(
             1,
             10,
+            null,
             2,
             "John Doe",
             "Hello",
@@ -82,7 +82,8 @@ public class ChatControllerTest {
             MessageType.TEXT,
             null,
             null
-        );        when(chatService.getMessageHistory(matchId)).thenReturn(List.of(message));
+        );
+        when(chatService.getMessageHistory(matchId)).thenReturn(List.of(message));
 
         mockMvc.perform(get("/api/chat/{matchId}/messages", matchId))
                .andExpect(status().isOk());
@@ -96,6 +97,7 @@ public class ChatControllerTest {
         ChatMessageDTO message = new ChatMessageDTO(
             1,
             10,
+            null,
             2,
             "John Doe",
             "Hello",
@@ -158,6 +160,7 @@ public class ChatControllerTest {
         ChatMessageDTO message = new ChatMessageDTO(
             1,
             matchId,
+            null,
             2,
             "John Doe",
             "Hello",
@@ -227,6 +230,7 @@ public class ChatControllerTest {
         ChatMessageDTO message = new ChatMessageDTO(
             1,
             matchId,
+            null,
             2,
             "John Doe",
             "File uploaded",
@@ -314,6 +318,96 @@ public class ChatControllerTest {
                 .file(file)
                 .with(request -> { request.setUserPrincipal(() -> "user@example.com"); return request; })
         ).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "TENANT")
+    @DisplayName("getIncidentMessageHistory should return 200")
+    void getIncidentMessageHistory_ReturnsOk() throws Exception {
+        Integer incidentId = 55;
+        ChatMessageDTO message = new ChatMessageDTO(
+            1,
+            null,
+            incidentId,
+            2,
+            "John Doe",
+            "Hola incidencia",
+            LocalDateTime.now(),
+            MessageStatus.SENT,
+            MessageType.TEXT,
+            null,
+            null
+        );
+
+        when(chatService.getIncidentMessageHistory(incidentId)).thenReturn(List.of(message));
+
+        mockMvc.perform(get("/api/chat/incidents/{incidentId}/messages", incidentId))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "tenant@example.com", roles = "TENANT")
+    @DisplayName("markIncidentAsRead should return 200")
+    void markIncidentAsRead_ReturnsOk() throws Exception {
+        Integer incidentId = 55;
+        ChatMessageDTO message = new ChatMessageDTO(
+            1,
+            null,
+            incidentId,
+            2,
+            "John Doe",
+            "Hola incidencia",
+            LocalDateTime.now(),
+            MessageStatus.READ,
+            MessageType.TEXT,
+            null,
+            null
+        );
+
+        when(chatService.markIncidentMessagesAsRead(incidentId, "tenant@example.com"))
+                .thenReturn(List.of(message));
+
+        mockMvc.perform(put("/api/chat/incidents/{incidentId}/read", incidentId))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "tenant@example.com", roles = "TENANT")
+    @DisplayName("uploadIncidentFile should return 200")
+    void uploadIncidentFile_ReturnsOk() throws Exception {
+        Integer incidentId = 55;
+        ChatMessageDTO message = new ChatMessageDTO(
+            1,
+            null,
+            incidentId,
+            2,
+            "John Doe",
+            "Adjunto incidencia",
+            LocalDateTime.now(),
+            MessageStatus.SENT,
+            MessageType.FILE,
+            "https://example.com/file.png",
+            "file.png"
+        );
+
+        when(chatService.sendIncidentFileMessage(
+                eq(incidentId),
+                any(MultipartFile.class),
+                eq("Adjunto incidencia"),
+                eq("tenant@example.com")
+        )).thenReturn(message);
+
+        MockMultipartFile file = new MockMultipartFile(
+            "file",
+            "file.png",
+            "image/png",
+            "dummy content".getBytes()
+        );
+
+        mockMvc.perform(multipart("/api/chat/incidents/{incidentId}/file", incidentId)
+                .file(file)
+                .param("caption", "Adjunto incidencia"))
+            .andExpect(status().isOk());
     }
 
     

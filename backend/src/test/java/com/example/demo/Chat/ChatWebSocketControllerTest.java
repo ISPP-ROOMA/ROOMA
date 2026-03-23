@@ -1,17 +1,16 @@
 package com.example.demo.Chat;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import java.security.Principal;
 import java.time.LocalDateTime;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import org.springframework.security.access.AccessDeniedException;
 
 import com.example.demo.Chat.DTOs.ChatMessageDTO;
@@ -25,6 +24,7 @@ public class ChatWebSocketControllerTest {
     private ChatWebSocketController controller;
 
     private final Integer matchId = 1;
+    private final Integer incidentId = 10;
     private final String username = "user@example.com";
 
     @BeforeEach
@@ -41,6 +41,7 @@ public class ChatWebSocketControllerTest {
         ChatMessageDTO returnedMessage = new ChatMessageDTO(
                 1,
                 matchId,
+                null,
                 2,
                 "John Doe",
                 "Hello WebSocket",
@@ -84,8 +85,6 @@ public class ChatWebSocketControllerTest {
     @Test
     @DisplayName("sendMessage should throw AccessDeniedException if user not participant")
     void sendMessage_ThrowsForbidden() {
-        Integer matchId = 1;
-        String username = "user@example.com";
         SendMessageDTO sendMessageDTO = new SendMessageDTO("Hello");
 
         when(chatService.sendMessage(eq(matchId), eq("Hello"), eq(username)))
@@ -127,6 +126,7 @@ public class ChatWebSocketControllerTest {
         ChatMessageDTO returnedMessage = new ChatMessageDTO(
                 1,
                 matchId,
+                null,
                 2,
                 "John Doe",
                 "",
@@ -162,5 +162,53 @@ public class ChatWebSocketControllerTest {
                 () -> controller.sendMessage(matchId, dto, principal)
         );
         assertThat(ex.getMessage()).isEqualTo("Content cannot be null");
+    }
+
+    @Test
+    @DisplayName("sendIncidentMessage should return message DTO for valid input")
+    void sendIncidentMessage_ReturnsMessageDTO() {
+        SendMessageDTO sendMessageDTO = new SendMessageDTO("Hola incidencia");
+
+        ChatMessageDTO returnedMessage = new ChatMessageDTO(
+                7,
+                null,
+                incidentId,
+                2,
+                "John Doe",
+                "Hola incidencia",
+                LocalDateTime.now(),
+                MessageStatus.SENT,
+                MessageType.TEXT,
+                null,
+                null
+        );
+
+        when(chatService.sendIncidentMessage(eq(incidentId), eq("Hola incidencia"), eq(username)))
+                .thenReturn(returnedMessage);
+
+        Principal principal = () -> username;
+
+        ChatMessageDTO response = controller.sendIncidentMessage(incidentId, sendMessageDTO, principal);
+
+        assertThat(response).isNotNull();
+        assertThat(response.content()).isEqualTo("Hola incidencia");
+        assertThat(response.incidentId()).isEqualTo(incidentId);
+        assertThat(response.matchId()).isNull();
+    }
+
+    @Test
+    @DisplayName("sendIncidentMessage throws AccessDeniedException when user is not participant")
+    void sendIncidentMessage_ThrowsForbidden() {
+        SendMessageDTO dto = new SendMessageDTO("Hola");
+        when(chatService.sendIncidentMessage(eq(incidentId), eq("Hola"), eq(username)))
+                .thenThrow(new AccessDeniedException("Not participant"));
+
+        Principal principal = () -> username;
+
+        AccessDeniedException ex = Assertions.assertThrows(
+                AccessDeniedException.class,
+                () -> controller.sendIncidentMessage(incidentId, dto, principal)
+        );
+        assertThat(ex.getMessage()).isEqualTo("Not participant");
     }
 }
