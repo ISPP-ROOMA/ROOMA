@@ -3,13 +3,13 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { getMyDebts, payDebt, type TenantDebtDTO } from '../../../service/billing.service'
 import { ToastContext } from '../../../context/ToastContext'
 
-/* â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── helpers ──────────────────────────────────────────────── */
 
 const fmtCurrency = (v: number) =>
   new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v)
 
 const fmtDate = (v?: string) => {
-  if (!v) return 'â€”'
+  if (!v) return '—'
   const d = new Date(v)
   if (Number.isNaN(d.getTime())) return v
   return new Intl.DateTimeFormat('es-ES', {
@@ -33,25 +33,25 @@ function statusBadge(days: number | null) {
   if (days === null) return { text: 'Sin fecha', cls: 'bg-gray-100 text-gray-600' }
   if (days < 0) return { text: 'Vencido', cls: 'bg-red-50 text-red-600' }
   if (days === 0) return { text: 'Vence hoy', cls: 'bg-orange-50 text-orange-600' }
-  if (days <= 3) return { text: `Vence en ${days} dÃ­as`, cls: 'bg-orange-50 text-orange-600' }
-  if (days <= 7) return { text: `Vence en ${days} dÃ­as`, cls: 'bg-amber-50 text-amber-600' }
-  return { text: `Vence en ${days} dÃ­as`, cls: 'bg-teal-50 text-teal-700' }
+  if (days <= 3) return { text: `Vence en ${days} días`, cls: 'bg-orange-50 text-orange-600' }
+  if (days <= 7) return { text: `Vence en ${days} días`, cls: 'bg-amber-50 text-amber-600' }
+  return { text: `Vence en ${days} días`, cls: 'bg-teal-50 text-teal-700' }
 }
 
 function conceptIcon(ref: string) {
   const r = ref.toLowerCase()
-  if (r.includes('alquiler')) return { emoji: 'ðŸ ', bg: 'bg-violet-100' }
-  if (r.includes('luz') || r.includes('electric')) return { emoji: 'âš¡', bg: 'bg-amber-100' }
-  if (r.includes('agua')) return { emoji: 'ðŸ’§', bg: 'bg-sky-100' }
-  if (r.includes('gas')) return { emoji: 'ðŸ”¥', bg: 'bg-orange-100' }
-  if (r.includes('internet') || r.includes('wifi')) return { emoji: 'ðŸ“¶', bg: 'bg-indigo-100' }
-  if (r.includes('comunidad')) return { emoji: 'ðŸ¢', bg: 'bg-teal-100' }
-  if (r.includes('seguro')) return { emoji: 'ðŸ›¡ï¸', bg: 'bg-emerald-100' }
-  if (r.includes('limpieza')) return { emoji: 'ðŸ§¹', bg: 'bg-cyan-100' }
-  return { emoji: 'ðŸ“„', bg: 'bg-gray-100' }
+  if (r.includes('alquiler')) return { emoji: '🏠', bg: 'bg-violet-100' }
+  if (r.includes('luz') || r.includes('electric')) return { emoji: '⚡', bg: 'bg-amber-100' }
+  if (r.includes('agua')) return { emoji: '💧', bg: 'bg-sky-100' }
+  if (r.includes('gas')) return { emoji: '🔥', bg: 'bg-orange-100' }
+  if (r.includes('internet') || r.includes('wifi')) return { emoji: '📶', bg: 'bg-indigo-100' }
+  if (r.includes('comunidad')) return { emoji: '🏢', bg: 'bg-teal-100' }
+  if (r.includes('seguro')) return { emoji: '🛡️', bg: 'bg-emerald-100' }
+  if (r.includes('limpieza')) return { emoji: '🧹', bg: 'bg-cyan-100' }
+  return { emoji: '📄', bg: 'bg-gray-100' }
 }
 
-/* â”€â”€ component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── component ────────────────────────────────────────────── */
 
 export default function DebtDetail() {
   const { debtId } = useParams<{ debtId: string }>()
@@ -89,7 +89,7 @@ export default function DebtDetail() {
           replace: true,
         })
       } else {
-        showToast('No se pudo procesar el pago. IntÃ©ntalo de nuevo.', 'error')
+        showToast('No se pudo procesar el pago. Inténtalo de nuevo.', 'error')
         setIsPaying(false)
       }
     } catch {
@@ -98,11 +98,11 @@ export default function DebtDetail() {
     }
   }
 
-  /* â”€â”€ loading / not found â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── loading / not found ────────────────────────────────── */
   if (isLoading) {
     return (
       <div className="min-h-dvh bg-[#F7F4EB] flex items-center justify-center">
-        <p className="text-gray-500">Cargando detalleâ€¦</p>
+        <p className="text-gray-500">Cargando detalle...</p>
       </div>
     )
   }
@@ -110,20 +110,20 @@ export default function DebtDetail() {
   if (!debt) {
     return (
       <div className="min-h-dvh bg-[#F7F4EB] flex flex-col items-center justify-center gap-4">
-        <p className="text-gray-500">No se encontrÃ³ la deuda.</p>
+        <p className="text-gray-500">No se encontró la deuda.</p>
         <button
           onClick={() => {
             navigate('/invoices')
           }}
           className="text-teal-700 font-semibold text-sm"
         >
-          â† Volver a Mis Pagos
+          ← Volver a Mis Pagos
         </button>
       </div>
     )
   }
 
-  /* â”€â”€ data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── data ────────────────────────────────────────────────── */
   const days = daysUntil(debt.bill?.duDate)
   const badge = statusBadge(days)
   const icon = conceptIcon(debt.bill?.reference ?? '')
@@ -131,7 +131,7 @@ export default function DebtDetail() {
 
   return (
     <div className="min-h-dvh bg-[#F7F4EB] flex flex-col">
-      {/* â”€â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ─── Header ───────────────────────────────────────── */}
       <header className="sticky top-0 z-30 bg-[#F7F4EB]/95 backdrop-blur-sm px-4 pt-3 sm:pt-5 pb-3">
         <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
           <button
@@ -162,7 +162,7 @@ export default function DebtDetail() {
         </div>
       </header>
 
-      {/* â”€â”€â”€ Body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ─── Body ─────────────────────────────────────────── */}
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 mt-2 space-y-5 pb-32">
         {/* Badge */}
         <div className="flex justify-center">
@@ -182,23 +182,23 @@ export default function DebtDetail() {
           </span>
           <p className="text-4xl font-extrabold text-gray-900">
             {fmtCurrency(Number(debt.amount))}{' '}
-            <span className="text-xl font-medium text-gray-400">â‚¬</span>
+            <span className="text-xl font-medium text-gray-400">—</span>
           </p>
-          <p className="text-sm text-gray-500 mt-1">{debt.bill.reference || 'â€”'}</p>
+          <p className="text-sm text-gray-500 mt-1">{debt.bill.reference || "€"}</p>
         </div>
 
         {/* Detail card */}
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="divide-y divide-gray-100">
-            <DetailRow label="Concepto" value={debt.bill.reference || 'â€”'} />
+            <DetailRow label="Concepto" value={debt.bill.reference || "€"} />
             <DetailRow label="Fecha de vencimiento" value={fmtDate(debt.bill.duDate)} />
             <DetailRow
               label="Importe total factura"
-              value={`${fmtCurrency(Number(debt.bill.totalAmount || 0))} â‚¬`}
+              value={`${fmtCurrency(Number(debt.bill.totalAmount || 0))} €`}
             />
             <DetailRow
               label="Tu parte"
-              value={`${fmtCurrency(Number(debt.amount))} â‚¬`}
+              value={`${fmtCurrency(Number(debt.amount))} €`}
               highlight
             />
             <DetailRow
@@ -227,12 +227,12 @@ export default function DebtDetail() {
           </svg>
           <p className="text-xs text-amber-900 leading-relaxed">
             Este importe corresponde a tu parte proporcional de la factura total. Al pulsar "Pagar
-            ahora" se registrarÃ¡ como pagado.
+            ahora" se registrarán como pagado.
           </p>
         </div>
       </main>
 
-      {/* â”€â”€â”€ Sticky footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ─── Sticky footer ────────────────────────────────── */}
       {isPending && (
         <div className="fixed inset-x-0 bottom-[4.75rem] md:bottom-0 bg-[#F7F4EB]/95 backdrop-blur-sm border-t border-gray-200/60 px-4 py-4 z-40 shadow-[0_-6px_24px_rgba(0,0,0,0.06)]">
           <div className="max-w-3xl mx-auto">
@@ -263,10 +263,10 @@ export default function DebtDetail() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                     />
                   </svg>
-                  Procesandoâ€¦
+                  Procesando...
                 </>
               ) : (
-                <>Pagar {fmtCurrency(Number(debt.amount))} â‚¬</>
+                <>Pagar {fmtCurrency(Number(debt.amount))} €</>
               )}
             </button>
           </div>
@@ -276,7 +276,7 @@ export default function DebtDetail() {
   )
 }
 
-/* â”€â”€ row sub-component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── row sub-component ───────────────────────────────────── */
 
 function DetailRow({
   label,

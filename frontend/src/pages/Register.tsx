@@ -1,10 +1,12 @@
-﻿import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
-import { getDeviceId, registerUser } from '../service/auth.service'
+import { getDeviceId, googleLogin, registerUser, type UserRole } from '../service/auth.service'
 import { useAuthStore } from '../store/authStore'
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
 const registerSchema = z.object({
   email: z.email('Email no valido'),
@@ -18,6 +20,8 @@ export default function Register() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+  const googleBtnRef = useRef<HTMLDivElement>(null)
+  const selectedRoleRef = useRef<UserRole | null>(null)
 
   const {
     register,
@@ -30,6 +34,72 @@ export default function Register() {
   })
 
   const selectedRole = useWatch({ control, name: 'role' })
+
+  useEffect(() => {
+    selectedRoleRef.current = selectedRole ?? null
+  }, [selectedRole])
+
+  const handleGoogleResponse = useCallback(
+    async (response: { credential: string }) => {
+      setError(null)
+
+      const role = selectedRoleRef.current
+      if (!role) {
+        setError('Selecciona un tipo de cuenta antes de continuar con Google')
+        return
+      }
+
+      const res = await googleLogin(response.credential, role)
+
+      if (res.error || !res.token) {
+        setError(res.error ?? 'Error signing in with Google')
+        return
+      }
+
+      useAuthStore.getState().login({
+        token: res.token,
+        role: res.role,
+        userId: res.userId,
+      })
+
+      if (res.role === 'LANDLORD') {
+        navigate('/apartments/my')
+      } else {
+        navigate('/')
+      }
+    },
+    [navigate],
+  )
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return
+
+    const initGoogle = () => {
+      if (!window.google) return false
+
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse,
+      })
+
+      if (googleBtnRef.current) {
+        window.google.accounts.id.renderButton(googleBtnRef.current, {
+          type: 'icon',
+          size: 'large',
+          shape: 'circle',
+          theme: 'outline',
+        })
+      }
+      return true
+    }
+
+    if (!initGoogle()) {
+      const interval = setInterval(() => {
+        if (initGoogle()) clearInterval(interval)
+      }, 200)
+      return () => clearInterval(interval)
+    }
+  }, [handleGoogleResponse])
 
   const onSubmit = async (data: RegisterFormData) => {
     const deviceId = getDeviceId()
@@ -85,28 +155,25 @@ export default function Register() {
               <button
                 type="button"
                 onClick={() => setValue('role', 'TENANT', { shouldValidate: true })}
-                className={`group relative flex min-h-[124px] flex-col items-center justify-center gap-1.5 rounded-3xl border px-4 py-3 transition-all duration-200 ${
-                  selectedRole === 'TENANT'
-                    ? 'border-primary bg-primary/10 ring-2 ring-primary/20 shadow-[0_10px_24px_rgba(0,128,128,0.2)]'
-                    : 'border-base-300 bg-base-100 hover:border-primary/35 hover:bg-base-200/50'
-                }`}
+                className={`group relative flex min-h-[124px] flex-col items-center justify-center gap-1.5 rounded-3xl border px-4 py-3 transition-all duration-200 ${selectedRole === 'TENANT'
+                  ? 'border-primary bg-primary/10 ring-2 ring-primary/20 shadow-[0_10px_24px_rgba(0,128,128,0.2)]'
+                  : 'border-base-300 bg-base-100 hover:border-primary/35 hover:bg-base-200/50'
+                  }`}
               >
                 <span
-                  className={`absolute right-3 top-3 grid h-5 w-5 place-items-center rounded-full border text-[10px] font-bold ${
-                    selectedRole === 'TENANT'
-                      ? 'border-primary bg-primary text-primary-content'
-                      : 'border-base-300 bg-base-100 text-transparent'
-                  }`}
+                  className={`absolute right-3 top-3 grid h-5 w-5 place-items-center rounded-full border text-[10px] font-bold ${selectedRole === 'TENANT'
+                    ? 'border-primary bg-primary text-primary-content'
+                    : 'border-base-300 bg-base-100 text-transparent'
+                    }`}
                 >
                   ✓
                 </span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className={`h-8 w-8 transition-transform duration-200 ${
-                    selectedRole === 'TENANT'
-                      ? 'text-primary scale-105'
-                      : 'text-base-content/50 group-hover:text-primary/80'
-                  }`}
+                  className={`h-8 w-8 transition-transform duration-200 ${selectedRole === 'TENANT'
+                    ? 'text-primary scale-105'
+                    : 'text-base-content/50 group-hover:text-primary/80'
+                    }`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -126,28 +193,25 @@ export default function Register() {
               <button
                 type="button"
                 onClick={() => setValue('role', 'LANDLORD', { shouldValidate: true })}
-                className={`group relative flex min-h-[124px] flex-col items-center justify-center gap-1.5 rounded-3xl border px-4 py-3 transition-all duration-200 ${
-                  selectedRole === 'LANDLORD'
-                    ? 'border-primary bg-primary/10 ring-2 ring-primary/20 shadow-[0_10px_24px_rgba(0,128,128,0.2)]'
-                    : 'border-base-300 bg-base-100 hover:border-primary/35 hover:bg-base-200/50'
-                }`}
+                className={`group relative flex min-h-[124px] flex-col items-center justify-center gap-1.5 rounded-3xl border px-4 py-3 transition-all duration-200 ${selectedRole === 'LANDLORD'
+                  ? 'border-primary bg-primary/10 ring-2 ring-primary/20 shadow-[0_10px_24px_rgba(0,128,128,0.2)]'
+                  : 'border-base-300 bg-base-100 hover:border-primary/35 hover:bg-base-200/50'
+                  }`}
               >
                 <span
-                  className={`absolute right-3 top-3 grid h-5 w-5 place-items-center rounded-full border text-[10px] font-bold ${
-                    selectedRole === 'LANDLORD'
-                      ? 'border-primary bg-primary text-primary-content'
-                      : 'border-base-300 bg-base-100 text-transparent'
-                  }`}
+                  className={`absolute right-3 top-3 grid h-5 w-5 place-items-center rounded-full border text-[10px] font-bold ${selectedRole === 'LANDLORD'
+                    ? 'border-primary bg-primary text-primary-content'
+                    : 'border-base-300 bg-base-100 text-transparent'
+                    }`}
                 >
                   ✓
                 </span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className={`h-8 w-8 transition-transform duration-200 ${
-                    selectedRole === 'LANDLORD'
-                      ? 'text-primary scale-105'
-                      : 'text-base-content/50 group-hover:text-primary/80'
-                  }`}
+                  className={`h-8 w-8 transition-transform duration-200 ${selectedRole === 'LANDLORD'
+                    ? 'text-primary scale-105'
+                    : 'text-base-content/50 group-hover:text-primary/80'
+                    }`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -218,6 +282,11 @@ export default function Register() {
             >
               Registrarse
             </button>
+          </div>
+
+          <div className="divider text-base-content/50 text-xs">o</div>
+          <div className="flex justify-center">
+            <div ref={googleBtnRef} />
           </div>
 
           <p className="pt-1 text-center text-sm text-base-content/65">

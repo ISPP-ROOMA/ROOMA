@@ -127,18 +127,6 @@ export default function PropertyCard({
           <h3 className="font-bold text-base leading-snug line-clamp-2 text-base-content">
             {title}
           </h3>
-          <button className="shrink-0 p-1 rounded-full hover:bg-black/5 transition">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-500"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <circle cx="10" cy="4" r="1.5" />
-              <circle cx="10" cy="10" r="1.5" />
-              <circle cx="10" cy="16" r="1.5" />
-            </svg>
-          </button>
         </div>
 
         <div className="flex items-baseline gap-1">
@@ -217,7 +205,6 @@ export default function PropertyCard({
               </>
             )}
           </button>
-
           <button onClick={goToDetail} className={VIEW_BUTTON_CLASS} title="Ver detalle">
             <svg
               xmlns="http://www.w3.org/2000/svg"
