@@ -182,6 +182,17 @@ export default function ApartmentDetail() {
               <p className="mb-6 text-gray-600 leading-relaxed">{apartment.description}</p>
             )}
 
+            {apartment.idealTenantProfile && (
+              <div className="mb-6 rounded-2xl bg-base-200 p-4">
+                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">
+                  Perfil ideal del inquilino
+                </span>
+                <p className="mt-1 whitespace-pre-wrap font-medium text-base-content">
+                  {apartment.idealTenantProfile}
+                </p>
+              </div>
+            )}
+
             <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
               <DetailMiniStat label="Estado" value={stateInfo.label} />
               <DetailMiniStat label="Precio" value={`${apartment.price} EUR`} />

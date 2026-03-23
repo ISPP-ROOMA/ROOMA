@@ -15,7 +15,8 @@ public record ApartmentDTO(
     String ubication,
     ApartmentState state, 
     String coverImageUrl, 
-    List<ApartmentMemberDTO> members
+    List<ApartmentMemberDTO> members,
+    String idealTenantProfile
 ) {
 
     public static ApartmentDTO fromApartmentEntity(ApartmentEntity apartment) {
@@ -28,7 +29,8 @@ public record ApartmentDTO(
             apartment.getUbication(), 
             apartment.getState(),
             apartment.getCoverImageUrl(), 
-            new ArrayList<>()
+            new ArrayList<>(),
+            apartment.getIdealTenantProfile()
         );
     }
 
@@ -42,7 +44,8 @@ public record ApartmentDTO(
             apartment.getUbication(), 
             apartment.getState(),
             apartment.getCoverImageUrl(), 
-            members
+            members,
+            apartment.getIdealTenantProfile()
         );
     }
 

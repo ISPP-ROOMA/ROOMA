@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: demo-test
+
+# Configuración dummy de Cloudinary sólo para tests.
+# Evita fallos de arranque del contexto cuando se activa el perfil "test"
+# sin requerir credenciales reales.
+cloudinary:
+  cloud_name: test-cloud
+  api_key: test-key
+  api_secret: test-secret
+

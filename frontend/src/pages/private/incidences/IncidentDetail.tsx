@@ -392,8 +392,12 @@ export default function IncidentDetail() {
 
         <article className="rounded-[30px] border border-dashed border-base-300 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="text-lg font-semibold">Chat tecnico</h2>
-          <button type="button" className="btn btn-outline btn-sm rounded-full transition hover:-translate-y-0.5">
-            Abrir conversacion (proximamente)
+          <button
+            type="button"
+            className="btn btn-outline btn-sm rounded-full transition hover:-translate-y-0.5"
+            onClick={() => navigate(`/chat/incidents/${incident.id}`)}
+          >
+            Abrir conversacion
           </button>
         </article>
 

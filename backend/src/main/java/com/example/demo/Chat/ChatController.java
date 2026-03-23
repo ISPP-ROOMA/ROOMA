@@ -1,4 +1,4 @@
-package com.example.demo.chat;
+package com.example.demo.Chat;
 
 import java.io.IOException;
 import java.util.List;
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.demo.chat.DTOs.ChatMessageDTO;
+import com.example.demo.Chat.DTOs.ChatMessageDTO;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -41,6 +41,30 @@ public class ChatController {
             @PathVariable Integer matchId,
             @AuthenticationPrincipal UserDetails userDetails) {
         List<ChatMessageDTO> messages = chatService.markMessagesAsRead(matchId, userDetails.getUsername());
+        if (!messages.isEmpty()) {
+            for (ChatMessageDTO msg : messages) {
+                messagingTemplate.convertAndSend("/topic/chat/" + matchId, msg);
+            }
+        }
+        return ResponseEntity.ok(messages);
+    }
+
+    @GetMapping("/incidents/{incidentId}/messages")
+    public ResponseEntity<List<ChatMessageDTO>> getIncidentMessageHistory(@PathVariable Integer incidentId) {
+        List<ChatMessageDTO> messages = chatService.getIncidentMessageHistory(incidentId);
+        return ResponseEntity.ok(messages);
+    }
+
+    @PutMapping("/incidents/{incidentId}/read")
+    public ResponseEntity<List<ChatMessageDTO>> markIncidentAsRead(
+            @PathVariable Integer incidentId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        List<ChatMessageDTO> messages = chatService.markIncidentMessagesAsRead(incidentId, userDetails.getUsername());
+        if (!messages.isEmpty()) {
+            for (ChatMessageDTO msg : messages) {
+                messagingTemplate.convertAndSend("/topic/chat/incident/" + incidentId, msg);
+            }
+        }
         return ResponseEntity.ok(messages);
     }
 
@@ -52,6 +76,17 @@ public class ChatController {
             @AuthenticationPrincipal UserDetails userDetails) throws IOException {
         ChatMessageDTO message = chatService.sendFileMessage(matchId, file, caption, userDetails.getUsername());
         messagingTemplate.convertAndSend("/topic/chat/" + matchId, message);
+        return ResponseEntity.ok(message);
+    }
+
+    @PostMapping("/incidents/{incidentId}/file")
+    public ResponseEntity<ChatMessageDTO> uploadIncidentFile(
+            @PathVariable Integer incidentId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "caption", required = false) String caption,
+            @AuthenticationPrincipal UserDetails userDetails) throws IOException {
+        ChatMessageDTO message = chatService.sendIncidentFileMessage(incidentId, file, caption, userDetails.getUsername());
+        messagingTemplate.convertAndSend("/topic/chat/incident/" + incidentId, message);
         return ResponseEntity.ok(message);
     }
 }
