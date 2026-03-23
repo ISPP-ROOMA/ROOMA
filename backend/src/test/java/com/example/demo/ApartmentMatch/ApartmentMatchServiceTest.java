@@ -299,6 +299,35 @@ public class ApartmentMatchServiceTest {
         verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
     }
 
+    @Test
+    @DisplayName("cancelMatch: allows tenant to cancel an ACTIVE request")
+    public void cancelMatch_ActiveRequestByCandidate_CancelsMatch() {
+        ApartmentMatchEntity match = createMatch(20, MatchStatus.ACTIVE, 7, 99, ApartmentState.ACTIVE);
+        UserEntity candidate = createUser(7);
+
+        when(userService.findCurrentUserEntity()).thenReturn(candidate);
+        when(apartmentMatchRepository.findById(20)).thenReturn(Optional.of(match));
+        when(apartmentMatchRepository.save(any(ApartmentMatchEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ApartmentMatchEntity result = apartmentMatchService.cancelMatch(20);
+
+        assertEquals(MatchStatus.CANCELED, result.getMatchStatus());
+        verify(apartmentMatchRepository).save(match);
+    }
+
+    @Test
+    @DisplayName("cancelMatch: rejects landlord trying to cancel an ACTIVE request")
+    public void cancelMatch_ActiveRequestByLandlord_ThrowsAccessDenied() {
+        ApartmentMatchEntity match = createMatch(21, MatchStatus.ACTIVE, 7, 99, ApartmentState.ACTIVE);
+        UserEntity landlord = createUser(99);
+
+        when(userService.findCurrentUserEntity()).thenReturn(landlord);
+        when(apartmentMatchRepository.findById(21)).thenReturn(Optional.of(match));
+
+        assertThrows(AccessDeniedException.class, () -> apartmentMatchService.cancelMatch(21));
+        verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
+    }
+
     private UserEntity createUser(Integer id) {
         UserEntity user = new UserEntity();
         user.setId(id);

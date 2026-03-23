@@ -125,13 +125,13 @@ export default function Profile() {
     if (!accepted) return
 
     setIsDeleting(true)
-    const success = await deleteUser()
+    const result = await deleteUser()
     setIsDeleting(false)
-    if (success) {
+    if (result.success) {
       useAuthStore.getState().logout()
       navigate('/')
     } else {
-      alert('Error eliminando la cuenta')
+      alert(result.message ?? 'Error eliminando la cuenta')
     }
   }
 
