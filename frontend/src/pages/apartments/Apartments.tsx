@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getMyApartments, type Apartment, updateApartment } from '../../service/apartments.service'
+import { getMatchesForLandlord, type MatchStatus } from '../../service/apartment.service'
 import PropertyCard from '../../components/PropertyCard'
 import { useAuthStore } from '../../store/authStore'
 
@@ -12,8 +13,11 @@ const GRID_CLASS = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8'
 
 export default function Apartments() {
   const navigate = useNavigate()
-  const { token } = useAuthStore()
+  const { token, userId } = useAuthStore()
   const [apartments, setApartments] = useState<Apartment[]>([])
+  const [statsByApartmentId, setStatsByApartmentId] = useState<
+    Record<number, { requests: number; matches: number }>
+  >({})
   const [isLoading, setIsLoading] = useState(true)
 
   const hasApartments = apartments.length > 0
@@ -60,6 +64,47 @@ export default function Apartments() {
       try {
         const data = await getMyApartments()
         setApartments(data)
+
+        if (!userId) {
+          setStatsByApartmentId({})
+          return
+        }
+
+        const landlordId = Number(userId)
+        if (Number.isNaN(landlordId)) {
+          setStatsByApartmentId({})
+          return
+        }
+
+        const requestStatuses: MatchStatus[] = ['ACTIVE']
+        const matchStatuses: MatchStatus[] = ['MATCH', 'SUCCESSFUL', 'INVITED']
+
+        const [requestGroups, matchGroups] = await Promise.all([
+          Promise.all(requestStatuses.map((status) => getMatchesForLandlord(landlordId, status))),
+          Promise.all(matchStatuses.map((status) => getMatchesForLandlord(landlordId, status))),
+        ])
+
+        const nextStats: Record<number, { requests: number; matches: number }> = {}
+
+        for (const group of requestGroups) {
+          for (const match of group) {
+            if (!nextStats[match.apartmentId]) {
+              nextStats[match.apartmentId] = { requests: 0, matches: 0 }
+            }
+            nextStats[match.apartmentId].requests += 1
+          }
+        }
+
+        for (const group of matchGroups) {
+          for (const match of group) {
+            if (!nextStats[match.apartmentId]) {
+              nextStats[match.apartmentId] = { requests: 0, matches: 0 }
+            }
+            nextStats[match.apartmentId].matches += 1
+          }
+        }
+
+        setStatsByApartmentId(nextStats)
       } catch (error) {
         console.error(error)
       } finally {
@@ -67,7 +112,7 @@ export default function Apartments() {
       }
     }
     fetchApartments()
-  }, [navigate, token])
+  }, [navigate, token, userId])
 
   const renderEmptyState = () => (
     <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -103,7 +148,7 @@ export default function Apartments() {
           coverImageUrl={apt.coverImageUrl}
           photoCount={0}
           status={apt.state === 'ACTIVE' || apt.state === 'MATCHING' ? 'active' : 'paused'}
-          stats={{ requests: 0, matches: 0 }}
+          stats={statsByApartmentId[apt.id] ?? { requests: 0, matches: 0 }}
           onEdit={() => {
             navigate(`/apartments/${apt.id}/edit`)
           }}
