@@ -41,7 +41,8 @@ public class CloudinaryService {
         @SuppressWarnings("unchecked")
         Map<String, Object> params = ObjectUtils.asMap(
             "folder", "rooma/" + folder,
-            "resource_type", "auto"
+            "resource_type", "raw",
+            "use_filename", true
         );
         @SuppressWarnings("unchecked")
         Map<String, Object> result = cloudinary.uploader().upload(multipartFile.getBytes(), params);
