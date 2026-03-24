@@ -28,6 +28,7 @@ public interface ApartmentRepository extends JpaRepository<ApartmentEntity, Inte
 
         @Query("SELECT a FROM ApartmentEntity a WHERE a.state = com.example.demo.Apartment.ApartmentState.ACTIVE " +
                 "AND a.user.id <> :candidateId " +
-                "AND NOT EXISTS (SELECT m FROM ApartmentMatchEntity m WHERE m.candidate.id = :candidateId AND m.apartment.id = a.id)")
+                "AND NOT EXISTS (SELECT m FROM ApartmentMatchEntity m WHERE m.candidate.id = :candidateId AND m.apartment.id = a.id) " +
+                "AND NOT EXISTS (SELECT am FROM ApartmentMemberEntity am WHERE am.user.id = :candidateId AND am.apartment.id = a.id)")
         List<ApartmentEntity> findDeckForCandidate(@Param("candidateId") Integer candidateId);
 }
