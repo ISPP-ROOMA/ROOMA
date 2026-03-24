@@ -170,26 +170,10 @@ export default function LandlordMatchDetailPage() {
   return (
     <div
       data-theme="light"
-      className="mx-auto w-full max-w-2xl min-h-dvh bg-[#F5F1E3] text-[#050505] pb-10"
+      className="mx-auto w-full max-w-2xl min-h-dvh text-[#050505] pb-10"
     >
-      <header className="sticky top-0 z-10 bg-[#F5F1E3] px-4 sm:px-8 pt-5 pb-4">
+      <header className="sticky top-0 z-10 px-4 sm:px-8 pt-5 pb-4">
         <div className="flex items-center justify-between">
-          <button
-            className="h-10 w-10 rounded-full bg-white text-[#050505] shadow-sm flex items-center justify-center shrink-0"
-            aria-label="Volver"
-            onClick={() => navigate(-1)}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#050505]">Detalle Match</h1>
           <div className="h-10 w-10" aria-hidden />
         </div>
@@ -227,14 +211,14 @@ export default function LandlordMatchDetailPage() {
 
             <div className="mt-4 rounded-2xl border border-[#DDDBCB] bg-[#F5F1E3] p-4">
               <div className="flex items-center gap-4">
-              <img
-                src={tenantAvatar}
-                alt="Foto de perfil del solicitante"
-                className="h-16 w-16 rounded-full object-cover border border-[#DDDBCB] bg-white"
-                onError={(event) => {
-                  event.currentTarget.src = FALLBACK_AVATAR
-                }}
-              />
+                <img
+                  src={tenantAvatar}
+                  alt="Foto de perfil del solicitante"
+                  className="h-16 w-16 rounded-full object-cover border border-[#DDDBCB] bg-white"
+                  onError={(event) => {
+                    event.currentTarget.src = FALLBACK_AVATAR
+                  }}
+                />
 
                 <div className="min-w-0">
                   <p className="text-sm text-[#050505]/60">Nombre</p>
