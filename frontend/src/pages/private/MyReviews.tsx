@@ -1,5 +1,4 @@
 import {
-  ArrowLeft,
   ChevronRight,
   Clock,
   Crown,
@@ -208,23 +207,18 @@ export default function MyReviews() {
   return (
     <div
       data-theme="light"
-      className="mx-auto min-h-dvh w-full max-w-md bg-[#F5F1E3] text-[#1E293B]"
+      className="mx-auto w-full max-w-5xl min-h-dvh text-[#050505] pb-28"
     >
-      <div className="px-5 pt-7 pb-28 sm:px-6">
-        {/* Header */}
-        <header className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex h-8 w-8 items-center justify-center text-[#0F172A]"
-            aria-label="Volver"
-          >
-            <ArrowLeft size={24} strokeWidth={2.5} />
-          </button>
-          <h1 className="text-[1.55rem] font-extrabold leading-none tracking-tight text-[#111827] sm:text-[1.75rem]">
+      <header className="sticky top-0 z-10 px-4 sm:px-8 pt-5 pb-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl sm:text-3xl font-bold text-[#050505] text-center px-2">
             Mis Valoraciones
           </h1>
-        </header>
+          <div className="h-10 w-10" aria-hidden />
+        </div>
+      </header>
 
+      <div className="px-4 sm:px-8 mt-5">
         {/* Tabs */}
         <div className="mt-5 flex rounded-2xl border border-[#E5E7EB] bg-white p-1">
           <button
