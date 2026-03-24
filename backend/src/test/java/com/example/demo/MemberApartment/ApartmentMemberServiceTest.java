@@ -62,7 +62,6 @@ public class ApartmentMemberServiceTest {
 
         when(userService.findById(userId)).thenReturn(user);
         when(apartmentService.findById(apartmentId)).thenReturn(apartment);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(apartmentMemberRepository.existsByApartmentIdAndUserId(apartmentId, userId)).thenReturn(false);
         when(apartmentMemberRepository.findActiveMembershipsByUserId(userId)).thenReturn(Collections.emptyList());
         when(apartmentMemberRepository.save(org.mockito.ArgumentMatchers.any(ApartmentMemberEntity.class)))
@@ -75,7 +74,7 @@ public class ApartmentMemberServiceTest {
     }
 
     @Test
-    @DisplayName("addMember should throw bad request exception if user is already a member of the apartment")
+    @DisplayName("addMember should throw BadRequestException if user is already a member of the apartment")
     public void addMemberShouldNotAddMemberIfAlreadyMember() {
         Integer apartmentId = 1;
         Integer userId = 1;
@@ -98,7 +97,7 @@ public class ApartmentMemberServiceTest {
     }
 
     @Test
-    @DisplayName("addMember should throw bad request exception if user has overlapping membership")
+    @DisplayName("addMember should throw BadRequestException if user has overlapping membership")
     public void addMemberShouldNotAddMemberIfOverlappingMembership() {
         Integer apartmentId = 1;
         Integer userId = 1;
@@ -111,7 +110,6 @@ public class ApartmentMemberServiceTest {
 
         when(userService.findById(userId)).thenReturn(user);
         when(apartmentService.findById(apartmentId)).thenReturn(apartment);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(apartmentMemberRepository.existsByApartmentIdAndUserId(apartmentId, userId)).thenReturn(false);
         when(apartmentMemberRepository.findActiveMembershipsByUserId(userId)).thenReturn(Collections.singletonList(new ApartmentMemberEntity()));
 
@@ -123,7 +121,7 @@ public class ApartmentMemberServiceTest {
     }
 
     @Test
-    @DisplayName("addMember should throw bad request exception if apartmentId is invalid")
+    @DisplayName("addMember should throw ResourceNotFoundException if apartmentId is invalid")
     public void addMemberShouldNotAddMemberIfApartmentIdInvalid() {
         Integer apartmentId = 1;
         Integer userId = 1;
@@ -132,18 +130,17 @@ public class ApartmentMemberServiceTest {
         user.setId(userId);
         user.setRole(Role.TENANT);
 
-        when(userService.findById(userId)).thenReturn(user);
         when(apartmentService.findById(apartmentId)).thenReturn(null);
 
-        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMemberService.addMember(apartmentId, userId, LocalDate.now());
         });
 
-        assert exception.getMessage().equals("Invalid apartment ID");
+        assert exception.getMessage().equals("Apartment not found");
     }
 
     @Test
-    @DisplayName("addMember should throw bad request exception if userId is invalid")
+    @DisplayName("addMember should throw ResourceNotFoundException if userId is invalid")
     public void addMemberShouldNotAddMemberIfUserIdInvalid() {
         Integer apartmentId = 1;
         Integer userId = 1;
@@ -157,11 +154,11 @@ public class ApartmentMemberServiceTest {
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMemberService.addMember(apartmentId, userId, LocalDate.now());
         });
-        assert exception.getMessage().equals("Invalid user ID");
+        assert exception.getMessage().equals("User not found");
     }
 
     @Test
-    @DisplayName("addMember should throw bad request exception if join date is in the past")
+    @DisplayName("addMember should throw BadRequestException if join date is in the past")
     public void addMemberShouldNotAddMemberIfJoinDateInPast() {
         Integer apartmentId = 1;
         Integer userId = 1;
@@ -171,9 +168,6 @@ public class ApartmentMemberServiceTest {
         user.setRole(Role.TENANT);
         ApartmentEntity apartment = new ApartmentEntity();
         apartment.setId(apartmentId);
-
-        when(userService.findById(userId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
 
         BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             apartmentMemberService.addMember(apartmentId, userId, LocalDate.now().minusDays(1));
@@ -216,8 +210,8 @@ public class ApartmentMemberServiceTest {
     }
 
     @Test
-    @DisplayName("listMembers should throw bad request exception if apartmentId is invalid")
-    public void listMembersShouldThrowBadRequestExceptionIfApartmentIdInvalid() {
+    @DisplayName("listMembers should throw ResourceNotFoundException if apartmentId is invalid")
+    public void listMembersShouldThrowResourceNotFoundExceptionIfApartmentIdInvalid() {
         Integer apartmentId = 1;
 
         when(apartmentService.findById(apartmentId)).thenReturn(null);
@@ -226,37 +220,28 @@ public class ApartmentMemberServiceTest {
             apartmentMemberService.listMembers(apartmentId);
         });
 
-        assert exception.getMessage().equals("Invalid apartment ID");
+        assert exception.getMessage().equals("Apartment not found");
     }
 
     @Test
-    @DisplayName("listMembers should throw bad request exception if current user is not a member of the apartment")
-    public void listMembersShouldThrowBadRequestExceptionIfUserNotMember() {
-        Integer apartmentId = 1;
-        String currentUserEmail = "tenant@test.com";
-
+    @DisplayName("listMembers should throw ResourceNotFoundException if userId is invalid")
+    public void listMembersShouldThrowResourceNotFoundExceptionIfUserIdInvalid() {
+        Integer apartmentId = 9999;
         ApartmentEntity apartment = new ApartmentEntity();
         apartment.setId(apartmentId);
 
-        UserEntity currentUser = new UserEntity();
-        currentUser.setId(1);
-        currentUser.setEmail(currentUserEmail);
-        currentUser.setRole(Role.TENANT);
-
         when(apartmentService.findById(apartmentId)).thenReturn(apartment);
-        when(userService.findCurrentUser()).thenReturn(currentUserEmail);
-        when(userService.findByEmail(currentUserEmail)).thenReturn(Optional.of(currentUser));
-        when(apartmentMemberRepository.findByApartmentId(apartmentId)).thenReturn(new java.util.ArrayList<>());
-
-        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+        when(userService.findCurrentUser()).thenReturn("nonexistent@test.com");
+        when(userService.findByEmail("nonexistent@test.com")).thenReturn(Optional.empty());
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMemberService.listMembers(apartmentId);
         });
 
-        assert exception.getMessage().equals("User is not the owner nor a member of this apartment");
+        assert exception.getMessage().equals("Current user not found");
     }
 
     @Test
-    @DisplayName("listMembers should throw bad request exception if current user is not owner of the apartment")
+    @DisplayName("listMembers should throw BadRequestException if current user is not owner of the apartment")
     public void listMembersShouldThrowBadRequestExceptionIfUserNotOwner() {
         Integer apartmentId = 1;
         String currentUserEmail = "owner@test.com";
@@ -278,11 +263,11 @@ public class ApartmentMemberServiceTest {
             apartmentMemberService.listMembers(apartmentId);
         });
 
-        assert exception.getMessage().equals("User is not the owner nor a member of this apartment");
+        assert exception.getMessage().equals("User is not the owner not a member of this apartment");
     }
 
     @Test
-    @DisplayName("listMembers should throw bad request exception if current user is not admin")
+    @DisplayName("listMembers should throw BadRequestException if current user is not admin")
     public void listMembersShouldThrowBadRequestExceptionIfUserNotAdmin() {
         Integer apartmentId = 1;
         String currentUserEmail = "admin@test.com";
@@ -293,30 +278,49 @@ public class ApartmentMemberServiceTest {
         UserEntity currentUser = new UserEntity();
         currentUser.setId(1);
         currentUser.setEmail(currentUserEmail);
-        currentUser.setRole(Role.ADMIN);
+        currentUser.setRole(Role.TENANT);
+        UserEntity otherUser = new UserEntity();
+        otherUser.setId(2);
+        otherUser.setRole(Role.TENANT);
+
+        ApartmentMemberEntity member = new ApartmentMemberEntity();
+        member.setId(1);
+        member.setApartment(apartment);
+        member.setUser(otherUser);
 
         when(apartmentService.findById(apartmentId)).thenReturn(apartment);
         when(userService.findCurrentUser()).thenReturn(currentUserEmail);
         when(userService.findByEmail(currentUserEmail)).thenReturn(Optional.of(currentUser));
-        when(apartmentMemberRepository.findByApartmentId(apartmentId)).thenReturn(new java.util.ArrayList<>());
+        when(apartmentMemberRepository.findByApartmentId(apartmentId)).thenReturn(List.of(member));
 
         BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             apartmentMemberService.listMembers(apartmentId);
         });
 
-        assert exception.getMessage().equals("User is not the owner nor a member of this apartment");
+        assert exception.getMessage().equals("User is not the owner not a member of this apartment");
     }
 
     @Test
     @DisplayName("listMembers should throw ResourceNotFoundException if no members found for the apartment")
     public void listMembersShouldThrowResourceNotFoundExceptionIfNoMembersFound() {
         Integer apartmentId = 1;
+        String currentUserEmail = "admin@test.com";
 
         ApartmentEntity apartment = new ApartmentEntity();
         apartment.setId(apartmentId);
 
+        UserEntity currentUser = new UserEntity();
+        currentUser.setId(1);
+        currentUser.setEmail(currentUserEmail);
+        currentUser.setRole(Role.ADMIN);
+        UserEntity otherUser = new UserEntity();
+        otherUser.setId(2);
+        otherUser.setRole(Role.TENANT);
+
         when(apartmentService.findById(apartmentId)).thenReturn(apartment);
-        when(apartmentMemberRepository.findByApartmentId(apartmentId)).thenReturn(new java.util.ArrayList<>());
+        when(userService.findCurrentUser()).thenReturn(currentUserEmail);
+        when(userService.findByEmail(currentUserEmail)).thenReturn(Optional.of(currentUser));
+        when(apartmentMemberRepository.findByApartmentId(apartmentId)).thenReturn(List.of());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMemberService.listMembers(apartmentId);
@@ -389,6 +393,7 @@ public class ApartmentMemberServiceTest {
         member.setRole(MemberRole.RENTER);
 
         when(apartmentMemberRepository.findById(member.getId())).thenReturn(Optional.of(member));
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
         when(apartmentMemberRepository.save(org.mockito.ArgumentMatchers.any(ApartmentMemberEntity.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -403,6 +408,17 @@ public class ApartmentMemberServiceTest {
         Integer userId = 1;
         MemberRole newRole = MemberRole.HOMEBODY;
 
+        UserEntity currentUser = new UserEntity();
+        currentUser.setId(1);
+        ApartmentEntity apartment = new ApartmentEntity();
+        apartment.setId(apartmentId);
+
+        ApartmentMemberEntity member = new ApartmentMemberEntity();
+        member.setId(1);
+        member.setApartment(apartment);
+        member.setUser(currentUser);
+
+        when(apartmentMemberRepository.findById(1)).thenReturn(Optional.of(member));
         when(apartmentService.findById(apartmentId)).thenReturn(null);
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
@@ -447,6 +463,7 @@ public class ApartmentMemberServiceTest {
         member.setUser(user);
 
         when(apartmentMemberRepository.findById(memberId)).thenReturn(Optional.of(member));
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
 
         apartmentMemberService.removeMember(apartmentId, memberId);
 
@@ -467,6 +484,9 @@ public class ApartmentMemberServiceTest {
         member.setApartment(otherApartment);
 
         when(apartmentMemberRepository.findById(memberId)).thenReturn(Optional.of(member));
+        ApartmentEntity apartment = new ApartmentEntity();
+        apartment.setId(apartmentId);
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMemberService.removeMember(apartmentId, memberId);
@@ -533,7 +553,7 @@ public class ApartmentMemberServiceTest {
         member2.setEndDate(LocalDate.now().plusDays(10));
 
         when(userService.findById(userId)).thenReturn(user);
-        when(apartmentMemberRepository.findActiveMembershipsByUserId(userId)).thenReturn(java.util.Arrays.asList(member1, member2));
+        when(apartmentMemberRepository.findActiveApartmentMembers(userId)).thenReturn(java.util.Arrays.asList(member1, member2));
 
         List<ApartmentMemberEntity> activeMembers = apartmentMemberService.findActiveApartmentMembers(userId);
         assert activeMembers.size() == 2;
@@ -579,7 +599,8 @@ public class ApartmentMemberServiceTest {
         member2.setUser(user2);
         member2.setEndDate(null);
 
-        when(apartmentMemberRepository.findCurrentTenantsByApartmentId(apartmentId)).thenReturn(java.util.Arrays.asList(member1, member2));
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+        when(apartmentMemberRepository.findCurrentTenantsByApartmentId(apartmentId)).thenReturn(List.of(member1, member2));
 
         List<ApartmentMemberEntity> currentTenants = apartmentMemberService.findCurrentTenantsByApartmentId(apartmentId);
         assert currentTenants.size() == 2;
@@ -623,13 +644,11 @@ public class ApartmentMemberServiceTest {
     public void findLastMembershipByUserIdShouldThrowResourceNotFoundExceptionIfUserIdInvalid() {
         Integer userId = 1;
 
-        when(userService.findById(userId)).thenReturn(null);
-
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMemberService.findLastMembershipByUserId(userId);
         });
 
-        assert exception.getMessage().equals("User not found");
+        assert exception.getMessage().equals("No past memberships found for this user");
     }
 
     @Test
@@ -659,15 +678,13 @@ public class ApartmentMemberServiceTest {
         UserEntity user = new UserEntity();
         user.setId(userId);
 
-        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
-        when(userService.findById(userId)).thenReturn(user);
-        when(apartmentMemberRepository.findByUserIdAndApartmentId(userId, apartmentId)).thenReturn(Optional.empty());
+        when(apartmentMemberRepository.existsByApartmentIdAndUserId(apartmentId, userId)).thenReturn(false);
 
         BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             apartmentMemberService.checkUserIsCurrentMember(apartmentId, userId);
         });
 
-        assert exception.getMessage().equals("User is not a current member of the apartment");
+        assert exception.getMessage().equals("User is not a current member of this apartment");
     }
 
     @Test
@@ -689,14 +706,13 @@ public class ApartmentMemberServiceTest {
         member.setRole(MemberRole.HOMEBODY);
 
         when(apartmentService.findById(apartmentId)).thenReturn(apartment);
-        when(userService.findById(userId)).thenReturn(user);
-        when(apartmentMemberRepository.findByUserIdAndApartmentId(userId, apartmentId)).thenReturn(Optional.of(member));
+        when(apartmentMemberRepository.findCurrentTenantsByApartmentId(apartmentId)).thenReturn(List.of());
 
         BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             apartmentMemberService.checkUserIsTenant(apartmentId, userId);
         });
 
-        assert exception.getMessage().equals("User is not a tenant of the apartment");
+        assert exception.getMessage().equals("User is not a tenant of this apartment");
     }
 
     @Test
@@ -715,17 +731,15 @@ public class ApartmentMemberServiceTest {
         member.setId(1);
         member.setApartment(apartment);
         member.setUser(user);
+        member.setEndDate(LocalDate.now().minusDays(32));
 
-        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
-        when(userService.findById(userId)).thenReturn(user);
         when(apartmentMemberRepository.findByUserIdAndApartmentId(userId, apartmentId)).thenReturn(Optional.of(member));
-        when(apartmentMemberRepository.findCurrentTenantsByApartmentId(apartmentId)).thenReturn(java.util.Arrays.asList(member, new ApartmentMemberEntity()));
 
         BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             apartmentMemberService.checkUserIsLastMemberInApartment(apartmentId, userId);
         });
 
-        assert exception.getMessage().equals("User is not the last member of the apartment");
+        assert exception.getMessage().equals("User is not the last member of this apartment");
     }
 
     @Test
@@ -746,7 +760,7 @@ public class ApartmentMemberServiceTest {
         member1.setUser(user);
         member1.setEndDate(null);
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userService.findById(userId)).thenReturn(user);
         when(apartmentMemberRepository.findActiveMembershipsByUserId(userId)).thenReturn(java.util.Arrays.asList(member1));
 
         List<ApartmentMemberEntity> activeMemberships = apartmentMemberService.findActiveMembershipsByUserId(userId);
@@ -766,43 +780,30 @@ public class ApartmentMemberServiceTest {
     }
 
     @Test
-    @DisplayName("findActiveMembershipsByUserId should throw BadRequestException if user is not a tenant")
-    public void findActiveMembershipsByUserIdShouldThrowBadRequestExceptionIfUserNotTenant() {
-        Integer userId = 1;
-
-        UserEntity user = new UserEntity();
-        user.setId(userId);
-
-        when(userService.findById(userId)).thenReturn(user);
-        when(apartmentMemberRepository.findActiveMembershipsByUserId(userId)).thenReturn(Collections.emptyList());
-
-        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
-            apartmentMemberService.findActiveMembershipsByUserId(userId);
-        });
-
-        assert exception.getMessage().equals("Tenants cannot be members of more than one apartment at the same time");
-    }
-
-    @Test
     @DisplayName("findActiveMembershipsByUserId should throw BadRequestException if user has more than one active membership")
     public void findActiveMembershipsByUserIdShouldThrowBadRequestExceptionIfUserHasMultipleActiveMemberships() {
         Integer userId = 1;
 
         UserEntity user = new UserEntity();
         user.setId(userId);
+        user.setRole(Role.TENANT);
+        ApartmentEntity apartment1 = new ApartmentEntity();
+        apartment1.setId(1);
 
         ApartmentMemberEntity member1 = new ApartmentMemberEntity();
         member1.setId(1);
         member1.setUser(user);
+        member1.setApartment(apartment1);
         member1.setEndDate(null);
 
         ApartmentMemberEntity member2 = new ApartmentMemberEntity();
         member2.setId(2);
         member2.setUser(user);
+        member2.setApartment(apartment1);
         member2.setEndDate(null);
 
         when(userService.findById(userId)).thenReturn(user);
-        when(apartmentMemberRepository.findActiveMembershipsByUserId(userId)).thenReturn(java.util.Arrays.asList(member1, member2));
+        when(apartmentMemberRepository.findActiveMembershipsByUserId(userId)).thenReturn(List.of(member1, member2));
 
         BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             apartmentMemberService.findActiveMembershipsByUserId(userId);
@@ -840,7 +841,14 @@ public class ApartmentMemberServiceTest {
         member2.setEndDate(LocalDate.now().plusDays(15));
 
         when(userService.findById(userId)).thenReturn(user);
-        when(apartmentMemberRepository.findActiveMembershipsByUserId(userId)).thenReturn(java.util.Arrays.asList(member1, member2));
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+        when(apartmentMemberRepository.findOverlappingMemberships(
+            org.mockito.ArgumentMatchers.eq(userId),
+            org.mockito.ArgumentMatchers.eq(apartmentId),
+            org.mockito.ArgumentMatchers.eq(startDate),
+            org.mockito.ArgumentMatchers.eq(endDate),
+            org.mockito.ArgumentMatchers.any(LocalDate.class)
+        )).thenReturn(java.util.Arrays.asList(member1, member2));
 
         List<ApartmentMemberEntity> overlappingMemberships = apartmentMemberService.findOverlappingMemberships(userId, apartmentId, startDate, endDate);
         assert overlappingMemberships.size() == 2;
@@ -915,7 +923,13 @@ public class ApartmentMemberServiceTest {
 
         when(userService.findById(userId)).thenReturn(user);
         when(apartmentService.findById(apartmentId)).thenReturn(apartment);
-        when(apartmentMemberRepository.findActiveMembershipsByUserId(userId)).thenReturn(java.util.Arrays.asList(member1, member2));
+        when(apartmentMemberRepository.findOtherOverlappingMemberships(
+            org.mockito.ArgumentMatchers.eq(userId),
+            org.mockito.ArgumentMatchers.eq(apartmentId),
+            org.mockito.ArgumentMatchers.eq(startDate),
+            org.mockito.ArgumentMatchers.eq(endDate),
+            org.mockito.ArgumentMatchers.any(LocalDate.class)
+        )).thenReturn(java.util.Arrays.asList(member2));
 
         List<ApartmentMemberEntity> overlappingMemberships = apartmentMemberService.findOtherOverlappingMemberships(userId, apartmentId, startDate, endDate);
         assert overlappingMemberships.size() == 1;
@@ -985,40 +999,6 @@ public class ApartmentMemberServiceTest {
     }
 
     @Test
-    @DisplayName("findByUserIdAndApartmentId should throw ResourceNotFoundException if userId is invalid")
-    public void findByUserIdAndApartmentIdShouldThrowResourceNotFoundExceptionIfUserIdInvalid() {
-        Integer userId = 1;
-        Integer apartmentId = 1;
-
-        when(userService.findById(userId)).thenReturn(null);
-
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
-            apartmentMemberService.findByUserIdAndApartmentId(userId, apartmentId);
-        });
-
-        assert exception.getMessage().equals("User not found");
-    }
-
-    @Test
-    @DisplayName("findByUserIdAndApartmentId should throw ResourceNotFoundException if apartmentId is invalid")
-    public void findByUserIdAndApartmentIdShouldThrowResourceNotFoundExceptionIfApartmentIdInvalid() {
-        Integer userId = 1;
-        Integer apartmentId = 1;
-
-        UserEntity user = new UserEntity();
-        user.setId(userId);
-
-        when(userService.findById(userId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(null);
-
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
-            apartmentMemberService.findByUserIdAndApartmentId(userId, apartmentId);
-        });
-
-        assert exception.getMessage().equals("Apartment not found");
-    }
-
-    @Test
     @DisplayName("findByUserIdAndApartmentId should throw ResourceNotFoundException if no membership found for the user in the apartment")
     public void findByUserIdAndApartmentIdShouldThrowResourceNotFoundExceptionIfNoMembershipFound() {
         Integer userId = 1;
@@ -1030,15 +1010,13 @@ public class ApartmentMemberServiceTest {
         ApartmentEntity apartment = new ApartmentEntity();
         apartment.setId(apartmentId);
 
-        when(userService.findById(userId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
         when(apartmentMemberRepository.findByUserIdAndApartmentId(userId, apartmentId)).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMemberService.findByUserIdAndApartmentId(userId, apartmentId);
         });
 
-        assert exception.getMessage().equals("Membership not found for the user in the apartment");
+        assert exception.getMessage().equals("Membership not found for user in this apartment");
     }
 
     @Test
@@ -1052,6 +1030,7 @@ public class ApartmentMemberServiceTest {
         ApartmentMemberEntity member1 = new ApartmentMemberEntity();
         ApartmentMemberEntity member2 = new ApartmentMemberEntity();
 
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
         when(apartmentMemberRepository.findByApartmentId(apartmentId)).thenReturn(java.util.Arrays.asList(member1, member2));
 
         List<ApartmentMemberEntity> result = apartmentMemberService.listMembersInternal(apartmentId);
@@ -1080,6 +1059,9 @@ public class ApartmentMemberServiceTest {
         ApartmentMemberEntity member1 = new ApartmentMemberEntity();
         ApartmentMemberEntity member2 = new ApartmentMemberEntity();
 
+        UserEntity user = new UserEntity();
+        user.setId(userId);
+        when(userService.findById(userId)).thenReturn(user);
         when(apartmentMemberRepository.findAllByUserId(userId)).thenReturn(java.util.Arrays.asList(member1, member2));
 
         List<ApartmentMemberEntity> result = apartmentMemberService.findAllByUserId(userId);
@@ -1127,6 +1109,10 @@ public class ApartmentMemberServiceTest {
         member2.setRole(MemberRole.HOMEBODY);
         member2.setEndDate(LocalDate.now().minusDays(20));
 
+        UserEntity loggedInUser = new UserEntity();
+        loggedInUser.setId(currentUserId);
+        when(userService.findCurrentUserEntity()).thenReturn(loggedInUser);
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
         when(apartmentMemberRepository.findPastLandlordMembershipsByUserIdAndApartmentId(currentUserId, apartmentId, LocalDate.now().minusDays(30)))
             .thenReturn(List.of(member1, member2));
         
@@ -1138,18 +1124,13 @@ public class ApartmentMemberServiceTest {
     @Test
     @DisplayName("findPastLandlordMembershipsByUserIdAndApartmentId should throw ForbiddenException if currentUserId is not current user")
     public void findPastLandlordMembershipsByUserIdAndApartmentIdShouldThrowForbiddenExceptionIfCurrentUserIdIsNotCurrentUser() {
-        Integer currentUserId = 1;
+        Integer currentUserId = 2;
         Integer apartmentId = 1;
 
-        UserEntity user = new UserEntity();
-        user.setId(currentUserId);
+        UserEntity loggedInUser = new UserEntity();
+        loggedInUser.setId(1);
 
-        ApartmentEntity apartment = new ApartmentEntity();
-        apartment.setId(apartmentId);
-
-        when(userService.findById(currentUserId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
-        when(userService.findCurrentUser()).thenReturn("different_user@example.com");
+        when(userService.findCurrentUserEntity()).thenReturn(loggedInUser);
 
         ForbiddenException exception = assertThrows(ForbiddenException.class, () -> {
             apartmentMemberService.findPastLandlordMembershipsByUserIdAndApartmentId(currentUserId, apartmentId);
@@ -1167,7 +1148,7 @@ public class ApartmentMemberServiceTest {
         UserEntity user = new UserEntity();
         user.setId(currentUserId);
 
-        when(userService.findById(currentUserId)).thenReturn(user);
+        when(userService.findCurrentUserEntity()).thenReturn(user);
         when(apartmentService.findById(apartmentId)).thenReturn(null);
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
@@ -1203,6 +1184,10 @@ public class ApartmentMemberServiceTest {
         member2.setRole(MemberRole.RENTER);
         member2.setEndDate(LocalDate.now().minusDays(20));
 
+        UserEntity loggedInUser = new UserEntity();
+        loggedInUser.setId(currentUserId);
+        when(userService.findCurrentUserEntity()).thenReturn(loggedInUser);
+        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
         when(apartmentMemberRepository.findPastTenantMembershipsByUserIdAndApartmentId(currentUserId, apartmentId, LocalDate.now().minusDays(30)))
             .thenReturn(List.of(member1, member2));
 
@@ -1217,15 +1202,9 @@ public class ApartmentMemberServiceTest {
         Integer currentUserId = 1;
         Integer apartmentId = 1;
 
-        UserEntity user = new UserEntity();
-        user.setId(currentUserId);
-
-        ApartmentEntity apartment = new ApartmentEntity();
-        apartment.setId(apartmentId);
-
-        when(userService.findById(currentUserId)).thenReturn(user);
-        when(apartmentService.findById(apartmentId)).thenReturn(apartment);
-        when(userService.findCurrentUser()).thenReturn("different_user@example.com");
+        UserEntity loggedInUser = new UserEntity();
+        loggedInUser.setId(2);
+        when(userService.findCurrentUserEntity()).thenReturn(loggedInUser);
 
         ForbiddenException exception = assertThrows(ForbiddenException.class, () -> {
             apartmentMemberService.findPastTenantMembershipsByUserIdAndApartmentId(currentUserId, apartmentId);
@@ -1242,8 +1221,7 @@ public class ApartmentMemberServiceTest {
 
         UserEntity user = new UserEntity();
         user.setId(currentUserId);
-
-        when(userService.findById(currentUserId)).thenReturn(user);
+        when(userService.findCurrentUserEntity()).thenReturn(user);
         when(apartmentService.findById(apartmentId)).thenReturn(null);
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
@@ -1268,6 +1246,7 @@ public class ApartmentMemberServiceTest {
         ApartmentEntity apartment2 = new ApartmentEntity();
         apartment2.setId(otherApartmentId);
 
+        when(userService.findById(currentUserId)).thenReturn(user);
         when(apartmentMemberRepository.findLastApartmentsByTenantIdAndApartmentId(currentUserId, LocalDate.now().minusDays(30))).thenReturn(List.of(apartment1, apartment2));
         
         List<ApartmentEntity> result = apartmentMemberService.findLastApartmentsByTenantIdAndApartmentId(currentUserId);
@@ -1278,21 +1257,17 @@ public class ApartmentMemberServiceTest {
     }
 
     @Test
-    @DisplayName("findLastApartmentsByTenantIdAndApartmentId should throw ForbiddenException if currentUserId is not current user")
-    public void findLastApartmentsByTenantIdAndApartmentIdShouldThrowForbiddenExceptionIfCurrentUserIdIsNotCurrentUser() {
+    @DisplayName("findLastApartmentsByTenantIdAndApartmentId should throw ResourceNotFoundException if current user does not exist")
+    public void findLastApartmentsByTenantIdAndApartmentIdShouldThrowResourceNotFoundExceptionIfCurrentUserIdIsNotCurrentUser() {
         Integer currentUserId = 1;
 
-        UserEntity user = new UserEntity();
-        user.setId(currentUserId);
+        when(userService.findById(currentUserId)).thenReturn(null);
 
-        when(userService.findById(currentUserId)).thenReturn(user);
-        when(userService.findCurrentUser()).thenReturn("different_user@example.com");
-
-        ForbiddenException exception = assertThrows(ForbiddenException.class, () -> {
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMemberService.findLastApartmentsByTenantIdAndApartmentId(currentUserId);
         });
 
-        assert exception.getMessage().equals("Access denied");
+        assert exception.getMessage().equals("User not found");
     }
 
     @Test
@@ -1310,6 +1285,7 @@ public class ApartmentMemberServiceTest {
         ApartmentEntity apartment2 = new ApartmentEntity();
         apartment2.setId(otherApartmentId);
 
+        when(userService.findById(currentUserId)).thenReturn(user);
         when(apartmentMemberRepository.findLastApartmentsByLandlordIdAndApartmentId(currentUserId, LocalDate.now().minusDays(30))).thenReturn(List.of(apartment1, apartment2));
         
         List<ApartmentEntity> result = apartmentMemberService.findLastApartmentsByLandlordIdAndApartmentId(currentUserId);
@@ -1320,21 +1296,17 @@ public class ApartmentMemberServiceTest {
     }
 
     @Test
-    @DisplayName("findLastApartmentsByLandlordIdAndApartmentId should throw ForbiddenException if currentUserId is not current user")
-    public void findLastApartmentsByLandlordIdAndApartmentIdShouldThrowForbiddenExceptionIfCurrentUserIdIsNotCurrentUser() {
+    @DisplayName("findLastApartmentsByLandlordIdAndApartmentId should throw ResourceNotFoundException if current user does not exist")
+    public void findLastApartmentsByLandlordIdAndApartmentIdShouldThrowResourceNotFoundExceptionIfCurrentUserIdIsNotCurrentUser() {
         Integer currentUserId = 1;
 
-        UserEntity user = new UserEntity();
-        user.setId(currentUserId);
+        when(userService.findById(currentUserId)).thenReturn(null);
 
-        when(userService.findById(currentUserId)).thenReturn(user);
-        when(userService.findCurrentUser()).thenReturn("different_user@example.com");
-
-        ForbiddenException exception = assertThrows(ForbiddenException.class, () -> {
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
             apartmentMemberService.findLastApartmentsByLandlordIdAndApartmentId(currentUserId);
         });
 
-        assert exception.getMessage().equals("Access denied");
+        assert exception.getMessage().equals("User not found");
     }
 
     @Test
