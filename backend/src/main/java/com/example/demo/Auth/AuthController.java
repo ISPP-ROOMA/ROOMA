@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.Auth.DTOs.AuthRequest;
 import com.example.demo.Auth.DTOs.AuthResponse;
 import com.example.demo.Auth.DTOs.AuthResult;
+import com.example.demo.Auth.DTOs.GoogleAuthRequest;
 import com.example.demo.Auth.DTOs.LoginRequest;
 import com.example.demo.Auth.DTOs.RefreshTokenRequest;
 import com.example.demo.Auth.DTOs.ValidateTokenResponse;
@@ -58,6 +59,20 @@ public class AuthController {
         cookie.setHttpOnly(true);
         cookie.setPath("/");
         AuthResponse authResp = new AuthResponse(loginRes.accessToken(), loginRes.role(), loginRes.userId());
+        response.addCookie(cookie);
+        return ResponseEntity.ok().body(authResp);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody GoogleAuthRequest request,
+            HttpServletResponse response) {
+        AuthResult googleRes = authService.googleLogin(request.idToken(), request.deviceId(), request.role());
+        Cookie cookie = new Cookie("refresh_token", googleRes.refreshToken());
+        cookie.setMaxAge(secondsExpirationRt);
+        cookie.setSecure(false);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        AuthResponse authResp = new AuthResponse(googleRes.accessToken(), googleRes.role(), googleRes.userId());
         response.addCookie(cookie);
         return ResponseEntity.ok().body(authResp);
     }

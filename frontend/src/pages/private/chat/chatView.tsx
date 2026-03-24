@@ -14,11 +14,23 @@ import {
 import { useAuthStore } from '../../../store/authStore'
 
 export default function ChatScreen() {
-  const { matchId } = useParams<{ matchId: string }>()
+  const { matchId, incidentId } = useParams<{ matchId?: string; incidentId?: string }>()
   const navigate = useNavigate()
   const { userId } = useAuthStore()
 
-  const parsedMatchId = useMemo(() => Number(matchId), [matchId])
+  const chatContext = useMemo(() => {
+    const parsedMatchId = matchId ? Number(matchId) : NaN
+    if (Number.isInteger(parsedMatchId) && parsedMatchId > 0) {
+      return { type: 'match' as const, id: parsedMatchId }
+    }
+
+    const parsedIncidentId = incidentId ? Number(incidentId) : NaN
+    if (Number.isInteger(parsedIncidentId) && parsedIncidentId > 0) {
+      return { type: 'incident' as const, id: parsedIncidentId }
+    }
+
+    return null
+  }, [matchId, incidentId])
   const { client, connected } = useStompClient()
 
   const [messages, setMessages] = useState<ChatMessageDTO[]>([])
@@ -33,14 +45,17 @@ export default function ChatScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!parsedMatchId) return
+    if (!chatContext) {
+      setLoading(false)
+      return
+    }
 
     const initChat = async () => {
       setLoading(true)
       try {
-        const history = await getMessageHistory(parsedMatchId)
+        const history = await getMessageHistory(chatContext)
         setMessages(history)
-        await markMessagesAsRead(parsedMatchId)
+        await markMessagesAsRead(chatContext)
       } catch (error) {
         console.error('Error al inicializar chat', error)
       } finally {
@@ -49,13 +64,13 @@ export default function ChatScreen() {
     }
 
     void initChat()
-  }, [parsedMatchId])
+  }, [chatContext])
 
   useEffect(() => {
-    if (!connected || !client || !parsedMatchId) return
+    if (!connected || !client || !chatContext) return
 
     const subscription = client.subscribe(
-      CHAT_TOPIC_SUBSCRIPTION(parsedMatchId),
+      CHAT_TOPIC_SUBSCRIPTION(chatContext),
       (payload: IMessage) => {
         const newMessage = JSON.parse(payload.body) as ChatMessageDTO
 
@@ -70,7 +85,7 @@ export default function ChatScreen() {
         })
 
         if (newMessage.senderId !== Number(userId) && newMessage.status !== 'READ') {
-          void markMessagesAsRead(parsedMatchId)
+          void markMessagesAsRead(chatContext)
         }
       }
     )
@@ -78,7 +93,7 @@ export default function ChatScreen() {
     return () => {
       subscription.unsubscribe()
     }
-  }, [connected, client, parsedMatchId, userId])
+  }, [connected, client, chatContext, userId])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -87,10 +102,10 @@ export default function ChatScreen() {
   }, [messages])
 
   const handleSendMessage = () => {
-    if (!inputValue.trim() || !connected || !client || !parsedMatchId) return
+    if (!inputValue.trim() || !connected || !client || !chatContext) return
 
     client.publish({
-      destination: CHAT_SEND_DESTINATION(parsedMatchId),
+      destination: CHAT_SEND_DESTINATION(chatContext),
       body: JSON.stringify({ content: inputValue }),
     })
 
@@ -110,10 +125,10 @@ export default function ChatScreen() {
   }
 
   const handleSendFile = async () => {
-    if (!selectedFile || !parsedMatchId) return
+    if (!selectedFile || !chatContext) return
     setSendingFile(true)
     try {
-      await uploadChatFile(parsedMatchId, selectedFile, fileCaption)
+      await uploadChatFile(chatContext, selectedFile, fileCaption)
       setSelectedFile(null)
       setFilePreview(null)
       setFileCaption('')
@@ -152,6 +167,14 @@ export default function ChatScreen() {
     )
   }
 
+  if (!chatContext) {
+    return (
+      <div className="flex h-[calc(100vh-64px)] flex-col items-center justify-center bg-[#F5F1E3] text-[#050505]">
+        <p className="font-medium">Chat no válido.</p>
+      </div>
+    )
+  }
+
   return (
     <div
       data-theme="light"
@@ -165,7 +188,9 @@ export default function ChatScreen() {
           <ChevronLeft size={24} />
         </button>
         <div className="flex-1">
-          <h2 className="font-bold text-lg leading-tight">Chat del Match</h2>
+          <h2 className="font-bold text-lg leading-tight">
+            {chatContext?.type === 'incident' ? 'Chat de la Incidencia' : 'Chat del Match'}
+          </h2>
           <div className="flex items-center gap-1.5 mt-0.5">
             <div className={`h-2 w-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-400'}`} />
             <span className="text-xs font-medium text-[#050505]/60">

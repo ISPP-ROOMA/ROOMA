@@ -22,6 +22,13 @@ public class RefreshTokenService {
     }
 
     @Transactional
+    public long deleteByUser(UserEntity user) {
+        long result = refreshTokenRepository.deleteByUser(user);
+        refreshTokenRepository.flush();
+        return result;
+    }
+
+    @Transactional
     public long deleteByUserAndDeviceId(UserEntity user, String deviceId) {
         long result = refreshTokenRepository.deleteByUserAndDeviceId(user, deviceId);
         refreshTokenRepository.flush();

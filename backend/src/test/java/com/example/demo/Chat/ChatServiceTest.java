@@ -1,18 +1,5 @@
 package com.example.demo.Chat;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -20,6 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,8 +19,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.access.AccessDeniedException;
@@ -41,6 +40,8 @@ import com.example.demo.Chat.DTOs.ChatMessageDTO;
 import com.example.demo.Cloudinary.CloudinaryService;
 import com.example.demo.Exceptions.ConflictException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
+import com.example.demo.Incident.IncidentEntity;
+import com.example.demo.Incident.IncidentRepository;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 
@@ -53,6 +54,9 @@ public class ChatServiceTest {
     @Mock
     private ApartmentMatchRepository apartmentMatchRepository;
 
+        @Mock
+        private IncidentRepository incidentRepository;
+
     @Mock
     private CloudinaryService cloudinaryService;
 
@@ -63,6 +67,7 @@ public class ChatServiceTest {
     private ChatService chatService;
 
     private ApartmentMatchEntity match;
+        private IncidentEntity incident;
     private UserEntity user;
     private UserEntity otherUser;
 
@@ -71,6 +76,7 @@ public class ChatServiceTest {
         user = new UserEntity();
         user.setId(1);
         user.setName("John");
+        user.setEmail("tenant@example.com");
 
         otherUser = new UserEntity();
         otherUser.setId(2);
@@ -78,6 +84,8 @@ public class ChatServiceTest {
 
         UserEntity landlord = new UserEntity();
         landlord.setId(3);
+        landlord.setName("Landlord");
+        landlord.setEmail("landlord@example.com");
 
         ApartmentEntity apartment = new ApartmentEntity();
         apartment.setUser(landlord);
@@ -87,6 +95,12 @@ public class ChatServiceTest {
         match.setCandidate(user);
         match.setApartment(apartment);
         match.setMatchStatus(MatchStatus.MATCH);
+
+        incident = new IncidentEntity();
+        incident.setId(200);
+        incident.setTenant(user);
+        incident.setLandlord(landlord);
+        incident.setApartment(apartment);
     }
 
     // == Test getMessageHistory ==
@@ -728,6 +742,129 @@ public class ChatServiceTest {
 
         assertEquals(MessageStatus.READ, msg1.getStatus());
         verify(chatMessageRepository).saveAll(Collections.emptyList());
+    }
+
+    // == Test incident chat ==
+
+    @Test
+    @DisplayName("getIncidentMessageHistory should return messages when tenant is participant")
+    void getIncidentMessageHistory_shouldReturnMessages_whenTenantParticipant() {
+        Integer incidentId = incident.getId();
+
+        ChatMessageEntity message = new ChatMessageEntity();
+        message.setSender(user);
+        message.setIncident(incident);
+        message.setContent("Incidence hello");
+
+        when(incidentRepository.findById(incidentId)).thenReturn(Optional.of(incident));
+        when(userService.findCurrentUserEntity()).thenReturn(user);
+        when(chatMessageRepository.findByIncidentIdOrderBySentAtAsc(incidentId)).thenReturn(List.of(message));
+
+        List<ChatMessageDTO> result = chatService.getIncidentMessageHistory(incidentId);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(incidentId, result.get(0).incidentId());
+    }
+
+    @Test
+    @DisplayName("getIncidentMessageHistory should throw AccessDeniedException when user is not participant")
+    void getIncidentMessageHistory_shouldThrow_whenUserNotParticipant() {
+        Integer incidentId = incident.getId();
+
+        UserEntity outsider = new UserEntity();
+        outsider.setId(999);
+        outsider.setEmail("outsider@example.com");
+
+        when(incidentRepository.findById(incidentId)).thenReturn(Optional.of(incident));
+        when(userService.findCurrentUserEntity()).thenReturn(outsider);
+
+        assertThrows(AccessDeniedException.class, () -> chatService.getIncidentMessageHistory(incidentId));
+        verify(chatMessageRepository, never()).findByIncidentIdOrderBySentAtAsc(any());
+    }
+
+    @Test
+    @DisplayName("sendIncidentMessage should save and trim content when valid")
+    void sendIncidentMessage_shouldSaveMessage_whenValid() {
+        Integer incidentId = incident.getId();
+
+        when(incidentRepository.findById(incidentId)).thenReturn(Optional.of(incident));
+        when(userService.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(chatMessageRepository.save(any(ChatMessageEntity.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ChatMessageDTO result = chatService.sendIncidentMessage(incidentId, " Hola incidencia ", user.getEmail());
+
+        assertNotNull(result);
+        assertEquals("Hola incidencia", result.content());
+        assertEquals(incidentId, result.incidentId());
+        assertTrue(result.matchId() == null);
+    }
+
+    @Test
+    @DisplayName("sendIncidentFileMessage should upload file and save message")
+    void sendIncidentFileMessage_shouldSaveMessage_whenValid() throws IOException {
+        Integer incidentId = incident.getId();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "incident.png",
+                "image/png",
+                "data".getBytes()
+        );
+
+        Map<String, Object> uploadResult = Map.of(
+                "secure_url", "http://file.url",
+                "public_id", "incident-file-123"
+        );
+
+        when(incidentRepository.findById(incidentId)).thenReturn(Optional.of(incident));
+        when(userService.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(cloudinaryService.uploadRaw(any(), anyString())).thenReturn(uploadResult);
+        when(chatMessageRepository.save(any(ChatMessageEntity.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ChatMessageDTO result = chatService.sendIncidentFileMessage(incidentId, file, "foto", user.getEmail());
+
+        assertNotNull(result);
+        assertEquals("foto", result.content());
+        assertEquals(incidentId, result.incidentId());
+        assertEquals(MessageType.IMAGE, result.messageType());
+    }
+
+    @Test
+    @DisplayName("markIncidentMessagesAsRead should update messages from other users to READ")
+    void markIncidentMessagesAsRead_shouldMarkOtherUsersMessagesAsRead() {
+        Integer incidentId = incident.getId();
+
+        ChatMessageEntity msgFromLandlord = new ChatMessageEntity();
+        msgFromLandlord.setId(1);
+        msgFromLandlord.setSender(incident.getLandlord());
+        msgFromLandlord.setIncident(incident);
+        msgFromLandlord.setStatus(MessageStatus.SENT);
+
+        ChatMessageEntity msgFromTenant = new ChatMessageEntity();
+        msgFromTenant.setId(2);
+        msgFromTenant.setSender(user);
+        msgFromTenant.setIncident(incident);
+        msgFromTenant.setStatus(MessageStatus.SENT);
+
+        List<ChatMessageEntity> allMessages = List.of(msgFromLandlord, msgFromTenant);
+
+        when(incidentRepository.findById(incidentId)).thenReturn(Optional.of(incident));
+        when(userService.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(chatMessageRepository.findByIncidentIdOrderBySentAtAsc(incidentId))
+                .thenReturn(allMessages)
+                .thenReturn(allMessages);
+
+        doAnswer(invocation -> invocation.getArgument(0)).when(chatMessageRepository).saveAll(anyList());
+
+        List<ChatMessageDTO> result = chatService.markIncidentMessagesAsRead(incidentId, user.getEmail());
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals(MessageStatus.READ, msgFromLandlord.getStatus());
+        assertEquals(MessageStatus.SENT, msgFromTenant.getStatus());
     }
     
 }

@@ -22,6 +22,7 @@ export interface ReviewDTO {
   comment: string
   response?: string
   reviewerUserId: number
+  reviewerName?: string
   reviewerEmail: string
   reviewedUserId: number
   reviewedEmail: string
@@ -86,6 +87,16 @@ export const getReceivedReviews = async (): Promise<ReviewDTO[]> => {
   } catch (error) {
     console.error('Error fetching received reviews:', error)
     return []
+  }
+}
+
+export const getReceivedReviewsByUser = async (userId: number): Promise<ReviewDTO[] | null> => {
+  try {
+    const res = await api.get<ReviewDTO[]>(`/reviews/received/user/${userId}/all`)
+    return res.data
+  } catch (error) {
+    console.error('Error fetching all received reviews by user:', error)
+    return null
   }
 }
 
