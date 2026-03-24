@@ -207,27 +207,12 @@ export default function LandlordRequestsPage() {
   return (
     <div
       data-theme="light"
-      className="mx-auto w-full max-w-2xl min-h-dvh bg-[#F5F1E3] text-[#050505] pb-28"
+      className="mx-auto w-full max-w-2xl min-h-dvh text-[#050505] pb-28"
     >
       {/* ── Header ── */}
-      <header className="sticky top-0 z-10 bg-[#F5F1E3] px-4 sm:px-8 pt-5 pb-4">
+      <header className="sticky top-0 z-10 px-4 sm:px-8 pt-5 pb-4">
         <div className="flex items-center justify-between">
-          <button
-            className="h-10 w-10 rounded-full bg-white text-[#050505] shadow-sm flex items-center justify-center shrink-0"
-            aria-label="Volver"
-            onClick={() => navigate(-1)}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
+
           <h1 className="text-2xl sm:text-3xl font-bold text-[#050505]">Mis Solicitudes</h1>
           <div className="h-10 w-10" aria-hidden /> {/* spacer */}
         </div>
@@ -237,9 +222,8 @@ export default function LandlordRequestsPage() {
       <section className="px-4 sm:px-8">
         <div className="flex rounded-xl bg-[#DDDBCB] p-1">
           <button
-            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${
-              activeTab === 'pending' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
-            }`}
+            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${activeTab === 'pending' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
+              }`}
             onClick={() => setActiveTab('pending')}
           >
             Pendientes
@@ -250,9 +234,8 @@ export default function LandlordRequestsPage() {
             )}
           </button>
           <button
-            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${
-              activeTab === 'match' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
-            }`}
+            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${activeTab === 'match' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
+              }`}
             onClick={() => setActiveTab('match')}
           >
             Match
@@ -301,9 +284,8 @@ export default function LandlordRequestsPage() {
                 <article
                   key={item.matchId}
                   onClick={(e) => void handleCardClick(item, e)}
-                  className={`overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm transition-opacity cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-transform ${
-                    isCancelled ? 'opacity-60' : ''
-                  }`}
+                  className={`overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm transition-opacity cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-transform ${isCancelled ? 'opacity-60' : ''
+                    }`}
                 >
                   {/* Image */}
                   <div className={`relative h-44 w-full ${isCancelled ? 'grayscale' : ''}`}>
@@ -331,9 +313,8 @@ export default function LandlordRequestsPage() {
                         {item.title}
                       </h2>
                       <span
-                        className={`shrink-0 text-lg font-semibold ${
-                          isCancelled ? 'text-[#050505]/50' : 'text-[#008080]'
-                        }`}
+                        className={`shrink-0 text-lg font-semibold ${isCancelled ? 'text-[#050505]/50' : 'text-[#008080]'
+                          }`}
                       >
                         {item.price}
                       </span>

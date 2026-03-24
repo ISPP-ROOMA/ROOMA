@@ -1,4 +1,4 @@
-import { motion, useAnimation, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion, useAnimation } from 'framer-motion'
 import {
   Banknote,
   Briefcase,
@@ -14,6 +14,7 @@ import {
   ZoomIn,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { ApartmentDTO, ApartmentPhotoDTO, UserDTO } from '../service/apartment.service'
 import { getApartmentPhotos } from '../service/apartment.service'
 import { api } from '../service/api'
@@ -45,6 +46,7 @@ function SwipeGallery({
   onOpenLightbox,
   height,
   rounded,
+  objectFit = 'cover',
 }: {
   images: { url: string; id?: number }[]
   currentIndex: number
@@ -52,6 +54,7 @@ function SwipeGallery({
   onOpenLightbox?: () => void
   height: string
   rounded?: string
+  objectFit?: 'cover' | 'contain'
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const dragStartX = useRef(0)
@@ -96,7 +99,6 @@ function SwipeGallery({
     const dx = e.clientX - dragStartX.current
     const dy = e.clientY - dragStartY.current
 
-    // Direction lock: decide on first significant movement
     if (dirLock.current === null) {
       if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return
       dirLock.current = Math.abs(dx) >= Math.abs(dy) ? 'h' : 'v'
@@ -172,7 +174,7 @@ function SwipeGallery({
             <img
               src={img.url}
               alt={`Foto ${idx + 1}`}
-              className="w-full h-full object-cover pointer-events-none select-none"
+              className={`w-full h-full pointer-events-none select-none ${objectFit === 'contain' ? 'object-contain' : 'object-cover'}`}
               draggable={false}
             />
           </div>
@@ -207,9 +209,8 @@ function SwipeGallery({
               key={idx}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => onIndexChange(idx)}
-              className={`rounded-full transition-all ${
-                idx === currentIndex ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50 hover:bg-white/70'
-              }`}
+              className={`rounded-full transition-all ${idx === currentIndex ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50 hover:bg-white/70'
+                }`}
             />
           ))}
         </div>
@@ -277,7 +278,7 @@ function Lightbox({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-[60] bg-black flex flex-col"
+      className="fixed inset-0 z-[70] bg-black flex flex-col"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 shrink-0">
@@ -294,7 +295,7 @@ function Lightbox({
 
       {/* Swipeable main image */}
       <div className="flex-1 min-h-0 flex items-center justify-center">
-        <SwipeGallery images={images} currentIndex={idx} onIndexChange={setIdx} height="h-full" />
+        <SwipeGallery images={images} currentIndex={idx} onIndexChange={setIdx} height="h-full" objectFit="contain" />
       </div>
 
       {/* Thumbnails */}
@@ -307,11 +308,10 @@ function Lightbox({
             <button
               key={photo.id}
               onClick={() => setIdx(i)}
-              className={`shrink-0 w-16 h-12 rounded-lg overflow-hidden transition-all ring-2 ${
-                i === idx
-                  ? 'ring-white scale-105 opacity-100'
-                  : 'ring-transparent opacity-40 hover:opacity-70'
-              }`}
+              className={`shrink-0 w-16 h-12 rounded-lg overflow-hidden transition-all ring-2 ${i === idx
+                ? 'ring-white scale-105 opacity-100'
+                : 'ring-transparent opacity-40 hover:opacity-70'
+                }`}
             >
               <img
                 src={photo.url}
@@ -413,7 +413,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
   useEffect(() => {
     modalControls.start({
       scale: 1,
-      borderRadius: '0px',
+      borderRadius: '24px',
       opacity: 1,
       transition: { type: 'spring', damping: 32, stiffness: 400, mass: 0.6 },
     })
@@ -452,7 +452,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
   const resetPull = useCallback(() => {
     modalControls.start({
       scale: 1,
-      borderRadius: '0px',
+      borderRadius: '24px',
       opacity: 1,
       transition: { type: 'spring', damping: 30, stiffness: 400 },
     })
@@ -487,7 +487,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
       } else if (pulling.current) {
         pulling.current = false
         pullDelta.current = 0
-        modalControls.set({ scale: 1, borderRadius: '0px', opacity: 1 })
+        modalControls.set({ scale: 1, borderRadius: '24px', opacity: 1 })
         backdropControls.set({ opacity: 1 })
       }
     }
@@ -519,7 +519,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
     dragStartY.current = e.clientY
     isDragging.current = true
     currentDragY.current = 0
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+      ; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
   }
 
   const handlePointerMove = (e: React.PointerEvent) => {
@@ -528,7 +528,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
     if (delta <= 0) {
       if (currentDragY.current > 0) {
         currentDragY.current = 0
-        modalControls.set({ scale: 1, borderRadius: '0px', opacity: 1 })
+        modalControls.set({ scale: 1, borderRadius: '24px', opacity: 1 })
         backdropControls.set({ opacity: 1 })
       }
       return
@@ -560,13 +560,13 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
 
   // ── Render ─────────────────────────────────────────────────────
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
+  return createPortal(
+    <div className="fixed inset-0 z-[80] overflow-hidden">
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={backdropControls}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm "
         onClick={dismiss}
       />
 
@@ -574,7 +574,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
       <motion.div
         initial={{ scale: 0.82, borderRadius: '24px', opacity: 0 }}
         animate={modalControls}
-        className="absolute inset-0 sm:inset-4 lg:inset-8 bg-base-100 overflow-hidden will-change-transform origin-center sm:rounded-2xl shadow-2xl"
+        className="absolute inset-x-0 bottom-0 top-6 sm:inset-4 lg:inset-8 bg-base-100 overflow-hidden will-change-transform origin-center rounded-t-3xl sm:rounded-3xl shadow-2xl"
       >
         {/* Close button – always visible */}
         <button
@@ -651,7 +651,7 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
               </div>
               <div className="bg-base-200 rounded-2xl p-4 flex flex-col items-center text-center gap-1">
                 <Shield size={20} className={stateInfo.cls.replace('badge-', 'text-')} />
-                <span className={`badge ${stateInfo.cls} badge-sm font-semibold`}>
+                <span className={`badge ${stateInfo.cls} badge-sm font-semibold rounded-full w-20`}>
                   {stateInfo.label}
                 </span>
                 <span className="text-xs text-base-content/50">Estado</span>
@@ -731,11 +731,10 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
                         setCurrentPhoto(idx)
                         setLightboxOpen(true)
                       }}
-                      className={`group relative aspect-[4/3] rounded-xl overflow-hidden ring-2 transition-all ${
-                        idx === currentPhoto
-                          ? 'ring-primary shadow-lg'
-                          : 'ring-transparent hover:ring-primary/40'
-                      }`}
+                      className={`group relative aspect-[4/3] rounded-xl overflow-hidden ring-2 transition-all ${idx === currentPhoto
+                        ? 'ring-primary shadow-lg'
+                        : 'ring-transparent hover:ring-primary/40'
+                        }`}
                     >
                       <img
                         src={photo.url}
@@ -834,7 +833,8 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
           />
         )}
       </AnimatePresence>
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -859,7 +859,7 @@ function DetailCard({
       <div className="min-w-0">
         <p className="text-xs text-base-content/50 font-medium uppercase tracking-wider">{label}</p>
         {badge ? (
-          <span className={`badge ${badge} badge-sm mt-1 font-semibold`}>{value}</span>
+          <span className={`badge ${badge} badge-sm mt-1 font-semibold rounded-full w-20`}>{value}</span>
         ) : (
           <p className="font-semibold text-sm mt-0.5 break-words">{value}</p>
         )}
