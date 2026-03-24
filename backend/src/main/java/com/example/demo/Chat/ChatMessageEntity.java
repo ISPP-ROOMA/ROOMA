@@ -3,6 +3,7 @@ package com.example.demo.Chat;
 import java.time.LocalDateTime;
 
 import com.example.demo.ApartmentMatch.ApartmentMatchEntity;
+import com.example.demo.Incident.IncidentEntity;
 import com.example.demo.User.UserEntity;
 
 import jakarta.persistence.Column;
@@ -29,9 +30,13 @@ public class ChatMessageEntity {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "chat_messages_seq")
     private Integer id;
 
-    @JoinColumn(name = "match_id", nullable = false)
+    @JoinColumn(name = "match_id")
     @ManyToOne
     private ApartmentMatchEntity apartmentMatch;
+
+    @JoinColumn(name = "incident_id")
+    @ManyToOne
+    private IncidentEntity incident;
 
     @JoinColumn(name = "sender_id", nullable = false)
     @ManyToOne
@@ -90,6 +95,14 @@ public class ChatMessageEntity {
 
     public void setApartmentMatch(ApartmentMatchEntity apartmentMatch) {
         this.apartmentMatch = apartmentMatch;
+    }
+
+    public IncidentEntity getIncident() {
+        return incident;
+    }
+
+    public void setIncident(IncidentEntity incident) {
+        this.incident = incident;
     }
 
     public UserEntity getSender() {

@@ -4,6 +4,10 @@ export interface UserDTO {
   id: number
   email: string
   role: string
+  name?: string
+  gender?: string
+  smoker?: boolean
+  profileImageUrl?: string
   hobbies?: string
   schedule?: string
   profession?: string
@@ -190,7 +194,7 @@ export const getMatchesForLandlord = async (
     const response = await api.get<ApartmentMatchLandlordResponseDTO[]>(
       `/apartments-matches/${landlordId}/interested-candidates/${status}`
     )
-    return response.data.map((item) => ({
+    return response.data.map((item: ApartmentMatchLandlordResponseDTO) => ({
       id: item.id,
       candidateId: 0,
       apartmentId: item.apartment.id,

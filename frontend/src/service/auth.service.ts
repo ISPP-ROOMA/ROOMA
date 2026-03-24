@@ -35,7 +35,14 @@ const clearSessionHint = (): void => {
   localStorage.removeItem(SESSION_HINT_KEY)
 }
 
-export const generateDeviceId = (): string => crypto.randomUUID()
+export const generateDeviceId = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+
+  // Fallback for browsers/environments that do not implement randomUUID.
+  return `device-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`
+}
 
 export const getDeviceId = (): string => {
   let deviceId = localStorage.getItem('deviceId')
@@ -85,6 +92,33 @@ export const loginUser = async (loginData: LoginData): Promise<AuthResponse> => 
   } catch (error) {
     console.error(error)
     return { error: 'Invalid credentials', token: '', role: 'TENANT', userId: 0 }
+  }
+}
+
+export const googleLogin = async (
+  idToken: string,
+  role?: UserRole,
+): Promise<AuthResponse> => {
+  try {
+    const response = await api.post<AuthResponse>('/auth/google', {
+      idToken,
+      deviceId: getDeviceId(),
+      role: role ?? null,
+    })
+    if (response.data.token) {
+      markSessionHint()
+    }
+    return response.data
+  } catch (error: unknown) {
+    console.error(error)
+    let msg = 'Error signing in with Google'
+    if (error && typeof error === 'object' && 'response' in error) {
+      const resp = (error as { response?: { data?: { message?: string } } }).response
+      if (resp?.data?.message) {
+        msg = resp.data.message
+      }
+    }
+    return { error: msg, token: '', role: 'TENANT', userId: 0 }
   }
 }
 

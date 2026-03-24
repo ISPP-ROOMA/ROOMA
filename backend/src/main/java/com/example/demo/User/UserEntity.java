@@ -25,8 +25,14 @@ public class UserEntity {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
+
+    @Column
+    private String authProvider;
+
+    @Column(unique = true)
+    private String googleId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -262,5 +268,21 @@ public class UserEntity {
 
     public void setLastConnectionAt(LocalDateTime lastConnectionAt) {
         this.lastConnectionAt = lastConnectionAt;
+    }
+
+    public String getAuthProvider() {
+        return authProvider;
+    }
+
+    public void setAuthProvider(String authProvider) {
+        this.authProvider = authProvider;
+    }
+
+    public String getGoogleId() {
+        return googleId;
+    }
+
+    public void setGoogleId(String googleId) {
+        this.googleId = googleId;
     }
 }

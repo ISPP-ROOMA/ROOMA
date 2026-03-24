@@ -30,6 +30,11 @@ export interface UserResponse {
   error?: string
 }
 
+export interface DeleteUserResult {
+  success: boolean
+  message?: string
+}
+
 export type UpdateUserPayload = {
   email: string
   name?: string
@@ -109,13 +114,21 @@ export const updateUserProfile = async (data: UpdateUserPayload): Promise<User |
   }
 }
 
-export const deleteUser = async (): Promise<boolean> => {
+export const deleteUser = async (): Promise<DeleteUserResult> => {
   try {
     await api.delete('/users/profile')
-    return true
+    return { success: true }
   } catch (error) {
     console.error(error)
-    return false
+    if (axios.isAxiosError(error)) {
+      const message =
+        (error.response?.data as { message?: string } | undefined)?.message ??
+        'No se pudo eliminar la cuenta'
+
+      return { success: false, message }
+    }
+
+    return { success: false, message: 'No se pudo eliminar la cuenta' }
   }
 }
 
