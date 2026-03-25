@@ -156,7 +156,7 @@ export default function FavoritesPage() {
               ) : (
                 <Link
                   key={fav.apartmentId}
-                  to={`/properties/${fav.apartmentId}`}
+                  to={`/apartments/${fav.apartmentId}`}
                   className="block h-full"
                 >
                   {CardInner}
