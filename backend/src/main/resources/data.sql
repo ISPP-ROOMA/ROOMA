@@ -19,7 +19,8 @@ INSERT INTO users (id, email, password, role, hobbies, schedule, profession) VAL
 (9, 'tenant4@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Lectura, Cine', 'Rotativo', 'Enfermero'),
 (10, 'tenant5@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Running', 'Mañanas', 'Periodista'),
 (11, 'tenant6@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Leer, Cocinar', 'Flexible', 'Docente'),
-(12, 'tenant7@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Pintura, Música', 'Tarde', 'Artista')
+(12, 'tenant7@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Pintura, Música', 'Tarde', 'Artista'),
+(13, 'tenant8@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Lectura, Cine', 'Flexible', 'Estudiante')
 ON CONFLICT (id) DO NOTHING;
 
 -- Test User (13)

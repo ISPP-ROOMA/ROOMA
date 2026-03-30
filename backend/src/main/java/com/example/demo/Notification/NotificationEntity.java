@@ -38,7 +38,7 @@ public class NotificationEntity{
     private LocalDateTime timestamp;
 
     @NotNull
-    @Column(nullable = false)
+    @Column(nullable = false,length = 500)
     private String description;
 
     @NotNull
@@ -46,7 +46,7 @@ public class NotificationEntity{
     private Boolean isRead;
 
     @NotBlank
-    @Column(nullable = false)
+    @Column(nullable = false,length = 500)
     private String link;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
