@@ -123,7 +123,7 @@ export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: Swi
           <span className="text-base">{apartment.ubication}</span>
         </div>
         <p className="text-2xl font-bold text-primary-content mt-1 drop-shadow">
-          <span className="bg-primary px-2 py-0.5 rounded-lg">
+          <span className="bg-primary px-2 py-0.5 rounded-xl">
             {apartment.price} €<span className="text-sm font-normal">/mes</span>
           </span>
         </p>

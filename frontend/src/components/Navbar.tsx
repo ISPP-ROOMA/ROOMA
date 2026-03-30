@@ -1,4 +1,4 @@
-﻿import {
+import {
   Building2,
   Bookmark,
   Home,
@@ -111,7 +111,7 @@ export default function Navbar() {
 
       {/* Center links (Absolute Center) */}
       <nav className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1">
-        {navItems.map((item) => (
+        {navItems.filter(item => item.to !== '/profile').map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
@@ -129,13 +129,24 @@ export default function Navbar() {
       {/* Right actions */}
       <div className="flex items-center gap-2">
         {token ? (
-          <button
-            onClick={handleLogout}
-            className="btn btn-ghost btn-sm gap-1.5 text-error hover:bg-error/10"
-          >
-            <LogOut size={16} />
-            Salir
-          </button>
+          <>
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
+                `flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${isActive ? 'bg-primary/10 text-primary' : 'text-base-content/60 hover:bg-base-200 hover:text-base-content'}`
+              }
+            >
+              <UserCircle size={20} />
+              Perfil
+            </NavLink>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-error/80 hover:bg-error/10 hover:text-error"
+            >
+              <LogOut size={20} />
+              Salir
+            </button>
+          </>
         ) : null}
       </div>
     </header>
