@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { getMyDebts, type TenantDebtDTO } from '../../../service/billing.service'
 import { getMyHomeSnapshot, type ApartmentHomeDTO } from '../../../service/apartment.service'
 
-/* â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── helpers ──────────────────────────────────────────────── */
 
 const fmtCurrency = (v: number) =>
   new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v)
 
 const fmtDate = (v?: string) => {
-  if (!v) return 'â€”'
+  if (!v) return '—'
   const d = new Date(v)
   if (Number.isNaN(d.getTime())) return v
   return new Intl.DateTimeFormat('es-ES', {
@@ -69,21 +69,21 @@ function urgencyMeta(days: number | null) {
   }
 }
 
-/** Map reference keywords â†’ icon config */
+/** Map reference keywords → icon config */
 function conceptIcon(ref: string) {
   const r = ref.toLowerCase()
-  if (r.includes('alquiler')) return { emoji: 'ðŸ ', bg: 'bg-violet-100' }
-  if (r.includes('luz') || r.includes('electric')) return { emoji: 'âš¡', bg: 'bg-amber-100' }
-  if (r.includes('agua')) return { emoji: 'ðŸ’§', bg: 'bg-sky-100' }
-  if (r.includes('gas')) return { emoji: 'ðŸ”¥', bg: 'bg-orange-100' }
-  if (r.includes('internet') || r.includes('wifi')) return { emoji: 'ðŸ“¶', bg: 'bg-indigo-100' }
-  if (r.includes('comunidad')) return { emoji: 'ðŸ¢', bg: 'bg-teal-100' }
-  if (r.includes('seguro')) return { emoji: 'ðŸ›¡ï¸', bg: 'bg-emerald-100' }
-  if (r.includes('limpieza')) return { emoji: 'ðŸ§¹', bg: 'bg-cyan-100' }
-  return { emoji: 'ðŸ“„', bg: 'bg-gray-100' }
+  if (r.includes('alquiler')) return { emoji: '🏠', bg: 'bg-violet-100' }
+  if (r.includes('luz') || r.includes('electric')) return { emoji: '⚡', bg: 'bg-amber-100' }
+  if (r.includes('agua')) return { emoji: '💧', bg: 'bg-sky-100' }
+  if (r.includes('gas')) return { emoji: '🔥', bg: 'bg-orange-100' }
+  if (r.includes('internet') || r.includes('wifi')) return { emoji: '📶', bg: 'bg-indigo-100' }
+  if (r.includes('comunidad')) return { emoji: '🏢', bg: 'bg-teal-100' }
+  if (r.includes('seguro')) return { emoji: '🛡️', bg: 'bg-emerald-100' }
+  if (r.includes('limpieza')) return { emoji: '🧹', bg: 'bg-cyan-100' }
+  return { emoji: '📄', bg: 'bg-gray-100' }
 }
 
-/* â”€â”€ component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── component ────────────────────────────────────────────── */
 
 type Tab = 'pending' | 'history'
 
@@ -127,7 +127,7 @@ export default function Invoices() {
     ? `${homeData.apartment.title} Â· ${homeData.apartment.ubication}`
     : null
 
-  /* â”€â”€ urgent / normal split â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── urgent / normal split ─────────────────────────────── */
   const urgentDebts = pending.filter((d) => {
     const days = daysUntil(d.bill?.duDate)
     return days !== null && days <= 3
@@ -137,21 +137,21 @@ export default function Invoices() {
     return days === null || days > 3
   })
 
-  /* â”€â”€ render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── render ────────────────────────────────────────────── */
 
   if (isLoading) {
     return (
       <div className="min-h-dvh bg-[#F7F4EB] flex items-center justify-center">
-        <p className="text-gray-500">Cargando tus pagosâ€¦</p>
+        <p className="text-gray-500">Cargando tus pagos...</p>
       </div>
     )
   }
 
   return (
     <div className="min-h-dvh bg-[#F7F4EB] pb-8">
-      {/* â”€â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ─── Header ──────────────────────────────────────── */}
       <header className="sticky top-0 z-30 bg-[#F7F4EB]/95 backdrop-blur-sm px-3 sm:px-4 pt-2.5 sm:pt-5 pb-2">
-        <div className="max-w-3xl mx-auto flex items-center justify-between gap-2">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
           <button
             onClick={() => {
               navigate('/my-home')
@@ -174,28 +174,9 @@ export default function Invoices() {
             </svg>
           </button>
 
-          <h1 className="text-[15px] sm:text-lg font-bold text-teal-700 text-center">Mis Pagos</h1>
-
-          {/* notification bell */}
-          <div className="relative w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-              />
-            </svg>
-            {pending.length > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-[#F7F4EB]" />
-            )}
-          </div>
+          <h1 className="text-[15px] sm:text-lg font-bold text-teal-700 text-center flex-1">Mis Pagos</h1>
+          
+          <div className="w-9"></div>
         </div>
 
         {locationPill && (
@@ -228,7 +209,7 @@ export default function Invoices() {
       </header>
 
       <main className="max-w-3xl mx-auto px-3 sm:px-4 mt-3 sm:mt-4 space-y-4 sm:space-y-5 pb-14">
-        {/* â”€â”€â”€ Tab selector â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ─── Tab selector ───────────────────────────────── */}
         <div className="flex bg-gray-200/70 rounded-full p-1">
           <button
             onClick={() => setTab('pending')}
@@ -248,9 +229,9 @@ export default function Invoices() {
           </button>
         </div>
 
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        {/* ════════════════════════════════════════════════════
             TAB: PENDIENTES
-           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+           ════════════════════════════════════════════════════ */}
         {tab === 'pending' && (
           <>
             {/* Total card */}
@@ -261,7 +242,7 @@ export default function Invoices() {
                 </p>
                 <p className="text-[34px] sm:text-4xl font-extrabold mt-1 leading-none">
                   {fmtCurrency(totalPending)}{' '}
-                  <span className="text-lg sm:text-xl font-medium text-teal-200">â‚¬</span>
+                  <span className="text-lg sm:text-xl font-medium text-teal-200">€</span>
                 </p>
               </div>
               {pending.length > 1 && (
@@ -287,7 +268,7 @@ export default function Invoices() {
                     />
                   </svg>
                 </div>
-                <p className="text-gray-700 font-semibold text-lg">Â¡Todo al dÃ­a!</p>
+                <p className="text-gray-700 font-semibold text-lg">¡Todo al día!</p>
                 <p className="text-gray-400 text-sm mt-1">No tienes pagos pendientes.</p>
               </div>
             ) : (
@@ -309,7 +290,7 @@ export default function Invoices() {
                         />
                       </svg>
                       <span className="text-xs font-bold uppercase tracking-wide text-red-600">
-                        AtenciÃ³n requerida
+                        Atención requerida
                       </span>
                     </div>
                     <ul className="space-y-3">
@@ -330,7 +311,7 @@ export default function Invoices() {
                 {normalDebts.length > 0 && (
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">
-                      PrÃ³ximos pagos
+                      Próximos pagos
                     </p>
                     <ul className="space-y-3">
                       {normalDebts.map((debt) => (
@@ -350,14 +331,14 @@ export default function Invoices() {
           </>
         )}
 
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        {/* ════════════════════════════════════════════════════
             TAB: HISTORIAL
-           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+           ════════════════════════════════════════════════════ */}
         {tab === 'history' && (
           <>
             {history.length === 0 ? (
               <div className="flex flex-col items-center py-16 text-center">
-                <p className="text-gray-400 text-sm">No hay pagos realizados aÃºn.</p>
+                <p className="text-gray-400 text-sm">No hay pagos realizados aún.</p>
               </div>
             ) : (
               <ul className="space-y-3">
@@ -375,13 +356,13 @@ export default function Invoices() {
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-800 text-sm truncate">
-                          {debt.bill.reference || 'â€”'}
+                          {debt.bill.reference || '—'}
                         </p>
                         <p className="text-xs text-gray-400">{fmtDate(debt.bill.duDate)}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-gray-800 text-sm">
-                          {fmtCurrency(Number(debt.amount))} â‚¬
+                          {fmtCurrency(Number(debt.amount))} €
                         </p>
                         <span className="inline-flex items-center gap-1 text-[11px] text-green-600 font-medium">
                           <svg
@@ -411,7 +392,7 @@ export default function Invoices() {
   )
 }
 
-/* â”€â”€ Debt card sub-component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Debt card sub-component ─────────────────────────────── */
 
 function DebtCard({ debt, onTap }: { debt: TenantDebtDTO; onTap: () => void }) {
   const days = daysUntil(debt.bill.duDate)
@@ -434,7 +415,7 @@ function DebtCard({ debt, onTap }: { debt: TenantDebtDTO; onTap: () => void }) {
 
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-800 text-sm sm:text-[15px] leading-tight truncate">
-            {debt.bill.reference || 'â€”'}
+            {debt.bill.reference || '—'}
           </p>
           <p className={`text-xs font-semibold ${urg.color}`}>
             {urg.label || fmtDate(debt.bill.duDate)}
@@ -442,7 +423,7 @@ function DebtCard({ debt, onTap }: { debt: TenantDebtDTO; onTap: () => void }) {
         </div>
 
         <p className="font-bold text-gray-900 text-sm sm:text-base text-right whitespace-nowrap mr-1">
-          {fmtCurrency(Number(debt.amount || 0))} â‚¬
+          {fmtCurrency(Number(debt.amount || 0))} €
         </p>
 
         <svg

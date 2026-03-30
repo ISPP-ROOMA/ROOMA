@@ -9,10 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.Apartment.ApartmentState;
+import com.example.demo.Favorite.DTOs.FavoriteSummaryDTO;
 import com.example.demo.Favorite.DTOs.FavoriteToggleResponseDTO;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
-import com.example.demo.Favorite.DTOs.FavoriteSummaryDTO;
 
 @Service
 public class FavoriteService {
@@ -21,7 +21,8 @@ public class FavoriteService {
     private final UserService userService;
     private final ApartmentService apartmentService;
 
-    public FavoriteService(FavoriteRepository favoriteRepository, UserService userService, ApartmentService apartmentService) {
+    public FavoriteService(FavoriteRepository favoriteRepository, UserService userService,
+            ApartmentService apartmentService) {
         this.favoriteRepository = favoriteRepository;
         this.userService = userService;
         this.apartmentService = apartmentService;
@@ -32,20 +33,20 @@ public class FavoriteService {
         UserEntity currentUser = resolveCurrentUser();
 
         if (favoriteRepository.findByUserIdAndApartmentId(currentUser.getId(), apartmentId).isPresent()) {
-            return new FavoriteToggleResponseDTO(apartmentId, true, "Apartment is already in favorites");
+            return new FavoriteToggleResponseDTO(apartmentId, true, "El apartamento ya está en favoritos");
         }
 
         ApartmentEntity apartment = resolveApartment(apartmentId);
         FavoriteEntity favorite = new FavoriteEntity(currentUser, apartment);
         favoriteRepository.save(favorite);
-        return new FavoriteToggleResponseDTO(apartmentId, true, "Apartment added to favorites");
+        return new FavoriteToggleResponseDTO(apartmentId, true, "El apartamento se ha añadido a favoritos");
     }
 
     @Transactional
     public FavoriteToggleResponseDTO removeFavorite(Integer apartmentId) {
         UserEntity currentUser = resolveCurrentUser();
         favoriteRepository.deleteByUserIdAndApartmentId(currentUser.getId(), apartmentId);
-        return new FavoriteToggleResponseDTO(apartmentId, false, "Apartment removed from favorites");
+        return new FavoriteToggleResponseDTO(apartmentId, false, "El apartamento se ha eliminado de favoritos");
     }
 
     @Transactional(readOnly = true)
@@ -81,7 +82,7 @@ public class FavoriteService {
         ApartmentEntity apartment = favorite.getApartment();
         boolean available = isApartmentAvailable(apartment.getState());
         String availabilityStatus = available ? "AVAILABLE" : "CLOSED";
-        String statusMessage = available ? null : "This apartment is no longer available";
+        String statusMessage = available ? null : "Este apartamento ya no está disponible";
 
         return new FavoriteSummaryDTO(
                 apartment.getId(),
@@ -97,8 +98,7 @@ public class FavoriteService {
                 apartment.getCoverImageUrl(),
                 true,
                 statusMessage,
-                favorite.getCreatedAt()
-        );
+                favorite.getCreatedAt());
     }
 
     private boolean isApartmentAvailable(ApartmentState state) {

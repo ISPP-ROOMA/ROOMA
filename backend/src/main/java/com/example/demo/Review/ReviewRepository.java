@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -14,6 +16,12 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Integer> {
 
     @Query("SELECT r FROM ReviewEntity r WHERE r.reviewedMember.id = :userId AND r.published = true")
     List<ReviewEntity> findReceivedReviewsByUserIdAndPublished(Integer userId);
+
+    @Query("SELECT r FROM ReviewEntity r WHERE r.reviewedMember.id = :userId AND r.published = true ORDER BY r.reviewDate DESC")
+    Page<ReviewEntity> findPublishedReceivedReviewsByUserId(Integer userId, Pageable pageable);
+
+    @Query("SELECT r FROM ReviewEntity r WHERE r.reviewedMember.id = :userId AND r.published = true ORDER BY r.reviewDate DESC")
+    List<ReviewEntity> findAllPublishedReceivedReviewsByUserId(Integer userId);
 
     @Query("SELECT r FROM ReviewEntity r WHERE r.published = false AND r.reviewDate <= :cutoffDate")
     List<ReviewEntity> findOldUnpublishedReviews(LocalDateTime cutoffDate);

@@ -9,8 +9,11 @@ export const useStompClient = () => {
   const { token } = useAuthStore()
 
   useEffect(() => {
+
+    const API_BASE_URL = import.meta.env.VITE_API_URL;
+
     const stompClient = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
       connectHeaders: {
         token: token || '',
       },

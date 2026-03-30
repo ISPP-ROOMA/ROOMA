@@ -558,6 +558,7 @@ public class ApartmentMatchServiceTest {
 
         when(apartmentMatchRepository.findById(35)).thenReturn(Optional.of(match));
         when(apartmentMatchRepository.save(match)).thenReturn(match);
+        when(userService.findCurrentUserEntity()).thenReturn(match.getApartment().getUser());
 
         ApartmentMatchEntity result = apartmentMatchService.cancelMatch(35);
 
@@ -567,18 +568,21 @@ public class ApartmentMatchServiceTest {
     @Test
     @DisplayName("cancelMatch throws when status is ACTIVE")
     public void cancelMatch_InvalidStatus_ThrowsConflict() {
-        ApartmentMatchEntity match = createMatch(36, MatchStatus.ACTIVE,
+        ApartmentMatchEntity match = createMatch(36, MatchStatus.INVITED,
                 createUser(61, Role.TENANT, "tenant26@test.com"),
                 createApartment(136, ApartmentState.ACTIVE, createUser(62, Role.LANDLORD, "landlord24@test.com")),
                 true, null);
 
+        
+        
         when(apartmentMatchRepository.findById(36)).thenReturn(Optional.of(match));
+        when(userService.findCurrentUserEntity()).thenReturn(match.getCandidate());
 
         ConflictException exception = assertThrows(
                 ConflictException.class,
                 () -> apartmentMatchService.cancelMatch(36));
 
-        assertEquals("Only matches with status MATCH can be canceled", exception.getMessage());
+        assertEquals("Only matches with status ACTIVE or MATCH can be canceled", exception.getMessage());
     }
 
     @Test

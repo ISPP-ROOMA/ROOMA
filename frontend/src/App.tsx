@@ -382,6 +382,14 @@ function App() {
                       </PrivateRoute>
                     }
                   />
+                  <Route
+                    path="/chat/incidents/:incidentId"
+                    element={
+                      <PrivateRoute>
+                        <ChatScreen />
+                      </PrivateRoute>
+                    }
+                  />
               </>
             )}
 
@@ -446,6 +454,14 @@ function App() {
                 />
                   <Route
                     path="/chat/:matchId"
+                    element={
+                      <PrivateRoute>
+                        <ChatScreen />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/chat/incidents/:incidentId"
                     element={
                       <PrivateRoute>
                         <ChatScreen />

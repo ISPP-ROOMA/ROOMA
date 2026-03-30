@@ -1,5 +1,6 @@
+import axios from 'axios'
 import { AnimatePresence } from 'framer-motion'
-import { CalendarDays, Loader2, MessageCircle, X } from 'lucide-react'
+import { Loader2, MessageCircle, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
@@ -129,13 +130,15 @@ export default function TenantRequestsPage() {
 
   const handleCancel = async (matchId: number) => {
     setCancellingId(matchId)
-    // Optimistic update
-    setPendingItems((prev) => prev.filter((i) => i.matchId !== matchId))
     try {
       await cancelApartmentMatch(matchId)
+      setPendingItems((prev) => prev.filter((i) => i.matchId !== matchId))
     } catch (err) {
       console.error('Error cancelling match', err)
-      // On failure, re-fetch to restore accurate state
+      const message = axios.isAxiosError(err)
+        ? ((err.response?.data as { message?: string } | undefined)?.message ?? 'No se pudo cancelar la solicitud')
+        : 'No se pudo cancelar la solicitud'
+      setError(message)
       void fetchData()
     } finally {
       setCancellingId(null)
@@ -179,27 +182,11 @@ export default function TenantRequestsPage() {
   return (
     <div
       data-theme="light"
-      className="mx-auto w-full max-w-5xl min-h-dvh bg-[#F5F1E3] text-[#050505] pb-28"
+      className="mx-auto w-full max-w-5xl min-h-dvh text-[#050505] pb-28"
     >
       {/* ── Header ── */}
-      <header className="sticky top-0 z-10 bg-[#FAF5EE] px-4 sm:px-8 pt-5 pb-4">
+      <header className="sticky top-0 z-10  px-4 sm:px-8 pt-5 pb-4">
         <div className="flex items-center justify-between">
-          <button
-            className="h-10 w-10 rounded-full bg-white text-[#050505] shadow-sm flex items-center justify-center shrink-0"
-            aria-label="Volver"
-            onClick={() => navigate(-1)}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
           <h1 className="text-xl sm:text-3xl font-bold text-[#050505] text-center px-2">
             Mis Solicitudes
           </h1>
@@ -211,9 +198,8 @@ export default function TenantRequestsPage() {
       <section className="px-4 sm:px-8">
         <div className="flex rounded-xl bg-[#DDDBCB] p-1">
           <button
-            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${
-              activeTab === 'pending' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
-            }`}
+            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${activeTab === 'pending' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
+              }`}
             onClick={() => setActiveTab('pending')}
           >
             Pendientes
@@ -224,9 +210,8 @@ export default function TenantRequestsPage() {
             )}
           </button>
           <button
-            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${
-              activeTab === 'match' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
-            }`}
+            className={`flex-1 rounded-lg py-2 text-base font-medium transition-colors ${activeTab === 'match' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'
+              }`}
             onClick={() => setActiveTab('match')}
           >
             Match
@@ -275,9 +260,8 @@ export default function TenantRequestsPage() {
                 <article
                   key={item.matchId}
                   onClick={(e) => void handleCardClick(item, e)}
-                  className={`overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm transition-opacity cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-transform ${
-                    isCancelled ? 'opacity-60' : ''
-                  }`}
+                  className={`overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm transition-opacity cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-transform ${isCancelled ? 'opacity-60' : ''
+                    }`}
                 >
                   {/* Image */}
                   <div className={`relative h-40 sm:h-44 w-full ${isCancelled ? 'grayscale' : ''}`}>
@@ -302,7 +286,10 @@ export default function TenantRequestsPage() {
                         className="absolute top-3 right-3 h-8 w-8 rounded-full bg-white/90 text-[#050505]/70 flex items-center justify-center shadow hover:bg-white hover:text-red-500 transition-colors disabled:opacity-50"
                         aria-label="Cancelar solicitud"
                         disabled={cancellingId === item.matchId}
-                        onClick={() => void handleCancel(item.matchId)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          void handleCancel(item.matchId)
+                        }}
                       >
                         {cancellingId === item.matchId ? (
                           <Loader2 size={14} className="animate-spin" />
@@ -320,9 +307,8 @@ export default function TenantRequestsPage() {
                         {item.title}
                       </h2>
                       <span
-                        className={`shrink-0 text-lg font-semibold ${
-                          isCancelled ? 'text-[#050505]/50' : 'text-[#008080]'
-                        }`}
+                        className={`shrink-0 text-lg font-semibold ${isCancelled ? 'text-[#050505]/50' : 'text-[#008080]'
+                          }`}
                       >
                         {item.price}
                       </span>
@@ -350,13 +336,6 @@ export default function TenantRequestsPage() {
                             }}
                           >
                             <MessageCircle size={16} />
-                          </button>
-                          <button
-                            type="button"
-                            className="h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center"
-                            aria-label="Agendar cita"
-                          >
-                            <CalendarDays size={16} />
                           </button>
                         </div>
                       )}

@@ -10,6 +10,7 @@ import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
+import com.example.demo.Exceptions.ForbiddenException;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserRepository;
@@ -33,7 +34,16 @@ public class ApartmentMemberService {
     }
 
     @Transactional 
-    public ApartmentMemberEntity addMember(Integer apartmentId, Integer userId, LocalDate joinDate) {
+    public ApartmentMemberEntity addMember(Integer apartmentId, Integer userId, LocalDate joinDate) throws BadRequestException {
+        if (joinDate != null && joinDate.isBefore(LocalDate.now())) {
+            throw new BadRequestException("Join date cannot be in the past");
+        }
+        if(apartmentId == null || apartmentService.findById(apartmentId) == null) {
+            throw new ResourceNotFoundException("Apartment not found");
+        }
+        if(userId == null || userService.findById(userId) == null) {
+            throw new ResourceNotFoundException("User not found");
+        }
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
 
         UserEntity user = userService.findById(userId);
@@ -60,7 +70,9 @@ public class ApartmentMemberService {
 
     @Transactional(readOnly = true)
     public List<ApartmentMemberEntity> listMembers(Integer apartmentId) {
-
+        if(apartmentId == null || apartmentService.findById(apartmentId) == null) {
+            throw new ResourceNotFoundException("Apartment not found");
+        }
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
 
         UserEntity currentUser = userService.findByEmail(userService.findCurrentUser())
@@ -77,7 +89,7 @@ public class ApartmentMemberService {
         boolean isAdmin = currentUser.getRole().equals(Role.ADMIN);
 
         if (!isOwner && !isMember && !isAdmin) {
-            throw new BadRequestException("User is not the owner nor a member of this apartment");
+            throw new BadRequestException("User is not the owner not a member of this apartment");
         }
 
         if (members.isEmpty()) {
@@ -89,6 +101,9 @@ public class ApartmentMemberService {
 
     @Transactional(readOnly = true)
     public List<ApartmentMemberEntity> findCurrentMembers(Integer apartmentId) {
+        if(apartmentId == null || apartmentService.findById(apartmentId) == null) {
+            throw new ResourceNotFoundException("Apartment not found");
+        }
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
 
         List<ApartmentMemberEntity> members = apartmentMemberRepository.findByApartmentIdAndEndDateIsNull(apartment.getId());
@@ -100,7 +115,9 @@ public class ApartmentMemberService {
     public ApartmentMemberEntity updateRole(Integer apartmentId, Integer memberId, MemberRole role) {
         ApartmentMemberEntity member = apartmentMemberRepository.findById(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
-
+        if(apartmentId == null || apartmentService.findById(apartmentId) == null) {
+            throw new ResourceNotFoundException("Apartment not found");
+        }
         if (!member.getApartment().getId().equals(apartmentId)) {
             throw new ResourceNotFoundException("Member not found in the apartment");
         }
@@ -114,6 +131,9 @@ public class ApartmentMemberService {
         ApartmentMemberEntity member = apartmentMemberRepository.findById(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
 
+        if(apartmentId == null || apartmentService.findById(apartmentId) == null) {
+            throw new ResourceNotFoundException("Apartment not found");
+        }
         if (!member.getApartment().getId().equals(apartmentId)) {
             throw new ResourceNotFoundException("Member not found in the apartment");
         }
@@ -122,10 +142,16 @@ public class ApartmentMemberService {
     }
 
     public List<ApartmentMemberEntity> findActiveApartmentMembers(Integer userId) {
+        if(userId == null || userService.findById(userId) == null) {
+            throw new ResourceNotFoundException("User not found");
+        }
         return apartmentMemberRepository.findActiveApartmentMembers(userId);
     }
 
     public List<ApartmentMemberEntity> findCurrentTenantsByApartmentId(Integer apartmentId) {
+        if(apartmentId == null || apartmentService.findById(apartmentId) == null) {
+            throw new ResourceNotFoundException("Apartment not found");
+        }
         return apartmentMemberRepository.findCurrentTenantsByApartmentId(apartmentId);
     }
 
@@ -158,8 +184,10 @@ public class ApartmentMemberService {
     }
 
     public List<ApartmentMemberEntity> findActiveMembershipsByUserId(Integer userId) {
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if(userId == null || userService.findById(userId) == null) {
+             throw new ResourceNotFoundException("User not found");
+        }
+        UserEntity user = userService.findById(userId);
         Role role = user.getRole();
 
         List<ApartmentMemberEntity> activeMemberships = apartmentMemberRepository.findActiveMembershipsByUserId(userId);
@@ -170,10 +198,22 @@ public class ApartmentMemberService {
     }
 
     public List<ApartmentMemberEntity> findOverlappingMemberships(Integer userId, Integer apartmentId, LocalDate joinDate, LocalDate getEndDate) {
+        if(userId == null || userService.findById(userId) == null) {
+             throw new ResourceNotFoundException("User not found");
+        }
+        if(apartmentId == null || apartmentService.findById(apartmentId) == null) {
+            throw new ResourceNotFoundException("Apartment not found");
+        }
         return apartmentMemberRepository.findOverlappingMemberships(userId, apartmentId, joinDate, getEndDate, LocalDate.now().minusDays(30));
     }
 
     public List<ApartmentMemberEntity> findOtherOverlappingMemberships(Integer excludeUserId, Integer apartmentId, LocalDate joinDate, LocalDate getEndDate) {
+        if(excludeUserId == null || userService.findById(excludeUserId) == null) {
+             throw new ResourceNotFoundException("User not found");
+        }
+        if(apartmentId == null || apartmentService.findById(apartmentId) == null) {
+            throw new ResourceNotFoundException("Apartment not found");
+        }
         return apartmentMemberRepository.findOtherOverlappingMemberships(excludeUserId, apartmentId, joinDate, getEndDate, LocalDate.now().minusDays(30));
     }
 
@@ -183,26 +223,51 @@ public class ApartmentMemberService {
     }
 
     public List<ApartmentMemberEntity> listMembersInternal(Integer apartmentId) {
+        if(apartmentId == null || apartmentService.findById(apartmentId) == null) {
+            throw new ResourceNotFoundException("Apartment not found");
+        }
         return apartmentMemberRepository.findByApartmentId(apartmentId);
     }
 
     public List<ApartmentMemberEntity> findAllByUserId(Integer userId) {
+        if(userId == null || userService.findById(userId) == null) {
+             throw new ResourceNotFoundException("User not found");
+        }
         return apartmentMemberRepository.findAllByUserId(userId);
     }
 
     public List<ApartmentMemberEntity> findPastLandlordMembershipsByUserIdAndApartmentId(Integer currentUserId, Integer apartmentId) {
+        if(currentUserId != userService.findCurrentUserEntity().getId()) {
+             throw new ForbiddenException("Access denied");
+        }
+        if(apartmentId == null || apartmentService.findById(apartmentId) == null) {
+            throw new ResourceNotFoundException("Apartment not found");
+        }
         return apartmentMemberRepository.findPastLandlordMembershipsByUserIdAndApartmentId(currentUserId, apartmentId, LocalDate.now().minusDays(30));
     }
 
     public List<ApartmentMemberEntity> findPastTenantMembershipsByUserIdAndApartmentId(Integer currentUserId, Integer apartmentId) {
+        if(currentUserId != userService.findCurrentUserEntity().getId()) {
+             throw new ForbiddenException("Access denied");
+        }
+        if(apartmentId == null || apartmentService.findById(apartmentId) == null) {
+            throw new ResourceNotFoundException("Apartment not found");
+        }
         return apartmentMemberRepository.findPastTenantMembershipsByUserIdAndApartmentId(currentUserId, apartmentId, LocalDate.now().minusDays(30));
     }
 
     public List<ApartmentEntity> findLastApartmentsByTenantIdAndApartmentId(Integer userId) {
+        if(userId == null || userService.findById(userId) == null) {
+             throw new ResourceNotFoundException("User not found");
+        }
         return apartmentMemberRepository.findLastApartmentsByTenantIdAndApartmentId(userId, LocalDate.now().minusDays(30));
     }
 
     public List<ApartmentEntity> findLastApartmentsByLandlordIdAndApartmentId(Integer userId) {
+        if(userId == null || userService.findById(userId) == null) {
+             throw new ResourceNotFoundException("User not found");
+        }
+
         return apartmentMemberRepository.findLastApartmentsByLandlordIdAndApartmentId(userId, LocalDate.now().minusDays(30));
     }
 

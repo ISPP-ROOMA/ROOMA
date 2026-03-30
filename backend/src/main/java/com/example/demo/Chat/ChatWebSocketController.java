@@ -26,4 +26,12 @@ public class ChatWebSocketController {
                                        Principal principal) {
         return chatService.sendMessage(matchId, message.content(), principal.getName());
     }
+
+    @MessageMapping("/chat/incident/{incidentId}")
+    @SendTo("/topic/chat/incident/{incidentId}")
+    public ChatMessageDTO sendIncidentMessage(@DestinationVariable Integer incidentId,
+                                              SendMessageDTO message,
+                                              Principal principal) {
+        return chatService.sendIncidentMessage(incidentId, message.content(), principal.getName());
+    }
 }

@@ -7,7 +7,6 @@ import {
   type FavoriteAvailabilityStatus,
 } from '../../service/favorites.service'
 
-const MAIN_CLASS = 'px-6 md:px-12 py-8 max-w-5xl mx-auto'
 const GRID_CLASS = 'grid grid-cols-1 sm:grid-cols-2 gap-6'
 
 const AVAILABILITY_LABELS: Record<FavoriteAvailabilityStatus, string> = {
@@ -75,17 +74,20 @@ export default function FavoritesPage() {
   )
 
   return (
-    <div className="min-h-dvh bg-base-200/50">
-      <header className="bg-base-100 px-6 pt-8 pb-6 md:px-12">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold text-base-content">Mis favoritos</h1>
-          <p className="text-gray-400 mt-1 text-sm">
-            Revisa rápidamente los pisos que has guardado.
-          </p>
+    <div
+      data-theme="light"
+      className="mx-auto w-full max-w-5xl min-h-dvh text-[#050505] pb-28"
+    >
+      <header className="sticky top-0 z-10 px-4 sm:px-8 pt-5 pb-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl sm:text-3xl font-bold text-[#050505] text-center px-2">
+            Mis favoritos
+          </h1>
+          <div className="h-10 w-10" aria-hidden />
         </div>
       </header>
 
-      <main className={MAIN_CLASS}>
+      <main className="px-4 sm:px-8 mt-5">
         {isLoading ? (
           <p className="text-center mt-10 opacity-50">Cargando favoritos...</p>
         ) : error ? (

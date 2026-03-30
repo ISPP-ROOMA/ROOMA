@@ -22,3 +22,6 @@ jwt:
 cors:
   allowed-origins: "*"
 
+google:
+  client-id: test-google-client-id
+

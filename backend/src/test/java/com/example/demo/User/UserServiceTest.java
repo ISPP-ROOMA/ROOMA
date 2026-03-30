@@ -43,6 +43,9 @@ public class UserServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
+    private RefreshTokenService refreshTokenService;
+
+    @Mock
     private SecurityContext securityContext;
 
     @Mock
@@ -53,7 +56,7 @@ public class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        userService = Mockito.spy(new UserService(userRepository, passwordEncoder));
+        userService = Mockito.spy(new UserService(userRepository, passwordEncoder, refreshTokenService));
     }
 
     @AfterEach
@@ -352,6 +355,7 @@ public class UserServiceTest {
         doThrow(new DataIntegrityViolationException("fk")).when(userRepository).flush();
 
         assertThrows(ConflictException.class, () -> userService.deleteCurrentUserProfile());
+        verify(refreshTokenService).deleteByUser(currentUser);
         verify(userRepository).delete(currentUser);
         verify(userRepository).flush();
     }
@@ -366,6 +370,7 @@ public class UserServiceTest {
 
         userService.deleteCurrentUserProfile();
 
+        verify(refreshTokenService).deleteByUser(currentUser);
         verify(userRepository).delete(currentUser);
         verify(userRepository).flush();
     }
