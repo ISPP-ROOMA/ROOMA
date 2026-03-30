@@ -235,8 +235,6 @@ public class ApartmentMatchService {
         
         ApartmentMatchEntity apartmentMatch = createApartmentMatch(currentUser, apartment, interest);
 
-        //Descripcion en español
-        //El usuario "nombre" ha mostrado interés en tu apartamento "titulo del apartamento".
         String description = "El usuario \"" + currentUser.getName() +" "+ currentUser.getSurname() + "\" ha mostrado interés en tu apartamento \"" + apartment.getTitle() + "\" con localización: " + apartment.getUbication();
         String link = "/mis-solicitudes/recibidas/"+apartmentMatch.getId();
 
