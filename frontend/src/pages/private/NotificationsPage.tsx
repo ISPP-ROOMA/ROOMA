@@ -39,7 +39,7 @@ export default function NotificationsPage() {
   }, [])
 
   return (
-    <section className="bg-base-200 min-h-[70vh] py-6 sm:py-8 px-3 sm:px-4">
+    <section className="bg-base-200 min-h-dvh py-6 sm:py-8 px-3 sm:px-4">
       <div className="max-w-4xl mx-auto space-y-5">
         <header className="bg-base-100 rounded-xl shadow-sm p-5 sm:p-6 flex items-center justify-between gap-4">
           <div>
