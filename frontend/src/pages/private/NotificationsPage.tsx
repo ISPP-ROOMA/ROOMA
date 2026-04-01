@@ -74,9 +74,6 @@ export default function NotificationsPage() {
                   </div>
                   <div className="text-xs text-base-content/60 sm:text-right">
                     <p>{formatDate(notification.createdAt)}</p>
-                    {notification.type && (
-                      <p className="badge badge-outline mt-2">{notification.type}</p>
-                    )}
                   </div>
                 </div>
               </li>

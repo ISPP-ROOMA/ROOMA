@@ -36,6 +36,8 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
   REVIEW: 'Valoración',
   REQUEST: 'Solicitud',
   INCIDENT: 'Incidencia',
+  NEW_BILL: 'Nueva factura',
+  BILL_PAID: 'Factura pagada',
 }
 
 function toTitleCase(value: string): string {
