@@ -31,15 +31,15 @@ type NotificationsResponse =
       content?: BackendPendingNotification[]
     }
 
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  MATCH: 'Nuevo match',
-  INVOICE: 'Factura',
-  REVIEW: 'Valoración',
-  REQUEST: 'Solicitud',
-  INCIDENT: 'Incidencia',
-  NEW_BILL: 'Nueva factura',
-  BILL_PAID: 'Factura pagada',
-}
+const EVENT_TYPE_LABELS: Map<string, string> = new Map([
+  ['MATCH', 'Nuevo match'],
+  ['INVOICE', 'Factura'],
+  ['REVIEW', 'Valoración'],
+  ['REQUEST', 'Solicitud'],
+  ['INCIDENT', 'Incidencia'],
+  ['NEW_BILL', 'Nueva factura'],
+  ['BILL_PAID', 'Factura pagada'],
+])
 
 function toTitleCase(value: string): string {
   return value
@@ -54,8 +54,12 @@ function getEventTypeLabel(eventType?: string): string {
     return 'Notificación'
   }
 
-  const label = (EVENT_TYPE_LABELS as Record<string, string>)[eventType]
-  return label ?? toTitleCase(eventType)
+  const label = EVENT_TYPE_LABELS.get(eventType)
+  if (label) {
+    return label
+  }
+
+  return toTitleCase(eventType)
 }
 
 function mapPendingNotification(
