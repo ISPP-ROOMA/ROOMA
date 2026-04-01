@@ -4,6 +4,7 @@ import {
   getPendingNotifications,
   type PendingNotification,
 } from '../../service/notifications.service'
+import { requestPushPermissionAndSubscribe } from '../../service/push.service'
 
 const dateFormatter = new Intl.DateTimeFormat('es-ES', {
   year: 'numeric',
@@ -23,6 +24,20 @@ const formatDate = (value?: string) => {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<PendingNotification[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default')
+
+  useEffect(() => {
+    if ('Notification' in window) {
+      setPermissionStatus(Notification.permission)
+    }
+  }, [])
+
+  const enablePush = async () => {
+    const success = await requestPushPermissionAndSubscribe();
+    if (success && 'Notification' in window) {
+      setPermissionStatus(Notification.permission);
+    }
+  }
 
   useEffect(() => {
     const loadNotifications = async () => {
@@ -41,16 +56,23 @@ export default function NotificationsPage() {
   return (
     <section className="bg-base-200 min-h-dvh py-6 sm:py-8 px-3 sm:px-4">
       <div className="max-w-4xl mx-auto space-y-5">
-        <header className="bg-base-100 rounded-xl shadow-sm p-5 sm:p-6 flex items-center justify-between gap-4">
+        <header className="bg-base-100 rounded-xl shadow-sm p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
             <p className="text-sm uppercase tracking-wide text-primary/80">
               Centro de notificaciones
             </p>
             <h1 className="text-2xl sm:text-3xl font-semibold leading-tight">Pendientes</h1>
           </div>
-          <Link to="/profile" className="btn btn-sm btn-outline">
-            Volver al perfil
-          </Link>
+          <div className="flex gap-2">
+            {permissionStatus === 'default' && (
+              <button onClick={enablePush} className="btn btn-sm btn-primary">
+                Activar Notificaciones
+              </button>
+            )}
+            <Link to="/profile" className="btn btn-sm btn-outline">
+              Volver al perfil
+            </Link>
+          </div>
         </header>
 
         {isLoading ? (

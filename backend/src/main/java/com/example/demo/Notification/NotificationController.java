@@ -16,17 +16,24 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationController {
 
+    private static final Logger logger = LoggerFactory.getLogger(NotificationController.class);
+
     private final NotificationService notificationService;
     private final UserService userService;
+    private final PushSubscriptionRepository pushSubscriptionRepository;
 
-    public NotificationController(NotificationService notificationService, UserService userService) {
+    public NotificationController(NotificationService notificationService, UserService userService, PushSubscriptionRepository pushSubscriptionRepository) {
         this.notificationService = notificationService;
         this.userService = userService;
+        this.pushSubscriptionRepository = pushSubscriptionRepository;
     }
 
     @GetMapping("/unread/count")
@@ -78,5 +85,24 @@ public class NotificationController {
         NotificationEntity notification = notificationService.createNotification(eventType, description, link, user);
         return ResponseEntity.ok(new NotificationDTO(notification));
     }
-
+    @PostMapping("/subscribe")
+    public ResponseEntity<Void> subscribe(@RequestBody PushSubscriptionRequestDTO request) {
+        UserEntity user = userService.findCurrentUserEntity();
+        logger.info("Solicitud de suscripción push para usuario: {} (ID: {})", user.getEmail(), user.getId());
+        
+        if (!pushSubscriptionRepository.existsByEndpoint(request.getEndpoint())) {
+            PushSubscriptionEntity subscription = new PushSubscriptionEntity(
+                request.getEndpoint(),
+                request.getKeys().getP256dh(),
+                request.getKeys().getAuth(),
+                user
+            );
+            pushSubscriptionRepository.save(subscription);
+            logger.info("Nueva suscripción push guardada para endpoint: {}", request.getEndpoint());
+        } else {
+            logger.info("La suscripción push ya existía para este endpoint.");
+        }
+        
+        return ResponseEntity.ok().build();
+    }
 }
