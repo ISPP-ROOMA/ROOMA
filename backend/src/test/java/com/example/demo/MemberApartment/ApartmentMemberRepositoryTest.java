@@ -194,11 +194,11 @@ public class ApartmentMemberRepositoryTest {
         UserEntity tenant = persistUser("tenant-a@test.com", Role.TENANT);
         ApartmentEntity apartment = persistApartment("A1", "Madrid Centro", 500.0, ApartmentState.ACTIVE, landlord);
 
-        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment, LocalDate.now().minusMonths(2), LocalDate.now().minusMonths(1));
+        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment, LocalDate.now().minusDays(60), LocalDate.now().minusDays(30));
         ApartmentMemberEntity member2 = persistApartmentMember(tenant, apartment, LocalDate.now().minusDays(20), null);
-        ApartmentMemberEntity member3 = persistApartmentMember(tenant, apartment, LocalDate.now().minusMonths(12), LocalDate.now().minusMonths(6));
+        ApartmentMemberEntity member3 = persistApartmentMember(tenant, apartment, LocalDate.now().minusDays(365), LocalDate.now().minusDays(180));
 
-        List<ApartmentMemberEntity> overlappingMemberships = apartmentMemberRepository.findOverlappingMemberships(tenant.getId(), apartment.getId(), LocalDate.now().minusDays(30), LocalDate.now().plusDays(10), LocalDate.now().minusMonths(3));
+        List<ApartmentMemberEntity> overlappingMemberships = apartmentMemberRepository.findOverlappingMemberships(tenant.getId(), apartment.getId(), LocalDate.now().minusDays(31), LocalDate.now().plusDays(10), LocalDate.now().minusDays(90));
 
         assertEquals(2, overlappingMemberships.size());
         assertEquals(member1.getId(), overlappingMemberships.get(0).getId());
