@@ -17,6 +17,8 @@ import com.example.demo.Exceptions.ForbiddenException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.MemberApartment.ApartmentMemberEntity;
 import com.example.demo.MemberApartment.ApartmentMemberService;
+import com.example.demo.Notification.EventType;
+import com.example.demo.Notification.NotificationService;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 import com.example.demo.billing.dto.BillingSummaryDTO;
@@ -29,15 +31,17 @@ public class BillingService {
     private final UserService userService;
     private final ApartmentService apartmentService;
     private final ApartmentMemberService apartmentMemberService;
+    private final NotificationService notificationService;
 
     public BillingService(BillRepository billRepository, TenantDebtRepository tenantDebtRepository,
             UserService userService, ApartmentService apartmentService,
-            ApartmentMemberService apartmentMemberService) {
+            ApartmentMemberService apartmentMemberService, NotificationService notificationService) {
         this.billRepository = billRepository;
         this.tenantDebtRepository = tenantDebtRepository;
         this.userService = userService;
         this.apartmentService = apartmentService;
         this.apartmentMemberService = apartmentMemberService;
+        this.notificationService = notificationService;
     }
 
     public List<BillEntity> getBillsForCurrentUser() {
@@ -93,11 +97,18 @@ public class BillingService {
         Integer billId = debt.getBill().getId();
         List<TenantDebtEntity> debts = tenantDebtRepository.findByBillId(billId);
         boolean allPaid = debts.stream().allMatch(d -> d.getStatus() == DebtStatus.PAID);
+        BillEntity bill = debt.getBill();
         if (allPaid) {
-            BillEntity bill = debt.getBill();
             bill.setStatus(BillStatus.PAID);
             billRepository.save(bill);
         }
+
+        notificationService.createNotification(
+            EventType.BILL_PAID,
+            "El inquilino " + currentUser.getName() + " ha pagado su parte de la factura.",
+            "/apartments/" + bill.getApartment().getId() + "/bills",
+            bill.getUser()
+        );
 
         return debt;
     }
@@ -143,6 +154,15 @@ public class BillingService {
             debt.setUser(member.getUser());
             debt.setBill(billEntity);
             debts.add(debt);
+
+            if (!member.getUser().getId().equals(landlord.getId())) {
+                notificationService.createNotification(
+                    EventType.NEW_BILL,
+                    "Tienes una nueva factura pendiente en el apartamento " + apartment.getTitle(),
+                    "/invoices",
+                    member.getUser()
+                );
+            }
         }
 
         billEntity.setTenantDebts(debts);

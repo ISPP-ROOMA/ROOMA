@@ -1,14 +1,5 @@
 package com.example.demo.Review;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,12 +12,22 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.MemberApartment.ApartmentMemberEntity;
 import com.example.demo.MemberApartment.ApartmentMemberService;
+import com.example.demo.Notification.NotificationService;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
@@ -39,14 +40,15 @@ public class ReviewServiceTest {
     private ApartmentMemberService apartmentMemberService;
     private UserService userService;
     private ApartmentService apartmentService;
-
+    private NotificationService notificationService;
     @BeforeEach
     void setUp() {
         reviewRepository = mock(ReviewRepository.class);
         apartmentMemberService = mock(ApartmentMemberService.class);
         userService = mock(UserService.class);
         apartmentService = mock(ApartmentService.class);
-        reviewService = new ReviewService(reviewRepository, apartmentMemberService, userService, apartmentService);
+        notificationService = mock(NotificationService.class);
+        reviewService = new ReviewService(reviewRepository, apartmentMemberService, userService, apartmentService, notificationService);
     }
 
     @Test

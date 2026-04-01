@@ -1,5 +1,6 @@
 package com.example.demo.ApartmentMatch;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -16,6 +17,8 @@ import com.example.demo.Exceptions.ConflictException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.MemberApartment.ApartmentMemberService;
 import com.example.demo.MemberApartment.MemberRole;
+import com.example.demo.Notification.EventType;
+import com.example.demo.Notification.NotificationService;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 
@@ -26,13 +29,17 @@ public class ApartmentMatchService {
     private final ApartmentService apartmentService;
     private final ApartmentMemberService apartmentMemberService;
     private final UserService userService;
+    private final NotificationService notificationService;
 
     @Autowired
-    public ApartmentMatchService(ApartmentMatchRepository apartmentMatchRepository, ApartmentService apartmentService, ApartmentMemberService apartmentMemberService, UserService userService) {
+    public ApartmentMatchService(ApartmentMatchRepository apartmentMatchRepository, ApartmentService apartmentService,
+            ApartmentMemberService apartmentMemberService, UserService userService,
+            NotificationService notificationService) {
         this.apartmentMatchRepository = apartmentMatchRepository;
         this.apartmentService = apartmentService;
         this.apartmentMemberService = apartmentMemberService;
         this.userService = userService;
+        this.notificationService = notificationService;
     }
 
     public ApartmentMatchEntity findApartmentMatchByCandidateAndApartment(Integer candidateId, Integer apartmentId) {
@@ -199,7 +206,7 @@ public class ApartmentMatchService {
     public void finalizeMatchProcess(Integer apartmentId) {
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
 
-        if(apartment.getState() == ApartmentState.MATCHING) {
+        if (apartment.getState() == ApartmentState.MATCHING) {
             throw new ConflictException("Only apartments that are not matching can be finalized");
         }
         List<ApartmentMatchEntity> matches = apartmentMatchRepository.findByApartmentId(apartmentId);
@@ -217,22 +224,31 @@ public class ApartmentMatchService {
     public ApartmentMatchEntity processSwipe(Integer apartmentId, boolean interest) {
         UserEntity currentUser = userService.findCurrentUserEntity();
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
-        
-        if(apartment.getState() != ApartmentState.ACTIVE) {
+
+        if (apartment.getState() != ApartmentState.ACTIVE) {
             throw new ConflictException("Cannot swipe on an apartment that is not active");
         }
-        if(apartment.getUser().getId().equals(currentUser.getId())) {
+        if (apartment.getUser().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("You cannot swipe on your own apartment");
         }
-        if(apartmentMatchRepository.findByCandidateIdAndApartmentId(currentUser.getId(), apartmentId).isPresent()) {
+        if (apartmentMatchRepository.findByCandidateIdAndApartmentId(currentUser.getId(), apartmentId).isPresent()) {
             throw new ConflictException("You have already swiped on this apartment");
         }
-        
+
         ApartmentMatchEntity apartmentMatch = createApartmentMatch(currentUser, apartment, interest);
+
+        String description = "El usuario \"" + currentUser.getName() + " " + currentUser.getSurname()
+                + "\" ha mostrado interés en tu apartamento \"" + apartment.getTitle() + "\" con localización: "
+                + apartment.getUbication();
+        String link = "/mis-solicitudes/recibidas";
+
+        notificationService.createNotification(EventType.MATCH, description, link, apartment.getUser());
+
         return apartmentMatchRepository.save(apartmentMatch);
     }
 
-    public ApartmentMatchEntity createApartmentMatch(UserEntity candidate, ApartmentEntity apartment, boolean interest) { 
+    public ApartmentMatchEntity createApartmentMatch(UserEntity candidate, ApartmentEntity apartment,
+            boolean interest) {
         ApartmentMatchEntity newMatch = new ApartmentMatchEntity();
         newMatch.setCandidateInterest(interest);
         newMatch.setLandlordInterest(null);
@@ -240,7 +256,7 @@ public class ApartmentMatchService {
         newMatch.setApartment(apartment);
         newMatch.setMatchDate(LocalDateTime.now(ZoneId.of("Europe/Madrid")));
 
-        if(interest){
+        if (interest) {
             newMatch.setMatchStatus(MatchStatus.ACTIVE);
         } else {
             newMatch.setMatchStatus(MatchStatus.REJECTED);
@@ -264,6 +280,12 @@ public class ApartmentMatchService {
         match.setLandlordInterest(interest);
         if (interest) {
             match.setMatchStatus(MatchStatus.MATCH);
+            String description = "El arrendador \"" + match.getApartment().getUser().getName() + " "
+                    + match.getApartment().getUser().getSurname() + "\" ha aceptado tu solicitud para el apartamento \""
+                    + match.getApartment().getTitle() + "\" con localización: " + match.getApartment().getUbication()
+                    + "\"\n Ahora tienes que hablar con el arrendador para concretar los detalles de la visita al apartamento y la posible firma del contrato.";
+            String link = "/mis-solicitudes/enviadas";
+            notificationService.createNotification(EventType.MATCH, description, link, match.getCandidate());
         } else {
             match.setMatchStatus(MatchStatus.REJECTED);
         }
@@ -271,7 +293,8 @@ public class ApartmentMatchService {
     }
 
     @Transactional(readOnly = true)
-    public List<ApartmentMatchEntity> findInterestedCandidatesByApartmentIdAndStatus(Integer apartmentId, MatchStatus status) {
+    public List<ApartmentMatchEntity> findInterestedCandidatesByApartmentIdAndStatus(Integer apartmentId,
+            MatchStatus status) {
         UserEntity currentUser = userService.findCurrentUserEntity();
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
         if (!apartment.getUser().getId().equals(currentUser.getId())) {
@@ -299,7 +322,7 @@ public class ApartmentMatchService {
     }
 
     @Transactional(readOnly = true)
-    public ApartmentMatchEntity findMyMatchForTenant(Integer apartmentMatchId){
+    public ApartmentMatchEntity findMyMatchForTenant(Integer apartmentMatchId) {
         UserEntity currentUser = userService.findCurrentUserEntity();
         ApartmentMatchEntity match = apartmentMatchRepository.findById(apartmentMatchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
@@ -310,7 +333,7 @@ public class ApartmentMatchService {
     }
 
     @Transactional(readOnly = true)
-    public ApartmentMatchEntity findMyMatchForLandlord(Integer apartmentMatchId){
+    public ApartmentMatchEntity findMyMatchForLandlord(Integer apartmentMatchId) {
         UserEntity currentUser = userService.findCurrentUserEntity();
         ApartmentMatchEntity match = apartmentMatchRepository.findById(apartmentMatchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
@@ -335,6 +358,13 @@ public class ApartmentMatchService {
             throw new ConflictException("Cannot send an invitation because the apartment is not active");
         }
         match.setMatchStatus(MatchStatus.INVITED);
+        String description = "El arrendador \"" + match.getApartment().getUser().getName() + " "
+                + match.getApartment().getUser().getSurname()
+                + "\" te ha enviado una invitación para unirte al apartamento \"" + match.getApartment().getTitle()
+                + "\" con localización: " + match.getApartment().getUbication()
+                + "\"\n Por favor, responde a esta invitación lo antes posible para confirmar si estás interesado en unirte al apartamento.";
+        String link = "/mis-solicitudes/recibidas/";
+        notificationService.createNotification(EventType.INVITATION_SENT, description, link, match.getCandidate());
         return apartmentMatchRepository.save(match);
     }
 
@@ -353,15 +383,26 @@ public class ApartmentMatchService {
             if (match.getApartment().getState() != ApartmentState.ACTIVE) {
                 throw new ConflictException("Cannot accept the invitation because the apartment is not active");
             }
-            if(!apartmentMemberService.existsByUserIdAndRole(match.getApartment().getUser().getId(), MemberRole.HOMEBODY)) {
-                apartmentMemberService.addMember(match.getApartment().getId(), match.getApartment().getUser().getId(), null);
-            }
             match.setMatchStatus(MatchStatus.SUCCESSFUL);
-            apartmentMemberService.addMember(match.getApartment().getId(), currentUser.getId(), null);
+            apartmentMemberService.addMember(match.getApartment().getId(), currentUser.getId(), LocalDate.now());
+            String description = "El inquilino \"" + currentUser.getName() + " " + currentUser.getSurname()
+                    + "\" ha aceptado tu invitación para unirse al apartamento \"" + match.getApartment().getTitle()
+                    + "\" con localización: " + match.getApartment().getUbication()
+                    + "\"\n Ahora vivirá en su apartamento.";
+            String link = "/my-home";
+            notificationService.createNotification(EventType.INVITATION_ACCEPTED, description, link,
+                    match.getApartment().getUser());
         } else {
             match.setMatchStatus(MatchStatus.REJECTED);
+            String description = "El inquilino \"" + currentUser.getName() + " " + currentUser.getSurname()
+                    + "\" ha rechazado tu invitación para unirse al apartamento \"" + match.getApartment().getTitle()
+                    + "\" con localización: " + match.getApartment().getUbication()
+                    + "\"\n Puedes seguir buscando candidatos interesados en tu apartamento.";
+            String link = "/apartment/" + match.getApartment().getId() + "/interested-candidates/ACTIVE";
+            notificationService.createNotification(EventType.INVITATION_REJECTED, description, link,
+                    match.getApartment().getUser());
         }
         return apartmentMatchRepository.save(match);
     }
-   
+
 }
