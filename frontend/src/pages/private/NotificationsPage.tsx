@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   getPendingNotifications,
+  markNotificationAsRead,
   type PendingNotification,
 } from '../../service/notifications.service'
 import { requestPushPermissionAndSubscribe } from '../../service/push.service'
@@ -25,6 +26,7 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<PendingNotification[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default')
+  const navigate = useNavigate()
 
   useEffect(() => {
     if ('Notification' in window) {
@@ -36,6 +38,17 @@ export default function NotificationsPage() {
     const success = await requestPushPermissionAndSubscribe();
     if (success && 'Notification' in window) {
       setPermissionStatus(Notification.permission);
+    }
+  }
+
+  const handleNotificationClick = async (notification: PendingNotification) => {
+    // Si tiene un ID válido de base de datos
+    if (notification.id > 100) {
+      await markNotificationAsRead(notification.id);
+    }
+    
+    if (notification.link) {
+      navigate(notification.link);
     }
   }
 
@@ -86,7 +99,11 @@ export default function NotificationsPage() {
         ) : (
           <ul className="space-y-3">
             {notifications.map((notification) => (
-              <li key={notification.id} className="bg-base-100 rounded-xl shadow-sm p-4 sm:p-5">
+              <li 
+                key={notification.id} 
+                className="bg-base-100 rounded-xl shadow-sm p-4 sm:p-5 hover:bg-base-200 transition-colors cursor-pointer"
+                onClick={() => handleNotificationClick(notification)}
+              >
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                   <div className="space-y-1">
                     <h2 className="text-lg font-semibold">{notification.title}</h2>

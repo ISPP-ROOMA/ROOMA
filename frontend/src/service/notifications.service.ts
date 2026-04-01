@@ -6,6 +6,7 @@ export interface PendingNotification {
   message: string
   createdAt?: string
   type?: string
+  link?: string
 }
 
 type BackendPendingNotification = {
@@ -66,6 +67,7 @@ function mapPendingNotification(
     message: item.message ?? item.content ?? item.description ?? '',
     createdAt: item.createdAt ?? item.date ?? item.timestamp,
     type: item.type ?? item.eventType,
+    link: item.link || '',
   }
 }
 
@@ -77,5 +79,13 @@ export async function getPendingNotifications(): Promise<PendingNotification[]> 
   } catch (error) {
     console.error('Error fetching pending notifications:', error)
     return []
+  }
+}
+
+export async function markNotificationAsRead(id: number): Promise<void> {
+  try {
+    await api.patch(`/notifications/${id}/mark-as-read`)
+  } catch (error) {
+    console.error(`Error marking notification ${id} as read:`, error)
   }
 }
