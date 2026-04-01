@@ -55,8 +55,7 @@ public class NotificationService {
             pushService = new PushService(publicKey, privateKey, subject);
             logger.info("PushService initialized successfully with VAPID.");
         } catch (Exception e) {
-            logger.error("CRITICAL ERROR initializing PushService VAPID: {}", e.getMessage());
-            e.printStackTrace();
+            logger.error("CRITICAL ERROR initializing PushService VAPID: {}", e.getMessage(), e);
         }
     }
 
@@ -90,7 +89,7 @@ public class NotificationService {
     @Transactional
     public void markAsRead(Integer notificationId, UserEntity user) {
         NotificationEntity notification = getNotificationById(notificationId, user);
-        if(notification.getIsRead()) {
+        if (notification.getIsRead()) {
             return;
         }
         notification.setIsRead(true);
@@ -133,7 +132,7 @@ public class NotificationService {
                 Subscription.Keys keys = new Subscription.Keys(sub.getP256dh(), sub.getAuth());
                 Subscription subscription = new Subscription(sub.getEndpoint(), keys);
                 // Creating a simple JSON payload manually for the push notification
-                String payload = String.format("{\"title\":\"%s\",\"message\":\"%s\",\"url\":\"%s\"}",
+                String payload = String.format("{\"title\":\"%s\", \"message\":\"%s\", \"url\":\"%s\"}",
                         notification.getEventType().name(),
                         notification.getDescription().replace("\"", "\\\""),
                         notification.getLink());

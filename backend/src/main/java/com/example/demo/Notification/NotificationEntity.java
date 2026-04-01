@@ -21,7 +21,7 @@ import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "notifications")
-public class NotificationEntity{
+public class NotificationEntity {
 
     @Id
     @SequenceGenerator(name = "notification_seq", sequenceName = "notification_seq", initialValue = 100)

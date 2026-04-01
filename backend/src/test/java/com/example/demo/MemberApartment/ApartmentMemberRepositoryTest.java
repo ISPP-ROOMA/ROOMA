@@ -17,7 +17,6 @@ import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentState;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
-import com.example.demo.MemberApartment.MemberRole;
 
 import jakarta.persistence.EntityManager;
 
