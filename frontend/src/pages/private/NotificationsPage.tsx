@@ -78,7 +78,7 @@ export default function NotificationsPage() {
           </div>
           <div className="flex gap-2">
             {permissionStatus === 'default' && (
-              <button onClick={enablePush} className="btn btn-sm btn-primary">
+              <button onClick={() => { void enablePush() }} className="btn btn-sm btn-primary">
                 Activar Notificaciones
               </button>
             )}
@@ -102,7 +102,7 @@ export default function NotificationsPage() {
               <li 
                 key={notification.id} 
                 className="bg-base-100 rounded-xl shadow-sm p-4 sm:p-5 hover:bg-base-200 transition-colors cursor-pointer"
-                onClick={() => handleNotificationClick(notification)}
+                onClick={() => { void handleNotificationClick(notification) }}
               >
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                   <div className="space-y-1">

@@ -54,7 +54,8 @@ function getEventTypeLabel(eventType?: string): string {
     return 'Notificación'
   }
 
-  return EVENT_TYPE_LABELS[eventType] ?? toTitleCase(eventType)
+  const label = (EVENT_TYPE_LABELS as Record<string, string>)[eventType]
+  return label ?? toTitleCase(eventType)
 }
 
 function mapPendingNotification(
