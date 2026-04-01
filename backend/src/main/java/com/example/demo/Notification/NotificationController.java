@@ -50,13 +50,14 @@ public class NotificationController {
     }
 
     @GetMapping("{id}")
-    public ResponseEntity<NotificationEntity> getNotificationById(@PathVariable Integer id) {
+    public ResponseEntity<NotificationDTO> getNotificationById(@PathVariable Integer id) {
         UserEntity user = userService.findCurrentUserEntity();
-        return ResponseEntity.ok(notificationService.getNotificationById(id, user));
+        NotificationEntity notification = notificationService.getNotificationById(id, user);
+        return ResponseEntity.ok(new NotificationDTO(notification));
     }
 
     @GetMapping
-    public ResponseEntity<?> searchNotifications(
+    public ResponseEntity<org.springframework.data.domain.Page<NotificationDTO>> searchNotifications(
         @RequestParam(required = false) Boolean isRead,
         @RequestParam(required = false) EventType eventType,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -64,18 +65,18 @@ public class NotificationController {
         @ParameterObject Pageable pageable
     ) {
         UserEntity user = userService.findCurrentUserEntity();
-        return ResponseEntity.ok(notificationService.searchNotifications(user, isRead, eventType, startDate, endDate, pageable));
+        return ResponseEntity.ok(notificationService.searchNotifications(user, isRead, eventType, startDate, endDate, pageable).map(NotificationDTO::new));
     }
 
     @PostMapping
-    public ResponseEntity<NotificationEntity> createNotification(
+    public ResponseEntity<NotificationDTO> createNotification(
         @RequestParam EventType eventType,
         @RequestParam String description,
         @RequestParam String link
     ) {
         UserEntity user = userService.findCurrentUserEntity();
         NotificationEntity notification = notificationService.createNotification(eventType, description, link, user);
-        return ResponseEntity.ok(notification);
+        return ResponseEntity.ok(new NotificationDTO(notification));
     }
 
 }
