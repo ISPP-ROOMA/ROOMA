@@ -69,7 +69,7 @@ public class FavoriteServiceTest {
         assertEquals(currentUser.getId(), captor.getValue().getUser().getId());
         assertEquals(apartmentId, captor.getValue().getApartment().getId());
         assertTrue(response.isFavorite());
-        assertEquals("Apartment added to favorites", response.message());
+        assertEquals("El apartamento se ha añadido a favoritos", response.message());
         assertEquals(apartmentId, response.apartmentId());
     }
 
@@ -89,7 +89,7 @@ public class FavoriteServiceTest {
         verify(apartmentService, never()).findById(apartmentId);
         verify(favoriteRepository, never()).save(org.mockito.ArgumentMatchers.any(FavoriteEntity.class));
         assertTrue(response.isFavorite());
-        assertEquals("Apartment is already in favorites", response.message());
+        assertEquals("El apartamento ya está en favoritos", response.message());
         assertEquals(apartmentId, response.apartmentId());
     }
 
@@ -135,7 +135,7 @@ public class FavoriteServiceTest {
 
         verify(favoriteRepository).deleteByUserIdAndApartmentId(currentUser.getId(), apartmentId);
         assertFalse(response.isFavorite());
-        assertEquals("Apartment removed from favorites", response.message());
+        assertEquals("El apartamento se ha eliminado de favoritos", response.message());
         assertEquals(apartmentId, response.apartmentId());
     }
 
@@ -241,7 +241,7 @@ public class FavoriteServiceTest {
         assertFalse(closed.canAccessDetail());
         assertEquals("CLOSED", closed.availabilityStatus());
         assertFalse(closed.detailAccessible());
-        assertEquals("This apartment is no longer available", closed.statusMessage());
+        assertEquals("Este apartamento ya no está disponible", closed.statusMessage());
 
         FavoriteSummaryDTO active = result.get(1);
         assertEquals(ApartmentState.ACTIVE, active.state());
