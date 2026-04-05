@@ -3,7 +3,6 @@ export interface PublishFormData {
   neighborhood: string
   priceInput: string
   deposit: number
-  availableDate: string
   includedBills: string[]
   images: File[]
 }
@@ -22,7 +21,6 @@ export const INITIAL_PUBLISH_FORM_DATA: PublishFormData = {
   neighborhood: '',
   priceInput: '450',
   deposit: 1,
-  availableDate: '',
   includedBills: [],
   images: [],
 }
@@ -57,7 +55,7 @@ export const isPublishStepValid = (step: number, data: PublishFormData): boolean
   }
 
   if (step === 1) {
-    return parsePrice(data.priceInput) > 0 && data.availableDate.length > 0
+    return parsePrice(data.priceInput) > 0
   }
 
   return true

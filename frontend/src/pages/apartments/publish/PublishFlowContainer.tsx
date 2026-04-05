@@ -73,7 +73,7 @@ export default function PublishFlowContainer() {
       await createApartment(
         {
           title: `Piso en ${formData.neighborhood || 'Sin barrio'}`,
-          description: `Disponible desde ${formData.availableDate || 'fecha por definir'}. Fianza: ${formData.deposit} mes(es).`,
+          description: `Fianza: ${formData.deposit} mes(es).`,
           price: parsedPrice,
           bills: billsText,
           ubication: formData.street || 'Sin dirección',
