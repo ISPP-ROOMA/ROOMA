@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -91,9 +92,10 @@ public class ApartmentController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApartmentDTO> createApartment(
             @RequestPart("data") @Valid CreateApartment apartment,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
             @RequestPart(value = "images", required = false) List<MultipartFile> images) {
 
-        ApartmentEntity createdApartment = apartmentsService.createWithImages(apartment, images);
+        ApartmentEntity createdApartment = apartmentsService.createWithImages(apartment, images, idempotencyKey);
         return new ResponseEntity<>(ApartmentDTO.fromApartmentEntity(createdApartment), HttpStatus.CREATED);
     }
 
