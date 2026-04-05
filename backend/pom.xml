@@ -158,6 +158,7 @@
 					<nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
 					<nvdApiDelay>20000</nvdApiDelay>
 					<failBuildOnCVSS>7</failBuildOnCVSS>
+					<skip>${skipDependencyCheck}</skip>
 				</configuration>
 			</plugin>
 		</plugins>
