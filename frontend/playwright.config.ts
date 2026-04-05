@@ -1,30 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
-import * as fs from 'fs';
+import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 /**
- * Read environment variables from file.
- * Native lightweight loader (no external dependency required).
+ * Load variables from .env without overriding existing process env values.
  */
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
-const envFilePath = path.resolve(currentDir, '.env');
-if (fs.existsSync(envFilePath)) {
-  const content = fs.readFileSync(envFilePath, 'utf8');
-  content
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'))
-    .forEach((line) => {
-      const separatorIndex = line.indexOf('=');
-      if (separatorIndex <= 0) return;
-      const key = line.slice(0, separatorIndex).trim();
-      const value = line.slice(separatorIndex + 1).trim();
-      if (!(key in process.env)) {
-        process.env[key] = value;
-      }
-    });
-}
+dotenv.config({ path: path.resolve(currentDir, '.env') });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
