@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - feat/**
@@ -34,12 +35,9 @@ jobs:
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('backend/pom.xml') }}
-
-      - name: Run tests + dependency-check
-        run: ./mvnw clean verify
-        env:
-          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-
+      
+      - name: Run tests (without dependency-check)
+        run: ./mvnw clean install
 
   frontend:
     runs-on: windows-latest

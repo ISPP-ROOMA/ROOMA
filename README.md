@@ -29,7 +29,7 @@ Enter the postgres user credentials and the database name in the application-dev
 1. Build the project:
 ```bash
     cd backend
-    mvn clean install -DskipDependencyCheck=true
+    mvn clean install
 ```
 
 2. Run the Spring application:
