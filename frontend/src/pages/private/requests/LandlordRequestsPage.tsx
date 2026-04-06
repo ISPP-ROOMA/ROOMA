@@ -1,6 +1,6 @@
 import { AnimatePresence } from 'framer-motion'
 import { Loader2, MessageCircle } from 'lucide-react'
-import type { IMessage } from '@stomp/stompjs'
+import type { IMessage, StompSubscription } from '@stomp/stompjs'
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
@@ -155,7 +155,7 @@ export default function LandlordRequestsPage() {
     if (chatableMatches.length === 0 || !userId) return
 
     let isMounted = true
-    const subscriptions: any[] = []
+    const subscriptions: StompSubscription[] = []
 
     const initializeUnread = async () => {
       const newUnread = new Set<number>()

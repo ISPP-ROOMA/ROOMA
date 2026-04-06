@@ -1,16 +1,11 @@
+import type { IMessage, StompSubscription } from '@stomp/stompjs'
 import axios from 'axios'
-import type { IMessage } from '@stomp/stompjs'
 import { AnimatePresence } from 'framer-motion'
 import { Loader2, MessageCircle, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
 import { useStompClient } from '../../../hooks/useStompClient'
-import {
-  CHAT_TOPIC_SUBSCRIPTION,
-  getMessageHistory,
-  type ChatMessageDTO,
-} from '../../../service/chat.service'
 import type {
   ApartmentDTO,
   ApartmentMatchDTO,
@@ -22,6 +17,11 @@ import {
   respondToInvitation,
 } from '../../../service/apartment.service'
 import { getApartment } from '../../../service/apartments.service'
+import {
+  CHAT_TOPIC_SUBSCRIPTION,
+  getMessageHistory,
+  type ChatMessageDTO,
+} from '../../../service/chat.service'
 import { useAuthStore } from '../../../store/authStore'
 
 type ActiveTab = 'pending' | 'match'
@@ -138,14 +138,14 @@ export default function TenantRequestsPage() {
   }, [fetchData])
 
   useEffect(() => {
-    const chatableMatches = matchItems.filter(item => 
+    const chatableMatches = matchItems.filter(item =>
       item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED' || item.matchStatus === 'SUCCESSFUL'
     )
-    
+
     if (chatableMatches.length === 0 || !userId) return
 
     let isMounted = true
-    const subscriptions: any[] = []
+    const subscriptions: StompSubscription[] = []
 
     const initializeUnread = async () => {
       const newUnread = new Set<number>()
@@ -161,9 +161,9 @@ export default function TenantRequestsPage() {
       }
       if (isMounted) {
         setUnreadMatches(prev => {
-           const merged = new Set(prev)
-           newUnread.forEach(id => merged.add(id))
-           return merged
+          const merged = new Set(prev)
+          newUnread.forEach(id => merged.add(id))
+          return merged
         })
       }
     }
@@ -175,10 +175,10 @@ export default function TenantRequestsPage() {
         const sub = client.subscribe(
           CHAT_TOPIC_SUBSCRIPTION({ type: 'match', id: item.matchId }),
           (payload: IMessage) => {
-             const newMessage = JSON.parse(payload.body) as ChatMessageDTO
-             if (newMessage.senderId !== Number(userId) && newMessage.status !== 'READ') {
-               setUnreadMatches(prev => new Set(prev).add(item.matchId))
-             }
+            const newMessage = JSON.parse(payload.body) as ChatMessageDTO
+            if (newMessage.senderId !== Number(userId) && newMessage.status !== 'READ') {
+              setUnreadMatches(prev => new Set(prev).add(item.matchId))
+            }
           }
         )
         subscriptions.push(sub)
