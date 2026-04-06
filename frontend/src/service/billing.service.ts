@@ -36,6 +36,12 @@ export interface CreateBillPayload {
   reference: string
   totalAmount: number
   duDate: string
+  tenantDebts?: Array<{
+    amount: number
+    user: {
+      id: number
+    }
+  }>
 }
 
 export interface ApartmentMemberDTO {
