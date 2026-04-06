@@ -140,6 +140,20 @@ public class ApartmentMatchController {
         return ResponseEntity.ok(apartmentMatches);
     }
 
+    @PreAuthorize("hasRole('LANDLORD')")
+    @PostMapping("/apartment/{apartmentId}/filtered-candidates")
+    public ResponseEntity<List<ApartmentMatchLandlordDTO>> getFilteredCandidates(@PathVariable Integer apartmentId, @RequestBody com.example.demo.ApartmentMatch.DTOs.CandidateFilterDTO filter) {
+        List<ApartmentMatchLandlordDTO> candidates = ApartmentMatchLandlordDTO.fromApartmentMatchEntityList(apartmentMatchService.getFilteredCandidates(apartmentId, filter));
+        return ResponseEntity.ok(candidates);
+    }
+
+    @PreAuthorize("hasRole('LANDLORD')")
+    @PatchMapping("/apartmentMatch/{apartmentMatchId}/landlord-decision")
+    public ResponseEntity<ApartmentMatchLandlordDTO> processLandlordDecision(@PathVariable Integer apartmentMatchId, @RequestParam String decision) {
+        ApartmentMatchLandlordDTO match = ApartmentMatchLandlordDTO.fromApartmentMatchEntity(apartmentMatchService.processLandlordDecision(apartmentMatchId, decision));
+        return ResponseEntity.ok(match);
+    }
+
     @PreAuthorize("hasRole('TENANT')")
     @PatchMapping("/apartmentMatch/{apartmentMatchId}/tenant-match-details")
     public ResponseEntity<ApartmentMatchLandlordDTO> getApartmentMatchDetailsForTenant(@PathVariable Integer apartmentMatchId) {

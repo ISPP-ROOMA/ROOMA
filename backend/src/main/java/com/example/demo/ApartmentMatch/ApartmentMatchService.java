@@ -281,6 +281,92 @@ public class ApartmentMatchService {
     }
 
     @Transactional(readOnly = true)
+    public List<ApartmentMatchEntity> getFilteredCandidates(Integer apartmentId, com.example.demo.ApartmentMatch.DTOs.CandidateFilterDTO filter) {
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        ApartmentEntity apartment = apartmentService.findById(apartmentId);
+        if (!apartment.getUser().getId().equals(currentUser.getId())) {
+            throw new ConflictException("Only the landlord of the apartment can view the filtered candidates");
+        }
+        List<ApartmentMatchEntity> candidates = apartmentMatchRepository.findByApartmentIdAndMatchStatus(apartmentId, MatchStatus.ACTIVE);
+        
+        if (filter == null) {
+            return candidates;
+        }
+
+        java.util.Map<ApartmentMatchEntity, Integer> scores = new java.util.HashMap<>();
+        int maxScore = 0;
+
+        for (ApartmentMatchEntity match : candidates) {
+            int score = 0;
+            UserEntity user = match.getCandidate();
+            
+            if (filter.getMinAge() != null && user.getBirthDate() != null) {
+                int age = java.time.Period.between(user.getBirthDate(), java.time.LocalDate.now()).getYears();
+                if (age >= filter.getMinAge()) score++;
+            }
+            if (filter.getMaxAge() != null && user.getBirthDate() != null) {
+                int age = java.time.Period.between(user.getBirthDate(), java.time.LocalDate.now()).getYears();
+                if (age <= filter.getMaxAge()) score++;
+            }
+            if (filter.getRequiredProfession() != null && filter.getRequiredProfession().equalsIgnoreCase(user.getProfession())) {
+                score++;
+            }
+            if (filter.getAllowedSmoker() != null) {
+                if (java.util.Objects.equals(filter.getAllowedSmoker(), user.getSmoker())) {
+                    score++;
+                }
+            }
+            if (filter.getRequiredSchedule() != null && filter.getRequiredSchedule().equalsIgnoreCase(user.getSchedule())) {
+                score++;
+            }
+            
+            scores.put(match, score);
+            if (score > maxScore) {
+                maxScore = score;
+            }
+        }
+
+        if (maxScore == 0) {
+            return candidates;
+        }
+
+        candidates.sort((m1, m2) -> Integer.compare(scores.get(m2), scores.get(m1)));
+        return candidates;
+    }
+
+    @Transactional
+    public ApartmentMatchEntity processLandlordDecision(Integer matchId, String decision) {
+        ApartmentMatchEntity match = apartmentMatchRepository.findById(matchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        
+        if (!match.getApartment().getUser().getId().equals(currentUser.getId())) {
+            throw new ConflictException("Only the landlord of the apartment can process this decision");
+        }
+        
+        if (match.getMatchStatus() != MatchStatus.ACTIVE && match.getMatchStatus() != MatchStatus.WAITING) {
+            throw new ConflictException("Only matches with status ACTIVE or WAITING can be processed by the landlord decision");
+        }
+
+        switch (decision.toUpperCase()) {
+            case "ACCEPT":
+                match.setMatchStatus(MatchStatus.MATCH);
+                match.setLandlordInterest(true);
+                break;
+            case "WAIT":
+                match.setMatchStatus(MatchStatus.WAITING);
+                break;
+            case "REJECT":
+                match.setMatchStatus(MatchStatus.REJECTED);
+                match.setLandlordInterest(false);
+                break;
+            default:
+                throw new ConflictException("Invalid decision: " + decision);
+        }
+        return apartmentMatchRepository.save(match);
+    }
+
+    @Transactional(readOnly = true)
     public List<ApartmentMatchEntity> findInterestedCandidatesByUserIdAndStatus(Integer userId, MatchStatus status) {
         UserEntity currentUser = userService.findCurrentUserEntity();
         if (!currentUser.getId().equals(userId)) {
