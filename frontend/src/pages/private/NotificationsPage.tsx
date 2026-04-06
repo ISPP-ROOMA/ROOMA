@@ -46,7 +46,7 @@ export default function NotificationsPage() {
     if (notification.id > 100) {
       await markNotificationAsRead(notification.id);
     }
-    
+
     if (notification.link) {
       navigate(notification.link);
     }
@@ -78,11 +78,11 @@ export default function NotificationsPage() {
           </div>
           <div className="flex gap-2">
             {permissionStatus === 'default' && (
-              <button onClick={() => { void enablePush() }} className="btn btn-sm btn-primary">
+              <button onClick={() => { void enablePush() }} className="rounded-full px-3 py-1 text-xs font-semibold bg-teal-600 cursor-pointer">
                 Activar Notificaciones
               </button>
             )}
-            <Link to="/profile" className="btn btn-sm btn-outline">
+            <Link to="/profile" className="rounded-full px-3 py-1 text-xs font-semibold bg-gray-200">
               Volver al perfil
             </Link>
           </div>
@@ -99,8 +99,8 @@ export default function NotificationsPage() {
         ) : (
           <ul className="space-y-3">
             {notifications.map((notification) => (
-              <li 
-                key={notification.id} 
+              <li
+                key={notification.id}
                 className="bg-base-100 rounded-xl shadow-sm p-4 sm:p-5 hover:bg-base-200 transition-colors cursor-pointer"
                 onClick={() => { void handleNotificationClick(notification) }}
               >
