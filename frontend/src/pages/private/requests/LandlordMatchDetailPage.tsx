@@ -1,4 +1,5 @@
 import { Loader2, MapPin, Star } from 'lucide-react'
+import axios from 'axios'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
@@ -10,6 +11,7 @@ import {
   getReceivedReviewsByUser,
   type ReviewDTO,
 } from '../../../service/review.service'
+import { useToast } from '../../../hooks/useToast'
 
 const FALLBACK_COVER =
   'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80'
@@ -20,12 +22,12 @@ const FALLBACK_AVATAR =
 export default function LandlordMatchDetailPage() {
   const navigate = useNavigate()
   const { apartmentMatchId } = useParams<{ apartmentMatchId: string }>()
+  const { showToast } = useToast()
 
   const [details, setDetails] = useState<ApartmentMatchTenantDetailsDTO | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [inviteLoading, setInviteLoading] = useState(false)
-  const [inviteError, setInviteError] = useState<string | null>(null)
   const [reviews, setReviews] = useState<ReviewDTO[]>([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
   const [reviewsError, setReviewsError] = useState<string | null>(null)
@@ -94,13 +96,17 @@ export default function LandlordMatchDetailPage() {
     if (!details) return
 
     setInviteLoading(true)
-    setInviteError(null)
     try {
       await sendInvitationToMatch(details.id)
+      showToast('Invitacion enviada correctamente.', 'success')
       navigate('/mis-solicitudes/recibidas')
     } catch (err) {
       console.error('Error sending invitation', err)
-      setInviteError('No se pudo enviar la invitación. Inténtalo de nuevo.')
+      const message = axios.isAxiosError(err)
+        ? ((err.response?.data as { message?: string } | undefined)?.message ??
+          'No se pudo enviar la invitacion. Intentalo de nuevo.')
+        : 'No se pudo enviar la invitacion. Intentalo de nuevo.'
+      showToast(message, 'error')
     } finally {
       setInviteLoading(false)
     }
@@ -343,8 +349,6 @@ export default function LandlordMatchDetailPage() {
                 </span>
               </button>
             </div>
-
-            {inviteError && <p className="mt-3 text-sm font-medium text-red-600">{inviteError}</p>}
           </div>
         </article>
       </section>
