@@ -14,7 +14,6 @@ const PRICE_INPUT_CLASS =
   'input input-bordered text-4xl font-extrabold text-base-content w-40 text-center rounded-xl bg-base-100 focus:outline-primary tracking-tight'
 const DEPOSIT_BUTTON_CLASS =
   'w-11 h-11 rounded-full bg-base-300/70 hover:bg-base-300 flex items-center justify-center text-xl font-bold text-base-content transition'
-const DATE_INPUT_CLASS = 'input input-bordered w-full rounded-xl bg-base-100 focus:outline-primary'
 const BILL_CHIP_BASE_CLASS =
   'flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all'
 const BILL_CHIP_ACTIVE_CLASS = 'bg-primary text-primary-content shadow-sm'
@@ -82,20 +81,6 @@ export default function StepPricing({ data, updateFields }: Props) {
             +
           </button>
         </div>
-      </div>
-
-      <div>
-        <label className="text-sm font-semibold text-base-content block mb-2">
-          Fecha disponible
-        </label>
-        <input
-          type="date"
-          value={data.availableDate}
-          onChange={(e) => {
-            updateFields({ availableDate: e.target.value })
-          }}
-          className={DATE_INPUT_CLASS}
-        />
       </div>
 
       <div>

@@ -21,7 +21,28 @@ public interface ApartmentMemberRepository extends JpaRepository<ApartmentMember
     @Query("SELECT m FROM ApartmentMemberEntity m WHERE m.apartment.id = :apartmentId AND (m.endDate IS NULL OR m.endDate > CURRENT_DATE)")
     List<ApartmentMemberEntity> findCurrentTenantsByApartmentId(Integer apartmentId);
     
-    @Query("SELECT m FROM ApartmentMemberEntity m WHERE m.user.id = :userId ORDER BY COALESCE(m.endDate, CURRENT_DATE) DESC, m.joinDate DESC")
+    @Query("""
+            SELECT m
+            FROM ApartmentMemberEntity m
+            WHERE m.user.id = :userId
+                AND NOT EXISTS (
+                    SELECT m2.id
+                    FROM ApartmentMemberEntity m2
+                    WHERE m2.user.id = :userId
+                        AND (
+                            COALESCE(m2.endDate, CURRENT_DATE) > COALESCE(m.endDate, CURRENT_DATE)
+                            OR (
+                                COALESCE(m2.endDate, CURRENT_DATE) = COALESCE(m.endDate, CURRENT_DATE)
+                                AND m2.joinDate > m.joinDate
+                            )
+                            OR (
+                                COALESCE(m2.endDate, CURRENT_DATE) = COALESCE(m.endDate, CURRENT_DATE)
+                                AND m2.joinDate = m.joinDate
+                                AND m2.id > m.id
+                            )
+                        )
+                )
+            """)
     Optional<ApartmentMemberEntity> findLastMembershipByUserId(Integer userId);
 
     @Query("SELECT m FROM ApartmentMemberEntity m WHERE m.user.id = :userId AND m.apartment.id = :apartmentId ORDER BY m.joinDate DESC")

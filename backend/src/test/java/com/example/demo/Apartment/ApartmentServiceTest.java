@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mock;
 import static org.mockito.Mockito.verify;
@@ -22,6 +23,8 @@ import com.example.demo.Apartment.DTOs.CreateApartment;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
 import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
+import com.example.demo.Idempotency.ApartmentCreateIdempotencyEntity;
+import com.example.demo.Idempotency.ApartmentCreateIdempotencyRepository;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
@@ -40,9 +43,16 @@ public class ApartmentServiceTest {
     @Mock
     private ApartmentPhotoService apartmentPhotoService;
 
+    @Mock
+    private ApartmentCreateIdempotencyRepository apartmentCreateIdempotencyRepository;
+
     @BeforeEach
     void setUp() {
-        apartmentService = new ApartmentService(apartmentRepository, userService, apartmentPhotoService);
+        apartmentService = new ApartmentService(
+                apartmentRepository,
+                userService,
+                apartmentPhotoService,
+                apartmentCreateIdempotencyRepository);
     }
 
     @Test
@@ -81,14 +91,19 @@ public class ApartmentServiceTest {
         ApartmentEntity persisted = baseApartment();
         persisted.setId(100);
 
-        when(userService.findCurrentUser()).thenReturn("owner@test.com");
-        when(userService.findByEmail("owner@test.com")).thenReturn(Optional.of(landlord));
+        when(userService.findCurrentUserEntity()).thenReturn(landlord);
+        when(apartmentCreateIdempotencyRepository.findByUserIdAndEndpointAndIdempotencyKey(
+            eq(11), anyString(), anyString())).thenReturn(Optional.empty());
+        when(apartmentCreateIdempotencyRepository.saveAndFlush(any(ApartmentCreateIdempotencyEntity.class)))
+            .thenAnswer(inv -> inv.getArgument(0));
         when(apartmentRepository.save(any(ApartmentEntity.class))).thenReturn(persisted);
+        when(apartmentCreateIdempotencyRepository.save(any(ApartmentCreateIdempotencyEntity.class)))
+            .thenAnswer(inv -> inv.getArgument(0));
 
         MultipartFile image = org.mockito.Mockito.mock(MultipartFile.class);
         List<MultipartFile> images = List.of(image);
 
-        ApartmentEntity result = apartmentService.createWithImages(dto, images);
+        ApartmentEntity result = apartmentService.createWithImages(dto, images, "idem-1");
 
         assertEquals(100, result.getId());
         verify(apartmentPhotoService).saveImages(eq(persisted), eq(images), eq(false));

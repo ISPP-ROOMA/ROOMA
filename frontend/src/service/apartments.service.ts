@@ -1,6 +1,15 @@
 import { api } from './api'
 import { AxiosError } from 'axios'
 import { z } from 'zod'
+
+const buildIdempotencyKey = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+
+  return `apt-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
 export interface Apartment {
   id: number
   title: string
@@ -80,9 +89,11 @@ export const getApartment = async (id: number): Promise<Apartment | undefined> =
 /** Create a new apartment (auto-links as RENTER) */
 export const createApartment = async (
   data: CreateApartmentPayload,
-  images: File[]
+  images: File[],
+  idempotencyKey?: string
 ): Promise<Apartment> => {
   const formData = new FormData()
+  const requestKey = idempotencyKey ?? buildIdempotencyKey()
 
   formData.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }))
 
@@ -91,7 +102,11 @@ export const createApartment = async (
   })
 
   try {
-    const response = await api.post<Apartment>('/apartments', formData)
+    const response = await api.post<Apartment>('/apartments', formData, {
+      headers: {
+        'Idempotency-Key': requestKey,
+      },
+    })
     return response.data
   } catch (error) {
     const err = error as AxiosError
