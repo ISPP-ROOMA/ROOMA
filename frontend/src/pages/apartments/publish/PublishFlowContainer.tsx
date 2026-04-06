@@ -70,13 +70,15 @@ export default function PublishFlowContainer() {
         ? formData.includedBills.join(', ')
         : 'No incluidos'
 
+      const ubicationText = [formData.street, formData.postalCode].filter(Boolean).join(', ') || 'Sin dirección'
+
       await createApartment(
         {
           title: `Piso en ${formData.neighborhood || 'Sin barrio'}`,
           description: `Fianza: ${formData.deposit} mes(es).`,
           price: parsedPrice,
           bills: billsText,
-          ubication: formData.street || 'Sin dirección',
+          ubication: ubicationText,
           state: 'ACTIVE',
         },
         formData.images
