@@ -166,7 +166,7 @@ export default function LandlordRequestsPage() {
           if (hasUnread) {
             newUnread.add(item.matchId)
           }
-        } catch (error) {
+        } catch {
           // no pasa nada
         }
       }
