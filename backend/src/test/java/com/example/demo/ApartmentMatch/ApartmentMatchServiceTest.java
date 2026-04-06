@@ -6,10 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,7 +30,7 @@ import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ConflictException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.MemberApartment.ApartmentMemberService;
-import com.example.demo.MemberApartment.MemberRole;
+import com.example.demo.Notification.NotificationService;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
@@ -50,13 +52,17 @@ public class ApartmentMatchServiceTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private NotificationService notificationService;
+
     @BeforeEach
     public void setUp() {
         apartmentMatchService = new ApartmentMatchService(
                 apartmentMatchRepository,
                 apartmentService,
                 apartmentMemberService,
-                userService);
+                userService,
+                notificationService);
     }
 
     @Test
@@ -381,14 +387,12 @@ public class ApartmentMatchServiceTest {
 
         when(userService.findCurrentUserEntity()).thenReturn(candidate);
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
-        when(apartmentMemberService.existsByUserIdAndRole(landlord.getId(), MemberRole.HOMEBODY)).thenReturn(false);
         when(apartmentMatchRepository.save(match)).thenReturn(match);
 
         ApartmentMatchEntity result = apartmentMatchService.respondToInvitation(matchId, true);
 
         assertEquals(MatchStatus.SUCCESSFUL, result.getMatchStatus());
-        verify(apartmentMemberService).addMember(apartment.getId(), landlord.getId(), null);
-        verify(apartmentMemberService).addMember(apartment.getId(), candidate.getId(), null);
+        verify(apartmentMemberService).addMember(apartment.getId(), candidate.getId(), LocalDate.now());
         verify(apartmentMatchRepository).save(match);
     }
 
@@ -403,14 +407,13 @@ public class ApartmentMatchServiceTest {
 
         when(userService.findCurrentUserEntity()).thenReturn(candidate);
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
-        when(apartmentMemberService.existsByUserIdAndRole(landlord.getId(), MemberRole.HOMEBODY)).thenReturn(true);
         when(apartmentMatchRepository.save(match)).thenReturn(match);
 
         ApartmentMatchEntity result = apartmentMatchService.respondToInvitation(matchId, true);
 
         assertEquals(MatchStatus.SUCCESSFUL, result.getMatchStatus());
         verify(apartmentMemberService, never()).addMember(apartment.getId(), landlord.getId(), null);
-        verify(apartmentMemberService).addMember(apartment.getId(), candidate.getId(), null);
+        verify(apartmentMemberService).addMember(apartment.getId(), candidate.getId(), LocalDate.now());
     }
 
     @Test
@@ -492,27 +495,27 @@ public class ApartmentMatchServiceTest {
     }
 
     @Test
-    @DisplayName("respondToInvitation propagates ApartmentMemberService errors")
-    public void respondToInvitation_AddMemberFails_PropagatesError() {
-        Integer matchId = 32;
-        UserEntity landlord = createUser(53, Role.LANDLORD, "landlord20@test.com");
-        UserEntity candidate = createUser(54, Role.TENANT, "tenant22@test.com");
-        ApartmentEntity apartment = createApartment(132, ApartmentState.ACTIVE, landlord);
-        ApartmentMatchEntity match = createMatch(matchId, MatchStatus.INVITED, candidate, apartment, true, true);
+        @DisplayName("respondToInvitation propaga errores al añadir candidato")
+        public void respondToInvitation_AddMemberCandidateFails_PropagatesError() {
+                Integer matchId = 32;
+                UserEntity landlord = createUser(53, Role.LANDLORD, "landlord20@test.com");
+                UserEntity candidate = createUser(54, Role.TENANT, "tenant22@test.com");
+                ApartmentEntity apartment = createApartment(132, ApartmentState.ACTIVE, landlord);
+                ApartmentMatchEntity match = createMatch(matchId, MatchStatus.INVITED, candidate, apartment, true, true);
 
-        when(userService.findCurrentUserEntity()).thenReturn(candidate);
-        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
-        when(apartmentMemberService.existsByUserIdAndRole(landlord.getId(), MemberRole.HOMEBODY)).thenReturn(false);
-        when(apartmentMemberService.addMember(apartment.getId(), landlord.getId(), null))
-                .thenThrow(new BadRequestException("User already belongs to this apartment"));
+                when(userService.findCurrentUserEntity()).thenReturn(candidate);
+                when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+                // Solo lanza excepción al intentar añadir al candidato
+                when(apartmentMemberService.addMember(eq(apartment.getId()), eq(candidate.getId()), any(LocalDate.class)))
+                                .thenThrow(new BadRequestException("User already belongs to this apartment"));
 
-        BadRequestException exception = assertThrows(
-                BadRequestException.class,
-                () -> apartmentMatchService.respondToInvitation(matchId, true));
+                BadRequestException exception = assertThrows(
+                                BadRequestException.class,
+                                () -> apartmentMatchService.respondToInvitation(matchId, true));
 
-        assertEquals("User already belongs to this apartment", exception.getMessage());
-        verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
-    }
+                assertEquals("User already belongs to this apartment", exception.getMessage());
+                verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
+        }
 
     @Test
     @DisplayName("successfulMatch sets SUCCESSFUL when match is in MATCH state")

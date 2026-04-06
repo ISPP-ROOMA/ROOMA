@@ -67,7 +67,7 @@ export interface ApartmentDTO {
   state: string
   coverImageUrl?: string
   members?: ApartmentMemberDTO[]
-   idealTenantProfile?: string
+  idealTenantProfile?: string
 }
 
 export interface ApartmentHomeDTO {
@@ -244,7 +244,9 @@ export const respondToInvitation = async (
   await api.post(
     `/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-invitation`,
     accepted,
-    { headers: { 'Content-Type': 'application/json' } }
+    {
+      headers: { 'Content-Type': 'application/json' },
+    }
   )
 }
 

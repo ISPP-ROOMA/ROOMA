@@ -25,3 +25,7 @@ cors:
 google:
   client-id: test-google-client-id
 
+vapid:
+  public-key: test-public-key
+  private-key: test-private-key
+  subject: test-subject

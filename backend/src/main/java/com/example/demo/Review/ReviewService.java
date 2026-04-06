@@ -17,6 +17,8 @@ import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.MemberApartment.ApartmentMemberEntity;
 import com.example.demo.MemberApartment.ApartmentMemberService;
+import com.example.demo.Notification.EventType;
+import com.example.demo.Notification.NotificationService;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
@@ -30,13 +32,15 @@ public class ReviewService {
     private final ApartmentMemberService apartmentMemberService;
     private final UserService userService;
     private final ApartmentService apartmentService;
+    private final NotificationService notificationService;
 
     @Autowired
-    public ReviewService(ReviewRepository reviewRepository, ApartmentMemberService apartmentMemberService, UserService userService, ApartmentService apartmentService) {
+    public ReviewService(ReviewRepository reviewRepository, ApartmentMemberService apartmentMemberService, UserService userService, ApartmentService apartmentService, NotificationService notificationService) {
         this.reviewRepository = reviewRepository;
         this.apartmentMemberService = apartmentMemberService;
         this.userService = userService;
         this.apartmentService = apartmentService;
+        this.notificationService = notificationService;
     }
 
     public ReviewEntity findById(Integer id) {
@@ -88,6 +92,9 @@ public class ReviewService {
 
         ReviewEntity saved = reviewRepository.save(review);
         checkAndPublishMutualReviews(saved);
+        String description = "El arrendador \"" + reviewerUser.getName() +" "+ reviewerUser.getSurname() + "\" ha hecho una reseña sobre ti en el apartamento \"" + apartment.getTitle() + "\" con localización: " + apartment.getUbication() + "\"\n Puedes ver la reseña y responderla si lo deseas.";
+        String link = "/my-reviews";
+        notificationService.createNotification(EventType.REVIEW, description, link, reviewedMember.getUser());
         return saved;
     }
     
@@ -147,6 +154,9 @@ public class ReviewService {
 
         ReviewEntity saved = reviewRepository.save(review);
         checkAndPublishMutualReviews(saved);
+        String description = "El inquilino \"" + reviewerUser.getName() +" "+ reviewerUser.getSurname() + "\" ha hecho una reseña sobre ti en el apartamento \"" + apartment.getTitle() + "\" con localización: " + apartment.getUbication() + "\"\n Puedes ver la reseña y responderla si lo deseas.";
+        String link = "/my-reviews";
+        notificationService.createNotification(EventType.REVIEW, description, link, reviewedUser);
         return saved;
     }
 
