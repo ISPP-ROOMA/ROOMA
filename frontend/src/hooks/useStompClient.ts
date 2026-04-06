@@ -11,9 +11,11 @@ export const useStompClient = () => {
   useEffect(() => {
 
     const API_BASE_URL = import.meta.env.VITE_API_URL;
+    const WS_PROFILE = import.meta.env.PROFILE === 'PROD' ? 'wss' : 'ws'
+
 
     const stompClient = new Client({
-      webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
+      webSocketFactory: () => new SockJS(`${API_BASE_URL}/${WS_PROFILE}`),
       connectHeaders: {
         token: token || '',
       },
