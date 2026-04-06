@@ -311,8 +311,10 @@ public class ApartmentMatchService {
             if (filter.getRequiredProfession() != null && filter.getRequiredProfession().equalsIgnoreCase(user.getProfession())) {
                 score++;
             }
-            if (filter.getAllowedSmoker() != null && filter.getAllowedSmoker().equals(user.getSmoker())) {
-                score++;
+            if (filter.getAllowedSmoker() != null) {
+                if (java.util.Objects.equals(filter.getAllowedSmoker(), user.getSmoker())) {
+                    score++;
+                }
             }
             if (filter.getRequiredSchedule() != null && filter.getRequiredSchedule().equalsIgnoreCase(user.getSchedule())) {
                 score++;
