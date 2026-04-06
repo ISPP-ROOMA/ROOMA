@@ -61,8 +61,8 @@ export default function Navbar() {
     }
     if (role === 'TENANT') {
       return [
-        { to: '/mis-solicitudes', label: 'Solicitudes', icon: <LayoutList size={22} /> },
         { to: '/', label: 'Inicio', icon: <Home size={22} />, end: true },
+        { to: '/mis-solicitudes', label: 'Solicitudes', icon: <LayoutList size={22} /> },
         { to: '/favorites', label: 'Favoritos', icon: <Bookmark size={22} /> },
         { to: '/my-reviews', label: 'Valoraciones', icon: <Star size={22} /> },
         { to: '/profile', label: 'Perfil', icon: <UserCircle size={22} /> },
@@ -70,8 +70,8 @@ export default function Navbar() {
     }
     if (role === 'LANDLORD') {
       return [
-        { to: '/apartments/my', label: 'Inmuebles', icon: <Building2 size={22} /> },
         { to: '/', label: 'Inicio', icon: <Home size={22} />, end: true },
+        { to: '/apartments/my', label: 'Inmuebles', icon: <Building2 size={22} /> },
         { to: '/mis-solicitudes', label: 'Solicitudes', icon: <LayoutList size={22} /> },
         { to: '/my-reviews', label: 'Valoraciones', icon: <Star size={22} /> },
         { to: '/apartments/publish', label: 'Publicar', icon: <LayoutList size={22} /> },

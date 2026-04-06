@@ -108,6 +108,9 @@ public class IncidentService {
         }
 
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
+        if (apartment == null) {
+            throw new ResourceNotFoundException("Apartment not found");
+        }
         ApartmentMemberEntity apartmentMember = apartmentMemberService.findByUserIdAndApartmentId(currentUser.getId(), apartmentId);
         ensureMembershipIsActive(apartmentMember);
 
@@ -134,6 +137,9 @@ public class IncidentService {
     @Transactional
     public IncidentDTO updateIncidentStatusByLandlord(Integer apartmentId, Integer id, IncidentStatus nextStatus) {
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
+        if (apartment == null) {
+            throw new ResourceNotFoundException("Apartment not found");
+        }
         UserEntity currentUser = userService.findCurrentUserEntity();
         if (currentUser.getRole() != Role.LANDLORD) {
             throw new ForbiddenException("Only landlords can update incidents");
@@ -240,6 +246,10 @@ public class IncidentService {
     }
 
     private void validateApartmentAccess(ApartmentEntity apartment, UserEntity currentUser) {
+        if (apartment == null) {
+            throw new ResourceNotFoundException("Apartment not found");
+        }
+
         if (currentUser.getRole() == Role.ADMIN) {
             return;
         }
@@ -270,6 +280,10 @@ public class IncidentService {
     }
 
     private void ensureMembershipIsActive(ApartmentMemberEntity apartmentMember) {
+        if (apartmentMember == null) {
+            throw new ForbiddenException("User is not an active member of this apartment");
+        }
+
         if (apartmentMember.getEndDate() != null && !apartmentMember.getEndDate().isAfter(LocalDate.now())) {
             throw new ForbiddenException("User is not an active member of this apartment");
         }

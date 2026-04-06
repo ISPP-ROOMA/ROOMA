@@ -433,6 +433,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="/apartments/:id"
+                  element={
+                    <PrivateRoute allowedRoles={['TENANT']}>
+                      <ApartmentDetail />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
                   path="/invoices"
                   element={
                     <PrivateRoute allowedRoles={['TENANT']}>

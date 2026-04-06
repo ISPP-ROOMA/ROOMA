@@ -62,10 +62,6 @@ export default function Login() {
         userId: res.userId,
       })
 
-      if (res.role === 'LANDLORD') {
-        navigate('/apartments/my')
-        return
-      }
       navigate('/')
     },
     [navigate],
@@ -121,11 +117,6 @@ export default function Login() {
       role: res.role,
       userId: res.userId,
     })
-
-    if (res.role === 'LANDLORD') {
-      navigate('/apartments/my')
-      return
-    }
 
     navigate('/')
   }

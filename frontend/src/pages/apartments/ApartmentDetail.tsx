@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getApartment, type Apartment } from '../../service/apartments.service'
+import { useAuthStore } from '../../store/authStore'
 
 const CLOUDINARY_CLOUD_NAME = 'djuqshdey'
 
@@ -15,6 +16,7 @@ const STATE_CONFIG: Record<string, { label: string; dotClass: string }> = {
 
 export default function ApartmentDetail() {
   const { id } = useParams()
+  const role = useAuthStore().role
   const navigate = useNavigate()
   const [apartment, setApartment] = useState<Apartment | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -219,7 +221,7 @@ export default function ApartmentDetail() {
               </div>
             </div>
 
-            <div className="rounded-[30px] border border-base-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,0.96))] p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-5">
+            { role === 'LANDLORD' && <div className="rounded-[30px] border border-base-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,250,252,0.96))] p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-5">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70">
@@ -296,7 +298,7 @@ export default function ApartmentDetail() {
                   Ver Incidencias
                 </button>
               </div>
-            </div>
+            </div>}
           </div>
         </div>
       </main>
