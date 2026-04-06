@@ -1,6 +1,5 @@
 import { Client } from '@stomp/stompjs'
 import { useEffect, useState } from 'react'
-import SockJS from 'sockjs-client'
 import { useAuthStore } from '../store/authStore'
 
 export const useStompClient = () => {
@@ -9,11 +8,11 @@ export const useStompClient = () => {
   const { token } = useAuthStore()
 
   useEffect(() => {
-
-    const API_BASE_URL = import.meta.env.VITE_API_URL;
+    const API_BASE_URL = import.meta.env.VITE_API_URL
+    const WS_URL = API_BASE_URL.replace(/^http/, 'ws') // http→ws, https→wss automatically
 
     const stompClient = new Client({
-      webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
+      brokerURL: `${WS_URL}/ws`, // 👈 replaces webSocketFactory + SockJS
       connectHeaders: {
         token: token || '',
       },
@@ -25,8 +24,6 @@ export const useStompClient = () => {
     stompClient.onConnect = () => {
       console.log('STOMP: Conectado')
       setConnected(true)
-      // Actualizamos el estado solo cuando ocurre el evento de conexión
-      // Esto es asíncrono y no dispara el error de ESLint
       setClient(stompClient)
     }
 
