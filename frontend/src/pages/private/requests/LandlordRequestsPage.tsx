@@ -1,8 +1,15 @@
 import { AnimatePresence } from 'framer-motion'
-import { Loader2 } from 'lucide-react'
+import { Loader2, MessageCircle } from 'lucide-react'
+import type { IMessage } from '@stomp/stompjs'
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
+import { useStompClient } from '../../../hooks/useStompClient'
+import {
+  CHAT_TOPIC_SUBSCRIPTION,
+  getMessageHistory,
+  type ChatMessageDTO,
+} from '../../../service/chat.service'
 import type {
   ApartmentDTO,
   ApartmentMatchDTO,
@@ -105,6 +112,8 @@ export default function LandlordRequestsPage() {
     (ApartmentDTO & { imageUrl: string }) | null
   >(null)
   const [modalLoading, setModalLoading] = useState<number | null>(null)
+  const [unreadMatches, setUnreadMatches] = useState<Set<number>>(new Set())
+  const { client, connected } = useStompClient()
 
   const fetchData = useCallback(async () => {
     if (!userId) return
@@ -137,6 +146,60 @@ export default function LandlordRequestsPage() {
   useEffect(() => {
     void fetchData()
   }, [fetchData, location.key])
+
+  useEffect(() => {
+    const chatableMatches = matchItems.filter(item => 
+      item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED' || item.matchStatus === 'SUCCESSFUL'
+    )
+    
+    if (chatableMatches.length === 0 || !userId) return
+
+    let isMounted = true
+    const subscriptions: any[] = []
+
+    const initializeUnread = async () => {
+      const newUnread = new Set<number>()
+      for (const item of chatableMatches) {
+        try {
+          const history = await getMessageHistory({ type: 'match', id: item.matchId })
+          const hasUnread = history.some(m => m.senderId !== Number(userId) && m.status !== 'READ')
+          if (hasUnread) {
+            newUnread.add(item.matchId)
+          }
+        } catch (error) {
+        }
+      }
+      if (isMounted) {
+        setUnreadMatches(prev => {
+           const merged = new Set(prev)
+           newUnread.forEach(id => merged.add(id))
+           return merged
+        })
+      }
+    }
+
+    void initializeUnread()
+
+    if (connected && client) {
+      for (const item of chatableMatches) {
+        const sub = client.subscribe(
+          CHAT_TOPIC_SUBSCRIPTION({ type: 'match', id: item.matchId }),
+          (payload: IMessage) => {
+             const newMessage = JSON.parse(payload.body) as ChatMessageDTO
+             if (newMessage.senderId !== Number(userId) && newMessage.status !== 'READ') {
+               setUnreadMatches(prev => new Set(prev).add(item.matchId))
+             }
+          }
+        )
+        subscriptions.push(sub)
+      }
+    }
+
+    return () => {
+      isMounted = false
+      subscriptions.forEach(sub => sub.unsubscribe())
+    }
+  }, [matchItems, userId, connected, client])
 
   const handleReject = async (matchId: number) => {
     setUpdatingId(matchId)
@@ -356,6 +419,24 @@ export default function LandlordRequestsPage() {
                               )}
                               Aceptar
                             </span>
+                          </button>
+                        </div>
+                      )}
+                      {(item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED' || item.matchStatus === 'SUCCESSFUL') && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="relative h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center"
+                            aria-label="Abrir chat"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              navigate(`/chat/${item.matchId}`)
+                            }}
+                          >
+                            <MessageCircle size={16} />
+                            {unreadMatches.has(item.matchId) && (
+                              <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 border border-white" />
+                            )}
                           </button>
                         </div>
                       )}
