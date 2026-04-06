@@ -157,6 +157,7 @@ export default function TenantRequestsPage() {
             newUnread.add(item.matchId)
           }
         } catch (error) {
+          // no pasa nada
         }
       }
       if (isMounted) {
