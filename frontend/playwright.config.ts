@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
  * Load variables from .env without overriding existing process env values.
  */
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(currentDir, '.env') });
+dotenv.config({ path: path.resolve(currentDir, '.env'), quiet: true });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
