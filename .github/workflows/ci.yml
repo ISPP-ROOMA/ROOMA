@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feat/**
+      - fix/**
       - trunk-**
       - trunk
       - main
@@ -68,8 +69,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Run tests
-        run: npm run test 
+      - name: Run Playwright tests
+        run: npx playwright test
 
       - name: NPM audit
         run: npm audit --audit-level=high || true
