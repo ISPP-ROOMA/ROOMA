@@ -110,12 +110,12 @@ jobs:
           exit 1
 
       - name: Start frontend
-        run: npm run dev -- --host 127.0.0.1 --port 5173 > ../frontend.log 2>&1 &
+        run: VITE_API_URL=http://127.0.0.1:8080 npm run dev -- --host localhost --port 5173 > ../frontend.log 2>&1 &
 
       - name: Wait for frontend
         run: |
           for i in {1..90}; do
-            if curl -fsS http://127.0.0.1:5173 > /dev/null; then
+            if curl -fsS http://localhost:5173 > /dev/null; then
               echo "Frontend ready"
               exit 0
             fi
@@ -130,9 +130,12 @@ jobs:
 
       - name: Run Playwright tests
         env:
-          PLAYWRIGHT_BASE_URL: http://127.0.0.1:5173
+          PLAYWRIGHT_BASE_URL: http://localhost:5173
           PLAYWRIGHT_API_URL: http://127.0.0.1:8080/api
-        run: npx playwright test --reporter=list,html
+          DOTENV_CONFIG_QUIET: "true"
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME: junit.xml
+          PLAYWRIGHT_JUNIT_OUTPUT_DIR: test-results
+        run: npx playwright test --reporter=line,html,junit
 
       - name: Upload Playwright report
         if: always()
