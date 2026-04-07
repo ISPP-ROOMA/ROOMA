@@ -5,6 +5,7 @@ export interface PublishFormData {
   deposit: number
   includedBills: string[]
   images: File[]
+  postalCode: string
 }
 
 export const STEP_TITLES = [
@@ -23,6 +24,7 @@ export const INITIAL_PUBLISH_FORM_DATA: PublishFormData = {
   deposit: 1,
   includedBills: [],
   images: [],
+  postalCode: '',
 }
 
 export const parsePrice = (value: string): number => {
@@ -51,7 +53,7 @@ export const normalizePriceInput = (value: string): string | null => {
 
 export const isPublishStepValid = (step: number, data: PublishFormData): boolean => {
   if (step === 0) {
-    return data.street.trim().length > 0 && data.neighborhood.length > 0
+    return data.street.trim().length > 0 && data.neighborhood.length > 0 && data.postalCode.trim().length > 0
   }
 
   if (step === 1) {
