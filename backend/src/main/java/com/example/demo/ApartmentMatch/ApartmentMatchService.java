@@ -357,6 +357,10 @@ public class ApartmentMatchService {
         if (match.getApartment().getState() != ApartmentState.ACTIVE) {
             throw new ConflictException("Cannot send an invitation because the apartment is not active");
         }
+        if (!apartmentMemberService.findActiveMembershipsByUserId(match.getCandidate().getId()).isEmpty()) {
+            throw new ConflictException("Cannot send invitation because the candidate already belongs to an apartment");
+        }
+
         match.setMatchStatus(MatchStatus.INVITED);
         String description = "El arrendador \"" + match.getApartment().getUser().getName() + " "
                 + match.getApartment().getUser().getSurname()
@@ -382,6 +386,13 @@ public class ApartmentMatchService {
         if (accepted) {
             if (match.getApartment().getState() != ApartmentState.ACTIVE) {
                 throw new ConflictException("Cannot accept the invitation because the apartment is not active");
+            }
+            if (!apartmentMemberService.findActiveMembershipsByUserId(currentUser.getId()).isEmpty()) {
+                throw new ConflictException("Cannot accept invitation because you already belong to an apartment");
+            }
+
+            if(!apartmentMemberService.existsByUserIdAndRole(match.getApartment().getUser().getId(), MemberRole.HOMEBODY)) {
+                apartmentMemberService.addMember(match.getApartment().getId(), match.getApartment().getUser().getId(), null);
             }
             match.setMatchStatus(MatchStatus.SUCCESSFUL);
             apartmentMemberService.addMember(match.getApartment().getId(), currentUser.getId(), LocalDate.now());

@@ -116,7 +116,7 @@ export default function PaymentSuccess() {
             onClick={() => navigate('/invoices', { replace: true })}
             className="w-full py-3.5 rounded-2xl bg-teal-700 text-white font-semibold text-base transition hover:bg-teal-800"
           >
-            Volver a Mis Pagos
+            Volver a Mis Facturas
           </button>
         </div>
       </div>

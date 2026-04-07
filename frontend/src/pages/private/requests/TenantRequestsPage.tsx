@@ -16,6 +16,7 @@ import {
   getMatchesForCandidate,
   respondToInvitation,
 } from '../../../service/apartment.service'
+import { useToast } from '../../../hooks/useToast'
 import { getApartment } from '../../../service/apartments.service'
 import {
   CHAT_TOPIC_SUBSCRIPTION,
@@ -90,6 +91,7 @@ async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatc
 export default function TenantRequestsPage() {
   const { userId } = useAuthStore()
   const navigate = useNavigate()
+  const { showToast } = useToast()
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('pending')
   const [pendingItems, setPendingItems] = useState<EnrichedMatch[]>([])
@@ -234,6 +236,11 @@ export default function TenantRequestsPage() {
       await respondToInvitation(matchId, accepted)
     } catch (err) {
       console.error('Error responding to invitation', err)
+      const message = axios.isAxiosError(err)
+        ? ((err.response?.data as { message?: string } | undefined)?.message ??
+          'No se pudo responder a la invitacion')
+        : 'No se pudo responder a la invitacion'
+      showToast(message, 'error')
       void fetchData()
     } finally {
       setInvitationActionId(null)
