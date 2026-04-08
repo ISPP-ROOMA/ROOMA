@@ -1,8 +1,8 @@
 import { AnimatePresence } from 'framer-motion'
 import { Loader2, MessageCircle } from 'lucide-react'
 import type { IMessage, StompSubscription } from '@stomp/stompjs'
-import { useCallback, useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
 import { useStompClient } from '../../../hooks/useStompClient'
 import {
@@ -70,13 +70,27 @@ export default function LandlordRequestsPage() {
   const { userId } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>('pending')
+  const apartmentFilterId = useMemo(() => {
+    const rawApartmentId = searchParams.get('apartmentId')
+    if (!rawApartmentId) return null
+
+    const parsedApartmentId = Number(rawApartmentId)
+    return Number.isNaN(parsedApartmentId) ? null : parsedApartmentId
+  }, [searchParams])
+
+  const initialTab = useMemo<ActiveTab>(() => {
+    return searchParams.get('tab') === 'match' ? 'match' : 'pending'
+  }, [searchParams])
+
+  const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab)
   const [pendingItems, setPendingItems] = useState<EnrichedMatch[]>([])
   const [matchItems, setMatchItems] = useState<EnrichedMatch[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
+  const [filteredApartmentLabel, setFilteredApartmentLabel] = useState<string | null>(null)
   const [selectedApartment, setSelectedApartment] = useState<
     (ApartmentDTO & { imageUrl: string }) | null
   >(null)
@@ -84,22 +98,34 @@ export default function LandlordRequestsPage() {
   const [unreadMatches, setUnreadMatches] = useState<Set<number>>(new Set())
   const { client, connected } = useStompClient()
 
+  useEffect(() => {
+    setActiveTab(initialTab)
+  }, [initialTab])
+
   const fetchData = useCallback(async () => {
     if (!userId) return
     setLoading(true)
     setError(null)
     try {
       const id = Number(userId)
-      const [activeMatches, successMatches, fullMatches] = await Promise.all([
+      const [filteredApartment, activeMatches, successMatches, fullMatches] = await Promise.all([
+        apartmentFilterId ? getApartment(apartmentFilterId) : Promise.resolve(undefined),
         getMatchesForLandlord(id, 'ACTIVE'),
         getMatchesForLandlord(id, 'SUCCESSFUL'),
         getMatchesForLandlord(id, 'MATCH'),
       ])
 
+      setFilteredApartmentLabel(
+        apartmentFilterId ? filteredApartment?.title ?? `Vivienda #${apartmentFilterId}` : null
+      )
+
+      const matchesForApartment = (matches: ApartmentMatchDTO[]) =>
+        apartmentFilterId ? matches.filter((match) => match.apartmentId === apartmentFilterId) : matches
+
       const [enrichedPending, enrichedSuccess, enrichedFull] = await Promise.all([
-        enrichMatches(activeMatches),
-        enrichMatches(successMatches),
-        enrichMatches(fullMatches),
+        enrichMatches(matchesForApartment(activeMatches)),
+        enrichMatches(matchesForApartment(successMatches)),
+        enrichMatches(matchesForApartment(fullMatches)),
       ])
 
       setPendingItems(enrichedPending)
@@ -110,11 +136,11 @@ export default function LandlordRequestsPage() {
     } finally {
       setLoading(false)
     }
-  }, [userId])
+  }, [userId, apartmentFilterId])
 
   useEffect(() => {
     void fetchData()
-  }, [fetchData, location.key])
+  }, [fetchData, location.search])
 
   useEffect(() => {
     const chatableMatches = matchItems.filter(item => 
@@ -236,6 +262,7 @@ export default function LandlordRequestsPage() {
   }
 
   const visibleItems = activeTab === 'pending' ? pendingItems : matchItems
+  const hasApartmentFilter = apartmentFilterId !== null
 
   return (
     <div
@@ -249,6 +276,21 @@ export default function LandlordRequestsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-[#050505]">Mis Solicitudes</h1>
           <div className="h-10 w-10" aria-hidden /> {/* spacer */}
         </div>
+        {hasApartmentFilter && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-[#DDDBCB] bg-white px-4 py-3 text-sm text-[#050505]/80 shadow-sm">
+            <span className="font-medium text-[#050505]">Filtrado por inmueble</span>
+            <span className="rounded-full bg-[#F5F1E3] px-3 py-1 font-medium">
+              {filteredApartmentLabel ?? `Vivienda #${apartmentFilterId}`}
+            </span>
+            <button
+              type="button"
+              className="ml-auto rounded-full bg-[#008080] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#006d6d]"
+              onClick={() => navigate('/mis-solicitudes/recibidas')}
+            >
+              Ver todas
+            </button>
+          </div>
+        )}
       </header>
 
       {/* ── Tabs ── */}
@@ -302,9 +344,13 @@ export default function LandlordRequestsPage() {
           <div className="rounded-2xl border border-[#DDDBCB] bg-white p-10 text-center">
             <div className="text-5xl mb-4">{activeTab === 'pending' ? '📋' : '🤝'}</div>
             <p className="text-[#050505]/70 font-medium">
-              {activeTab === 'pending'
-                ? 'Aún no tienes solicitudes activas. ¡Desliza pisos en el inicio!'
-                : 'Todavía no tienes matches. ¡Sigue explorando!'}
+              {hasApartmentFilter
+                ? activeTab === 'pending'
+                  ? 'Este inmueble no tiene solicitudes activas.'
+                  : 'Este inmueble no tiene matches.'
+                : activeTab === 'pending'
+                  ? 'Aún no tienes solicitudes activas. ¡Desliza pisos en el inicio!'
+                  : 'Todavía no tienes matches. ¡Sigue explorando!'}
             </p>
           </div>
         ) : (
