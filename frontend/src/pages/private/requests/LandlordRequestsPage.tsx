@@ -37,37 +37,6 @@ interface EnrichedMatch {
   tenantEmail: string
 }
 
-function statusLabel(status: MatchStatus): string {
-  switch (status) {
-    case 'ACTIVE':
-      return 'Pendiente'
-    case 'MATCH':
-      return '¡Match!'
-    case 'INVITED':
-      return 'Invitado'
-    case 'SUCCESSFUL':
-      return 'Aceptada'
-    case 'REJECTED':
-      return 'Rechazada'
-    case 'CANCELED':
-      return 'Cancelada'
-  }
-}
-
-function statusBadgeClass(status: MatchStatus): string {
-  switch (status) {
-    case 'ACTIVE':
-      return 'border border-[#050505] bg-white text-[#050505]'
-    case 'MATCH':
-    case 'INVITED':
-    case 'SUCCESSFUL':
-      return 'border-0 bg-[#008080] text-white'
-    case 'REJECTED':
-    case 'CANCELED':
-      return 'border border-[#DDDBCB] bg-[#F5F1E3] text-[#050505]/60'
-  }
-}
-
 async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatch[]> {
   const enriched = await Promise.all(
     matches.map(async (match) => {
@@ -389,12 +358,7 @@ export default function LandlordRequestsPage() {
 
                     <div className="my-3 h-px w-full bg-[#DDDBCB]" />
 
-                    <div className="flex items-center justify-between gap-2">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.matchStatus)}`}
-                      >
-                        {statusLabel(item.matchStatus)}
-                      </span>
+                    <div className="flex items-center justify-end gap-2">
                       {item.matchStatus === 'ACTIVE' && (
                         <div className="flex items-center gap-2">
                           <button

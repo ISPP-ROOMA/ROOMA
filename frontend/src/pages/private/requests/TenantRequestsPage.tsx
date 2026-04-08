@@ -2,7 +2,7 @@ import type { IMessage, StompSubscription } from '@stomp/stompjs'
 import axios from 'axios'
 import { AnimatePresence } from 'framer-motion'
 import Lottie from 'lottie-react'
-import { Loader2, MessageCircle, X } from 'lucide-react'
+import { Info, Loader2, MessageCircle, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
@@ -39,37 +39,6 @@ interface EnrichedMatch {
   location: string
   price: string
   imageUrl: string
-}
-
-function statusLabel(status: MatchStatus): string {
-  switch (status) {
-    case 'ACTIVE':
-      return 'Pendiente'
-    case 'MATCH':
-      return '¡Match!'
-    case 'INVITED':
-      return 'Invitado'
-    case 'SUCCESSFUL':
-      return 'Aceptada'
-    case 'REJECTED':
-      return 'Rechazada'
-    case 'CANCELED':
-      return 'Cancelada'
-  }
-}
-
-function statusBadgeClass(status: MatchStatus): string {
-  switch (status) {
-    case 'ACTIVE':
-      return 'border border-[#050505] bg-white text-[#050505]'
-    case 'MATCH':
-    case 'INVITED':
-    case 'SUCCESSFUL':
-      return 'border-0 bg-[#008080] text-white'
-    case 'REJECTED':
-    case 'CANCELED':
-      return 'border border-[#DDDBCB] bg-[#F5F1E3] text-[#050505]/60'
-  }
 }
 
 async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatch[]> {
@@ -112,6 +81,7 @@ export default function TenantRequestsPage() {
   const [introMatchId, setIntroMatchId] = useState<number | null>(null)
   const [newMatchAnimationData, setNewMatchAnimationData] = useState<object | null>(null)
   const [unreadMatches, setUnreadMatches] = useState<Set<number>>(new Set())
+  const [invitationModalItem, setInvitationModalItem] = useState<EnrichedMatch | null>(null)
   const { client, connected } = useStompClient()
 
   useEffect(() => {
@@ -287,9 +257,10 @@ export default function TenantRequestsPage() {
 
   const handleInvitationResponse = async (matchId: number, accepted: boolean) => {
     setInvitationActionId(matchId)
-    setMatchItems((prev) => prev.filter((i) => i.matchId !== matchId))
     try {
       await respondToInvitation(matchId, accepted)
+      setMatchItems((prev) => prev.filter((i) => i.matchId !== matchId))
+      setInvitationModalItem((prev) => (prev?.matchId === matchId ? null : prev))
     } catch (err) {
       console.error('Error responding to invitation', err)
       const message = axios.isAxiosError(err)
@@ -457,12 +428,7 @@ export default function TenantRequestsPage() {
 
                         <div className="my-3 h-px w-full bg-[#DDDBCB]" />
 
-                        <div className="flex items-center justify-between gap-2">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.matchStatus)}`}
-                          >
-                            {statusLabel(item.matchStatus)}
-                          </span>
+                        <div className="flex items-center justify-end gap-2">
                           {item.matchStatus === 'MATCH' && (
                             <div className="flex items-center gap-2">
                               <button
@@ -482,34 +448,27 @@ export default function TenantRequestsPage() {
                             </div>
                           )}
                           {item.matchStatus === 'INVITED' && (
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                            <div className="mr-auto flex items-center gap-2">
                               <button
                                 type="button"
-                                className="btn btn-sm btn-error btn-outline"
-                                onClick={() => {
-                                  void handleInvitationResponse(item.matchId, false)
+                                className="rounded-full border border-[#DDDBCB] bg-white p-2 text-[#008080] flex items-center justify-center hover:bg-[#F5F1E3] transition-colors"
+                                aria-label="Ver invitacion"
+                                onClick={(e) => {
+                                  e.stopPropagation()
                                 }}
-                                disabled={invitationActionId === item.matchId}
                               >
-                                {invitationActionId === item.matchId ? (
-                                  <Loader2 size={12} className="animate-spin" />
-                                ) : (
-                                  'Rechazar'
-                                )}
+                                <Info size={16} />
                               </button>
                               <button
                                 type="button"
-                                className="btn btn-sm btn-success"
-                                onClick={() => {
-                                  void handleInvitationResponse(item.matchId, true)
+                                className="text-left text-xs font-medium text-[#008080] hover:underline"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setInvitationModalItem(item)
                                 }}
-                                disabled={invitationActionId === item.matchId}
+                                aria-label="Abrir invitacion"
                               >
-                                {invitationActionId === item.matchId ? (
-                                  <Loader2 size={12} className="animate-spin" />
-                                ) : (
-                                  'Aceptar'
-                                )}
+                                Tienes una invitacion para unirte al inmueble. Pulsa aquí
                               </button>
                             </div>
                           )}
@@ -539,6 +498,80 @@ export default function TenantRequestsPage() {
           />
         )}
       </AnimatePresence>
+
+      {invitationModalItem && (
+        <div
+          className="fixed inset-0 z-[75] flex items-center justify-center bg-black/45 px-4"
+          onClick={() => {
+            if (invitationActionId !== invitationModalItem.matchId) {
+              setInvitationModalItem(null)
+            }
+          }}
+          role="presentation"
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-[#DDDBCB] bg-white p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="invitation-dialog-title"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <h2 id="invitation-dialog-title" className="text-lg font-bold text-[#050505] leading-tight">
+                Invitacion para unirte
+              </h2>
+              <button
+                type="button"
+                className="rounded-full p-1.5 text-[#050505]/65 hover:bg-[#F5F1E3] hover:text-[#050505] transition-colors disabled:opacity-40"
+                onClick={() => setInvitationModalItem(null)}
+                aria-label="Cerrar invitacion"
+                disabled={invitationActionId === invitationModalItem.matchId}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <p className="mt-3 text-sm text-[#050505]/80">
+              Has recibido una invitacion para unirte al inmueble
+              <span className="font-semibold text-[#050505]"> {invitationModalItem.title}</span>.
+            </p>
+            <p className="mt-1 text-xs text-[#050505]/60">{invitationModalItem.location}</p>
+
+            <div className="mt-5 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-xl border border-[#DDDBCB] bg-white px-3 py-2 text-xs font-semibold text-[#050505] transition-colors hover:bg-[#F5F1E3] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => {
+                  void handleInvitationResponse(invitationModalItem.matchId, false)
+                }}
+                disabled={invitationActionId === invitationModalItem.matchId}
+              >
+                <span className="flex items-center justify-center gap-1.5">
+                  {invitationActionId === invitationModalItem.matchId && (
+                    <Loader2 size={12} className="animate-spin" />
+                  )}
+                  Rechazar
+                </span>
+              </button>
+              <button
+                type="button"
+                className="rounded-xl border border-[#008080] bg-white px-3 py-2 text-xs font-semibold text-[#008080] transition-colors hover:bg-[#E8F7F7] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => {
+                  void handleInvitationResponse(invitationModalItem.matchId, true)
+                }}
+                disabled={invitationActionId === invitationModalItem.matchId}
+              >
+                <span className="flex items-center justify-center gap-1.5">
+                  {invitationActionId === invitationModalItem.matchId && (
+                    <Loader2 size={12} className="animate-spin" />
+                  )}
+                  Aceptar
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {introMatchId !== null && (
         <div className="fixed inset-0 z-[70] pointer-events-none">
