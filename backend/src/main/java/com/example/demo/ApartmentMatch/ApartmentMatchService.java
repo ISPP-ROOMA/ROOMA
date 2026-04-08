@@ -315,9 +315,6 @@ public class ApartmentMatchService {
     @Transactional(readOnly = true)
     List<ApartmentMatchEntity> findTenantRequestByUserIdAndStatus(MatchStatus status) {
         UserEntity currentUser = userService.findCurrentUserEntity();
-        if (!currentUser.getId().equals(currentUser.getId())) {
-            throw new ConflictException("You can only view your own Request");
-        }
         return apartmentMatchRepository.findTenantRequestByUserIdAndStatus(currentUser.getId(), status);
     }
 
