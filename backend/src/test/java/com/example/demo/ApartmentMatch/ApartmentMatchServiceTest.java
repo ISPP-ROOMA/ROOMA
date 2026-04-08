@@ -691,6 +691,43 @@ public class ApartmentMatchServiceTest {
         assertSame(match, result);
     }
 
+        @Test
+        @DisplayName("markTenantMatchDetailsAsOpened sets viewed flag on first access")
+        public void markTenantMatchDetailsAsOpened_FirstOpen_SetsViewedFlag() {
+                UserEntity tenant = createUser(201, Role.TENANT, "tenant-view1@test.com");
+                ApartmentMatchEntity match = createMatch(202, MatchStatus.MATCH, tenant,
+                                createApartment(203, ApartmentState.ACTIVE, createUser(204, Role.LANDLORD, "landlord-view1@test.com")),
+                                true, true);
+                match.setTenantHasOpenedMatchDetails(false);
+
+                when(userService.findCurrentUserEntity()).thenReturn(tenant);
+                when(apartmentMatchRepository.findById(202)).thenReturn(Optional.of(match));
+                when(apartmentMatchRepository.save(match)).thenReturn(match);
+
+                ApartmentMatchEntity result = apartmentMatchService.markTenantMatchDetailsAsOpened(202);
+
+                assertEquals(Boolean.TRUE, result.getTenantHasOpenedMatchDetails());
+                verify(apartmentMatchRepository).save(match);
+        }
+
+        @Test
+        @DisplayName("markTenantMatchDetailsAsOpened does not save when already viewed")
+        public void markTenantMatchDetailsAsOpened_AlreadyViewed_DoesNotSave() {
+                UserEntity tenant = createUser(205, Role.TENANT, "tenant-view2@test.com");
+                ApartmentMatchEntity match = createMatch(206, MatchStatus.MATCH, tenant,
+                                createApartment(207, ApartmentState.ACTIVE, createUser(208, Role.LANDLORD, "landlord-view2@test.com")),
+                                true, true);
+                match.setTenantHasOpenedMatchDetails(true);
+
+                when(userService.findCurrentUserEntity()).thenReturn(tenant);
+                when(apartmentMatchRepository.findById(206)).thenReturn(Optional.of(match));
+
+                ApartmentMatchEntity result = apartmentMatchService.markTenantMatchDetailsAsOpened(206);
+
+                assertEquals(Boolean.TRUE, result.getTenantHasOpenedMatchDetails());
+                verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
+        }
+
     @Test
     @DisplayName("findMyMatchForTenant throws when current user is not candidate")
     public void findMyMatchForTenant_NotCandidate_ThrowsAccessDenied() {
@@ -973,6 +1010,7 @@ public class ApartmentMatchServiceTest {
         match.setMatchStatus(status);
         match.setCandidateInterest(candidateInterest);
         match.setLandlordInterest(landlordInterest);
+                match.setTenantHasOpenedMatchDetails(false);
         return match;
     }
 }

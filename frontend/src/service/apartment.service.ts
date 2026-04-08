@@ -88,6 +88,7 @@ export interface ApartmentMatchDTO {
   candidateId: number
   apartmentId: number
   matchStatus: MatchStatus
+  tenantHasOpenedMatchDetails?: boolean
 }
 
 export interface ApartmentMatchTenantDetailsDTO {
@@ -248,6 +249,10 @@ export const respondToInvitation = async (
       headers: { 'Content-Type': 'application/json' },
     }
   )
+}
+
+export const markTenantMatchDetailsAsViewed = async (apartmentMatchId: number): Promise<void> => {
+  await api.patch(`/apartments-matches/apartmentMatch/${apartmentMatchId}/tenant-match-details`)
 }
 
 export const sendInvitationToMatch = async (apartmentMatchId: number): Promise<void> => {

@@ -135,6 +135,7 @@ public class ApartmentMatchService {
         } else {
             newMatch.setMatchStatus(MatchStatus.REJECTED);
         }
+        newMatch.setTenantHasOpenedMatchDetails(false);
         return newMatch;
     }
 
@@ -261,6 +262,7 @@ public class ApartmentMatchService {
         } else {
             newMatch.setMatchStatus(MatchStatus.REJECTED);
         }
+        newMatch.setTenantHasOpenedMatchDetails(false);
         return newMatch;
     }
 
@@ -325,6 +327,16 @@ public class ApartmentMatchService {
                 .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
         if (!match.getCandidate().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("You can only view your own matches");
+        }
+        return match;
+    }
+
+    @Transactional
+    public ApartmentMatchEntity markTenantMatchDetailsAsOpened(Integer apartmentMatchId) {
+        ApartmentMatchEntity match = findMyMatchForTenant(apartmentMatchId);
+        if (!Boolean.TRUE.equals(match.getTenantHasOpenedMatchDetails())) {
+            match.setTenantHasOpenedMatchDetails(true);
+            apartmentMatchRepository.save(match);
         }
         return match;
     }

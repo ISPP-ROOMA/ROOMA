@@ -5,6 +5,7 @@ import { Loader2, MessageCircle, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
+import Grainient from '../../../components/ui/Grainient'
 import { useStompClient } from '../../../hooks/useStompClient'
 import type {
   ApartmentDTO,
@@ -14,6 +15,7 @@ import type {
 import {
   cancelApartmentMatch,
   getMatchesForCandidate,
+  markTenantMatchDetailsAsViewed,
   respondToInvitation,
 } from '../../../service/apartment.service'
 import { useToast } from '../../../hooks/useToast'
@@ -31,6 +33,7 @@ interface EnrichedMatch {
   matchId: number
   apartmentId: number
   matchStatus: MatchStatus
+  tenantHasOpenedMatchDetails: boolean
   title: string
   location: string
   price: string
@@ -76,6 +79,7 @@ async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatc
         matchId: match.id,
         apartmentId: match.apartmentId,
         matchStatus: match.matchStatus,
+        tenantHasOpenedMatchDetails: Boolean(match.tenantHasOpenedMatchDetails),
         title: apt?.title ?? `Vivienda #${match.apartmentId}`,
         location: apt?.ubication ?? '—',
         price: apt ? `${apt.price.toLocaleString('es-ES')} €` : '—',
@@ -213,6 +217,23 @@ export default function TenantRequestsPage() {
 
   const handleCardClick = async (item: EnrichedMatch, e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return
+
+    if (item.matchStatus === 'MATCH' && !item.tenantHasOpenedMatchDetails) {
+      try {
+        await markTenantMatchDetailsAsViewed(item.matchId)
+      } catch (err) {
+        console.error('Error marking match details as viewed', err)
+      } finally {
+        setMatchItems((prev) =>
+          prev.map((entry) =>
+            entry.matchId === item.matchId
+              ? { ...entry, tenantHasOpenedMatchDetails: true }
+              : entry
+          )
+        )
+      }
+    }
+
     setModalLoading(item.matchId)
     try {
       const apt = await getApartment(item.apartmentId)
@@ -325,6 +346,8 @@ export default function TenantRequestsPage() {
             {visibleItems.map((item) => {
               const isCancelled = item.matchStatus === 'CANCELED' || item.matchStatus === 'REJECTED'
               const isMatch = item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED'
+              const isNewUnopenedMatch =
+                item.matchStatus === 'MATCH' && !item.tenantHasOpenedMatchDetails
 
               return (
                 <article
@@ -333,119 +356,159 @@ export default function TenantRequestsPage() {
                   className={`overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm transition-opacity cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-transform ${isCancelled ? 'opacity-60' : ''
                     }`}
                 >
-                  {/* Image */}
-                  <div className={`relative h-40 sm:h-44 w-full ${isCancelled ? 'grayscale' : ''}`}>
-                    <img
-                      src={item.imageUrl}
-                      alt={item.title}
-                      className="h-full w-full object-cover"
-                    />
-                    {/* Modal loading spinner on card */}
-                    {modalLoading === item.matchId && (
-                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                        <Loader2 size={28} className="animate-spin text-white" />
+                  {isNewUnopenedMatch ? (
+                    <div className="relative h-[260px] sm:h-[280px] w-full overflow-hidden">
+                      <div className="absolute inset-0">
+                        <Grainient
+                          color1="#f0ebe3"
+                          color2="#0d9488"
+                          color3="#c4a97d"
+                          timeSpeed={0.25}
+                          colorBalance={-0.17}
+                          warpStrength={0.75}
+                          warpFrequency={5}
+                          warpSpeed={2}
+                          warpAmplitude={65}
+                          blendAngle={0}
+                          blendSoftness={0.05}
+                          rotationAmount={500}
+                          noiseScale={2.3}
+                          grainAmount={0.02}
+                          grainScale={2}
+                          grainAnimated={true}
+                          contrast={1.1}
+                          gamma={1}
+                          saturation={1.2}
+                          zoom={0.9}
+                        />
                       </div>
-                    )}
-                    {/* Match glow overlay */}
-                    {isMatch && (
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#008080]/40 to-transparent pointer-events-none" />
-                    )}
-                    {/* Cancel button (only on ACTIVE) */}
-                    {item.matchStatus === 'ACTIVE' && (
-                      <button
-                        className="absolute top-3 right-3 h-8 w-8 rounded-full bg-white/90 text-[#050505]/70 flex items-center justify-center shadow hover:bg-white hover:text-red-500 transition-colors disabled:opacity-50"
-                        aria-label="Cancelar solicitud"
-                        disabled={cancellingId === item.matchId}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          void handleCancel(item.matchId)
-                        }}
-                      >
-                        {cancellingId === item.matchId ? (
-                          <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                          <X size={14} />
-                        )}
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <h2 className="text-lg sm:text-xl font-bold leading-tight text-[#050505] line-clamp-1">
-                        {item.title}
-                      </h2>
-                      <span
-                        className={`shrink-0 text-lg font-semibold ${isCancelled ? 'text-[#050505]/50' : 'text-[#008080]'
-                          }`}
-                      >
-                        {item.price}
-                      </span>
+                      <div className="absolute inset-0 bg-black/15" />
+                      <div className="relative z-10 h-full w-full flex flex-col items-center justify-center px-6 text-center text-white">
+                        <p className="text-2xl sm:text-3xl font-black tracking-tight drop-shadow-lg">
+                          Nuevo Match!
+                        </p>
+                        <p className="mt-2 text-sm sm:text-base font-medium text-white/90 drop-shadow">
+                          Pulsa para descubrir los detalles
+                        </p>
+                      </div>
                     </div>
-
-                    <p className="mt-0.5 text-sm text-[#050505]/70 line-clamp-1">{item.location}</p>
-
-                    <div className="my-3 h-px w-full bg-[#DDDBCB]" />
-
-                    <div className="flex items-center justify-between gap-2">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.matchStatus)}`}
-                      >
-                        {statusLabel(item.matchStatus)}
-                      </span>
-                      {item.matchStatus === 'MATCH' && (
-                        <div className="flex items-center gap-2">
+                  ) : (
+                    <>
+                      {/* Image */}
+                      <div className={`relative h-40 sm:h-44 w-full ${isCancelled ? 'grayscale' : ''}`}>
+                        <img
+                          src={item.imageUrl}
+                          alt={item.title}
+                          className="h-full w-full object-cover"
+                        />
+                        {/* Match glow overlay */}
+                        {isMatch && (
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#008080]/40 to-transparent pointer-events-none" />
+                        )}
+                        {/* Cancel button (only on ACTIVE) */}
+                        {item.matchStatus === 'ACTIVE' && (
                           <button
-                            type="button"
-                            className="relative h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center"
-                            aria-label="Abrir chat"
+                            className="absolute top-3 right-3 h-8 w-8 rounded-full bg-white/90 text-[#050505]/70 flex items-center justify-center shadow hover:bg-white hover:text-red-500 transition-colors disabled:opacity-50"
+                            aria-label="Cancelar solicitud"
+                            disabled={cancellingId === item.matchId}
                             onClick={(e) => {
                               e.stopPropagation()
-                              navigate(`/chat/${item.matchId}`)
+                              void handleCancel(item.matchId)
                             }}
                           >
-                            <MessageCircle size={16} />
-                            {unreadMatches.has(item.matchId) && (
-                              <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 border border-white" />
-                            )}
-                          </button>
-                        </div>
-                      )}
-                      {item.matchStatus === 'INVITED' && (
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-error btn-outline"
-                            onClick={() => {
-                              void handleInvitationResponse(item.matchId, false)
-                            }}
-                            disabled={invitationActionId === item.matchId}
-                          >
-                            {invitationActionId === item.matchId ? (
-                              <Loader2 size={12} className="animate-spin" />
+                            {cancellingId === item.matchId ? (
+                              <Loader2 size={14} className="animate-spin" />
                             ) : (
-                              'Rechazar'
+                              <X size={14} />
                             )}
                           </button>
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-success"
-                            onClick={() => {
-                              void handleInvitationResponse(item.matchId, true)
-                            }}
-                            disabled={invitationActionId === item.matchId}
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <h2 className="text-lg sm:text-xl font-bold leading-tight text-[#050505] line-clamp-1">
+                            {item.title}
+                          </h2>
+                          <span
+                            className={`shrink-0 text-lg font-semibold ${isCancelled ? 'text-[#050505]/50' : 'text-[#008080]'
+                              }`}
                           >
-                            {invitationActionId === item.matchId ? (
-                              <Loader2 size={12} className="animate-spin" />
-                            ) : (
-                              'Aceptar'
-                            )}
-                          </button>
+                            {item.price}
+                          </span>
                         </div>
-                      )}
+
+                        <p className="mt-0.5 text-sm text-[#050505]/70 line-clamp-1">{item.location}</p>
+
+                        <div className="my-3 h-px w-full bg-[#DDDBCB]" />
+
+                        <div className="flex items-center justify-between gap-2">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(item.matchStatus)}`}
+                          >
+                            {statusLabel(item.matchStatus)}
+                          </span>
+                          {item.matchStatus === 'MATCH' && (
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                className="relative h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center"
+                                aria-label="Abrir chat"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  navigate(`/chat/${item.matchId}`)
+                                }}
+                              >
+                                <MessageCircle size={16} />
+                                {unreadMatches.has(item.matchId) && (
+                                  <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 border border-white" />
+                                )}
+                              </button>
+                            </div>
+                          )}
+                          {item.matchStatus === 'INVITED' && (
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-error btn-outline"
+                                onClick={() => {
+                                  void handleInvitationResponse(item.matchId, false)
+                                }}
+                                disabled={invitationActionId === item.matchId}
+                              >
+                                {invitationActionId === item.matchId ? (
+                                  <Loader2 size={12} className="animate-spin" />
+                                ) : (
+                                  'Rechazar'
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-success"
+                                onClick={() => {
+                                  void handleInvitationResponse(item.matchId, true)
+                                }}
+                                disabled={invitationActionId === item.matchId}
+                              >
+                                {invitationActionId === item.matchId ? (
+                                  <Loader2 size={12} className="animate-spin" />
+                                ) : (
+                                  'Aceptar'
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {modalLoading === item.matchId && (
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <Loader2 size={28} className="animate-spin text-white" />
                     </div>
-                  </div>
+                  )}
                 </article>
               )
             })}

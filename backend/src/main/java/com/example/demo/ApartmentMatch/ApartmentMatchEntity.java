@@ -50,6 +50,9 @@ public class ApartmentMatchEntity {
     @Enumerated(EnumType.STRING)
     private MatchStatus matchStatus;
 
+    @Column
+    private Boolean tenantHasOpenedMatchDetails = false;
+
     public ApartmentMatchEntity() {
     }
 
@@ -116,6 +119,14 @@ public class ApartmentMatchEntity {
 
     public void setMatchStatus(MatchStatus matchStatus) {
         this.matchStatus = matchStatus;
+    }
+
+    public Boolean getTenantHasOpenedMatchDetails() {
+        return tenantHasOpenedMatchDetails;
+    }
+
+    public void setTenantHasOpenedMatchDetails(Boolean tenantHasOpenedMatchDetails) {
+        this.tenantHasOpenedMatchDetails = tenantHasOpenedMatchDetails;
     }
 
 }
