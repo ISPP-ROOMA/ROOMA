@@ -3,6 +3,7 @@ package com.example.demo.Apartment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.example.demo.Exceptions.ForbiddenException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
@@ -18,6 +20,7 @@ import com.example.demo.Jwt.UserDetailsImpl;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserRepository;
+import com.example.demo.User.UserService;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -32,6 +35,9 @@ class ApartmentEditingIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
+    @MockitoBean
+    private UserService userService;
+
     private UserEntity landlord;
     private UserEntity otherUser;
     private ApartmentEntity apartment;
@@ -43,16 +49,18 @@ class ApartmentEditingIntegrationTest {
         SecurityContextHolder.clearContext();
 
         landlord = new UserEntity();
-        landlord.setEmail("landlord@test.com");
+        landlord.setEmail("landlord-edit@test.com");
         landlord.setPassword("pwd");
         landlord.setRole(Role.LANDLORD);
-        landlord = userRepository.save(landlord);
+        landlord.setAuthProvider("LOCAL");
+        landlord = userRepository.saveAndFlush(landlord);
 
         otherUser = new UserEntity();
-        otherUser.setEmail("other@test.com");
+        otherUser.setEmail("other-edit@test.com");
         otherUser.setPassword("pwd");
         otherUser.setRole(Role.TENANT);
-        otherUser = userRepository.save(otherUser);
+        otherUser.setAuthProvider("LOCAL");
+        otherUser = userRepository.saveAndFlush(otherUser);
 
         apartment = new ApartmentEntity(
                 "Titulo",
@@ -63,7 +71,7 @@ class ApartmentEditingIntegrationTest {
                 ApartmentState.ACTIVE,
                 landlord);
         apartment.setIdealTenantProfile("Perfil original");
-        apartment = apartmentRepository.save(apartment);
+        apartment = apartmentRepository.saveAndFlush(apartment);
     }
 
     private void authenticate(UserEntity user) {
@@ -73,6 +81,10 @@ class ApartmentEditingIntegrationTest {
                 principal.getPassword(),
                 principal.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);
+        
+        // Ensure mock returns this user when requested during service execution
+        when(userService.findCurrentUserEntity()).thenReturn(user);
+        when(userService.findCurrentUser()).thenReturn(user.getEmail());
     }
 
     @Test
@@ -99,7 +111,7 @@ class ApartmentEditingIntegrationTest {
         assertEquals("Madrid", updated.getUbication());
         assertEquals(ApartmentState.CLOSED, updated.getState());
         assertEquals("Nuevo perfil ideal", updated.getIdealTenantProfile());
-        // el propietario no cambia
+        // El propietario no cambia
         assertEquals(landlord.getId(), updated.getUser().getId());
     }
 
@@ -139,4 +151,3 @@ class ApartmentEditingIntegrationTest {
                 () -> apartmentService.update(nonExistingId, payload));
     }
 }
-

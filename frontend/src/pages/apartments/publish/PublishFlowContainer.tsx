@@ -37,6 +37,7 @@ export default function PublishFlowContainer() {
   const { token } = useAuthStore()
   const [currentStep, setCurrentStep] = useState(0)
   const [formData, setFormData] = useState<PublishFormData>(INITIAL_PUBLISH_FORM_DATA)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const progress = ((currentStep + 1) / TOTAL_STEPS) * 100
 
@@ -59,18 +60,25 @@ export default function PublishFlowContainer() {
       return
     }
 
+    if (isSubmitting) {
+      return
+    }
+
+    setIsSubmitting(true)
     try {
       const billsText = formData.includedBills.length
         ? formData.includedBills.join(', ')
         : 'No incluidos'
 
+      const ubicationText = [formData.street, formData.postalCode].filter(Boolean).join(', ') || 'Sin dirección'
+
       await createApartment(
         {
           title: `Piso en ${formData.neighborhood || 'Sin barrio'}`,
-          description: `Disponible desde ${formData.availableDate || 'fecha por definir'}. Fianza: ${formData.deposit} mes(es).`,
+          description: `Fianza: ${formData.deposit} mes(es).`,
           price: parsedPrice,
           bills: billsText,
-          ubication: formData.street || 'Sin dirección',
+          ubication: ubicationText,
           state: 'ACTIVE',
         },
         formData.images
@@ -79,6 +87,8 @@ export default function PublishFlowContainer() {
       navigate('/apartments/my')
     } catch (err) {
       console.error('Error creating apartment', err)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -176,10 +186,10 @@ export default function PublishFlowContainer() {
 
           <button
             onClick={() => handleNext()}
-            disabled={!canContinue}
+            disabled={!canContinue || isSubmitting}
             className={CONTINUE_BUTTON_CLASS}
           >
-            {isLastStep ? 'Finalizar' : 'Siguiente'}
+            {isLastStep ? (isSubmitting ? 'Publicando...' : 'Finalizar') : 'Siguiente'}
           </button>
         </div>
       </footer>

@@ -1,6 +1,6 @@
 import { Client } from '@stomp/stompjs'
-import { useEffect, useState } from 'react'
 import SockJS from 'sockjs-client'
+import { useEffect, useState } from 'react'
 import { useAuthStore } from '../store/authStore'
 
 export const useStompClient = () => {
@@ -27,8 +27,6 @@ export const useStompClient = () => {
     stompClient.onConnect = () => {
       console.log('STOMP: Conectado')
       setConnected(true)
-      // Actualizamos el estado solo cuando ocurre el evento de conexión
-      // Esto es asíncrono y no dispara el error de ESLint
       setClient(stompClient)
     }
 

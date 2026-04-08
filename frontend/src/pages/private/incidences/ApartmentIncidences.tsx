@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AxiosError } from 'axios'
 import { useToast } from '../../../hooks/useToast'
@@ -202,21 +202,21 @@ export default function ApartmentIncidences() {
         urgency: 'MEDIUM',
     })
 
-    const loadIncidents = async () => {
+    const loadIncidents = useCallback(async () => {
         if (!Number.isFinite(apartmentId)) {
-            setIsLoading(false)
-            return
+            setIsLoading(false);
+            return;
         }
 
-        setIsLoading(true)
-        const data = await getApartmentIncidents(apartmentId)
-        setIncidents(data)
-        setIsLoading(false)
-    }
+        setIsLoading(true);
+        const data = await getApartmentIncidents(apartmentId);
+        setIncidents(data);
+        setIsLoading(false);
+    }, [apartmentId]);
 
     useEffect(() => {
         void loadIncidents()
-    }, [apartmentId])
+    }, [loadIncidents])
 
     const activeIncidents = useMemo(
         () => incidents.filter((i) => i.status !== 'CLOSED' && i.status !== 'CLOSED_INACTIVITY'),
@@ -337,7 +337,7 @@ export default function ApartmentIncidences() {
         }
     }
 
-    const moveIncidentToStatus = async (incident: IncidentDTO, nextStatus: IncidentStatus) => {
+    const moveIncidentToStatus = useCallback(async (incident: IncidentDTO, nextStatus: IncidentStatus) => {
         if (incident.status === nextStatus) return
 
         setMovingIncidentId(incident.id)
@@ -351,7 +351,7 @@ export default function ApartmentIncidences() {
         } finally {
             setMovingIncidentId(null)
         }
-    }
+    }, [apartmentId, loadIncidents, showToast]);
 
     useEffect(() => {
         if (!dragState) return
@@ -430,7 +430,7 @@ export default function ApartmentIncidences() {
             window.removeEventListener('pointerup', handlePointerUp)
             window.removeEventListener('pointercancel', handlePointerUp)
         }
-    }, [dragState, showToast])
+    }, [dragState, showToast, moveIncidentToStatus])
 
     useEffect(() => {
         if (!dragState?.dragging) return

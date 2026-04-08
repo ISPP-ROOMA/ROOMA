@@ -154,7 +154,7 @@ export default function Invoices() {
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <button
             onClick={() => {
-              navigate('/my-home')
+              navigate(-1)
             }}
             className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm"
           >
@@ -174,7 +174,7 @@ export default function Invoices() {
             </svg>
           </button>
 
-          <h1 className="text-[15px] sm:text-lg font-bold text-teal-700 text-center flex-1">Mis Pagos</h1>
+          <h1 className="text-[15px] sm:text-lg font-bold text-teal-700 text-center flex-1">Mis Facturas</h1>
           
           <div className="w-9"></div>
         </div>

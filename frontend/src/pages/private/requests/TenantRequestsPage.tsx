@@ -1,9 +1,11 @@
+import type { IMessage, StompSubscription } from '@stomp/stompjs'
 import axios from 'axios'
 import { AnimatePresence } from 'framer-motion'
 import { Loader2, MessageCircle, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
+import { useStompClient } from '../../../hooks/useStompClient'
 import type {
   ApartmentDTO,
   ApartmentMatchDTO,
@@ -14,7 +16,13 @@ import {
   getMatchesForCandidate,
   respondToInvitation,
 } from '../../../service/apartment.service'
+import { useToast } from '../../../hooks/useToast'
 import { getApartment } from '../../../service/apartments.service'
+import {
+  CHAT_TOPIC_SUBSCRIPTION,
+  getMessageHistory,
+  type ChatMessageDTO,
+} from '../../../service/chat.service'
 import { useAuthStore } from '../../../store/authStore'
 
 type ActiveTab = 'pending' | 'match'
@@ -83,6 +91,7 @@ async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatc
 export default function TenantRequestsPage() {
   const { userId } = useAuthStore()
   const navigate = useNavigate()
+  const { showToast } = useToast()
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('pending')
   const [pendingItems, setPendingItems] = useState<EnrichedMatch[]>([])
@@ -95,6 +104,8 @@ export default function TenantRequestsPage() {
     (ApartmentDTO & { imageUrl: string }) | null
   >(null)
   const [modalLoading, setModalLoading] = useState<number | null>(null)
+  const [unreadMatches, setUnreadMatches] = useState<Set<number>>(new Set())
+  const { client, connected } = useStompClient()
 
   const fetchData = useCallback(async () => {
     if (!userId) return
@@ -128,6 +139,61 @@ export default function TenantRequestsPage() {
     void fetchData()
   }, [fetchData])
 
+  useEffect(() => {
+    const chatableMatches = matchItems.filter(item =>
+      item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED' || item.matchStatus === 'SUCCESSFUL'
+    )
+
+    if (chatableMatches.length === 0 || !userId) return
+
+    let isMounted = true
+    const subscriptions: StompSubscription[] = []
+
+    const initializeUnread = async () => {
+      const newUnread = new Set<number>()
+      for (const item of chatableMatches) {
+        try {
+          const history = await getMessageHistory({ type: 'match', id: item.matchId })
+          const hasUnread = history.some(m => m.senderId !== Number(userId) && m.status !== 'READ')
+          if (hasUnread) {
+            newUnread.add(item.matchId)
+          }
+        } catch {
+          // no pasa nada
+        }
+      }
+      if (isMounted) {
+        setUnreadMatches(prev => {
+          const merged = new Set(prev)
+          newUnread.forEach(id => merged.add(id))
+          return merged
+        })
+      }
+    }
+
+    void initializeUnread()
+
+    if (connected && client) {
+      for (const item of chatableMatches) {
+        const sub = client.subscribe(
+          CHAT_TOPIC_SUBSCRIPTION({ type: 'match', id: item.matchId }),
+          (payload: IMessage) => {
+            const newMessage = JSON.parse(payload.body) as ChatMessageDTO
+            if (newMessage.senderId !== Number(userId) && newMessage.status !== 'READ') {
+              setUnreadMatches(prev => new Set(prev).add(item.matchId))
+            }
+          }
+        )
+        subscriptions.push(sub)
+      }
+    }
+
+    return () => {
+      isMounted = false
+      subscriptions.forEach(sub => sub.unsubscribe())
+    }
+  }, [matchItems, userId, connected, client])
+
   const handleCancel = async (matchId: number) => {
     setCancellingId(matchId)
     try {
@@ -146,7 +212,6 @@ export default function TenantRequestsPage() {
   }
 
   const handleCardClick = async (item: EnrichedMatch, e: React.MouseEvent) => {
-    // Don't open modal when clicking the cancel button
     if ((e.target as HTMLElement).closest('button')) return
     setModalLoading(item.matchId)
     try {
@@ -171,6 +236,11 @@ export default function TenantRequestsPage() {
       await respondToInvitation(matchId, accepted)
     } catch (err) {
       console.error('Error responding to invitation', err)
+      const message = axios.isAxiosError(err)
+        ? ((err.response?.data as { message?: string } | undefined)?.message ??
+          'No se pudo responder a la invitacion')
+        : 'No se pudo responder a la invitacion'
+      showToast(message, 'error')
       void fetchData()
     } finally {
       setInvitationActionId(null)
@@ -328,7 +398,7 @@ export default function TenantRequestsPage() {
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            className="h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center"
+                            className="relative h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center"
                             aria-label="Abrir chat"
                             onClick={(e) => {
                               e.stopPropagation()
@@ -336,6 +406,9 @@ export default function TenantRequestsPage() {
                             }}
                           >
                             <MessageCircle size={16} />
+                            {unreadMatches.has(item.matchId) && (
+                              <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 border border-white" />
+                            )}
                           </button>
                         </div>
                       )}

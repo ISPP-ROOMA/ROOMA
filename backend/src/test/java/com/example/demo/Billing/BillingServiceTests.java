@@ -27,6 +27,7 @@ import com.example.demo.billing.BillRepository;
 import com.example.demo.billing.BillStatus;
 import com.example.demo.billing.BillingService;
 import com.example.demo.billing.DebtStatus;
+import com.example.demo.Notification.NotificationService;
 import com.example.demo.billing.TenantDebtEntity;
 import com.example.demo.billing.TenantDebtRepository;
 import com.example.demo.billing.dto.BillingSummaryDTO;
@@ -51,9 +52,12 @@ public class BillingServiceTests {
     @Mock
     private ApartmentMemberService apartmentMemberService;
     
+    @Mock
+    private NotificationService notificationService;
+
     @BeforeEach
     public void setUp() {
-        billingService = new BillingService(billRepository, tenantDebtRepository, userService, apartmentService, apartmentMemberService);
+        billingService = new BillingService(billRepository, tenantDebtRepository, userService, apartmentService, apartmentMemberService, notificationService);
     }
 
     @Test
@@ -261,9 +265,13 @@ public class BillingServiceTests {
         UserEntity user = new UserEntity();
         user.setId(userId);
 
+        ApartmentEntity apartment = new ApartmentEntity();
+        apartment.setId(1);
+
         BillEntity bill = new BillEntity();
         bill.setId(billId);
         bill.setStatus(BillStatus.PENDING);
+        bill.setApartment(apartment);
 
         TenantDebtEntity debt = new TenantDebtEntity();
         debt.setId(debtId);
@@ -371,9 +379,13 @@ public class BillingServiceTests {
         UserEntity user = new UserEntity();
         user.setId(userId);
 
+        ApartmentEntity apartment = new ApartmentEntity();
+        apartment.setId(1);
+
         BillEntity bill = new BillEntity();
         bill.setId(billId);
         bill.setStatus(BillStatus.PENDING);
+        bill.setApartment(apartment);
 
         TenantDebtEntity debt1 = new TenantDebtEntity();
         debt1.setId(debtId1);
