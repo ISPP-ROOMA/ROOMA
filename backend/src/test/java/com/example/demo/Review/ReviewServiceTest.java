@@ -20,6 +20,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentService;
@@ -136,6 +138,15 @@ public class ReviewServiceTest {
     }
 
     @Test
+    void makeReviewByLandlord_currentUserNotFound_throws() {
+        when(userService.findCurrentUser()).thenReturn("missing@test.com");
+        when(userService.findByEmail("missing@test.com")).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> reviewService.makeReviewByLandlord(2, 100, "x", 5));
+    }
+
+    @Test
     void makeReviewByLandlord_duplicateReview_throws() {
         UserEntity landlord = user(1, Role.LANDLORD, "landlord@test.com");
         when(userService.findCurrentUser()).thenReturn("landlord@test.com");
@@ -222,6 +233,41 @@ public class ReviewServiceTest {
         when(userService.findByEmail("tenant@test.com")).thenReturn(Optional.of(tenant));
 
         assertThrows(BadRequestException.class, () -> reviewService.makeReviewByTenant(3, 100, "x", 3));
+    }
+
+    @Test
+    void makeReviewByTenant_currentUserNotFound_throws() {
+        when(userService.findCurrentUser()).thenReturn("missing@test.com");
+        when(userService.findByEmail("missing@test.com")).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> reviewService.makeReviewByTenant(1, 100, "x", 3));
+    }
+
+    @Test
+    void findPublishedReceivedReviewsByUserId_delegatesAndReturnsPage() {
+        ReviewEntity r1 = review(70, 1, 5, 100);
+        ReviewEntity r2 = review(71, 2, 5, 100);
+        Page<ReviewEntity> page = new PageImpl<>(List.of(r1, r2));
+        when(reviewRepository.findPublishedReceivedReviewsByUserId(any(Integer.class), any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(page);
+
+        Page<ReviewEntity> result = reviewService.findPublishedReceivedReviewsByUserId(5, -3, 999);
+
+        assertEquals(2, result.getContent().size());
+        verify(reviewRepository).findPublishedReceivedReviewsByUserId(any(Integer.class), any(org.springframework.data.domain.Pageable.class));
+    }
+
+    @Test
+    void findAllPublishedReceivedReviewsByUserId_delegatesAndReturnsList() {
+        ReviewEntity r1 = review(80, 1, 5, 100);
+        ReviewEntity r2 = review(81, 2, 5, 100);
+        when(reviewRepository.findAllPublishedReceivedReviewsByUserId(5)).thenReturn(List.of(r1, r2));
+
+        List<ReviewEntity> result = reviewService.findAllPublishedReceivedReviewsByUserId(5);
+
+        assertEquals(2, result.size());
+        verify(reviewRepository).findAllPublishedReceivedReviewsByUserId(5);
     }
 
     @Test
@@ -396,6 +442,14 @@ public class ReviewServiceTest {
     }
 
     @Test
+    void getReviewableUsers_currentUserNotFound_throws() {
+        when(userService.findCurrentUser()).thenReturn("missing@test.com");
+        when(userService.findByEmail("missing@test.com")).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> reviewService.getReviewableUsers(100));
+    }
+
+    @Test
     void getPendingReviewApartments_landlordPath() {
         UserEntity currentLandlord = user(1, Role.LANDLORD, "landlord@test.com");
         UserEntity formerTenant = user(2, Role.TENANT, "tenant@test.com");
@@ -416,6 +470,14 @@ public class ReviewServiceTest {
     }
 
     @Test
+    void getPendingReviewApartments_currentUserNotFound_throws() {
+        when(userService.findCurrentUser()).thenReturn("missing@test.com");
+        when(userService.findByEmail("missing@test.com")).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> reviewService.getPendingReviewApartments());
+    }
+
+    @Test
     void getPendingReviewApartments_tenantInactivePath() {
         UserEntity currentTenant = user(3, Role.TENANT, "tenant@test.com");
         UserEntity landlord = user(1, Role.LANDLORD, "landlord@test.com");
@@ -432,6 +494,56 @@ public class ReviewServiceTest {
         when(apartmentMemberService.findCurrentTenantsByApartmentId(100)).thenReturn(List.of(flatmateMembership));
         when(apartmentService.findLandlordByApartmentId(100)).thenReturn(landlord);
 
+        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 1, 100)).thenReturn(Optional.empty());
+        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(1, 3, 100)).thenReturn(Optional.empty());
+        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 9, 100)).thenReturn(Optional.empty());
+        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(9, 3, 100)).thenReturn(Optional.empty());
+
+        List<ReviewService.PendingReviewApartment> result = reviewService.getPendingReviewApartments();
+
+        assertEquals(1, result.size());
+        assertEquals(2, result.get(0).pendingUsers().size());
+    }
+
+    @Test
+    void getPendingReviewApartments_tenantActiveWhenEndDateNull() {
+        UserEntity currentTenant = user(3, Role.TENANT, "tenant@test.com");
+        UserEntity pastFlatmate = user(8, Role.TENANT, "past@test.com");
+        ApartmentEntity apartment = apartment(100);
+
+        ApartmentMemberEntity currentMembership = membership(currentTenant, apartment, LocalDate.now().minusDays(20), null);
+        ApartmentMemberEntity pastMembership = membership(pastFlatmate, apartment, LocalDate.now().minusDays(30), LocalDate.now().minusDays(5));
+
+        when(userService.findCurrentUser()).thenReturn("tenant@test.com");
+        when(userService.findByEmail("tenant@test.com")).thenReturn(Optional.of(currentTenant));
+        when(apartmentMemberService.findLastApartmentsByTenantIdAndApartmentId(3)).thenReturn(List.of(apartment));
+        when(apartmentMemberService.findByUserIdAndApartmentId(3, 100)).thenReturn(currentMembership);
+        when(apartmentMemberService.findPastTenantMembershipsByUserIdAndApartmentId(3, 100)).thenReturn(List.of(pastMembership));
+        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 8, 100)).thenReturn(Optional.empty());
+        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(8, 3, 100)).thenReturn(Optional.empty());
+
+        List<ReviewService.PendingReviewApartment> result = reviewService.getPendingReviewApartments();
+
+        assertEquals(1, result.size());
+        assertEquals(1, result.get(0).pendingUsers().size());
+    }
+
+    @Test
+    void getPendingReviewApartments_tenantInactiveWhenEndDateEqualsToday() {
+        UserEntity currentTenant = user(3, Role.TENANT, "tenant@test.com");
+        UserEntity landlord = user(1, Role.LANDLORD, "landlord@test.com");
+        UserEntity currentFlatmate = user(9, Role.TENANT, "flat@test.com");
+        ApartmentEntity apartment = apartment(100);
+
+        ApartmentMemberEntity currentMembership = membership(currentTenant, apartment, LocalDate.now().minusDays(20), LocalDate.now());
+        ApartmentMemberEntity flatmateMembership = membership(currentFlatmate, apartment, LocalDate.now().minusDays(7), null);
+
+        when(userService.findCurrentUser()).thenReturn("tenant@test.com");
+        when(userService.findByEmail("tenant@test.com")).thenReturn(Optional.of(currentTenant));
+        when(apartmentMemberService.findLastApartmentsByTenantIdAndApartmentId(3)).thenReturn(List.of(apartment));
+        when(apartmentMemberService.findByUserIdAndApartmentId(3, 100)).thenReturn(currentMembership);
+        when(apartmentMemberService.findCurrentTenantsByApartmentId(100)).thenReturn(List.of(flatmateMembership));
+        when(apartmentService.findLandlordByApartmentId(100)).thenReturn(landlord);
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 1, 100)).thenReturn(Optional.empty());
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(1, 3, 100)).thenReturn(Optional.empty());
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 9, 100)).thenReturn(Optional.empty());

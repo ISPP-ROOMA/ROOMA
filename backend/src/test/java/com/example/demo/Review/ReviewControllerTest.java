@@ -7,6 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -120,6 +121,30 @@ public class ReviewControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(11));
     }
+
+            @Test
+            @WithMockUser(roles = "TENANT")
+            void getReceivedReviewsByUser_ok() throws Exception {
+            when(reviewService.findPublishedReceivedReviewsByUserId(2, 0, 5))
+                .thenReturn(new PageImpl<>(List.of(reviewEntity(30, 5, "Public review"))));
+
+            mockMvc.perform(get("/api/reviews/received/user/2?page=0&size=5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(30))
+                .andExpect(jsonPath("$.content[0].comment").value("Public review"));
+            }
+
+            @Test
+            @WithMockUser(roles = "TENANT")
+            void getAllReceivedReviewsByUser_ok() throws Exception {
+            when(reviewService.findAllPublishedReceivedReviewsByUserId(2))
+                .thenReturn(List.of(reviewEntity(31, 4, "All reviews")));
+
+            mockMvc.perform(get("/api/reviews/received/user/2/all"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(31))
+                .andExpect(jsonPath("$[0].comment").value("All reviews"));
+            }
 
     @Test
     @WithMockUser(roles = "TENANT")
