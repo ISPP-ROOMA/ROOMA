@@ -271,7 +271,7 @@ export default function LandlordMatchDetailPage() {
 
                 {!reviewsLoading && !reviewsError && !hasReviews && (
                   <p className="text-sm text-[#050505]/70">
-                    Este tenant todavía no tiene reseñas publicadas.
+                    Este usuario todavía no tiene reseñas publicadas.
                   </p>
                 )}
 
@@ -345,7 +345,7 @@ export default function LandlordMatchDetailPage() {
               >
                 <span className="flex items-center justify-center gap-2">
                   {inviteLoading && <Loader2 size={15} className="animate-spin" />}
-                  Añadir a mi vivienda
+                  Invitar a unirse a la vivienda
                 </span>
               </button>
             </div>

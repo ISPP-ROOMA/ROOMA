@@ -280,7 +280,7 @@ export default function LandlordRequestDetailPage() {
 
                 {!reviewsLoading && !reviewsError && !hasReviews && (
                   <p className="text-sm text-[#050505]/70">
-                    Este tenant todavía no tiene reseñas publicadas.
+                    Este usuario todavía no tiene reseñas publicadas.
                   </p>
                 )}
 
