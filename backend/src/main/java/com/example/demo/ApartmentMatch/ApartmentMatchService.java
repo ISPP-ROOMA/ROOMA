@@ -274,9 +274,6 @@ public class ApartmentMatchService {
         if (!match.getApartment().getUser().getId().equals(userService.findCurrentUserEntity().getId())) {
             throw new ConflictException("Only the landlord of the apartment can process this action");
         }
-        if (match.getApartment().getState() != ApartmentState.ACTIVE) {
-            throw new ConflictException("Cannot process the match because the apartment is not active");
-        }
         match.setLandlordInterest(interest);
         if (interest) {
             match.setMatchStatus(MatchStatus.MATCH);
@@ -354,9 +351,6 @@ public class ApartmentMatchService {
         if (match.getMatchStatus() != MatchStatus.MATCH) {
             throw new ConflictException("Only matches with status MATCH can be invited");
         }
-        if (match.getApartment().getState() != ApartmentState.ACTIVE) {
-            throw new ConflictException("Cannot send an invitation because the apartment is not active");
-        }
         if (!apartmentMemberService.findActiveMembershipsByUserId(match.getCandidate().getId()).isEmpty()) {
             throw new ConflictException("Cannot send invitation because the candidate already belongs to an apartment");
         }
@@ -384,9 +378,6 @@ public class ApartmentMatchService {
             throw new ConflictException("Only matches with status INVITED can be responded to");
         }
         if (accepted) {
-            if (match.getApartment().getState() != ApartmentState.ACTIVE) {
-                throw new ConflictException("Cannot accept the invitation because the apartment is not active");
-            }
             if (!apartmentMemberService.findActiveMembershipsByUserId(currentUser.getId()).isEmpty()) {
                 throw new ConflictException("Cannot accept invitation because you already belong to an apartment");
             }

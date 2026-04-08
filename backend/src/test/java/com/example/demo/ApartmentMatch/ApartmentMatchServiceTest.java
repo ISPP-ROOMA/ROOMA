@@ -1,25 +1,24 @@
 package com.example.demo.ApartmentMatch;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -30,6 +29,7 @@ import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ConflictException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.MemberApartment.ApartmentMemberService;
+import com.example.demo.MemberApartment.MemberRole;
 import com.example.demo.Notification.NotificationService;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
@@ -281,22 +281,23 @@ public class ApartmentMatchServiceTest {
     }
 
     @Test
-    @DisplayName("processLandlordAction throws when apartment is not ACTIVE")
-    public void processLandlordAction_ApartmentNotActive_ThrowsConflict() {
+    @DisplayName("processLandlordAction allows landlord to process a closed apartment")
+    public void processLandlordAction_ClosedApartment_AllowsProcessing() {
         Integer matchId = 21;
         UserEntity landlord = createUser(29, Role.LANDLORD, "landlord9@test.com");
-        ApartmentEntity apartment = createApartment(121, ApartmentState.MATCHING, landlord);
+        ApartmentEntity apartment = createApartment(121, ApartmentState.CLOSED, landlord);
         ApartmentMatchEntity match = createMatch(matchId, MatchStatus.ACTIVE,
                 createUser(30, Role.TENANT, "tenant11@test.com"), apartment, true, null);
 
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
         when(userService.findCurrentUserEntity()).thenReturn(landlord);
+        when(apartmentMatchRepository.save(match)).thenReturn(match);
 
-        ConflictException exception = assertThrows(
-                ConflictException.class,
-                () -> apartmentMatchService.processLandlordAction(matchId, true));
+        ApartmentMatchEntity result = apartmentMatchService.processLandlordAction(matchId, true);
 
-        assertEquals("Cannot process the match because the apartment is not active", exception.getMessage());
+        assertEquals(Boolean.TRUE, result.getLandlordInterest());
+        assertEquals(MatchStatus.MATCH, result.getMatchStatus());
+        verify(apartmentMatchRepository).save(match);
     }
 
     @Test
@@ -357,9 +358,9 @@ public class ApartmentMatchServiceTest {
         assertEquals("Only matches with status MATCH can be invited", exception.getMessage());
     }
 
-    @Test
-    @DisplayName("sendInvitation throws when apartment is not ACTIVE")
-    public void sendInvitation_ApartmentNotActive_ThrowsConflict() {
+        @Test
+        @DisplayName("sendInvitation allows landlord to invite from a closed apartment")
+        public void sendInvitation_ClosedApartment_AllowsInvitation() {
         Integer matchId = 25;
         UserEntity landlord = createUser(38, Role.LANDLORD, "landlord13@test.com");
         ApartmentEntity apartment = createApartment(125, ApartmentState.CLOSED, landlord);
@@ -368,12 +369,12 @@ public class ApartmentMatchServiceTest {
 
         when(userService.findCurrentUserEntity()).thenReturn(landlord);
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+                when(apartmentMatchRepository.save(match)).thenReturn(match);
 
-        ConflictException exception = assertThrows(
-                ConflictException.class,
-                () -> apartmentMatchService.sendInvitation(matchId));
+                ApartmentMatchEntity result = apartmentMatchService.sendInvitation(matchId);
 
-        assertEquals("Cannot send an invitation because the apartment is not active", exception.getMessage());
+                assertEquals(MatchStatus.INVITED, result.getMatchStatus());
+                verify(apartmentMatchRepository).save(match);
     }
 
     @Test
@@ -407,6 +408,7 @@ public class ApartmentMatchServiceTest {
 
         when(userService.findCurrentUserEntity()).thenReturn(candidate);
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+        when(apartmentMemberService.existsByUserIdAndRole(landlord.getId(), MemberRole.HOMEBODY)).thenReturn(true);
         when(apartmentMatchRepository.save(match)).thenReturn(match);
 
         ApartmentMatchEntity result = apartmentMatchService.respondToInvitation(matchId, true);
@@ -475,9 +477,9 @@ public class ApartmentMatchServiceTest {
         assertEquals("Only matches with status INVITED can be responded to", exception.getMessage());
     }
 
-    @Test
-    @DisplayName("respondToInvitation throws when apartment is not ACTIVE while accepting")
-    public void respondToInvitation_Accepted_ApartmentNotActive_ThrowsConflict() {
+        @Test
+        @DisplayName("respondToInvitation accepted adds members even when apartment is closed")
+        public void respondToInvitation_Accepted_ClosedApartment_AddsMembersAndSetsSuccessful() {
         Integer matchId = 31;
         UserEntity candidate = createUser(51, Role.TENANT, "tenant21@test.com");
         ApartmentEntity apartment = createApartment(131, ApartmentState.CLOSED,
@@ -486,12 +488,13 @@ public class ApartmentMatchServiceTest {
 
         when(userService.findCurrentUserEntity()).thenReturn(candidate);
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+                when(apartmentMatchRepository.save(match)).thenReturn(match);
 
-        ConflictException exception = assertThrows(
-                ConflictException.class,
-                () -> apartmentMatchService.respondToInvitation(matchId, true));
+                ApartmentMatchEntity result = apartmentMatchService.respondToInvitation(matchId, true);
 
-        assertEquals("Cannot accept the invitation because the apartment is not active", exception.getMessage());
+                assertEquals(MatchStatus.SUCCESSFUL, result.getMatchStatus());
+                verify(apartmentMemberService).addMember(apartment.getId(), candidate.getId(), LocalDate.now());
+                verify(apartmentMatchRepository).save(match);
     }
 
     @Test
@@ -505,6 +508,7 @@ public class ApartmentMatchServiceTest {
 
                 when(userService.findCurrentUserEntity()).thenReturn(candidate);
                 when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+                when(apartmentMemberService.existsByUserIdAndRole(landlord.getId(), MemberRole.HOMEBODY)).thenReturn(true);
                 // Solo lanza excepción al intentar añadir al candidato
                 when(apartmentMemberService.addMember(eq(apartment.getId()), eq(candidate.getId()), any(LocalDate.class)))
                                 .thenThrow(new BadRequestException("User already belongs to this apartment"));
