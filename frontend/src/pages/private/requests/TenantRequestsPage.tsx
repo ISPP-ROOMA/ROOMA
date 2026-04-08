@@ -1,6 +1,7 @@
 import type { IMessage, StompSubscription } from '@stomp/stompjs'
 import axios from 'axios'
 import { AnimatePresence } from 'framer-motion'
+import Lottie from 'lottie-react'
 import { Loader2, MessageCircle, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -108,8 +109,33 @@ export default function TenantRequestsPage() {
     (ApartmentDTO & { imageUrl: string }) | null
   >(null)
   const [modalLoading, setModalLoading] = useState<number | null>(null)
+  const [introMatchId, setIntroMatchId] = useState<number | null>(null)
+  const [newMatchAnimationData, setNewMatchAnimationData] = useState<object | null>(null)
   const [unreadMatches, setUnreadMatches] = useState<Set<number>>(new Set())
   const { client, connected } = useStompClient()
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadAnimation = async () => {
+      try {
+        const response = await fetch('/animations/new-match.json')
+        if (!response.ok) return
+        const data = (await response.json()) as object
+        if (isMounted) {
+          setNewMatchAnimationData(data)
+        }
+      } catch {
+        // Fallback to text-only intro if JSON is missing or invalid.
+      }
+    }
+
+    void loadAnimation()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const fetchData = useCallback(async () => {
     if (!userId) return
@@ -215,8 +241,26 @@ export default function TenantRequestsPage() {
     }
   }
 
+  const openApartmentDetails = async (item: EnrichedMatch) => {
+    setModalLoading(item.matchId)
+    try {
+      const apt = await getApartment(item.apartmentId)
+      if (apt) {
+        setSelectedApartment({
+          ...apt,
+          imageUrl: apt.coverImageUrl ?? item.imageUrl,
+        } as ApartmentDTO & { imageUrl: string })
+      }
+    } catch (err) {
+      console.error('Error loading apartment details', err)
+    } finally {
+      setModalLoading(null)
+    }
+  }
+
   const handleCardClick = async (item: EnrichedMatch, e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return
+    if (introMatchId !== null) return
 
     if (item.matchStatus === 'MATCH' && !item.tenantHasOpenedMatchDetails) {
       try {
@@ -232,22 +276,13 @@ export default function TenantRequestsPage() {
           )
         )
       }
+
+      setIntroMatchId(item.matchId)
+      await new Promise((resolve) => setTimeout(resolve, 1800))
+      setIntroMatchId(null)
     }
 
-    setModalLoading(item.matchId)
-    try {
-      const apt = await getApartment(item.apartmentId)
-      if (apt) {
-        setSelectedApartment({
-          ...apt,
-          imageUrl: apt.coverImageUrl ?? item.imageUrl,
-        } as ApartmentDTO & { imageUrl: string })
-      }
-    } catch (err) {
-      console.error('Error loading apartment details', err)
-    } finally {
-      setModalLoading(null)
-    }
+    await openApartmentDetails(item)
   }
 
   const handleInvitationResponse = async (matchId: number, accepted: boolean) => {
@@ -359,33 +394,12 @@ export default function TenantRequestsPage() {
                   {isNewUnopenedMatch ? (
                     <div className="relative h-[260px] sm:h-[280px] w-full overflow-hidden">
                       <div className="absolute inset-0">
-                        <Grainient
-                          color1="#f0ebe3"
-                          color2="#0d9488"
-                          color3="#c4a97d"
-                          timeSpeed={0.25}
-                          colorBalance={-0.17}
-                          warpStrength={0.75}
-                          warpFrequency={5}
-                          warpSpeed={2}
-                          warpAmplitude={65}
-                          blendAngle={0}
-                          blendSoftness={0.05}
-                          rotationAmount={500}
-                          noiseScale={2.3}
-                          grainAmount={0.02}
-                          grainScale={2}
-                          grainAnimated={true}
-                          contrast={1.1}
-                          gamma={1}
-                          saturation={1.2}
-                          zoom={0.9}
-                        />
+                        <Grainient variant="roomaMatch" />
                       </div>
                       <div className="absolute inset-0 bg-black/15" />
                       <div className="relative z-10 h-full w-full flex flex-col items-center justify-center px-6 text-center text-white">
                         <p className="text-2xl sm:text-3xl font-black tracking-tight drop-shadow-lg">
-                          Nuevo Match!
+                          ¡Nuevo Match!
                         </p>
                         <p className="mt-2 text-sm sm:text-base font-medium text-white/90 drop-shadow">
                           Pulsa para descubrir los detalles
@@ -525,6 +539,24 @@ export default function TenantRequestsPage() {
           />
         )}
       </AnimatePresence>
+
+      {introMatchId !== null && (
+        <div className="fixed inset-0 z-[70] pointer-events-none">
+          <div className="absolute inset-0">
+            <Grainient variant="roomaMatch" />
+          </div>
+          <div className="absolute inset-0 bg-black/15" />
+          <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-6 text-center">
+            <div className="w-[240px] max-w-[75vw] sm:w-[320px]">
+              {newMatchAnimationData ? (
+                <Lottie animationData={newMatchAnimationData} loop={false} autoplay={true} />
+              ) : (
+                <Loader2 size={56} className="mx-auto animate-spin text-white" />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
