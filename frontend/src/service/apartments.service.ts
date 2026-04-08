@@ -93,7 +93,10 @@ export const createApartment = async (
   idempotencyKey?: string
 ): Promise<Apartment> => {
   const formData = new FormData()
-  const requestKey = idempotencyKey ?? buildIdempotencyKey()
+  const normalizedProvidedKey = idempotencyKey?.trim()
+  const requestKey = normalizedProvidedKey && normalizedProvidedKey.length > 0
+    ? normalizedProvidedKey
+    : buildIdempotencyKey()
 
   formData.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }))
 
