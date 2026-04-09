@@ -1349,7 +1349,7 @@ public class ApartmentMatchServiceTest {
         apartment.setUbication("Madrid");
         return apartment;
     }
-
+//
     private ApartmentMatchEntity createMatch(Integer id, MatchStatus status, UserEntity candidate,
             ApartmentEntity apartment, Boolean candidateInterest, Boolean landlordInterest) {
         ApartmentMatchEntity match = new ApartmentMatchEntity();
