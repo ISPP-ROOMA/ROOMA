@@ -1337,6 +1337,18 @@ public class ApartmentMatchServiceTest {
         return user;
     }
 
+    private ApartmentMatchEntity createMatch(Integer id, MatchStatus status, UserEntity candidate,
+            ApartmentEntity apartment, Boolean candidateInterest, Boolean landlordInterest) {
+        ApartmentMatchEntity match = new ApartmentMatchEntity();
+        match.setId(id);
+        match.setCandidate(candidate);
+        match.setApartment(apartment);
+        match.setMatchStatus(status);
+        match.setCandidateInterest(candidateInterest);
+        match.setLandlordInterest(landlordInterest);
+        return match;
+    }
+
     private ApartmentEntity createApartment(Integer apartmentId, ApartmentState state, UserEntity landlord) {
         ApartmentEntity apartment = new ApartmentEntity();
         apartment.setId(apartmentId);
@@ -1349,16 +1361,6 @@ public class ApartmentMatchServiceTest {
         apartment.setUbication("Madrid");
         return apartment;
     }
-//
-    private ApartmentMatchEntity createMatch(Integer id, MatchStatus status, UserEntity candidate,
-            ApartmentEntity apartment, Boolean candidateInterest, Boolean landlordInterest) {
-        ApartmentMatchEntity match = new ApartmentMatchEntity();
-        match.setId(id);
-        match.setCandidate(candidate);
-        match.setApartment(apartment);
-        match.setMatchStatus(status);
-        match.setCandidateInterest(candidateInterest);
-        match.setLandlordInterest(landlordInterest);
-        return match;
-    }
+
+    
 }
