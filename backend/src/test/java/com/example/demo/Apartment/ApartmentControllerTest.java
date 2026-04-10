@@ -255,7 +255,7 @@ public class ApartmentControllerTest {
     @DisplayName("createApartment should return 201 with created apartment for landlord")
     public void createApartment_LandlordSuccess() throws Exception {
         ApartmentEntity created = apartment(5);
-        when(apartmentService.createWithImages(any(CreateApartment.class), any(), anyString()))
+        when(apartmentService.createWithImages(any(CreateApartment.class), any()))
                 .thenReturn(created);
 
         mockMvc.perform(multipart("/api/apartments")
@@ -265,13 +265,12 @@ public class ApartmentControllerTest {
                                 MediaType.APPLICATION_JSON_VALUE,
                                 "{\"title\":\"Flat A\",\"description\":\"Desc\",\"price\":700.0,\"bills\":\"wifi\",\"ubication\":\"Madrid\",\"state\":\"ACTIVE\"}"
                                         .getBytes(StandardCharsets.UTF_8)
-                        ))
-                        .header("Idempotency-Key", "unique-key-001"))
+                        )))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(5))
                 .andExpect(jsonPath("$.title").value("Apartment 5"));
 
-        verify(apartmentService).createWithImages(any(CreateApartment.class), any(), anyString());
+        verify(apartmentService).createWithImages(any(CreateApartment.class), any());
     }
 
     @Test
