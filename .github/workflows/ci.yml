@@ -110,10 +110,11 @@ jobs:
           exit 1
 
       - name: Seed Database
+        working-directory: backend
         env:
           PGPASSWORD: user
         run: |
-          psql -h localhost -U user -d test -f backend/src/main/resources/data.sql
+          psql -h localhost -U user -d test -f src/main/resources/data.sql
 
       - name: Start frontend
         run: VITE_API_URL=http://localhost:8080/api npm run dev -- --host localhost --port 5173 > ../frontend.log 2>&1 &
