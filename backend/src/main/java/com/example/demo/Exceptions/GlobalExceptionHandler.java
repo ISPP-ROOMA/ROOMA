@@ -108,20 +108,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
-    public ResponseEntity<Map<String, Object>> methodArgumentNotValidException(MethodArgumentNotValidException ex) {
-        Map<String, Object> errorResponse = new HashMap<>();
+    public ResponseEntity<ErrorResponse> methodArgumentNotValidException(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = new HashMap<>();
 
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 fieldErrors.put(error.getField(), error.getDefaultMessage())
         );
 
-        errorResponse.put("message", "Validation failed");
-        errorResponse.put("statusCode", HttpStatus.BAD_REQUEST.value());
-        errorResponse.put("errors", fieldErrors);
-        errorResponse.put("date", new Date());
+        ErrorResponse message = new ErrorResponse(
+                "Validation failed",
+                HttpStatus.BAD_REQUEST.value(),
+                new Date(),
+                fieldErrors
+        );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)

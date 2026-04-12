@@ -92,10 +92,9 @@ public class ApartmentController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApartmentDTO> createApartment(
             @RequestPart("data") @Valid CreateApartment apartment,
-            @RequestHeader("Idempotency-Key") String idempotencyKey,
             @RequestPart(value = "images", required = false) List<MultipartFile> images) {
 
-        ApartmentEntity createdApartment = apartmentsService.createWithImages(apartment, images, idempotencyKey);
+        ApartmentEntity createdApartment = apartmentsService.createWithImages(apartment, images);
         return new ResponseEntity<>(ApartmentDTO.fromApartmentEntity(createdApartment), HttpStatus.CREATED);
     }
 
