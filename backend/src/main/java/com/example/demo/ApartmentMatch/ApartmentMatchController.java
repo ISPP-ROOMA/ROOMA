@@ -2,7 +2,6 @@ package com.example.demo.ApartmentMatch;
 
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,6 +19,7 @@ import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchDTO;
 import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchLandlordDTO;
 import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchSummaryDTO;
 import com.example.demo.ApartmentMatch.DTOs.ApartmentMatchTenantDTO;
+import com.example.demo.Exceptions.ForbiddenException;
 
 @RestController
 @RequestMapping("/api/apartments-matches")
@@ -69,20 +69,18 @@ public class ApartmentMatchController {
     }
 
     @PostMapping("/swipe/candidate/{candidateId}/apartment/{apartmentId}/action/{isCandidateAction}")
-    public ResponseEntity<?> processSwipe(@PathVariable Integer candidateId, @PathVariable Integer apartmentId,
+    public ResponseEntity<ApartmentMatchDTO> processSwipe(@PathVariable Integer candidateId, @PathVariable Integer apartmentId,
             @PathVariable boolean isCandidateAction, @RequestBody boolean interest,
             @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
 
         if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("You must be authenticated to perform swipe actions");
+            throw new ForbiddenException("You must be authenticated to perform swipe actions");
         }
 
         com.example.demo.User.UserEntity authenticatedUser = apartmentMatchService
                 .getUserByEmail(userDetails.getUsername());
         if (authenticatedUser == null || !authenticatedUser.getId().equals(candidateId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("You can only perform swipe actions for your own user");
+            throw new ForbiddenException("You can only perform swipe actions for your own user");
         }
 
         ApartmentMatchDTO apartmentMatch = ApartmentMatchDTO.fromApartmentMatchEntity(

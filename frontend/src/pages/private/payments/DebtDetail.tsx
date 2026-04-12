@@ -117,7 +117,7 @@ export default function DebtDetail() {
           }}
           className="text-teal-700 font-semibold text-sm"
         >
-          ← Volver a Mis Pagos
+          ← Volver a Mis Facturas
         </button>
       </div>
     )

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import ChatScreen from './pages/private/chat/chatView'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import PrivateRoute from './components/PrivateRoute'
@@ -9,31 +8,33 @@ import { ToastProvider } from './context/ToastContext'
 import User from './pages/admin/User'
 import Users from './pages/admin/Users'
 import ApartmentDetail from './pages/apartments/ApartmentDetail'
-import Apartments from './pages/apartments/Apartments'
 import ApartmentEdit from './pages/apartments/ApartmentEdit'
+import Apartments from './pages/apartments/Apartments'
 import ApartmentBills from './pages/apartments/billing/ApartmentBills'
 import LandlordBillDetail from './pages/apartments/billing/LandlordBillDetail'
 import NewBill from './pages/apartments/billing/NewBill'
 import PublishFlowContainer from './pages/apartments/publish/PublishFlowContainer'
 import Home from './pages/Home'
 import Login from './pages/Login'
-import LeaveReview from './pages/private/LeaveReview'
-import MyHome from './pages/private/MyHome'
+import ChatScreen from './pages/private/chat/chatView'
 import FavoritesPage from './pages/private/FavoritesPage'
-import DebtDetail from './pages/private/payments/DebtDetail'
-import Invoices from './pages/private/payments/Invoices'
 import ApartmentIncidences from './pages/private/incidences/ApartmentIncidences'
 import IncidentDetail from './pages/private/incidences/IncidentDetail'
-import PaymentSuccess from './pages/private/payments/PaymentSuccess'
+import LeaveReview from './pages/private/LeaveReview'
+import MyHome from './pages/private/MyHome'
 import MyReviews from './pages/private/MyReviews'
+import NotificationsPage from './pages/private/NotificationsPage'
+import DebtDetail from './pages/private/payments/DebtDetail'
+import Invoices from './pages/private/payments/Invoices'
+import PaymentSuccess from './pages/private/payments/PaymentSuccess'
 import Profile from './pages/private/Profile'
 import ProfileEdit from './pages/private/ProfileEdit'
-import ReviewContractFinished from './pages/private/ReviewContractFinished'
-import SelectReviewTarget from './pages/private/SelectReviewTarget'
 import LandlordMatchDetailPage from './pages/private/requests/LandlordMatchDetailPage'
 import LandlordRequestDetailPage from './pages/private/requests/LandlordRequestDetailPage'
 import LandlordRequestsPage from './pages/private/requests/LandlordRequestsPage'
 import TenantRequestsPage from './pages/private/requests/TenantRequestsPage'
+import ReviewContractFinished from './pages/private/ReviewContractFinished'
+import SelectReviewTarget from './pages/private/SelectReviewTarget'
 import Register from './pages/Register'
 import { hasSessionHint, refreshToken } from './service/auth.service'
 import { getPendingReviewApartments } from './service/review.service'
@@ -133,6 +134,14 @@ function App() {
           element={
             <PrivateRoute>
               <ProfileEdit />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <PrivateRoute>
+              <NotificationsPage />
             </PrivateRoute>
           }
         />
@@ -277,6 +286,17 @@ function App() {
               />
             )}
 
+            {token && (
+              <Route
+                path="/notifications"
+                element={
+                  <PrivateRoute>
+                    <NotificationsPage />
+                  </PrivateRoute>
+                }
+              />
+            )}
+
             {role === 'ADMIN' && (
               <>
                 <Route
@@ -374,22 +394,22 @@ function App() {
                     </PrivateRoute>
                   }
                 />
-                  <Route
-                    path="/chat/:matchId"
-                    element={
-                      <PrivateRoute>
-                        <ChatScreen />
-                      </PrivateRoute>
-                    }
-                  />
-                  <Route
-                    path="/chat/incidents/:incidentId"
-                    element={
-                      <PrivateRoute>
-                        <ChatScreen />
-                      </PrivateRoute>
-                    }
-                  />
+                <Route
+                  path="/chat/:matchId"
+                  element={
+                    <PrivateRoute>
+                      <ChatScreen />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/chat/incidents/:incidentId"
+                  element={
+                    <PrivateRoute>
+                      <ChatScreen />
+                    </PrivateRoute>
+                  }
+                />
               </>
             )}
 
@@ -460,22 +480,22 @@ function App() {
                     </PrivateRoute>
                   }
                 />
-                  <Route
-                    path="/chat/:matchId"
-                    element={
-                      <PrivateRoute>
-                        <ChatScreen />
-                      </PrivateRoute>
-                    }
-                  />
-                  <Route
-                    path="/chat/incidents/:incidentId"
-                    element={
-                      <PrivateRoute>
-                        <ChatScreen />
-                      </PrivateRoute>
-                    }
-                  />
+                <Route
+                  path="/chat/:matchId"
+                  element={
+                    <PrivateRoute>
+                      <ChatScreen />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/chat/incidents/:incidentId"
+                  element={
+                    <PrivateRoute>
+                      <ChatScreen />
+                    </PrivateRoute>
+                  }
+                />
               </>
             )}
 

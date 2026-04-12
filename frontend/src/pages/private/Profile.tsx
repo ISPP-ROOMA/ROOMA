@@ -1,9 +1,9 @@
 ﻿import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getUserProfile, getUser, deleteUser } from '../../service/users.service'
-import type { User } from '../../service/users.service'
 import { getAllApartments, type ApartmentDTO } from '../../service/apartment.service'
 import { api } from '../../service/api'
+import type { User } from '../../service/users.service'
+import { deleteUser, getUser, getUserProfile } from '../../service/users.service'
 import { useAuthStore } from '../../store/authStore'
 
 const ROLE_LABELS: Record<string, string> = {
@@ -143,7 +143,11 @@ export default function Profile() {
           <div className="-mt-8 px-5 pb-6 text-center sm:px-6">
             <div className="mx-auto mb-3 h-20 w-20 overflow-hidden rounded-full border-4 border-white bg-[#0F9E97] text-2xl font-bold text-white shadow-sm sm:h-24 sm:w-24 sm:text-3xl">
               {userData.profilePic ? (
-                <img src={userData.profilePic} alt="Perfil" className="h-full w-full object-cover" />
+                <img
+                  src={userData.profilePic}
+                  alt="Perfil"
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <div className="grid h-full w-full place-items-center">{initial}</div>
               )}
@@ -157,12 +161,18 @@ export default function Profile() {
             <div className="mt-2 inline-flex rounded-full border border-[#A2E0D8] bg-[#E6F7F5] px-3 py-1 text-xs font-semibold text-[#0C8A80]">
               {roleLabel}
             </div>
-            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
               <Link
                 to="/profile/edit"
                 className="btn h-11 w-full rounded-xl border border-[#0F9E97] bg-white px-4 text-sm font-semibold text-[#0F9E97] hover:bg-[#E6F7F5]"
               >
                 Editar Perfil
+              </Link>
+              <Link
+                to="/notifications"
+                className="btn h-11 w-full rounded-xl border border-[#0F9E97] bg-white px-4 text-sm font-semibold text-[#0F9E97] hover:bg-[#E6F7F5]"
+              >
+                Notificaciones
               </Link>
               <button
                 className="btn h-11 w-full rounded-xl border border-[#F5C2C7] bg-white px-4 text-sm font-semibold text-[#C2414D] hover:bg-[#FFF1F2]"
@@ -179,32 +189,50 @@ export default function Profile() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <p className="text-[11px] uppercase tracking-[0.14em] text-[#8B7355]">Teléfono</p>
-              <p className="mt-1 text-sm font-medium text-[#0F172A]">{userData.phone || 'No especificado'}</p>
+              <p className="mt-1 text-sm font-medium text-[#0F172A]">
+                {userData.phone || 'No especificado'}
+              </p>
             </div>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.14em] text-[#8B7355]">Fecha de nacimiento</p>
+              <p className="text-[11px] uppercase tracking-[0.14em] text-[#8B7355]">
+                Fecha de nacimiento
+              </p>
               <p className="mt-1 text-sm font-medium text-[#0F172A]">
-                {userData.birthDate ? new Date(userData.birthDate).toLocaleDateString() : 'No especificada'}
+                {userData.birthDate
+                  ? new Date(userData.birthDate).toLocaleDateString()
+                  : 'No especificada'}
               </p>
             </div>
             <div>
               <p className="text-[11px] uppercase tracking-[0.14em] text-[#8B7355]">Género</p>
-              <p className="mt-1 text-sm font-medium text-[#0F172A]">{userData.gender || 'No especificado'}</p>
+              <p className="mt-1 text-sm font-medium text-[#0F172A]">
+                {userData.gender || 'No especificado'}
+              </p>
             </div>
             <div>
               <p className="text-[11px] uppercase tracking-[0.14em] text-[#8B7355]">Fumador</p>
               <p className="mt-1 text-sm font-medium text-[#0F172A]">
-                {userData.smoker === true ? 'Sí' : userData.smoker === false ? 'No' : 'No especificado'}
+                {userData.smoker === true
+                  ? 'Sí'
+                  : userData.smoker === false
+                    ? 'No'
+                    : 'No especificado'}
               </p>
             </div>
             <div>
               <p className="text-[11px] uppercase tracking-[0.14em] text-[#8B7355]">Profesión</p>
-              <p className="mt-1 text-sm font-medium text-[#0F172A]">{userData.profession || 'No especificada'}</p>
+              <p className="mt-1 text-sm font-medium text-[#0F172A]">
+                {userData.profession || 'No especificada'}
+              </p>
             </div>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.14em] text-[#8B7355]">Fecha de alta</p>
+              <p className="text-[11px] uppercase tracking-[0.14em] text-[#8B7355]">
+                Fecha de alta
+              </p>
               <p className="mt-1 text-sm font-medium text-[#0F172A]">
-                {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Desconocida'}
+                {userData.createdAt
+                  ? new Date(userData.createdAt).toLocaleDateString()
+                  : 'Desconocida'}
               </p>
             </div>
           </div>
@@ -219,7 +247,9 @@ export default function Profile() {
               )}
               {userData.schedule && (
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#8B7355]">Horario / rutina</p>
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-[#8B7355]">
+                    Horario / rutina
+                  </p>
                   <p className="mt-1 text-sm text-[#0F172A]">{userData.schedule}</p>
                 </div>
               )}
@@ -240,9 +270,7 @@ export default function Profile() {
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <Link
                 to={
-                  userData.role === 'LANDLORD'
-                    ? `/apartments/${currentApartment.id}`
-                    : `/my-home`
+                  userData.role === 'LANDLORD' ? `/apartments/${currentApartment.id}` : `/my-home`
                 }
                 className="btn h-12 w-full rounded-2xl border-none bg-gradient-to-r from-[#0F9E97] to-[#13B2A6] px-5 text-base font-semibold text-white shadow-[0_10px_22px_rgba(15,158,151,0.25)] hover:brightness-105"
               >

@@ -13,8 +13,6 @@ import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
 import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ForbiddenException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
-import com.example.demo.Idempotency.ApartmentCreateIdempotencyEntity;
-import com.example.demo.Idempotency.ApartmentCreateIdempotencyRepository;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 
@@ -26,16 +24,13 @@ public class ApartmentService {
     private final ApartmentRepository apartmentsRepository;
     private final UserService userService;
     private final ApartmentPhotoService apartmentPhotoService;
-    private final ApartmentCreateIdempotencyRepository apartmentCreateIdempotencyRepository;
 
     public ApartmentService(ApartmentRepository apartmentsRepository,
             UserService userService,
-            ApartmentPhotoService apartmentPhotoService,
-            ApartmentCreateIdempotencyRepository apartmentCreateIdempotencyRepository) {
+            ApartmentPhotoService apartmentPhotoService) {
         this.apartmentsRepository = apartmentsRepository;
         this.userService = userService;
         this.apartmentPhotoService = apartmentPhotoService;
-        this.apartmentCreateIdempotencyRepository = apartmentCreateIdempotencyRepository;
     }
 
     @Transactional
@@ -52,23 +47,8 @@ public class ApartmentService {
     }
 
     @Transactional
-    public ApartmentEntity createWithImages(CreateApartment dto, List<MultipartFile> images, String idempotencyKey) {
-        if (idempotencyKey == null || idempotencyKey.isBlank()) {
-            throw new BadRequestException("Missing Idempotency-Key header");
-        }
-
+    public ApartmentEntity createWithImages(CreateApartment dto, List<MultipartFile> images) {
         UserEntity currentUser = userService.findCurrentUserEntity();
-        String normalizedKey = idempotencyKey.trim();
-        String requestFingerprint = buildRequestFingerprint(dto, images);
-
-        ApartmentCreateIdempotencyEntity idempotencyEntry = getOrCreateIdempotencyEntry(
-                currentUser,
-                normalizedKey,
-                requestFingerprint);
-
-        if (idempotencyEntry.getApartment() != null) {
-            return idempotencyEntry.getApartment();
-        }
 
         ApartmentEntity apartment = CreateApartment.fromDTO(dto);
         apartment.setUser(currentUser);
@@ -76,63 +56,7 @@ public class ApartmentService {
         ApartmentEntity savedApartment = apartmentsRepository.save(apartment);
         apartmentPhotoService.saveImages(savedApartment, images, false);
 
-        idempotencyEntry.setApartment(savedApartment);
-        apartmentCreateIdempotencyRepository.save(idempotencyEntry);
         return savedApartment;
-    }
-
-    private ApartmentCreateIdempotencyEntity getOrCreateIdempotencyEntry(
-            UserEntity currentUser,
-            String idempotencyKey,
-            String requestFingerprint) {
-        Optional<ApartmentCreateIdempotencyEntity> existingEntry = apartmentCreateIdempotencyRepository
-                .findByUserIdAndEndpointAndIdempotencyKey(currentUser.getId(), CREATE_APARTMENT_ENDPOINT, idempotencyKey);
-
-        if (existingEntry.isPresent()) {
-            validateFingerprint(existingEntry.get(), requestFingerprint);
-            return existingEntry.get();
-        }
-
-        ApartmentCreateIdempotencyEntity newEntry = new ApartmentCreateIdempotencyEntity(
-                currentUser,
-                CREATE_APARTMENT_ENDPOINT,
-                idempotencyKey,
-                requestFingerprint);
-
-        try {
-            return apartmentCreateIdempotencyRepository.saveAndFlush(newEntry);
-        } catch (DataIntegrityViolationException ex) {
-            ApartmentCreateIdempotencyEntity persistedEntry = apartmentCreateIdempotencyRepository
-                    .findByUserIdAndEndpointAndIdempotencyKey(currentUser.getId(), CREATE_APARTMENT_ENDPOINT, idempotencyKey)
-                    .orElseThrow(() -> ex);
-
-            validateFingerprint(persistedEntry, requestFingerprint);
-            return persistedEntry;
-        }
-    }
-
-    private void validateFingerprint(ApartmentCreateIdempotencyEntity entry, String requestFingerprint) {
-        if (!entry.getRequestFingerprint().equals(requestFingerprint)) {
-            throw new BadRequestException("Idempotency-Key was already used with a different payload");
-        }
-    }
-
-    private String buildRequestFingerprint(CreateApartment dto, List<MultipartFile> images) {
-        int imageCount = images == null ? 0 : images.size();
-        return normalize(dto.title())
-                + "|" + normalize(dto.description())
-                + "|" + dto.price()
-                + "|" + normalize(dto.bills())
-                + "|" + normalize(dto.ubication())
-                + "|" + normalize(dto.state())
-                + "|" + imageCount;
-    }
-
-    private String normalize(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.trim().replaceAll("\\s+", " ").toLowerCase();
     }
 
     @Transactional(readOnly = true)

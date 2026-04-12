@@ -202,6 +202,55 @@ public class ApartmentPhotoServiceTest {
         verify(apartmentPhotoRepository, never()).delete(any(ApartmentPhotoEntity.class));
     }
 
+    @Test
+    @DisplayName("save should delegate to repository and return saved entity")
+    public void save_DelegatesToRepository() {
+        ApartmentPhotoEntity photo = new ApartmentPhotoEntity();
+        photo.setId(80);
+        photo.setUrl("https://img/80.jpg");
+
+        when(apartmentPhotoRepository.save(photo)).thenReturn(photo);
+
+        ApartmentPhotoEntity result = apartmentPhotoService.save(photo);
+
+        assertEquals(photo, result);
+        verify(apartmentPhotoRepository).save(photo);
+    }
+
+    @Test
+    @DisplayName("deleteById should delegate deleteById to repository")
+    public void deleteById_DelegatesToRepository() {
+        apartmentPhotoService.deleteById(90);
+
+        verify(apartmentPhotoRepository).deleteById(90);
+    }
+
+    @Test
+    @DisplayName("findPhotosByApartmentId should return photos for the given apartment")
+    public void findPhotosByApartmentId_ReturnsPhotos() {
+        ApartmentEntity apartment = apartment(100);
+        ApartmentPhotoEntity first = photo(apartment, 1, true, "p-1", "https://img/1.jpg");
+        ApartmentPhotoEntity second = photo(apartment, 2, false, "p-2", "https://img/2.jpg");
+
+        when(apartmentPhotoRepository.findByApartmentId(100)).thenReturn(List.of(first, second));
+
+        List<ApartmentPhotoEntity> result = apartmentPhotoService.findPhotosByApartmentId(100);
+
+        assertEquals(2, result.size());
+        verify(apartmentPhotoRepository).findByApartmentId(100);
+    }
+
+    @Test
+    @DisplayName("findPhotosByApartmentId should return empty list when apartment has no photos")
+    public void findPhotosByApartmentId_WhenNoPhotos_ReturnsEmptyList() {
+        when(apartmentPhotoRepository.findByApartmentId(101)).thenReturn(List.of());
+
+        List<ApartmentPhotoEntity> result = apartmentPhotoService.findPhotosByApartmentId(101);
+
+        assertEquals(0, result.size());
+        verify(apartmentPhotoRepository).findByApartmentId(101);
+    }
+
     private ApartmentEntity apartment(Integer id) {
         ApartmentEntity apartment = new ApartmentEntity();
         apartment.setId(id);

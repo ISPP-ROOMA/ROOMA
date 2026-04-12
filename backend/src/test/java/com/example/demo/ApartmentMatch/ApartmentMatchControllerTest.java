@@ -2,9 +2,11 @@ package com.example.demo.ApartmentMatch;
 
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -62,6 +64,210 @@ public class ApartmentMatchControllerTest {
                     .httpBasic(Customizer.withDefaults());
             return http.build();
         }
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("getAllApartmentMatches returns list of ApartmentMatchDTOs")
+    void getAllApartmentMatches_ReturnsOk() throws Exception {
+        ApartmentMatchEntity match = createMatch(100, 200, 300, MatchStatus.ACTIVE, Role.LANDLORD);
+        when(apartmentMatchService.findAllApartmentMatches()).thenReturn(List.of(match));
+
+        mockMvc.perform(get("/api/apartments-matches"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(100))
+                .andExpect(jsonPath("$[0].candidateId").value(200))
+                .andExpect(jsonPath("$[0].apartmentId").value(300))
+                .andExpect(jsonPath("$[0].matchStatus").value("ACTIVE"));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("getApartmentMatchByCandidateAndApartment returns single ApartmentMatchDTO")
+    void getApartmentMatchByCandidateAndApartment_ReturnsOk() throws Exception {
+        ApartmentMatchEntity match = createMatch(101, 201, 301, MatchStatus.MATCH, Role.LANDLORD);
+        when(apartmentMatchService.findApartmentMatchByCandidateAndApartment(201, 301)).thenReturn(match);
+
+        mockMvc.perform(get("/api/apartments-matches/candidate/{candidateId}/apartment/{apartmentId}", 201, 301))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(101))
+                .andExpect(jsonPath("$.candidateId").value(201))
+                .andExpect(jsonPath("$.apartmentId").value(301))
+                .andExpect(jsonPath("$.matchStatus").value("MATCH"));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("getApartmentMatchByCandidateAndApartment returns 404 when service throws not found")
+    void getApartmentMatchByCandidateAndApartment_NotFound_Returns404() throws Exception {
+        when(apartmentMatchService.findApartmentMatchByCandidateAndApartment(202, 302))
+                .thenThrow(new ResourceNotFoundException("Apartment match not found for the given candidate and apartment"));
+
+        mockMvc.perform(get("/api/apartments-matches/candidate/{candidateId}/apartment/{apartmentId}", 202, 302))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Apartment match not found for the given candidate and apartment"))
+                .andExpect(jsonPath("$.statusCode").value(404));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("getApartmentMatchesByCandidateId returns list for candidate and status")
+    void getApartmentMatchesByCandidateId_ReturnsOk() throws Exception {
+        ApartmentMatchEntity match = createMatch(103, 203, 303, MatchStatus.ACTIVE, Role.LANDLORD);
+        when(apartmentMatchService.findMatchesByCandidateIdAndMatchStatus(203, MatchStatus.ACTIVE))
+                .thenReturn(List.of(match));
+
+        mockMvc.perform(get("/api/apartments-matches/candidate/{candidateId}/status/{matchStatus}", 203, "ACTIVE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(103))
+                .andExpect(jsonPath("$[0].candidateId").value(203))
+                .andExpect(jsonPath("$[0].apartmentId").value(303))
+                .andExpect(jsonPath("$[0].matchStatus").value("ACTIVE"));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("getApartmentMatchesByCandidateId returns 400 for invalid MatchStatus")
+    void getApartmentMatchesByCandidateId_InvalidStatus_Returns400() throws Exception {
+        mockMvc.perform(get("/api/apartments-matches/candidate/{candidateId}/status/{matchStatus}", 204, "WRONG"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid request parameter: matchStatus"))
+                .andExpect(jsonPath("$.statusCode").value(400));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("getApartmentMatchesByApartmentId returns list for apartment and status")
+    void getApartmentMatchesByApartmentId_ReturnsOk() throws Exception {
+        ApartmentMatchEntity match = createMatch(105, 205, 305, MatchStatus.MATCH, Role.LANDLORD);
+        when(apartmentMatchService.findMatchesByApartmentIdAndMatchStatus(305, MatchStatus.MATCH))
+                .thenReturn(List.of(match));
+
+        mockMvc.perform(get("/api/apartments-matches/apartment/{apartmentId}/status/{matchStatus}", 305, "MATCH"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(105))
+                .andExpect(jsonPath("$[0].candidateId").value(205))
+                .andExpect(jsonPath("$[0].apartmentId").value(305))
+                .andExpect(jsonPath("$[0].matchStatus").value("MATCH"));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("getApartmentMatchesByApartmentId returns 400 for invalid MatchStatus")
+    void getApartmentMatchesByApartmentId_InvalidStatus_Returns400() throws Exception {
+        mockMvc.perform(get("/api/apartments-matches/apartment/{apartmentId}/status/{matchStatus}", 306, "WRONG"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid request parameter: matchStatus"))
+                .andExpect(jsonPath("$.statusCode").value(400));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("finalizeMatchProcess returns 204 when service succeeds")
+    void finalizeMatchProcess_ReturnsNoContent() throws Exception {
+        mockMvc.perform(delete("/api/apartments-matches/apartment/{apartmentId}", 400))
+                .andExpect(status().isNoContent());
+
+        verify(apartmentMatchService).finalizeMatchProcess(400);
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("finalizeMatchProcess returns 404 when service throws not found")
+    void finalizeMatchProcess_NotFound_Returns404() throws Exception {
+        doThrow(new ResourceNotFoundException("No matches found for this apartment"))
+                .when(apartmentMatchService).finalizeMatchProcess(401);
+
+        mockMvc.perform(delete("/api/apartments-matches/apartment/{apartmentId}", 401))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("No matches found for this apartment"))
+                .andExpect(jsonPath("$.statusCode").value(404));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("updateApartmentMatchStatus returns ApartmentMatchDTO when successful")
+    void updateApartmentMatchStatus_ReturnsOk() throws Exception {
+        ApartmentMatchEntity match = createMatch(500, 600, 700, MatchStatus.SUCCESSFUL, Role.LANDLORD);
+        when(apartmentMatchService.successfulMatch(500)).thenReturn(match);
+
+        mockMvc.perform(patch("/api/apartments-matches/apartmentMatch/{apartmentMatchId}/status/successful", 500))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(500))
+                .andExpect(jsonPath("$.candidateId").value(600))
+                .andExpect(jsonPath("$.apartmentId").value(700))
+                .andExpect(jsonPath("$.matchStatus").value("SUCCESSFUL"));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("updateApartmentMatchStatus returns 404 when service throws not found")
+    void updateApartmentMatchStatus_NotFound_Returns404() throws Exception {
+        when(apartmentMatchService.successfulMatch(501))
+                .thenThrow(new ResourceNotFoundException("Match not found"));
+
+        mockMvc.perform(patch("/api/apartments-matches/apartmentMatch/{apartmentMatchId}/status/successful", 501))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Match not found"))
+                .andExpect(jsonPath("$.statusCode").value(404));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("cancelApartmentMatch returns ApartmentMatchDTO when successful")
+    void cancelApartmentMatch_ReturnsOk() throws Exception {
+        ApartmentMatchEntity match = createMatch(600, 700, 800, MatchStatus.CANCELED, Role.LANDLORD);
+        when(apartmentMatchService.cancelMatch(600)).thenReturn(match);
+
+        mockMvc.perform(patch("/api/apartments-matches/apartmentMatch/{apartmentMatchId}/status/canceled", 600))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(600))
+                .andExpect(jsonPath("$.candidateId").value(700))
+                .andExpect(jsonPath("$.apartmentId").value(800))
+                .andExpect(jsonPath("$.matchStatus").value("CANCELED"));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("cancelApartmentMatch returns 404 when service throws not found")
+    void cancelApartmentMatch_NotFound_Returns404() throws Exception {
+        when(apartmentMatchService.cancelMatch(601))
+                .thenThrow(new ResourceNotFoundException("Match not found"));
+
+        mockMvc.perform(patch("/api/apartments-matches/apartmentMatch/{apartmentMatchId}/status/canceled", 601))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Match not found"))
+                .andExpect(jsonPath("$.statusCode").value(404));
+    }
+
+    @Test
+    @WithMockUser(roles = "LANDLORD")
+    @DisplayName("getInterestedCandidatesByUserId returns landlord dto list")
+    void getInterestedCandidatesByUserId_ReturnsOk() throws Exception {
+        ApartmentMatchEntity match = createMatch(700, 800, 900, MatchStatus.ACTIVE, Role.LANDLORD);
+        when(apartmentMatchService.findInterestedCandidatesByUserIdAndStatus(800, MatchStatus.ACTIVE))
+                .thenReturn(List.of(match));
+
+        mockMvc.perform(get("/api/apartments-matches/{userId}/interested-candidates/{status}", 800, "ACTIVE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(700))
+                .andExpect(jsonPath("$[0].matchStatus").value("ACTIVE"))
+                .andExpect(jsonPath("$[0].landlord.id").value(match.getApartment().getUser().getId()))
+                .andExpect(jsonPath("$[0].apartment.id").value(900));
+    }
+
+    @Test
+    @WithMockUser(roles = "TENANT")
+    @DisplayName("tenant detail endpoint returns landlord dto when authorized")
+    void getApartmentMatchDetailsForTenant_ReturnsOk() throws Exception {
+        ApartmentMatchEntity match = createMatch(710, 810, 910, MatchStatus.MATCH, Role.LANDLORD);
+        when(apartmentMatchService.findMyMatchForTenant(710)).thenReturn(match);
+
+        mockMvc.perform(patch("/api/apartments-matches/apartmentMatch/{apartmentMatchId}/tenant-match-details", 710))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(710))
+                .andExpect(jsonPath("$.landlord.id").value(match.getApartment().getUser().getId()))
+                .andExpect(jsonPath("$.apartment.id").value(910));
     }
 
     @Test
@@ -331,7 +537,8 @@ public class ApartmentMatchControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("true"))
                 .andExpect(status().isForbidden())
-                .andExpect(content().string("You can only perform swipe actions for your own user"));
+                .andExpect(jsonPath("$.message").value("You can only perform swipe actions for your own user"))
+                .andExpect(jsonPath("$.statusCode").value(403));
 
         verify(apartmentMatchService, never()).processSwipe(eq(201), eq(30), eq(true), eq(true));
     }
@@ -353,6 +560,42 @@ public class ApartmentMatchControllerTest {
                 .andExpect(jsonPath("$.id").value(14))
                 .andExpect(jsonPath("$.candidateId").value(202))
                 .andExpect(jsonPath("$.apartmentId").value(31));
+    }
+
+    @Test
+    @WithMockUser(username = "tenant-conflict@test.com", roles = "TENANT")
+    @DisplayName("legacy swipe endpoint returns 409 when service throws conflict")
+    void legacySwipe_ServiceConflict_Returns409() throws Exception {
+        when(apartmentMatchService.getUserByEmail("tenant-conflict@test.com"))
+                .thenReturn(createUser(300, Role.TENANT, "tenant-conflict@test.com"));
+        when(apartmentMatchService.processSwipe(300, 40, true, true))
+                .thenThrow(new ConflictException("Cannot swipe on an apartment that is not active"));
+
+        mockMvc.perform(post("/api/apartments-matches/swipe/candidate/{candidateId}/apartment/{apartmentId}/action/{isCandidateAction}",
+                        300, 40, true)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("true"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Cannot swipe on an apartment that is not active"))
+                .andExpect(jsonPath("$.statusCode").value(409));
+    }
+
+    @Test
+    @WithMockUser(username = "tenant-notfound@test.com", roles = "TENANT")
+    @DisplayName("legacy swipe endpoint returns 404 when service throws not found")
+    void legacySwipe_ServiceNotFound_Returns404() throws Exception {
+        when(apartmentMatchService.getUserByEmail("tenant-notfound@test.com"))
+                .thenReturn(createUser(301, Role.TENANT, "tenant-notfound@test.com"));
+        when(apartmentMatchService.processSwipe(301, 41, true, true))
+                .thenThrow(new ResourceNotFoundException("Apartment not found"));
+
+        mockMvc.perform(post("/api/apartments-matches/swipe/candidate/{candidateId}/apartment/{apartmentId}/action/{isCandidateAction}",
+                        301, 41, true)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("true"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Apartment not found"))
+                .andExpect(jsonPath("$.statusCode").value(404));
     }
 
     private ApartmentMatchEntity createMatch(Integer matchId, Integer candidateId, Integer apartmentId, MatchStatus status,

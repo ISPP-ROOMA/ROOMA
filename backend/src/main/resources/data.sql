@@ -19,7 +19,8 @@ INSERT INTO users (id, email, password, role, hobbies, schedule, profession) VAL
 (9, 'tenant4@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Lectura, Cine', 'Rotativo', 'Enfermero'),
 (10, 'tenant5@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Running', 'Mañanas', 'Periodista'),
 (11, 'tenant6@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Leer, Cocinar', 'Flexible', 'Docente'),
-(12, 'tenant7@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Pintura, Música', 'Tarde', 'Artista')
+(12, 'tenant7@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Pintura, Música', 'Tarde', 'Artista'),
+(13, 'tenant8@test.com', '$2a$10$xSV.G4QXraYvYw7KTjt8eObjK8BFvYegnEXXr0yB0axtbqEayYgxK', 'TENANT', 'Lectura, Cine', 'Flexible', 'Estudiante')
 ON CONFLICT (id) DO NOTHING;
 
 -- Test User (13)
@@ -61,8 +62,8 @@ INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date,end_da
 (1, 1, 6, 'HOMEBODY', '2024-01-01', NULL),
 (2, 1, 7, 'RENTER', '2024-01-01', NULL),
 (3, 1, 8, 'RENTER', '2024-01-01', NULL),
-(6, 1, 11, 'RENTER', '2024-01-15', CURRENT_DATE - INTERVAL '7 days'),
-(7, 1, 12, 'RENTER', '2024-01-20', CURRENT_DATE - INTERVAL '3 days')
+(6, 1, 11, 'RENTER', '2024-01-15', NULL),
+(7, 1, 12, 'RENTER', '2024-01-20', NULL)
 ON CONFLICT (id) DO NOTHING;;
 
 -- Piso 2: tenant4(9)
