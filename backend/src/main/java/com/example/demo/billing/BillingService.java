@@ -122,13 +122,12 @@ public class BillingService {
         if(bill == null) {
             throw new IllegalArgumentException("Bill cannot be null");
         }
-        if (bill.getTotalAmount() == null || bill.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Bill total amount must be greater than zero");
-        }
-
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
         if (apartment == null) {
             throw new ResourceNotFoundException("Apartment not found: " + apartmentId);
+        }
+        if (bill.getTotalAmount() == null || bill.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Bill total amount must be greater than zero");
         }
 
         UserEntity landlord = userService.findCurrentUserEntity();

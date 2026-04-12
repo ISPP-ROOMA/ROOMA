@@ -490,12 +490,15 @@ public class BillingServiceTests {
         ApartmentEntity apartment = new ApartmentEntity();
         apartment.setId(apartmentId);
         apartment.setUser(landlord);
+        BillEntity bill = new BillEntity();
+        bill.setReference("Test Bill");
+        bill.setTotalAmount(new java.math.BigDecimal("100.00"));
 
         when(apartmentService.findById(apartmentId)).thenReturn(apartment);
         when(userService.findCurrentUserEntity()).thenReturn(landlord);
         when(apartmentMemberService.findCurrentMembers(apartmentId)).thenReturn(List.of());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> billingService.createBillAndSplit(new BillEntity(), apartmentId));
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> billingService.createBillAndSplit(bill, apartmentId));
         assertEquals("No current members for apartment: " + apartmentId, exception.getMessage());
     }
 
@@ -515,10 +518,14 @@ public class BillingServiceTests {
         apartment.setId(apartmentId);
         apartment.setUser(landlord);
 
+        BillEntity bill = new BillEntity();
+        bill.setReference("Test Bill");
+        bill.setTotalAmount(new java.math.BigDecimal("100.00"));
+
         when(apartmentService.findById(apartmentId)).thenReturn(apartment);
         when(userService.findCurrentUserEntity()).thenReturn(user);
 
-        ForbiddenException exception = assertThrows(ForbiddenException.class, () -> billingService.createBillAndSplit(new BillEntity(), apartmentId));
+        ForbiddenException exception = assertThrows(ForbiddenException.class, () -> billingService.createBillAndSplit(bill, apartmentId));
         assertEquals("Only landlord can create bills for this apartment", exception.getMessage());
     }
 
