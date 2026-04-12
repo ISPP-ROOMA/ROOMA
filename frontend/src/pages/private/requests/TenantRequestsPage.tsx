@@ -386,10 +386,6 @@ export default function TenantRequestsPage() {
                           alt={item.title}
                           className="h-full w-full object-cover"
                         />
-                        {/* Match glow overlay */}
-                        {isMatch && (
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#008080]/40 to-transparent pointer-events-none" />
-                        )}
                         {/* Cancel button (only on ACTIVE) */}
                         {item.matchStatus === 'ACTIVE' && (
                           <button

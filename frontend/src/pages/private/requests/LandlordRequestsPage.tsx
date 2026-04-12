@@ -379,10 +379,6 @@ export default function LandlordRequestsPage() {
                         <Loader2 size={28} className="animate-spin text-white" />
                       </div>
                     )}
-                    {/* Match glow overlay */}
-                    {isMatch && (
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#008080]/40 to-transparent pointer-events-none" />
-                    )}
                   </div>
 
                   {/* Info */}
