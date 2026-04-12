@@ -92,11 +92,9 @@ jobs:
 
       - name: Start backend
         working-directory: backend
-        env:
-          SPRING_PROFILES_ACTIVE: dev
         run: |
           chmod +x mvnw
-          ./mvnw -DskipTests spring-boot:run > ../backend.log 2>&1 &
+          ./mvnw -DskipTests spring-boot:run -Dspring-boot.run.profiles=dev > ../backend.log 2>&1 &
 
       - name: Wait for backend
         run: |
@@ -110,6 +108,12 @@ jobs:
           echo "Backend did not start in time"
           tail -n 200 ../backend.log || true
           exit 1
+
+      - name: Seed Database
+        env:
+          PGPASSWORD: user
+        run: |
+          psql -h localhost -U user -d test -f backend/src/main/resources/data.sql
 
       - name: Start frontend
         run: VITE_API_URL=http://localhost:8080/api npm run dev -- --host localhost --port 5173 > ../frontend.log 2>&1 &
