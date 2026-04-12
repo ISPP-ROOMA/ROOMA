@@ -7,6 +7,7 @@ import {
   Clock,
   Heart,
   MapPin,
+  MessageCircle,
   Receipt,
   Shield,
   Users,
@@ -25,6 +26,8 @@ import FavoriteButton from './FavoriteButton'
 interface ApartmentDetailModalProps {
   apartment: ApartmentDTO
   onClose: () => void
+  showChatButton?: boolean
+  onOpenChat?: () => void
 }
 
 const FALLBACK_IMG =
@@ -329,7 +332,12 @@ function Lightbox({
 /* ───────────────────────────────────────────────────────────────
    Main Modal
    ─────────────────────────────────────────────────────────────── */
-export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDetailModalProps) {
+export default function ApartmentDetailModal({
+  apartment,
+  onClose,
+  showChatButton = false,
+  onOpenChat,
+}: ApartmentDetailModalProps) {
   const { token } = useAuthStore()
   const [roommates, setRoommates] = useState<UserDTO[]>([])
   const [photos, setPhotos] = useState<ApartmentPhotoDTO[]>([])
@@ -633,8 +641,23 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
             </div>
           </div>
 
+          {showChatButton && onOpenChat && (
+            <div className="max-w-2xl mx-auto px-5 pt-4">
+              <button
+                type="button"
+                onClick={onOpenChat}
+                className="w-full rounded-2xl bg-[#008080] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#006d6d] flex items-center justify-center gap-2"
+              >
+                <MessageCircle size={18} />
+                Ir al chat
+              </button>
+            </div>
+          )}
+
           {/* ─── Content ─── */}
-          <div className="max-w-2xl mx-auto px-5 py-20 space-y-8">
+          <div
+            className={`max-w-2xl mx-auto px-5 ${showChatButton && onOpenChat ? 'pt-6 pb-20' : 'py-20'} space-y-8`}
+          >
             {/* Quick stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-base-200 rounded-2xl p-4 flex flex-col items-center text-center gap-1">

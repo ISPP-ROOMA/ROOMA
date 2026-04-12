@@ -77,6 +77,7 @@ export default function TenantRequestsPage() {
   const [selectedApartment, setSelectedApartment] = useState<
     (ApartmentDTO & { imageUrl: string }) | null
   >(null)
+  const [selectedMatch, setSelectedMatch] = useState<EnrichedMatch | null>(null)
   const [modalLoading, setModalLoading] = useState<number | null>(null)
   const [introMatchId, setIntroMatchId] = useState<number | null>(null)
   const [newMatchAnimationData, setNewMatchAnimationData] = useState<object | null>(null)
@@ -216,6 +217,7 @@ export default function TenantRequestsPage() {
     try {
       const apt = await getApartment(item.apartmentId)
       if (apt) {
+        setSelectedMatch(item)
         setSelectedApartment({
           ...apt,
           imageUrl: apt.coverImageUrl ?? item.imageUrl,
@@ -490,7 +492,16 @@ export default function TenantRequestsPage() {
         {selectedApartment && (
           <ApartmentDetailModal
             apartment={selectedApartment}
-            onClose={() => setSelectedApartment(null)}
+            showChatButton={selectedMatch?.matchStatus === 'MATCH'}
+            onOpenChat={
+              selectedMatch?.matchStatus === 'MATCH'
+                ? () => navigate(`/chat/${selectedMatch.matchId}`)
+                : undefined
+            }
+            onClose={() => {
+              setSelectedApartment(null)
+              setSelectedMatch(null)
+            }}
           />
         )}
       </AnimatePresence>
