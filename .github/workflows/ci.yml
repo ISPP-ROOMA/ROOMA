@@ -110,7 +110,7 @@ jobs:
           exit 1
 
       - name: Start frontend
-        run: VITE_API_URL=http://127.0.0.1:8080 npm run dev -- --host localhost --port 5173 > ../frontend.log 2>&1 &
+        run: VITE_API_URL=http://127.0.0.1:8080/api npm run dev -- --host localhost --port 5173 > ../frontend.log 2>&1 &
 
       - name: Wait for frontend
         run: |
