@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const CARD_CLASS = 'bg-base-100 rounded-3xl shadow-md overflow-hidden flex flex-col'
@@ -72,8 +73,17 @@ export default function PropertyCard({
     navigate(`/apartments/${id}`)
   }
 
+  const handleCardClick = (event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement
+    if (target.closest('button, a')) {
+      return
+    }
+
+    goToDetail()
+  }
+
   return (
-    <div className={CARD_CLASS}>
+    <div className={CARD_CLASS} onClick={handleCardClick}>
       <div className={IMAGE_WRAPPER_CLASS}>
         {resolvedCoverImageSrc ? (
           <img
