@@ -92,6 +92,8 @@ jobs:
 
       - name: Start backend
         working-directory: backend
+        env:
+          SPRING_PROFILES_ACTIVE: dev
         run: |
           chmod +x mvnw
           ./mvnw -DskipTests spring-boot:run > ../backend.log 2>&1 &
