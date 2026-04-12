@@ -493,11 +493,16 @@ export default function TenantRequestsPage() {
           <ApartmentDetailModal
             apartment={selectedApartment}
             showChatButton={selectedMatch?.matchStatus === 'MATCH'}
+            showBackButton
             onOpenChat={
               selectedMatch?.matchStatus === 'MATCH'
                 ? () => navigate(`/chat/${selectedMatch.matchId}`)
                 : undefined
             }
+            onBack={() => {
+              setSelectedApartment(null)
+              setSelectedMatch(null)
+            }}
             onClose={() => {
               setSelectedApartment(null)
               setSelectedMatch(null)
