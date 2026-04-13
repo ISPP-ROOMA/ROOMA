@@ -6,6 +6,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -35,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.demo.Apartment.DTOs.ApartmentDTO;
 import com.example.demo.Apartment.DTOs.ApartmentHomeDTO;
+import com.example.demo.Apartment.DTOs.CreateApartment;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
 import com.example.demo.Exceptions.ForbiddenException;
@@ -219,6 +221,56 @@ public class ApartmentControllerTest {
         mockMvc.perform(get("/api/apartments/deck/{candidateId}", 9))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(8));
+    }
+
+    @Test
+    @WithMockUser(roles = "TENANT")
+    @DisplayName("getApartmentById should return 200 with apartment data")
+    public void getApartmentById_ReturnsOk() throws Exception {
+        ApartmentEntity apartment = apartment(3);
+        when(apartmentService.findById(3)).thenReturn(apartment);
+        when(apartmentMemberService.findCurrentMembers(3)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/apartments/{id}", 3))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(3))
+                .andExpect(jsonPath("$.title").value("Apartment 3"));
+    }
+
+    @Test
+    @WithMockUser(roles = "TENANT")
+    @DisplayName("getApartmentById should return 404 when apartment does not exist")
+    public void getApartmentById_WhenNotFound_Returns404() throws Exception {
+        when(apartmentService.findById(998))
+                .thenThrow(new ResourceNotFoundException("Apartment not found"));
+
+        mockMvc.perform(get("/api/apartments/{id}", 998))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Apartment not found"))
+                .andExpect(jsonPath("$.statusCode").value(404));
+    }
+
+    @Test
+    @WithMockUser(roles = "LANDLORD")
+    @DisplayName("createApartment should return 201 with created apartment for landlord")
+    public void createApartment_LandlordSuccess() throws Exception {
+        ApartmentEntity created = apartment(5);
+        when(apartmentService.createWithImages(any(CreateApartment.class), any()))
+                .thenReturn(created);
+
+        mockMvc.perform(multipart("/api/apartments")
+                        .file(new org.springframework.mock.web.MockMultipartFile(
+                                "data",
+                                "data",
+                                MediaType.APPLICATION_JSON_VALUE,
+                                "{\"title\":\"Flat A\",\"description\":\"Desc\",\"price\":700.0,\"bills\":\"wifi\",\"ubication\":\"Madrid\",\"state\":\"ACTIVE\"}"
+                                        .getBytes(StandardCharsets.UTF_8)
+                        )))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(5))
+                .andExpect(jsonPath("$.title").value("Apartment 5"));
+
+        verify(apartmentService).createWithImages(any(CreateApartment.class), any());
     }
 
     @Test

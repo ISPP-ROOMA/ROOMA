@@ -1,23 +1,24 @@
 package com.example.demo.ApartmentMatch;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.List;
-import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -27,8 +28,10 @@ import com.example.demo.Apartment.ApartmentState;
 import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ConflictException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
+import com.example.demo.MemberApartment.ApartmentMemberEntity;
 import com.example.demo.MemberApartment.ApartmentMemberService;
 import com.example.demo.MemberApartment.MemberRole;
+import com.example.demo.Notification.NotificationService;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
@@ -50,13 +53,17 @@ public class ApartmentMatchServiceTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private NotificationService notificationService;
+
     @BeforeEach
     public void setUp() {
         apartmentMatchService = new ApartmentMatchService(
                 apartmentMatchRepository,
                 apartmentService,
                 apartmentMemberService,
-                userService);
+                userService,
+                notificationService);
     }
 
     @Test
@@ -275,22 +282,23 @@ public class ApartmentMatchServiceTest {
     }
 
     @Test
-    @DisplayName("processLandlordAction throws when apartment is not ACTIVE")
-    public void processLandlordAction_ApartmentNotActive_ThrowsConflict() {
+    @DisplayName("processLandlordAction allows landlord to process a closed apartment")
+    public void processLandlordAction_ClosedApartment_AllowsProcessing() {
         Integer matchId = 21;
         UserEntity landlord = createUser(29, Role.LANDLORD, "landlord9@test.com");
-        ApartmentEntity apartment = createApartment(121, ApartmentState.MATCHING, landlord);
+        ApartmentEntity apartment = createApartment(121, ApartmentState.CLOSED, landlord);
         ApartmentMatchEntity match = createMatch(matchId, MatchStatus.ACTIVE,
                 createUser(30, Role.TENANT, "tenant11@test.com"), apartment, true, null);
 
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
         when(userService.findCurrentUserEntity()).thenReturn(landlord);
+        when(apartmentMatchRepository.save(match)).thenReturn(match);
 
-        ConflictException exception = assertThrows(
-                ConflictException.class,
-                () -> apartmentMatchService.processLandlordAction(matchId, true));
+        ApartmentMatchEntity result = apartmentMatchService.processLandlordAction(matchId, true);
 
-        assertEquals("Cannot process the match because the apartment is not active", exception.getMessage());
+        assertEquals(Boolean.TRUE, result.getLandlordInterest());
+        assertEquals(MatchStatus.MATCH, result.getMatchStatus());
+        verify(apartmentMatchRepository).save(match);
     }
 
     @Test
@@ -351,9 +359,9 @@ public class ApartmentMatchServiceTest {
         assertEquals("Only matches with status MATCH can be invited", exception.getMessage());
     }
 
-    @Test
-    @DisplayName("sendInvitation throws when apartment is not ACTIVE")
-    public void sendInvitation_ApartmentNotActive_ThrowsConflict() {
+        @Test
+        @DisplayName("sendInvitation allows landlord to invite from a closed apartment")
+        public void sendInvitation_ClosedApartment_AllowsInvitation() {
         Integer matchId = 25;
         UserEntity landlord = createUser(38, Role.LANDLORD, "landlord13@test.com");
         ApartmentEntity apartment = createApartment(125, ApartmentState.CLOSED, landlord);
@@ -362,12 +370,48 @@ public class ApartmentMatchServiceTest {
 
         when(userService.findCurrentUserEntity()).thenReturn(landlord);
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+                when(apartmentMatchRepository.save(match)).thenReturn(match);
+
+                ApartmentMatchEntity result = apartmentMatchService.sendInvitation(matchId);
+
+                assertEquals(MatchStatus.INVITED, result.getMatchStatus());
+                verify(apartmentMatchRepository).save(match);
+    }
+
+    @Test
+    @DisplayName("sendInvitation throws when match does not exist")
+    public void sendInvitation_MatchNotFound_ThrowsResourceNotFound() {
+        Integer matchId = 226;
+
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> apartmentMatchService.sendInvitation(matchId));
+
+        assertEquals("Match not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("sendInvitation throws when candidate already belongs to an apartment")
+    public void sendInvitation_CandidateAlreadyBelongsToApartment_ThrowsConflict() {
+        Integer matchId = 227;
+        UserEntity landlord = createUser(228, Role.LANDLORD, "landlord-invitation-conflict@test.com");
+        UserEntity candidate = createUser(229, Role.TENANT, "tenant-invitation-conflict@test.com");
+        ApartmentEntity apartment = createApartment(230, ApartmentState.ACTIVE, landlord);
+        ApartmentMatchEntity match = createMatch(matchId, MatchStatus.MATCH, candidate, apartment, true, true);
+
+        when(userService.findCurrentUserEntity()).thenReturn(landlord);
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+        when(apartmentMemberService.findActiveMembershipsByUserId(candidate.getId()))
+                .thenReturn(List.of(new ApartmentMemberEntity()));
 
         ConflictException exception = assertThrows(
                 ConflictException.class,
                 () -> apartmentMatchService.sendInvitation(matchId));
 
-        assertEquals("Cannot send an invitation because the apartment is not active", exception.getMessage());
+        assertEquals("Cannot send invitation because the candidate already belongs to an apartment", exception.getMessage());
+        verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
     }
 
     @Test
@@ -381,14 +425,12 @@ public class ApartmentMatchServiceTest {
 
         when(userService.findCurrentUserEntity()).thenReturn(candidate);
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
-        when(apartmentMemberService.existsByUserIdAndRole(landlord.getId(), MemberRole.HOMEBODY)).thenReturn(false);
         when(apartmentMatchRepository.save(match)).thenReturn(match);
 
         ApartmentMatchEntity result = apartmentMatchService.respondToInvitation(matchId, true);
 
         assertEquals(MatchStatus.SUCCESSFUL, result.getMatchStatus());
-        verify(apartmentMemberService).addMember(apartment.getId(), landlord.getId(), null);
-        verify(apartmentMemberService).addMember(apartment.getId(), candidate.getId(), null);
+        verify(apartmentMemberService).addMember(apartment.getId(), candidate.getId(), LocalDate.now());
         verify(apartmentMatchRepository).save(match);
     }
 
@@ -410,7 +452,7 @@ public class ApartmentMatchServiceTest {
 
         assertEquals(MatchStatus.SUCCESSFUL, result.getMatchStatus());
         verify(apartmentMemberService, never()).addMember(apartment.getId(), landlord.getId(), null);
-        verify(apartmentMemberService).addMember(apartment.getId(), candidate.getId(), null);
+        verify(apartmentMemberService).addMember(apartment.getId(), candidate.getId(), LocalDate.now());
     }
 
     @Test
@@ -472,9 +514,9 @@ public class ApartmentMatchServiceTest {
         assertEquals("Only matches with status INVITED can be responded to", exception.getMessage());
     }
 
-    @Test
-    @DisplayName("respondToInvitation throws when apartment is not ACTIVE while accepting")
-    public void respondToInvitation_Accepted_ApartmentNotActive_ThrowsConflict() {
+        @Test
+        @DisplayName("respondToInvitation accepted adds members even when apartment is closed")
+        public void respondToInvitation_Accepted_ClosedApartment_AddsMembersAndSetsSuccessful() {
         Integer matchId = 31;
         UserEntity candidate = createUser(51, Role.TENANT, "tenant21@test.com");
         ApartmentEntity apartment = createApartment(131, ApartmentState.CLOSED,
@@ -483,34 +525,72 @@ public class ApartmentMatchServiceTest {
 
         when(userService.findCurrentUserEntity()).thenReturn(candidate);
         when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+                when(apartmentMatchRepository.save(match)).thenReturn(match);
+
+                ApartmentMatchEntity result = apartmentMatchService.respondToInvitation(matchId, true);
+
+                assertEquals(MatchStatus.SUCCESSFUL, result.getMatchStatus());
+                verify(apartmentMemberService).addMember(apartment.getId(), candidate.getId(), LocalDate.now());
+                verify(apartmentMatchRepository).save(match);
+    }
+
+    @Test
+        @DisplayName("respondToInvitation propaga errores al añadir candidato")
+        public void respondToInvitation_AddMemberCandidateFails_PropagatesError() {
+                Integer matchId = 32;
+                UserEntity landlord = createUser(53, Role.LANDLORD, "landlord20@test.com");
+                UserEntity candidate = createUser(54, Role.TENANT, "tenant22@test.com");
+                ApartmentEntity apartment = createApartment(132, ApartmentState.ACTIVE, landlord);
+                ApartmentMatchEntity match = createMatch(matchId, MatchStatus.INVITED, candidate, apartment, true, true);
+
+                when(userService.findCurrentUserEntity()).thenReturn(candidate);
+                when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+                when(apartmentMemberService.existsByUserIdAndRole(landlord.getId(), MemberRole.HOMEBODY)).thenReturn(true);
+                // Solo lanza excepción al intentar añadir al candidato
+                when(apartmentMemberService.addMember(eq(apartment.getId()), eq(candidate.getId()), any(LocalDate.class)))
+                                .thenThrow(new BadRequestException("User already belongs to this apartment"));
+
+                BadRequestException exception = assertThrows(
+                                BadRequestException.class,
+                                () -> apartmentMatchService.respondToInvitation(matchId, true));
+
+                assertEquals("User already belongs to this apartment", exception.getMessage());
+                verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
+        }
+
+    @Test
+    @DisplayName("respondToInvitation throws when match does not exist")
+    public void respondToInvitation_MatchNotFound_ThrowsResourceNotFound() {
+        Integer matchId = 240;
+
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> apartmentMatchService.respondToInvitation(matchId, true));
+
+        assertEquals("Match not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("respondToInvitation throws when candidate already belongs to an apartment")
+    public void respondToInvitation_CandidateAlreadyBelongsToApartment_ThrowsConflict() {
+        Integer matchId = 241;
+        UserEntity candidate = createUser(242, Role.TENANT, "tenant-respond-conflict@test.com");
+        ApartmentEntity apartment = createApartment(243, ApartmentState.ACTIVE,
+                createUser(244, Role.LANDLORD, "landlord-respond-conflict@test.com"));
+        ApartmentMatchEntity match = createMatch(matchId, MatchStatus.INVITED, candidate, apartment, true, true);
+
+        when(userService.findCurrentUserEntity()).thenReturn(candidate);
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+        when(apartmentMemberService.findActiveMembershipsByUserId(candidate.getId()))
+                .thenReturn(List.of(new ApartmentMemberEntity()));
 
         ConflictException exception = assertThrows(
                 ConflictException.class,
                 () -> apartmentMatchService.respondToInvitation(matchId, true));
 
-        assertEquals("Cannot accept the invitation because the apartment is not active", exception.getMessage());
-    }
-
-    @Test
-    @DisplayName("respondToInvitation propagates ApartmentMemberService errors")
-    public void respondToInvitation_AddMemberFails_PropagatesError() {
-        Integer matchId = 32;
-        UserEntity landlord = createUser(53, Role.LANDLORD, "landlord20@test.com");
-        UserEntity candidate = createUser(54, Role.TENANT, "tenant22@test.com");
-        ApartmentEntity apartment = createApartment(132, ApartmentState.ACTIVE, landlord);
-        ApartmentMatchEntity match = createMatch(matchId, MatchStatus.INVITED, candidate, apartment, true, true);
-
-        when(userService.findCurrentUserEntity()).thenReturn(candidate);
-        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
-        when(apartmentMemberService.existsByUserIdAndRole(landlord.getId(), MemberRole.HOMEBODY)).thenReturn(false);
-        when(apartmentMemberService.addMember(apartment.getId(), landlord.getId(), null))
-                .thenThrow(new BadRequestException("User already belongs to this apartment"));
-
-        BadRequestException exception = assertThrows(
-                BadRequestException.class,
-                () -> apartmentMatchService.respondToInvitation(matchId, true));
-
-        assertEquals("User already belongs to this apartment", exception.getMessage());
+        assertEquals("Cannot accept invitation because you already belong to an apartment", exception.getMessage());
         verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
     }
 
@@ -549,6 +629,35 @@ public class ApartmentMatchServiceTest {
     }
 
     @Test
+    @DisplayName("successfulMatch throws when match does not exist")
+    public void successfulMatch_MatchNotFound_ThrowsResourceNotFound() {
+        when(apartmentMatchRepository.findById(200)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> apartmentMatchService.successfulMatch(200));
+
+        assertEquals("Match not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("successfulMatch throws when match is already SUCCESSFUL")
+    public void successfulMatch_AlreadySuccessful_ThrowsConflict() {
+        ApartmentMatchEntity match = createMatch(201, MatchStatus.SUCCESSFUL,
+                createUser(201, Role.TENANT, "tenant-success@test.com"),
+                createApartment(201, ApartmentState.ACTIVE, createUser(202, Role.LANDLORD, "landlord-success@test.com")),
+                true, true);
+
+        when(apartmentMatchRepository.findById(201)).thenReturn(Optional.of(match));
+
+        ConflictException exception = assertThrows(
+                ConflictException.class,
+                () -> apartmentMatchService.successfulMatch(201));
+
+        assertEquals("Match is already finalized as successful", exception.getMessage());
+    }
+
+    @Test
     @DisplayName("cancelMatch sets CANCELED when match is in MATCH state")
     public void cancelMatch_MatchState_SetsCanceled() {
         ApartmentMatchEntity match = createMatch(35, MatchStatus.MATCH,
@@ -583,6 +692,108 @@ public class ApartmentMatchServiceTest {
                 () -> apartmentMatchService.cancelMatch(36));
 
         assertEquals("Only matches with status ACTIVE or MATCH can be canceled", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("cancelMatch throws when match does not exist")
+    public void cancelMatch_MatchNotFound_ThrowsResourceNotFound() {
+        when(apartmentMatchRepository.findById(300)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> apartmentMatchService.cancelMatch(300));
+
+        assertEquals("Match not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("cancelMatch throws when match is already SUCCESSFUL")
+    public void cancelMatch_AlreadySuccessful_ThrowsConflict() {
+        ApartmentMatchEntity match = createMatch(301, MatchStatus.SUCCESSFUL,
+                createUser(301, Role.TENANT, "tenant-success-cancel@test.com"),
+                createApartment(301, ApartmentState.ACTIVE, createUser(302, Role.LANDLORD, "landlord-success-cancel@test.com")),
+                true, true);
+
+        when(apartmentMatchRepository.findById(301)).thenReturn(Optional.of(match));
+        when(userService.findCurrentUserEntity()).thenReturn(match.getCandidate());
+
+        ConflictException exception = assertThrows(
+                ConflictException.class,
+                () -> apartmentMatchService.cancelMatch(301));
+
+        assertEquals("Cannot cancel a match that has already been finalized as successful", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("cancelMatch throws when match is already CANCELED")
+    public void cancelMatch_AlreadyCanceled_ThrowsConflict() {
+        ApartmentMatchEntity match = createMatch(302, MatchStatus.CANCELED,
+                createUser(303, Role.TENANT, "tenant-canceled@test.com"),
+                createApartment(302, ApartmentState.ACTIVE, createUser(304, Role.LANDLORD, "landlord-canceled@test.com")),
+                true, true);
+
+        when(apartmentMatchRepository.findById(302)).thenReturn(Optional.of(match));
+        when(userService.findCurrentUserEntity()).thenReturn(match.getCandidate());
+
+        ConflictException exception = assertThrows(
+                ConflictException.class,
+                () -> apartmentMatchService.cancelMatch(302));
+
+        assertEquals("Match is already canceled", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("cancelMatch throws when match is REJECTED")
+    public void cancelMatch_RejectedMatch_ThrowsConflict() {
+        ApartmentMatchEntity match = createMatch(303, MatchStatus.REJECTED,
+                createUser(305, Role.TENANT, "tenant-rejected@test.com"),
+                createApartment(303, ApartmentState.ACTIVE, createUser(306, Role.LANDLORD, "landlord-rejected@test.com")),
+                true, true);
+
+        when(apartmentMatchRepository.findById(303)).thenReturn(Optional.of(match));
+        when(userService.findCurrentUserEntity()).thenReturn(match.getCandidate());
+
+        ConflictException exception = assertThrows(
+                ConflictException.class,
+                () -> apartmentMatchService.cancelMatch(303));
+
+        assertEquals("Rejected matches cannot be canceled", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("cancelMatch throws when current user is not candidate or landlord")
+    public void cancelMatch_NotParticipant_ThrowsAccessDenied() {
+        UserEntity candidate = createUser(307, Role.TENANT, "tenant-not-participant@test.com");
+        UserEntity landlord = createUser(308, Role.LANDLORD, "landlord-not-participant@test.com");
+        ApartmentEntity apartment = createApartment(304, ApartmentState.ACTIVE, landlord);
+        ApartmentMatchEntity match = createMatch(304, MatchStatus.ACTIVE, candidate, apartment, true, true);
+
+        when(apartmentMatchRepository.findById(304)).thenReturn(Optional.of(match));
+        when(userService.findCurrentUserEntity()).thenReturn(createUser(309, Role.TENANT, "third-user@test.com"));
+
+        AccessDeniedException exception = assertThrows(
+                AccessDeniedException.class,
+                () -> apartmentMatchService.cancelMatch(304));
+
+        assertEquals("Only the users involved in the match can cancel it", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("cancelMatch throws when ACTIVE match is canceled by landlord")
+    public void cancelMatch_ActiveMatchCanceledByLandlord_ThrowsAccessDenied() {
+        UserEntity candidate = createUser(310, Role.TENANT, "tenant-active@test.com");
+        UserEntity landlord = createUser(311, Role.LANDLORD, "landlord-active@test.com");
+        ApartmentEntity apartment = createApartment(305, ApartmentState.ACTIVE, landlord);
+        ApartmentMatchEntity match = createMatch(305, MatchStatus.ACTIVE, candidate, apartment, true, true);
+
+        when(apartmentMatchRepository.findById(305)).thenReturn(Optional.of(match));
+        when(userService.findCurrentUserEntity()).thenReturn(landlord);
+
+        AccessDeniedException exception = assertThrows(
+                AccessDeniedException.class,
+                () -> apartmentMatchService.cancelMatch(305));
+
+        assertEquals("Only the candidate can cancel an active request", exception.getMessage());
     }
 
     @Test
@@ -669,6 +880,18 @@ public class ApartmentMatchServiceTest {
     }
 
     @Test
+    @DisplayName("findTenantRequestByUserIdAndStatus throws when current user cannot be resolved")
+    public void findTenantRequestByUserIdAndStatus_UserNotFound_ThrowsResourceNotFound() {
+        when(userService.findCurrentUserEntity()).thenThrow(new ResourceNotFoundException("User not found"));
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> apartmentMatchService.findTenantRequestByUserIdAndStatus(MatchStatus.ACTIVE));
+
+        assertEquals("User not found", exception.getMessage());
+    }
+
+    @Test
     @DisplayName("findMyMatchForTenant returns match when current user is candidate")
     public void findMyMatchForTenant_Candidate_ReturnsMatch() {
         UserEntity tenant = createUser(73, Role.TENANT, "tenant30@test.com");
@@ -683,6 +906,43 @@ public class ApartmentMatchServiceTest {
 
         assertSame(match, result);
     }
+
+        @Test
+        @DisplayName("markTenantMatchDetailsAsOpened sets viewed flag on first access")
+        public void markTenantMatchDetailsAsOpened_FirstOpen_SetsViewedFlag() {
+                UserEntity tenant = createUser(201, Role.TENANT, "tenant-view1@test.com");
+                ApartmentMatchEntity match = createMatch(202, MatchStatus.MATCH, tenant,
+                                createApartment(203, ApartmentState.ACTIVE, createUser(204, Role.LANDLORD, "landlord-view1@test.com")),
+                                true, true);
+                match.setTenantHasOpenedMatchDetails(false);
+
+                when(userService.findCurrentUserEntity()).thenReturn(tenant);
+                when(apartmentMatchRepository.findById(202)).thenReturn(Optional.of(match));
+                when(apartmentMatchRepository.save(match)).thenReturn(match);
+
+                ApartmentMatchEntity result = apartmentMatchService.markTenantMatchDetailsAsOpened(202);
+
+                assertEquals(Boolean.TRUE, result.getTenantHasOpenedMatchDetails());
+                verify(apartmentMatchRepository).save(match);
+        }
+
+        @Test
+        @DisplayName("markTenantMatchDetailsAsOpened does not save when already viewed")
+        public void markTenantMatchDetailsAsOpened_AlreadyViewed_DoesNotSave() {
+                UserEntity tenant = createUser(205, Role.TENANT, "tenant-view2@test.com");
+                ApartmentMatchEntity match = createMatch(206, MatchStatus.MATCH, tenant,
+                                createApartment(207, ApartmentState.ACTIVE, createUser(208, Role.LANDLORD, "landlord-view2@test.com")),
+                                true, true);
+                match.setTenantHasOpenedMatchDetails(true);
+
+                when(userService.findCurrentUserEntity()).thenReturn(tenant);
+                when(apartmentMatchRepository.findById(206)).thenReturn(Optional.of(match));
+
+                ApartmentMatchEntity result = apartmentMatchService.markTenantMatchDetailsAsOpened(206);
+
+                assertEquals(Boolean.TRUE, result.getTenantHasOpenedMatchDetails());
+                verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
+        }
 
     @Test
     @DisplayName("findMyMatchForTenant throws when current user is not candidate")
@@ -754,6 +1014,37 @@ public class ApartmentMatchServiceTest {
                 apartment.getId());
 
         assertSame(match, result);
+    }
+
+    @Test
+    @DisplayName("findApartmentMatchByCandidateAndApartment throws when candidate does not exist")
+    public void findApartmentMatchByCandidateAndApartment_CandidateNotFound_Throws() {
+        Integer candidateId = 901;
+        Integer apartmentId = 902;
+
+        when(userService.findById(candidateId)).thenReturn(null);
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> apartmentMatchService.findApartmentMatchByCandidateAndApartment(candidateId, apartmentId));
+
+        assertEquals("Candidate not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("findApartmentMatchByCandidateAndApartment throws when apartment does not exist")
+    public void findApartmentMatchByCandidateAndApartment_ApartmentNotFound_Throws() {
+        UserEntity candidate = createUser(903, Role.TENANT, "tenant-candidate-notfound@test.com");
+        Integer apartmentId = 904;
+
+        when(userService.findById(candidate.getId())).thenReturn(candidate);
+        when(apartmentService.findById(apartmentId)).thenReturn(null);
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> apartmentMatchService.findApartmentMatchByCandidateAndApartment(candidate.getId(), apartmentId));
+
+        assertEquals("Apartment not found", exception.getMessage());
     }
 
     @Test
@@ -831,6 +1122,77 @@ public class ApartmentMatchServiceTest {
     }
 
     @Test
+    @DisplayName("createFirstInteraction for landlord sets landlord interest and null candidate interest")
+    public void createFirstInteraction_LandlordAction_SetsLandlordInterestAndNullCandidate() {
+        UserEntity candidate = createUser(905, Role.TENANT, "tenant-first-landlord@test.com");
+        ApartmentEntity apartment = createApartment(905, ApartmentState.ACTIVE,
+                createUser(906, Role.LANDLORD, "landlord-first-landlord@test.com"));
+
+        ApartmentMatchEntity result = apartmentMatchService.createFirstInteraction(candidate, apartment, false, true);
+
+        assertEquals(Boolean.TRUE, result.getLandlordInterest());
+        assertNull(result.getCandidateInterest());
+        assertSame(candidate, result.getCandidate());
+        assertSame(apartment, result.getApartment());
+        assertEquals(MatchStatus.ACTIVE, result.getMatchStatus());
+    }
+
+    @Test
+    @DisplayName("createFirstInteraction sets REJECTED status when interest is false")
+    public void createFirstInteraction_InterestFalse_SetsRejectedStatus() {
+        UserEntity candidate = createUser(907, Role.TENANT, "tenant-first-rejected@test.com");
+        ApartmentEntity apartment = createApartment(907, ApartmentState.ACTIVE,
+                createUser(908, Role.LANDLORD, "landlord-first-rejected@test.com"));
+
+        ApartmentMatchEntity result = apartmentMatchService.createFirstInteraction(candidate, apartment, true, false);
+
+        assertEquals(Boolean.FALSE, result.getCandidateInterest());
+        assertNull(result.getLandlordInterest());
+        assertEquals(MatchStatus.REJECTED, result.getMatchStatus());
+    }
+
+    @Test
+    @DisplayName("checkNoDuplicateInteraction throws when candidate has already swiped")
+    public void checkNoDuplicateInteraction_CandidateAlreadySwiped_ThrowsConflict() {
+        UserEntity candidate = createUser(909, Role.TENANT, "tenant-duplicate-candidate@test.com");
+        ApartmentEntity apartment = createApartment(909, ApartmentState.ACTIVE,
+                createUser(910, Role.LANDLORD, "landlord-duplicate-candidate@test.com"));
+        ApartmentMatchEntity match = createMatch(909, MatchStatus.ACTIVE, candidate, apartment, true, null);
+
+        ConflictException exception = assertThrows(
+                ConflictException.class,
+                () -> apartmentMatchService.checkNoDuplicateInteraction(match, true));
+
+        assertEquals("Candidate has already swiped on this apartment", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("checkNoDuplicateInteraction throws when landlord has already swiped")
+    public void checkNoDuplicateInteraction_LandlordAlreadySwiped_ThrowsConflict() {
+        UserEntity candidate = createUser(911, Role.TENANT, "tenant-duplicate-landlord@test.com");
+        ApartmentEntity apartment = createApartment(911, ApartmentState.ACTIVE,
+                createUser(912, Role.LANDLORD, "landlord-duplicate-landlord@test.com"));
+        ApartmentMatchEntity match = createMatch(911, MatchStatus.ACTIVE, candidate, apartment, null, true);
+
+        ConflictException exception = assertThrows(
+                ConflictException.class,
+                () -> apartmentMatchService.checkNoDuplicateInteraction(match, false));
+
+        assertEquals("Landlord has already swiped on this candidate", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("checkNoDuplicateInteraction allows interaction when there is no previous swipe")
+    public void checkNoDuplicateInteraction_NoPreviousInteraction_AllowsProceed() {
+        UserEntity candidate = createUser(913, Role.TENANT, "tenant-no-duplicate@test.com");
+        ApartmentEntity apartment = createApartment(913, ApartmentState.ACTIVE,
+                createUser(914, Role.LANDLORD, "landlord-no-duplicate@test.com"));
+        ApartmentMatchEntity match = createMatch(913, MatchStatus.ACTIVE, candidate, apartment, null, null);
+
+        apartmentMatchService.checkNoDuplicateInteraction(match, true);
+    }
+
+    @Test
     @DisplayName("legacy processSwipe creates first interaction for candidate")
     public void legacyProcessSwipe_FirstCandidateInteraction_CreatesActiveMatch() {
         UserEntity candidate = createUser(91, Role.TENANT, "tenant37@test.com");
@@ -853,6 +1215,54 @@ public class ApartmentMatchServiceTest {
     }
 
     @Test
+    @DisplayName("legacy processSwipe throws when candidate does not exist")
+    public void legacyProcessSwipe_CandidateNotFound_Throws() {
+        Integer candidateId = 915;
+        Integer apartmentId = 916;
+
+        when(userService.findById(candidateId)).thenReturn(null);
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> apartmentMatchService.processSwipe(candidateId, apartmentId, true, true));
+
+        assertEquals("Candidate not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("legacy processSwipe throws when apartment does not exist")
+    public void legacyProcessSwipe_ApartmentNotFound_Throws() {
+        UserEntity candidate = createUser(917, Role.TENANT, "tenant-legacy-apartment-notfound@test.com");
+        Integer apartmentId = 918;
+
+        when(userService.findById(candidate.getId())).thenReturn(candidate);
+        when(apartmentService.findById(apartmentId)).thenReturn(null);
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> apartmentMatchService.processSwipe(candidate.getId(), apartmentId, true, true));
+
+        assertEquals("Apartment not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("legacy processSwipe throws when apartment is not ACTIVE")
+    public void legacyProcessSwipe_ApartmentNotActive_ThrowsConflict() {
+        UserEntity candidate = createUser(919, Role.TENANT, "tenant-legacy-apartment-not-active@test.com");
+        ApartmentEntity apartment = createApartment(919, ApartmentState.CLOSED,
+                createUser(920, Role.LANDLORD, "landlord-legacy-apartment-not-active@test.com"));
+
+        when(userService.findById(candidate.getId())).thenReturn(candidate);
+        when(apartmentService.findById(apartment.getId())).thenReturn(apartment);
+
+        ConflictException exception = assertThrows(
+                ConflictException.class,
+                () -> apartmentMatchService.processSwipe(candidate.getId(), apartment.getId(), true, true));
+
+        assertEquals("Cannot swipe on an apartment that is not active", exception.getMessage());
+    }
+
+    @Test
     @DisplayName("legacy processSwipe throws on duplicate candidate interaction")
     public void legacyProcessSwipe_DuplicateCandidateInteraction_ThrowsConflict() {
         UserEntity candidate = createUser(93, Role.TENANT, "tenant38@test.com");
@@ -870,6 +1280,26 @@ public class ApartmentMatchServiceTest {
                 () -> apartmentMatchService.processSwipe(candidate.getId(), apartment.getId(), true, false));
 
         assertEquals("Candidate has already swiped on this apartment", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("legacy processSwipe throws on duplicate landlord interaction")
+    public void legacyProcessSwipe_DuplicateLandlordInteraction_ThrowsConflict() {
+        UserEntity candidate = createUser(921, Role.TENANT, "tenant-legacy-duplicate-landlord@test.com");
+        ApartmentEntity apartment = createApartment(921, ApartmentState.ACTIVE,
+                createUser(922, Role.LANDLORD, "landlord-legacy-duplicate-landlord@test.com"));
+        ApartmentMatchEntity existingMatch = createMatch(922, MatchStatus.ACTIVE, candidate, apartment, null, true);
+
+        when(userService.findById(candidate.getId())).thenReturn(candidate);
+        when(apartmentService.findById(apartment.getId())).thenReturn(apartment);
+        when(apartmentMatchRepository.findByCandidateIdAndApartmentId(candidate.getId(), apartment.getId()))
+                .thenReturn(Optional.of(existingMatch));
+
+        ConflictException exception = assertThrows(
+                ConflictException.class,
+                () -> apartmentMatchService.processSwipe(candidate.getId(), apartment.getId(), false, true));
+
+        assertEquals("Landlord has already swiped on this candidate", exception.getMessage());
     }
 
     @Test
@@ -966,6 +1396,7 @@ public class ApartmentMatchServiceTest {
         match.setMatchStatus(status);
         match.setCandidateInterest(candidateInterest);
         match.setLandlordInterest(landlordInterest);
+                match.setTenantHasOpenedMatchDetails(false);
         return match;
     }
 }

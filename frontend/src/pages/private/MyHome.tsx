@@ -52,7 +52,6 @@ export default function MyHome() {
   const [userData, setUserData] = useState<User | null>(null)
   const [homeData, setHomeData] = useState<ApartmentHomeDTO | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [selectedPhoto, setSelectedPhoto] = useState(0)
 
   useEffect(() => {
@@ -64,14 +63,12 @@ export default function MyHome() {
         const snapshot = await getMyHomeSnapshot()
         if (!snapshot) {
           setHomeData(null)
-          setError('Aún no tienes un piso asignado en Rooma.')
         } else {
           setHomeData(snapshot)
-          setError(null)
         }
       } catch (e) {
         console.error(e)
-        setError('No se pudo cargar la información del piso.')
+        setHomeData(null)
       } finally {
         setIsLoading(false)
       }
@@ -102,13 +99,31 @@ export default function MyHome() {
   }, [homeData])
 
   if (isLoading) return <p className="text-center mt-10 text-gray-500">Cargando tu piso...</p>
-  if (error && !homeData) return <p className="text-center mt-10 text-red-500">{error}</p>
-  if (!homeData)
+  if (!homeData) {
     return (
-      <p className="text-center mt-10 text-gray-600">
-        No estás asignado a ningún piso en el sistema.
-      </p>
+      <section className="bg-base-200 min-h-[70vh] flex flex-col items-center justify-center py-6 px-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-lg p-8 text-center space-y-4">
+          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-base-content">Aún no tienes piso</h2>
+          <p className="text-base-content/60 leading-relaxed">
+            Todavía no has sido aceptado en ningún apartamento o tu contrato aún no ha comenzado. Regresa a explorar opciones o revisa tus solicitudes en curso.
+          </p>
+          <div className="pt-4 flex flex-col gap-3">
+            <Link to="/" className="btn btn-primary w-full rounded-2xl shadow-lg shadow-primary/20 text-base">
+              Explorar apartamentos
+            </Link>
+            <Link to="/mis-solicitudes" className="btn bg-base-100 hover:bg-base-200 w-full rounded-2xl border border-base-300 text-base">
+              Ver mis solicitudes
+            </Link>
+          </div>
+        </div>
+      </section>
     )
+  }
 
   const { apartment, roommates = [], billing } = homeData
   const currentUserMembership = roommates.find((mate) => mate.currentUser)

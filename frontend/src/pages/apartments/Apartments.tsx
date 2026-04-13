@@ -26,6 +26,14 @@ export default function Apartments() {
     navigate('/apartments/publish')
   }
 
+  const openApartmentRequests = (apartmentId: number) => {
+    navigate(`/mis-solicitudes/recibidas?apartmentId=${apartmentId}&tab=pending`)
+  }
+
+  const openApartmentMatches = (apartmentId: number) => {
+    navigate(`/mis-solicitudes/recibidas?apartmentId=${apartmentId}&tab=match`)
+  }
+
   const toggleApartmentState = async (apartment: Apartment) => {
     const isAvailable = apartment.state === 'ACTIVE' || apartment.state === 'MATCHING'
     const nextState = isAvailable ? 'CLOSED' : 'ACTIVE'
@@ -149,6 +157,8 @@ export default function Apartments() {
           photoCount={0}
           status={apt.state === 'ACTIVE' || apt.state === 'MATCHING' ? 'active' : 'paused'}
           stats={statsByApartmentId[apt.id] ?? { requests: 0, matches: 0 }}
+          onRequestsClick={() => openApartmentRequests(apt.id)}
+          onMatchesClick={() => openApartmentMatches(apt.id)}
           onEdit={() => {
             navigate(`/apartments/${apt.id}/edit`)
           }}

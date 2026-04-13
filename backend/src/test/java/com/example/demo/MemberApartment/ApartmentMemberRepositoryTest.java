@@ -1,8 +1,6 @@
 package com.example.demo.MemberApartment;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -17,14 +15,13 @@ import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentState;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
-import com.example.demo.MemberApartment.MemberRole;
 
 import jakarta.persistence.EntityManager;
 
 @DataJpaTest
 @TestPropertySource(properties = "spring.sql.init.mode=never")
 public class ApartmentMemberRepositoryTest {
-    
+
     @Autowired
     private ApartmentMemberRepository apartmentMemberRepository;
 
@@ -47,7 +44,7 @@ public class ApartmentMemberRepositoryTest {
         assertTrue(members.stream().anyMatch(m -> m.getId().equals(member2.getId())));
         assertTrue(members.stream().anyMatch(m -> m.getId().equals(member3.getId())));
     }
-    
+
     @Test
     public void findByApartmentIdAndEndDateIsNull_ReturnsOnlyActiveMembers() {
         UserEntity landlord = persistUser("landlord-a@test.com", Role.LANDLORD);
@@ -62,7 +59,8 @@ public class ApartmentMemberRepositoryTest {
         member2.setEndDate(LocalDate.now().minusDays(1));
         entityManager.merge(member2);
         entityManager.flush();
-        List<ApartmentMemberEntity> activeMembers = apartmentMemberRepository.findByApartmentIdAndEndDateIsNull(apartment.getId());
+        List<ApartmentMemberEntity> activeMembers = apartmentMemberRepository
+                .findByApartmentIdAndEndDateIsNull(apartment.getId());
         assertEquals(2, activeMembers.size());
         assertTrue(activeMembers.stream().anyMatch(m -> m.getId().equals(member1.getId())));
         assertTrue(activeMembers.stream().anyMatch(m -> m.getId().equals(member3.getId())));
@@ -103,7 +101,8 @@ public class ApartmentMemberRepositoryTest {
         persistApartmentMember(tenant2, apartment1);
         persistApartmentMember(tenant3, apartment1, LocalDate.now().minusDays(1));
 
-        List<ApartmentMemberEntity> activeMembers = apartmentMemberRepository.findActiveApartmentMembers(apartment1.getId());
+        List<ApartmentMemberEntity> activeMembers = apartmentMemberRepository
+                .findActiveApartmentMembers(apartment1.getId());
         assertEquals(2, activeMembers.size());
         assertTrue(activeMembers.stream().anyMatch(m -> m.getUser().getId().equals(tenant1.getId())));
         assertTrue(activeMembers.stream().anyMatch(m -> m.getUser().getId().equals(tenant2.getId())));
@@ -121,7 +120,8 @@ public class ApartmentMemberRepositoryTest {
         persistApartmentMember(tenant2, apartment1);
         persistApartmentMember(tenant3, apartment1, LocalDate.now().minusDays(1));
 
-        List<ApartmentMemberEntity> currentTenants = apartmentMemberRepository.findCurrentTenantsByApartmentId(apartment1.getId());
+        List<ApartmentMemberEntity> currentTenants = apartmentMemberRepository
+                .findCurrentTenantsByApartmentId(apartment1.getId());
         assertEquals(2, currentTenants.size());
     }
 
@@ -132,10 +132,13 @@ public class ApartmentMemberRepositoryTest {
         ApartmentEntity apartment1 = persistApartment("A1", "Madrid Centro", 500.0, ApartmentState.ACTIVE, landlord);
         ApartmentEntity apartment2 = persistApartment("A2", "Madrid Centro", 600.0, ApartmentState.ACTIVE, landlord);
 
-        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment1, LocalDate.now().minusMonths(3), LocalDate.now().minusMonths(2));
-        ApartmentMemberEntity member2 = persistApartmentMember(tenant, apartment2, LocalDate.now().minusDays(20), LocalDate.now().minusDays(2));
-        
-        Optional<ApartmentMemberEntity> lastMembership = apartmentMemberRepository.findLastMembershipByUserId(tenant.getId());
+        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment1, LocalDate.now().minusMonths(3),
+                LocalDate.now().minusMonths(2));
+        ApartmentMemberEntity member2 = persistApartmentMember(tenant, apartment2, LocalDate.now().minusDays(20),
+                LocalDate.now().minusDays(2));
+
+        Optional<ApartmentMemberEntity> lastMembership = apartmentMemberRepository
+                .findLastMembershipByUserId(tenant.getId());
 
         assertTrue(lastMembership.isPresent());
         assertEquals(member2.getId(), lastMembership.get().getId());
@@ -144,7 +147,8 @@ public class ApartmentMemberRepositoryTest {
     @Test
     public void findLastMembershipByUserId_ReturnsEmptyWhenNoMemberships() {
         UserEntity tenant = persistUser("tenant-a@test.com", Role.TENANT);
-        Optional<ApartmentMemberEntity> lastMembership = apartmentMemberRepository.findLastMembershipByUserId(tenant.getId());
+        Optional<ApartmentMemberEntity> lastMembership = apartmentMemberRepository
+                .findLastMembershipByUserId(tenant.getId());
         assertTrue(lastMembership.isEmpty());
     }
 
@@ -155,10 +159,12 @@ public class ApartmentMemberRepositoryTest {
         ApartmentEntity apartment1 = persistApartment("A1", "Madrid Centro", 500.0, ApartmentState.ACTIVE, landlord);
         ApartmentEntity apartment2 = persistApartment("A2", "Madrid Centro", 600.0, ApartmentState.ACTIVE, landlord);
 
-        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment1, LocalDate.now().minusMonths(2), LocalDate.now().minusMonths(1));
+        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment1, LocalDate.now().minusMonths(2),
+                LocalDate.now().minusMonths(1));
         ApartmentMemberEntity member2 = persistApartmentMember(tenant, apartment2, LocalDate.now().minusDays(20), null);
 
-        Optional<ApartmentMemberEntity> foundMember = apartmentMemberRepository.findByUserIdAndApartmentId(tenant.getId(), apartment2.getId());
+        Optional<ApartmentMemberEntity> foundMember = apartmentMemberRepository
+                .findByUserIdAndApartmentId(tenant.getId(), apartment2.getId());
 
         assertTrue(foundMember.isPresent());
         assertEquals(member2.getId(), foundMember.get().getId());
@@ -168,7 +174,8 @@ public class ApartmentMemberRepositoryTest {
     public void findByUserIdAndApartmentId_ReturnsEmptyWhenNoMembership() {
         UserEntity tenant = persistUser("tenant-a@test.com", Role.TENANT);
         ApartmentEntity apartment = persistApartment("A1", "Madrid Centro", 500.0, ApartmentState.ACTIVE, tenant);
-        Optional<ApartmentMemberEntity> foundMember = apartmentMemberRepository.findByUserIdAndApartmentId(tenant.getId(), apartment.getId());
+        Optional<ApartmentMemberEntity> foundMember = apartmentMemberRepository
+                .findByUserIdAndApartmentId(tenant.getId(), apartment.getId());
         assertTrue(foundMember.isEmpty());
     }
 
@@ -179,10 +186,12 @@ public class ApartmentMemberRepositoryTest {
         ApartmentEntity apartment1 = persistApartment("A1", "Madrid Centro", 500.0, ApartmentState.ACTIVE, landlord);
         ApartmentEntity apartment2 = persistApartment("A2", "Madrid Centro", 600.0, ApartmentState.ACTIVE, landlord);
 
-        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment1, LocalDate.now().minusMonths(2), LocalDate.now().minusMonths(1));
+        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment1, LocalDate.now().minusMonths(2),
+                LocalDate.now().minusMonths(1));
         ApartmentMemberEntity member2 = persistApartmentMember(tenant, apartment2, LocalDate.now().minusDays(20), null);
 
-        List<ApartmentMemberEntity> activeMemberships = apartmentMemberRepository.findActiveMembershipsByUserId(tenant.getId());
+        List<ApartmentMemberEntity> activeMemberships = apartmentMemberRepository
+                .findActiveMembershipsByUserId(tenant.getId());
 
         assertEquals(1, activeMemberships.size());
         assertEquals(member2.getId(), activeMemberships.get(0).getId());
@@ -197,10 +206,12 @@ public class ApartmentMemberRepositoryTest {
         LocalDate requestedEndDate = LocalDate.of(2026, 4, 11);
         LocalDate cutoffDate = LocalDate.of(2025, 12, 1);
 
-        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment, LocalDate.of(2026, 1, 10), LocalDate.of(2026, 3, 15));
+        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment, LocalDate.of(2026, 1, 10),
+                LocalDate.of(2026, 3, 15));
         ApartmentMemberEntity member2 = persistApartmentMember(tenant, apartment, LocalDate.of(2026, 3, 20), null);
 
-        List<ApartmentMemberEntity> overlappingMemberships = apartmentMemberRepository.findOverlappingMemberships(tenant.getId(), apartment.getId(), requestedJoinDate, requestedEndDate, cutoffDate);
+        List<ApartmentMemberEntity> overlappingMemberships = apartmentMemberRepository.findOverlappingMemberships(
+                tenant.getId(), apartment.getId(), requestedJoinDate, requestedEndDate, cutoffDate);
 
         assertEquals(2, overlappingMemberships.size());
         assertEquals(member1.getId(), overlappingMemberships.get(0).getId());
@@ -214,10 +225,14 @@ public class ApartmentMemberRepositoryTest {
         UserEntity otherTenant = persistUser("tenant-b@test.com", Role.TENANT);
         ApartmentEntity apartment = persistApartment("A1", "Madrid Centro", 500.0, ApartmentState.ACTIVE, landlord);
 
-        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment, LocalDate.now().minusMonths(2), LocalDate.now().minusMonths(1));
-        ApartmentMemberEntity member2 = persistApartmentMember(otherTenant, apartment, LocalDate.now().minusDays(20), null);
+        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment, LocalDate.now().minusMonths(2),
+                LocalDate.now().minusMonths(1));
+        ApartmentMemberEntity member2 = persistApartmentMember(otherTenant, apartment, LocalDate.now().minusDays(20),
+                null);
 
-        List<ApartmentMemberEntity> overlappingMemberships = apartmentMemberRepository.findOtherOverlappingMemberships(tenant.getId(), apartment.getId(), LocalDate.now().minusDays(30), LocalDate.now().plusDays(10), LocalDate.now().minusMonths(3));
+        List<ApartmentMemberEntity> overlappingMemberships = apartmentMemberRepository.findOtherOverlappingMemberships(
+                tenant.getId(), apartment.getId(), LocalDate.now().minusDays(30), LocalDate.now().plusDays(10),
+                LocalDate.now().minusMonths(3));
 
         assertEquals(1, overlappingMemberships.size());
         assertEquals(member2.getId(), overlappingMemberships.get(0).getId());
@@ -245,7 +260,9 @@ public class ApartmentMemberRepositoryTest {
 
         persistApartmentMember(tenant, apartment, LocalDate.now().minusMonths(2), LocalDate.now().minusMonths(1));
 
-        List<ApartmentMemberEntity> pastMemberships = apartmentMemberRepository.findPastTenantMembershipsByUserIdAndApartmentId(landlord.getId(), apartment.getId(), LocalDate.now().minusMonths(3));
+        List<ApartmentMemberEntity> pastMemberships = apartmentMemberRepository
+                .findPastTenantMembershipsByUserIdAndApartmentId(landlord.getId(), apartment.getId(),
+                        LocalDate.now().minusMonths(3));
 
         assertEquals(1, pastMemberships.size());
     }
@@ -260,7 +277,9 @@ public class ApartmentMemberRepositoryTest {
 
         persistApartmentMember(tenant, apartment, LocalDate.now().minusMonths(2), LocalDate.now().minusMonths(1));
         persistApartmentMember(tenant, apartment2, LocalDate.now().minusMonths(12), LocalDate.now().minusMonths(6));
-        List<ApartmentMemberEntity> pastMemberships = apartmentMemberRepository.findPastLandlordMembershipsByUserIdAndApartmentId(landlord.getId(), apartment.getId(), LocalDate.now().minusMonths(3));
+        List<ApartmentMemberEntity> pastMemberships = apartmentMemberRepository
+                .findPastLandlordMembershipsByUserIdAndApartmentId(landlord.getId(), apartment.getId(),
+                        LocalDate.now().minusMonths(3));
 
         assertEquals(1, pastMemberships.size());
     }
@@ -274,7 +293,8 @@ public class ApartmentMemberRepositoryTest {
 
         persistApartmentMember(tenant, apartment, LocalDate.now().minusMonths(2), LocalDate.now().minusMonths(1));
         persistApartmentMember(tenant, apartment2, LocalDate.now().minusMonths(12), null);
-        List<ApartmentEntity> lastMemberships = apartmentMemberRepository.findLastApartmentsByTenantIdAndApartmentId(tenant.getId(), LocalDate.now());
+        List<ApartmentEntity> lastMemberships = apartmentMemberRepository
+                .findLastApartmentsByTenantIdAndApartmentId(tenant.getId(), LocalDate.now());
 
         assertEquals(1, lastMemberships.size());
     }
@@ -288,7 +308,8 @@ public class ApartmentMemberRepositoryTest {
 
         persistApartmentMember(tenant, apartment, LocalDate.now().minusMonths(2), LocalDate.now());
         persistApartmentMember(tenant, apartment2, LocalDate.now().minusMonths(12), LocalDate.now());
-        List<ApartmentEntity> lastMemberships = apartmentMemberRepository.findLastApartmentsByLandlordIdAndApartmentId(landlord.getId(), LocalDate.now().minusMonths(1));
+        List<ApartmentEntity> lastMemberships = apartmentMemberRepository
+                .findLastApartmentsByLandlordIdAndApartmentId(landlord.getId(), LocalDate.now().minusMonths(1));
 
         assertEquals(2, lastMemberships.size());
     }
@@ -301,7 +322,8 @@ public class ApartmentMemberRepositoryTest {
 
         persistApartmentMember(tenant, apartment, LocalDate.now().minusMonths(2), LocalDate.now().minusMonths(1));
         persistApartmentMember(tenant, apartment, LocalDate.now().minusDays(20), null);
-        Optional<ApartmentMemberEntity> mostRecentMembership = apartmentMemberRepository.findFirstByUserIdAndEndDateIsNullOrderByJoinDateDesc(tenant.getId());
+        Optional<ApartmentMemberEntity> mostRecentMembership = apartmentMemberRepository
+                .findFirstByUserIdAndEndDateIsNullOrderByJoinDateDesc(tenant.getId());
 
         assertEquals(apartment, mostRecentMembership.get().getApartment());
     }
@@ -309,7 +331,8 @@ public class ApartmentMemberRepositoryTest {
     @Test
     public void findFirstByUserIdAndEndDateIsNullOrderByJoinDateDesc_ReturnsEmptyWhenNoActiveMembership() {
         UserEntity tenant = persistUser("tenant-a@test.com", Role.TENANT);
-        Optional<ApartmentMemberEntity> mostRecentMembership = apartmentMemberRepository.findFirstByUserIdAndEndDateIsNullOrderByJoinDateDesc(tenant.getId());
+        Optional<ApartmentMemberEntity> mostRecentMembership = apartmentMemberRepository
+                .findFirstByUserIdAndEndDateIsNullOrderByJoinDateDesc(tenant.getId());
 
         assertFalse(mostRecentMembership.isPresent());
     }
@@ -336,7 +359,6 @@ public class ApartmentMemberRepositoryTest {
         assertFalse(exists);
     }
 
-
     private UserEntity persistUser(String email, Role role) {
         UserEntity user = new UserEntity();
         user.setEmail(email);
@@ -347,7 +369,8 @@ public class ApartmentMemberRepositoryTest {
         return user;
     }
 
-    private ApartmentMemberEntity persistApartmentMember(UserEntity tenant, ApartmentEntity apartment, MemberRole memberRole) {
+    private ApartmentMemberEntity persistApartmentMember(UserEntity tenant, ApartmentEntity apartment,
+            MemberRole memberRole) {
         ApartmentMemberEntity member = new ApartmentMemberEntity();
         member.setUser(tenant);
         member.setApartment(apartment);
@@ -358,7 +381,8 @@ public class ApartmentMemberRepositoryTest {
         return member;
     }
 
-    private ApartmentEntity persistApartment(String title, String ubication, Double price, ApartmentState state, UserEntity owner) {
+    private ApartmentEntity persistApartment(String title, String ubication, Double price, ApartmentState state,
+            UserEntity owner) {
         ApartmentEntity apartment = new ApartmentEntity();
         apartment.setTitle(title);
         apartment.setDescription("desc " + title);
@@ -382,7 +406,8 @@ public class ApartmentMemberRepositoryTest {
         return member;
     }
 
-    private ApartmentMemberEntity persistApartmentMember(UserEntity tenant, ApartmentEntity apartment, LocalDate endDate) {
+    private ApartmentMemberEntity persistApartmentMember(UserEntity tenant, ApartmentEntity apartment,
+            LocalDate endDate) {
         ApartmentMemberEntity member = new ApartmentMemberEntity();
         member.setUser(tenant);
         member.setApartment(apartment);
@@ -393,7 +418,8 @@ public class ApartmentMemberRepositoryTest {
         return member;
     }
 
-    private ApartmentMemberEntity persistApartmentMember(UserEntity tenant, ApartmentEntity apartment, LocalDate joinDate, LocalDate endDate) {
+    private ApartmentMemberEntity persistApartmentMember(UserEntity tenant, ApartmentEntity apartment,
+            LocalDate joinDate, LocalDate endDate) {
         ApartmentMemberEntity member = new ApartmentMemberEntity();
         member.setUser(tenant);
         member.setApartment(apartment);

@@ -1,8 +1,15 @@
 import { AnimatePresence } from 'framer-motion'
-import { Loader2, Filter, ChevronDown } from 'lucide-react'
-import { useCallback, useEffect, useState, useMemo } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Loader2, MessageCircle, Filter, ChevronDown } from 'lucide-react'
+import type { IMessage, StompSubscription } from '@stomp/stompjs'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
+import { useStompClient } from '../../../hooks/useStompClient'
+import {
+  CHAT_TOPIC_SUBSCRIPTION,
+  getMessageHistory,
+  type ChatMessageDTO,
+} from '../../../service/chat.service'
 import type {
   ApartmentDTO,
   ApartmentMatchDTO,
@@ -32,6 +39,7 @@ interface EnrichedMatch {
   score?: number
 }
 
+
 function statusLabel(status: MatchStatus): string {
   switch (status) {
     case 'ACTIVE': return 'Pendiente'
@@ -56,7 +64,8 @@ function statusBadgeClass(status: MatchStatus): string {
   }
 }
 
-async function enrichMatches(matches: any[]): Promise<EnrichedMatch[]> {
+async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatch[]> {
+
   const enriched = await Promise.all(
     matches.map(async (match) => {
       const mId = match.id;
@@ -91,22 +100,42 @@ export default function LandlordRequestsPage() {
   const { userId } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
+
+  const apartmentFilterId = useMemo(() => {
+    const rawApartmentId = searchParams.get('apartmentId')
+    if (!rawApartmentId) return null
+
+    const parsedApartmentId = Number(rawApartmentId)
+    return Number.isNaN(parsedApartmentId) ? null : parsedApartmentId
+  }, [searchParams])
 
   // --- Estados de Ranking ---
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<CandidateFilter>(location.state?.appliedFilters || {})
   const [selectedAptId, setSelectedAptId] = useState<number | null>(null)
   const [isRanking, setIsRanking] = useState(false)
-
-  // --- Estados de Lista ---
-  const [activeTab, setActiveTab] = useState<ActiveTab>('pending')
+  const initialTab = useMemo<ActiveTab>(() => {
+    return searchParams.get('tab') === 'match' ? 'match' : 'pending'
+  }, [searchParams])
+  const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab)
   const [pendingItems, setPendingItems] = useState<EnrichedMatch[]>([])
   const [matchItems, setMatchItems] = useState<EnrichedMatch[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
-  const [selectedApartment, setSelectedApartment] = useState<(ApartmentDTO & { imageUrl: string }) | null>(null)
+
+  const [filteredApartmentLabel, setFilteredApartmentLabel] = useState<string | null>(null)
+  const [selectedApartment, setSelectedApartment] = useState<
+    (ApartmentDTO & { imageUrl: string }) | null
+  >(null)
   const [modalLoading, setModalLoading] = useState<number | null>(null)
+  const [unreadMatches, setUnreadMatches] = useState<Set<number>>(new Set())
+  const { client, connected } = useStompClient()
+
+  useEffect(() => {
+    setActiveTab(initialTab)
+  }, [initialTab])
 
   // Selector de viviendas únicas para el filtro
   const uniqueApartments = useMemo(() => {
@@ -122,39 +151,111 @@ export default function LandlordRequestsPage() {
     if (!userId) return;
     setLoading(true);
     setError(null);
-  
+    
     try {
       const id = Number(userId);
-    
+
+      // 1. Obtener la vivienda filtrada si existe en URL (de trunk)
+      const filteredApartment = apartmentFilterId ? await getApartment(apartmentFilterId) : undefined;
+      setFilteredApartmentLabel(
+        apartmentFilterId ? filteredApartment?.title ?? `Vivienda #${apartmentFilterId}` : null
+      );
+
+      const matchesForApartment = (matches: ApartmentMatchDTO[]) =>
+        apartmentFilterId ? matches.filter((match) => match.apartmentId === apartmentFilterId) : matches;
+
+      // 2. Lógica de filtrado y ranking (de feat/apartment-filters)
       if (selectedAptId && (filters.requiredProfession || filters.allowedSmoker !== undefined)) {
         setIsRanking(true);
         const rankedData = await getFilteredCandidates(selectedAptId, filters);
         const enrichedRanked = await enrichMatches(rankedData);
         setPendingItems(enrichedRanked);
-      
+        
         const fullMatches = await getMatchesForLandlord(id, 'MATCH');
-        setMatchItems(await enrichMatches(fullMatches));
+        setMatchItems(await enrichMatches(matchesForApartment(fullMatches)));
       } else {
         setIsRanking(false); 
         const [activeMatches, successMatches, fullMatches] = await Promise.all([
-        getMatchesForLandlord(id, 'ACTIVE'),
-        getMatchesForLandlord(id, 'SUCCESSFUL'),
-        getMatchesForLandlord(id, 'MATCH'),
+          getMatchesForLandlord(id, 'ACTIVE'),
+          getMatchesForLandlord(id, 'SUCCESSFUL'),
+          getMatchesForLandlord(id, 'MATCH'),
         ]);
-        setPendingItems(await enrichMatches(activeMatches));
-        setMatchItems(await enrichMatches([...fullMatches, ...successMatches]));
+
+        const [enrichedPending, enrichedSuccess, enrichedFull] = await Promise.all([
+          enrichMatches(matchesForApartment(activeMatches)),
+          enrichMatches(matchesForApartment(successMatches)),
+          enrichMatches(matchesForApartment(fullMatches)),
+        ]);
+
+        setPendingItems(enrichedPending);
+        setMatchItems([...enrichedFull, ...enrichedSuccess]);
       }
-      } catch (err) {
-        console.error('Error loading requests', err);
-      setError('No se pudieron cargar las solicitudes.');
-      } finally {
-        setLoading(false);
-      }
-  }, [userId, selectedAptId, filters]);
+    } catch (err) {
+      console.error('Error loading requests', err);
+      setError('No se pudieron cargar tus solicitudes. Inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, apartmentFilterId, selectedAptId, filters]);
 
   useEffect(() => {
     void fetchData()
-  }, [fetchData, location.key])
+  }, [fetchData, location.search])
+
+  useEffect(() => {
+    const chatableMatches = matchItems.filter(item => 
+      item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED' || item.matchStatus === 'SUCCESSFUL'
+    )
+    
+    if (chatableMatches.length === 0 || !userId) return
+
+    let isMounted = true
+    const subscriptions: StompSubscription[] = []
+
+    const initializeUnread = async () => {
+      const newUnread = new Set<number>()
+      for (const item of chatableMatches) {
+        try {
+          const history = await getMessageHistory({ type: 'match', id: item.matchId })
+          const hasUnread = history.some(m => m.senderId !== Number(userId) && m.status !== 'READ')
+          if (hasUnread) {
+            newUnread.add(item.matchId)
+          }
+        } catch {
+          // no pasa nada
+        }
+      }
+      if (isMounted) {
+        setUnreadMatches(prev => {
+           const merged = new Set(prev)
+           newUnread.forEach(id => merged.add(id))
+           return merged
+        })
+      }
+    }
+
+    void initializeUnread()
+
+    if (connected && client) {
+      for (const item of chatableMatches) {
+        const sub = client.subscribe(
+          CHAT_TOPIC_SUBSCRIPTION({ type: 'match', id: item.matchId }),
+          (payload: IMessage) => {
+             const newMessage = JSON.parse(payload.body) as ChatMessageDTO
+             if (newMessage.senderId !== Number(userId) && newMessage.status !== 'READ') {
+               setUnreadMatches(prev => new Set(prev).add(item.matchId))
+             }
+          }
+        )
+        subscriptions.push(sub)
+      }
+    }
+
+    return () => {
+      isMounted = false
+      subscriptions.forEach(sub => sub.unsubscribe())
+    }
+  }, [matchItems, userId, connected, client])
 
   const handleFilterChange = (field: keyof CandidateFilter, value: any) => {
     setFilters(prev => ({ ...prev, [field]: value === '' ? undefined : value }))
@@ -206,6 +307,7 @@ export default function LandlordRequestsPage() {
   }
 
   const visibleItems = activeTab === 'pending' ? pendingItems : matchItems
+  const hasApartmentFilter = apartmentFilterId !== null
 
   return (
     <div data-theme="light" className="mx-auto w-full max-w-2xl min-h-dvh text-[#050505] pb-28">
@@ -219,6 +321,22 @@ export default function LandlordRequestsPage() {
             <Filter size={20} />
           </button>
         </div>
+
+        {hasApartmentFilter && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-[#DDDBCB] bg-white px-4 py-3 text-sm text-[#050505]/80 shadow-sm">
+            <span className="font-medium text-[#050505]">Filtrado por inmueble</span>
+            <span className="rounded-full bg-[#F5F1E3] px-3 py-1 font-medium">
+              {filteredApartmentLabel ?? `Vivienda #${apartmentFilterId}`}
+            </span>
+            <button
+              type="button"
+              className="ml-auto rounded-full bg-[#008080] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#006d6d]"
+              onClick={() => navigate('/mis-solicitudes/recibidas')}
+            >
+              Ver todas
+            </button>
+          </div>
+        )}
 
         <AnimatePresence>
           {showFilters && (
@@ -312,7 +430,16 @@ export default function LandlordRequestsPage() {
           </div>
         ) : visibleItems.length === 0 ? (
           <div className="rounded-2xl border border-[#DDDBCB] bg-white p-10 text-center">
-            <p className="text-[#050505]/70 font-medium">No hay solicitudes en esta sección.</p>
+            <div className="text-5xl mb-4">{activeTab === 'pending' ? '📋' : '🤝'}</div>
+            <p className="text-[#050505]/70 font-medium">
+              {hasApartmentFilter
+                ? activeTab === 'pending'
+                  ? 'Este inmueble no tiene solicitudes activas.'
+                  : 'Este inmueble no tiene matches.'
+                : activeTab === 'pending'
+                  ? 'Aún no tienes solicitudes activas. ¡Desliza pisos en el inicio!'
+                  : 'Todavía no tienes matches. ¡Sigue explorando!'}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -324,55 +451,105 @@ export default function LandlordRequestsPage() {
               </div>
             )}
             
-            {visibleItems.map((item, index) => (
-              <article
-                key={item.matchId}
-                onClick={(e) => void handleCardClick(item, e)}
-                className={`relative overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm transition-all cursor-pointer hover:shadow-md ${index === 0 && isRanking ? 'ring-2 ring-[#008080] scale-[1.02]' : ''}`}
-              >
-                {index === 0 && isRanking && (
-                  <div className="absolute top-3 left-3 z-10 bg-[#008080] text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg uppercase">
-                    Mejor Match
-                  </div>
-                )}
-                
-                <div className="relative h-40 w-full">
-                  <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" />
-                  <div className="absolute top-3 right-3 bg-black/40 backdrop-blur-sm px-2 py-1 rounded-lg text-white text-xs font-bold">
-                    {item.price}
-                  </div>
-                </div>
+            {visibleItems.map((item, index) => {
+              const isCancelled = item.matchStatus === 'CANCELED' || item.matchStatus === 'REJECTED'
+              const isTopRanked = index === 0 && isRanking && activeTab === 'pending'
 
-                <div className="p-4">
-                  <h2 className="text-lg font-bold text-[#050505] line-clamp-1">{item.title}</h2>
-                  <p className="text-xs text-[#050505]/60 mb-2">{item.location}</p>
-                  <p className="text-sm font-medium text-[#008080] truncate mb-4">{item.tenantEmail}</p>
-
-                  <div className="flex items-center justify-between mt-auto">
-                    <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-tighter ${statusBadgeClass(item.matchStatus)}`}>
-                      {statusLabel(item.matchStatus)}
-                    </span>
-                    
-                    {item.matchStatus === 'ACTIVE' && (
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={() => handleReject(item.matchId)}
-                          className="p-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                        </button>
-                        <button 
-                          onClick={() => handleAccept(item.matchId)}
-                          className="p-2 rounded-xl bg-[#008080] text-white hover:bg-[#006d6d] transition-colors"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                        </button>
+              return (
+                <article
+                  key={item.matchId}
+                  onClick={(e) => void handleCardClick(item, e)}
+                  className={`relative overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm transition-all cursor-pointer hover:shadow-md hover:-translate-y-0.5 ${
+                    isCancelled ? 'opacity-60' : ''
+                  } ${isTopRanked ? 'ring-2 ring-[#008080] scale-[1.02]' : ''}`}
+                >
+                  {isTopRanked && (
+                    <div className="absolute top-3 left-3 z-20 bg-[#008080] text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg uppercase">
+                      Mejor Match
+                    </div>
+                  )}
+                  
+                  {/* Image */}
+                  <div className={`relative h-44 w-full ${isCancelled ? 'grayscale' : ''}`}>
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute top-3 right-3 z-10 bg-black/40 backdrop-blur-sm px-2 py-1 rounded-lg text-white text-xs font-bold">
+                      {item.price}
+                    </div>
+                    {/* Modal loading spinner on card */}
+                    {modalLoading === item.matchId && (
+                      <div className="absolute inset-0 z-10 bg-black/30 flex items-center justify-center">
+                        <Loader2 size={28} className="animate-spin text-white" />
                       </div>
                     )}
                   </div>
-                </div>
-              </article>
-            ))}
+
+                  <div className="p-4 flex flex-col h-[calc(100%-11rem)]">
+                    <h2 className="text-lg font-bold text-[#050505] line-clamp-1">{item.title}</h2>
+                    <p className="text-xs text-[#050505]/60 mb-2">{item.location}</p>
+                    <p className="text-sm font-medium text-[#008080] truncate mb-4">{item.tenantEmail}</p>
+
+                    <div className="flex items-center justify-between mt-auto">
+                      <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-tighter ${statusBadgeClass(item.matchStatus)}`}>
+                        {statusLabel(item.matchStatus)}
+                      </span>
+                      
+                      <div className="flex items-center justify-end gap-2">
+                        {item.matchStatus === 'ACTIVE' && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              className="rounded-xl border border-[#DDDBCB] bg-white px-3 py-2 text-xs font-semibold text-[#050505] transition-colors hover:bg-[#F5F1E3] disabled:cursor-not-allowed disabled:opacity-60"
+                              onClick={(e) => { e.stopPropagation(); void handleReject(item.matchId); }}
+                              disabled={updatingId === item.matchId}
+                            >
+                              <span className="flex items-center justify-center gap-1.5">
+                                {updatingId === item.matchId && (
+                                  <Loader2 size={12} className="animate-spin" />
+                                )}
+                                Rechazar
+                              </span>
+                            </button>
+                            <button
+                              className="rounded-xl bg-[#008080] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#006d6d] disabled:cursor-not-allowed disabled:opacity-60"
+                              onClick={(e) => { e.stopPropagation(); void handleAccept(item.matchId); }}
+                              disabled={updatingId === item.matchId}
+                            >
+                              <span className="flex items-center justify-center gap-1.5">
+                                {updatingId === item.matchId && (
+                                  <Loader2 size={12} className="animate-spin" />
+                                )}
+                                Aceptar
+                              </span>
+                            </button>
+                          </div>
+                        )}
+                        {(item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED' || item.matchStatus === 'SUCCESSFUL') && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              className="relative h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center transition-colors hover:bg-[#F5F1E3]"
+                              aria-label="Abrir chat"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                navigate(`/chat/${item.matchId}`)
+                              }}
+                            >
+                              <MessageCircle size={16} />
+                              {unreadMatches.has(item.matchId) && (
+                                <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 border border-white" />
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              )
+            })}
           </div>
         )}
       </section>

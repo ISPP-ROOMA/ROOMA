@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useToast } from '../../../hooks/useToast'
 import {
@@ -137,7 +137,7 @@ export default function IncidentDetail() {
     })
   }, [incident])
 
-  const loadIncident = async () => {
+  const loadIncident = useCallback(async () => {
     if (!Number.isFinite(apartmentId) || !Number.isFinite(currentIncidentId)) {
       setIsLoading(false)
       return
@@ -147,11 +147,11 @@ export default function IncidentDetail() {
     const data = await getIncidentById(apartmentId, currentIncidentId)
     setIncident(data)
     setIsLoading(false)
-  }
+  }, [apartmentId, currentIncidentId]);
 
   useEffect(() => {
     void loadIncident()
-  }, [apartmentId, currentIncidentId])
+  }, [loadIncident])
 
   const handleConfirm = async () => {
     if (!incident) return

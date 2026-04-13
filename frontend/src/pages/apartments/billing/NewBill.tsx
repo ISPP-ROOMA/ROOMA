@@ -206,10 +206,46 @@ export default function NewBill() {
 
     setIsSending(true)
     try {
+      const totalCents = Math.round(total * 100)
+      const manualDebts = tenants
+        .filter((t) => !t.selected)
+        .map((t) => {
+          const cents = Math.round((parseFloat(t.customAmount) || 0) * 100)
+          return {
+            userId: t.member.userId,
+            cents,
+          }
+        })
+        .filter((d) => d.cents > 0)
+
+      const manualCents = manualDebts.reduce((sum, d) => sum + d.cents, 0)
+      const selectedTenants = tenants.filter((t) => t.selected)
+      const remainingCents = Math.max(0, totalCents - manualCents)
+      const baseAutoCents = selectedTenants.length > 0 ? Math.floor(remainingCents / selectedTenants.length) : 0
+      const remainder = selectedTenants.length > 0 ? remainingCents % selectedTenants.length : 0
+
+      const autoDebts = selectedTenants
+        .map((tenant, idx) => ({
+          userId: tenant.member.userId,
+          cents: baseAutoCents + (idx < remainder ? 1 : 0),
+        }))
+        .filter((d) => d.cents > 0)
+
+      const debtByUserId = new Map<number, number>()
+      for (const debt of [...manualDebts, ...autoDebts]) {
+        debtByUserId.set(debt.userId, (debtByUserId.get(debt.userId) ?? 0) + debt.cents)
+      }
+
+      const tenantDebts = Array.from(debtByUserId.entries()).map(([userId, cents]) => ({
+        amount: cents / 100,
+        user: { id: userId },
+      }))
+
       await createBill(apartmentId, {
         reference: concept,
         totalAmount: total,
         duDate: dueDate,
+        tenantDebts,
       })
       showToast('Factura creada y notificada a los inquilinos', 'success')
       navigate(`/apartments/${apartmentId}`)

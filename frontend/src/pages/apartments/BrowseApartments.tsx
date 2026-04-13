@@ -18,11 +18,11 @@ export default function BrowseApartments() {
     const fetchApartments = async () => {
       try {
         const data = await getApartments()
-        const available = data.filter((a) => a.state === 'available')
-        setApartments(available)
+        const activeApartments = data.filter((a) => (a.state ?? '').toUpperCase() === 'ACTIVE')
+        setApartments(activeApartments)
 
         if (token) {
-          const ids = await getFavoriteApartmentIds(available.map((a) => a.id))
+          const ids = await getFavoriteApartmentIds(activeApartments.map((a) => a.id))
           setFavoriteIds(new Set(ids))
         } else {
           setFavoriteIds(new Set())
@@ -75,7 +75,7 @@ export default function BrowseApartments() {
             {apartments.map((apt) => (
               <Link
                 key={apt.id}
-                to={`/properties/${apt.id}`}
+                to={`/apartments/${apt.id}`}
                 className="bg-base-100 rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition flex flex-col"
               >
                 <div className="relative h-40 bg-gray-100 flex items-center justify-center">

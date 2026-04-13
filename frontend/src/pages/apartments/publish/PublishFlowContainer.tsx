@@ -70,13 +70,15 @@ export default function PublishFlowContainer() {
         ? formData.includedBills.join(', ')
         : 'No incluidos'
 
+      const ubicationText = [formData.street, formData.postalCode].filter(Boolean).join(', ') || 'Sin dirección'
+
       await createApartment(
         {
           title: `Piso en ${formData.neighborhood || 'Sin barrio'}`,
           description: `Fianza: ${formData.deposit} mes(es).`,
           price: parsedPrice,
           bills: billsText,
-          ubication: formData.street || 'Sin dirección',
+          ubication: ubicationText,
           state: 'ACTIVE',
         },
         formData.images
@@ -183,11 +185,21 @@ export default function PublishFlowContainer() {
           )}
 
           <button
-            onClick={() => handleNext()}
+            onClick={handleNext}
             disabled={!canContinue || isSubmitting}
             className={CONTINUE_BUTTON_CLASS}
+            aria-busy={isSubmitting}
           >
-            {isLastStep ? (isSubmitting ? 'Publicando...' : 'Finalizar') : 'Siguiente'}
+            {isSubmitting ? (
+              <>
+                <span className="loading loading-spinner loading-sm" aria-hidden="true" />
+                Publicando...
+              </>
+            ) : isLastStep ? (
+              'Finalizar'
+            ) : (
+              'Siguiente'
+            )}
           </button>
         </div>
       </footer>

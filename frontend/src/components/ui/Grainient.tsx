@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react'
 import './Grainient.css'
 
 interface GrainientProps {
+  variant?: 'default' | 'roomaMatch'
   timeSpeed?: number
   colorBalance?: number
   warpStrength?: number
@@ -26,6 +27,57 @@ interface GrainientProps {
   color2?: string
   color3?: string
   className?: string
+}
+
+const DEFAULT_GRAINIENT_PROPS = {
+  timeSpeed: 0.25,
+  colorBalance: 0.0,
+  warpStrength: 1.0,
+  warpFrequency: 5.0,
+  warpSpeed: 2.0,
+  warpAmplitude: 50.0,
+  blendAngle: 0.0,
+  blendSoftness: 0.05,
+  rotationAmount: 500.0,
+  noiseScale: 2.0,
+  grainAmount: 0.1,
+  grainScale: 2.0,
+  grainAnimated: false,
+  contrast: 1.5,
+  gamma: 1.0,
+  saturation: 1.0,
+  centerX: 0.0,
+  centerY: 0.0,
+  zoom: 0.9,
+  color1: '#FF9FFC',
+  color2: '#5227FF',
+  color3: '#B19EEF',
+  className: '',
+} as const
+
+const GRAINIENT_VARIANTS: Record<Exclude<NonNullable<GrainientProps['variant']>, 'default'>, Partial<GrainientProps>> = {
+  roomaMatch: {
+    color1: '#f0ebe3',
+    color2: '#0d9488',
+    color3: '#c4a97d',
+    timeSpeed: 0.25,
+    colorBalance: -0.17,
+    warpStrength: 0.75,
+    warpFrequency: 5,
+    warpSpeed: 2,
+    warpAmplitude: 65,
+    blendAngle: 0,
+    blendSoftness: 0.05,
+    rotationAmount: 500,
+    noiseScale: 2.3,
+    grainAmount: 0.02,
+    grainScale: 2,
+    grainAnimated: true,
+    contrast: 1.1,
+    gamma: 1,
+    saturation: 1.2,
+    zoom: 0.9,
+  },
 }
 
 const hexToRgb = (hex: string): [number, number, number] => {
@@ -129,31 +181,38 @@ void main(){
 }
 `
 
-const Grainient: React.FC<GrainientProps> = ({
-  timeSpeed = 0.25,
-  colorBalance = 0.0,
-  warpStrength = 1.0,
-  warpFrequency = 5.0,
-  warpSpeed = 2.0,
-  warpAmplitude = 50.0,
-  blendAngle = 0.0,
-  blendSoftness = 0.05,
-  rotationAmount = 500.0,
-  noiseScale = 2.0,
-  grainAmount = 0.1,
-  grainScale = 2.0,
-  grainAnimated = false,
-  contrast = 1.5,
-  gamma = 1.0,
-  saturation = 1.0,
-  centerX = 0.0,
-  centerY = 0.0,
-  zoom = 0.9,
-  color1 = '#FF9FFC',
-  color2 = '#5227FF',
-  color3 = '#B19EEF',
-  className = '',
-}) => {
+const Grainient: React.FC<GrainientProps> = ({ variant = 'default', ...props }) => {
+  const variantConfig = variant === 'default' ? {} : GRAINIENT_VARIANTS[variant]
+  const {
+    timeSpeed,
+    colorBalance,
+    warpStrength,
+    warpFrequency,
+    warpSpeed,
+    warpAmplitude,
+    blendAngle,
+    blendSoftness,
+    rotationAmount,
+    noiseScale,
+    grainAmount,
+    grainScale,
+    grainAnimated,
+    contrast,
+    gamma,
+    saturation,
+    centerX,
+    centerY,
+    zoom,
+    color1,
+    color2,
+    color3,
+    className,
+  } = {
+    ...DEFAULT_GRAINIENT_PROPS,
+    ...variantConfig,
+    ...props,
+  }
+
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
