@@ -47,6 +47,13 @@ export interface RequestItem {
   status: RequestStatus
   monthlyPrice?: number
 }
+export interface CandidateFilter {
+  minAge?: number;
+  maxAge?: number;
+  requiredProfession?: string;
+  allowedSmoker?: boolean;
+  requiredSchedule?: string;
+}
 
 function mapBackendStatus(status: BackendMatchStatus): RequestStatus {
   switch (status) {
@@ -162,4 +169,12 @@ export async function rejectRequest(apartmentMatchId: number): Promise<void> {
   await api.post(
     `/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-request?interest=false`
   )
+}
+
+export async function getFilteredCandidates(
+  apartmentId: number,
+  filter: CandidateFilter
+) {
+  const response = await api.post(`/apartments-matches/apartment/${apartmentId}/filtered-candidates`, filter);
+  return response.data;
 }
