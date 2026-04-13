@@ -135,6 +135,7 @@ public class ApartmentMatchService {
         } else {
             newMatch.setMatchStatus(MatchStatus.REJECTED);
         }
+        newMatch.setTenantHasOpenedMatchDetails(false);
         return newMatch;
     }
 
@@ -261,6 +262,7 @@ public class ApartmentMatchService {
         } else {
             newMatch.setMatchStatus(MatchStatus.REJECTED);
         }
+        newMatch.setTenantHasOpenedMatchDetails(false);
         return newMatch;
     }
 
@@ -326,6 +328,16 @@ public class ApartmentMatchService {
         return match;
     }
 
+    @Transactional
+    public ApartmentMatchEntity markTenantMatchDetailsAsOpened(Integer apartmentMatchId) {
+        ApartmentMatchEntity match = findMyMatchForTenant(apartmentMatchId);
+        if (!Boolean.TRUE.equals(match.getTenantHasOpenedMatchDetails())) {
+            match.setTenantHasOpenedMatchDetails(true);
+            apartmentMatchRepository.save(match);
+        }
+        return match;
+    }
+
     @Transactional(readOnly = true)
     public ApartmentMatchEntity findMyMatchForLandlord(Integer apartmentMatchId) {
         UserEntity currentUser = userService.findCurrentUserEntity();
@@ -349,7 +361,7 @@ public class ApartmentMatchService {
             throw new ConflictException("Only matches with status MATCH can be invited");
         }
         if (!apartmentMemberService.findActiveMembershipsByUserId(match.getCandidate().getId()).isEmpty()) {
-            throw new ConflictException("Cannot send invitation because the candidate already belongs to an apartment");
+            throw new ConflictException("No puedes enviar esta invitación porque el candidato ya pertenece a un apartamento");
         }
 
         match.setMatchStatus(MatchStatus.INVITED);
@@ -376,7 +388,7 @@ public class ApartmentMatchService {
         }
         if (accepted) {
             if (!apartmentMemberService.findActiveMembershipsByUserId(currentUser.getId()).isEmpty()) {
-                throw new ConflictException("Cannot accept invitation because you already belong to an apartment");
+                throw new ConflictException("No puedes aceptar esta invitación porque ya perteneces a un apartamento");
             }
 
             if(!apartmentMemberService.existsByUserIdAndRole(match.getApartment().getUser().getId(), MemberRole.HOMEBODY)) {

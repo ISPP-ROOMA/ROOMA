@@ -7,6 +7,7 @@ import {
   Clock,
   Heart,
   MapPin,
+  MessageCircle,
   Receipt,
   Shield,
   Users,
@@ -25,6 +26,10 @@ import FavoriteButton from './FavoriteButton'
 interface ApartmentDetailModalProps {
   apartment: ApartmentDTO
   onClose: () => void
+  showChatButton?: boolean
+  onOpenChat?: () => void
+  showBackButton?: boolean
+  onBack?: () => void
 }
 
 const FALLBACK_IMG =
@@ -228,7 +233,7 @@ function SwipeGallery({
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={onOpenLightbox}
-          className="absolute top-3 left-3 z-10 btn btn-circle btn-sm bg-black/30 text-white hover:bg-black/50 backdrop-blur-md border-none"
+          className="absolute top-[34%] -translate-y-1/2 left-3 z-10 btn btn-circle btn-sm bg-black/30 text-white hover:bg-black/50 backdrop-blur-md border-none"
         >
           <ZoomIn size={16} />
         </button>
@@ -329,7 +334,14 @@ function Lightbox({
 /* ───────────────────────────────────────────────────────────────
    Main Modal
    ─────────────────────────────────────────────────────────────── */
-export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDetailModalProps) {
+export default function ApartmentDetailModal({
+  apartment,
+  onClose,
+  showChatButton = false,
+  onOpenChat,
+  showBackButton = false,
+  onBack,
+}: ApartmentDetailModalProps) {
   const { token } = useAuthStore()
   const [roommates, setRoommates] = useState<UserDTO[]>([])
   const [photos, setPhotos] = useState<ApartmentPhotoDTO[]>([])
@@ -584,6 +596,29 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
           <X size={18} />
         </button>
 
+        {showBackButton && (
+          <button
+            onClick={onBack ?? dismiss}
+            className="absolute top-3 left-3 sm:top-4 sm:left-4 z-30 w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm"
+            aria-label="Volver"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-gray-700"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+        )}
+
         {/* ─── Single scroll container ─── */}
         <div ref={scrollRef} className="h-full overflow-y-auto overscroll-none">
           {/* Drag handle (desktop pull-to-dismiss) */}
@@ -633,8 +668,23 @@ export default function ApartmentDetailModal({ apartment, onClose }: ApartmentDe
             </div>
           </div>
 
+          {showChatButton && onOpenChat && (
+            <div className="max-w-2xl mx-auto px-5 pt-4">
+              <button
+                type="button"
+                onClick={onOpenChat}
+                className="w-full rounded-2xl bg-[#008080] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#006d6d] flex items-center justify-center gap-2"
+              >
+                <MessageCircle size={18} />
+                Ir al chat
+              </button>
+            </div>
+          )}
+
           {/* ─── Content ─── */}
-          <div className="max-w-2xl mx-auto px-5 py-20 space-y-8">
+          <div
+            className={`max-w-2xl mx-auto px-5 ${showChatButton && onOpenChat ? 'pt-6 pb-20' : 'py-20'} space-y-8`}
+          >
             {/* Quick stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-base-200 rounded-2xl p-4 flex flex-col items-center text-center gap-1">

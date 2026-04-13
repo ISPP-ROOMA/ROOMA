@@ -21,6 +21,7 @@
     "axios": "^1.13.5",
     "framer-motion": "^12.34.3",
     "leaflet": "^1.9.4",
+    "lottie-react": "^2.4.1",
     "lucide-react": "^0.575.0",
     "ogl": "^1.0.11",
     "react": "^19.2.0",

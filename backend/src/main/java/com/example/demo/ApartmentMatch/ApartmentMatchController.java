@@ -141,7 +141,8 @@ public class ApartmentMatchController {
     @PreAuthorize("hasRole('TENANT')")
     @PatchMapping("/apartmentMatch/{apartmentMatchId}/tenant-match-details")
     public ResponseEntity<ApartmentMatchLandlordDTO> getApartmentMatchDetailsForTenant(@PathVariable Integer apartmentMatchId) {
-        ApartmentMatchLandlordDTO apartmentMatch = ApartmentMatchLandlordDTO.fromApartmentMatchEntity(apartmentMatchService.findMyMatchForTenant(apartmentMatchId));
+        ApartmentMatchLandlordDTO apartmentMatch = ApartmentMatchLandlordDTO
+                .fromApartmentMatchEntity(apartmentMatchService.markTenantMatchDetailsAsOpened(apartmentMatchId));
         return ResponseEntity.ok(apartmentMatch);
     }
 

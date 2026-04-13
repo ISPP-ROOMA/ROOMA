@@ -5,10 +5,16 @@ import java.util.List;
 import com.example.demo.ApartmentMatch.ApartmentMatchEntity;
 import com.example.demo.ApartmentMatch.MatchStatus;
 
-public record ApartmentMatchDTO(Integer id, Integer candidateId, Integer apartmentId, MatchStatus matchStatus) {
+public record ApartmentMatchDTO(Integer id, Integer candidateId, Integer apartmentId, MatchStatus matchStatus,
+    Boolean tenantHasOpenedMatchDetails) {
 
     public static ApartmentMatchDTO fromApartmentMatchEntity(ApartmentMatchEntity apartmentMatch) {
-        return new ApartmentMatchDTO(apartmentMatch.getId(), apartmentMatch.getCandidate().getId(), apartmentMatch.getApartment().getId(), apartmentMatch.getMatchStatus());
+        return new ApartmentMatchDTO(
+                apartmentMatch.getId(),
+                apartmentMatch.getCandidate().getId(),
+                apartmentMatch.getApartment().getId(),
+                apartmentMatch.getMatchStatus(),
+                apartmentMatch.getTenantHasOpenedMatchDetails());
     }
 
     public static List<ApartmentMatchDTO> fromApartmentMatchEntityList(List<ApartmentMatchEntity> apartmentMatches) {

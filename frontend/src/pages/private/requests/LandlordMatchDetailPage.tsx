@@ -180,8 +180,30 @@ export default function LandlordMatchDetailPage() {
     >
       <header className="sticky top-0 z-10 px-4 sm:px-8 pt-5 pb-4">
         <div className="flex items-center justify-between">
+          <button
+            onClick={() => {
+              navigate(-1)
+            }}
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm"
+            aria-label="Volver"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-gray-700"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#050505]">Detalle Match</h1>
-          <div className="h-10 w-10" aria-hidden />
+          <div className="w-9" aria-hidden />
         </div>
       </header>
 
@@ -271,7 +293,7 @@ export default function LandlordMatchDetailPage() {
 
                 {!reviewsLoading && !reviewsError && !hasReviews && (
                   <p className="text-sm text-[#050505]/70">
-                    Este tenant todavía no tiene reseñas publicadas.
+                    Este usuario todavía no tiene reseñas publicadas.
                   </p>
                 )}
 
@@ -345,7 +367,7 @@ export default function LandlordMatchDetailPage() {
               >
                 <span className="flex items-center justify-center gap-2">
                   {inviteLoading && <Loader2 size={15} className="animate-spin" />}
-                  Añadir a mi vivienda
+                  Invitar a unirse a la vivienda
                 </span>
               </button>
             </div>

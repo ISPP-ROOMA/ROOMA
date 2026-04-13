@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const CARD_CLASS = 'bg-base-100 rounded-3xl shadow-md overflow-hidden flex flex-col'
@@ -27,6 +28,8 @@ export interface PropertyCardProps {
     requests: number
     matches: number
   }
+  onRequestsClick?: () => void
+  onMatchesClick?: () => void
   onEdit?: () => void
   onPause?: () => void
 }
@@ -41,6 +44,8 @@ export default function PropertyCard({
   photoCount,
   status,
   stats,
+  onRequestsClick,
+  onMatchesClick,
   onEdit,
   onPause,
 }: PropertyCardProps) {
@@ -68,8 +73,17 @@ export default function PropertyCard({
     navigate(`/apartments/${id}`)
   }
 
+  const handleCardClick = (event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement
+    if (target.closest('button, a')) {
+      return
+    }
+
+    goToDetail()
+  }
+
   return (
-    <div className={CARD_CLASS}>
+    <div className={CARD_CLASS} onClick={handleCardClick}>
       <div className={IMAGE_WRAPPER_CLASS}>
         {resolvedCoverImageSrc ? (
           <img
@@ -137,14 +151,24 @@ export default function PropertyCard({
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-base-200 rounded-2xl flex flex-col items-center justify-center py-4">
+          <button
+            type="button"
+            onClick={onRequestsClick}
+            disabled={!onRequestsClick}
+            className={`bg-base-200 rounded-2xl flex flex-col items-center justify-center py-4 transition-colors ${onRequestsClick ? 'cursor-pointer hover:bg-base-300' : 'cursor-default opacity-70'}`}
+          >
             <span className="text-2xl font-bold text-base-content">{stats.requests}</span>
             <span className="text-xs opacity-60 mt-0.5">Solicitudes</span>
-          </div>
-          <div className="bg-base-200 rounded-2xl flex flex-col items-center justify-center py-4">
+          </button>
+          <button
+            type="button"
+            onClick={onMatchesClick}
+            disabled={!onMatchesClick}
+            className={`bg-base-200 rounded-2xl flex flex-col items-center justify-center py-4 transition-colors ${onMatchesClick ? 'cursor-pointer hover:bg-base-300' : 'cursor-default opacity-70'}`}
+          >
             <span className="text-2xl font-bold text-base-content">{stats.matches}</span>
             <span className="text-xs opacity-60 mt-0.5">Matches</span>
-          </div>
+          </button>
         </div>
 
         <div className="flex items-center gap-2 mt-auto pt-2">
