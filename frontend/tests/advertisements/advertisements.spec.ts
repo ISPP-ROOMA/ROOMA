@@ -39,6 +39,7 @@ const login = async (page: Page, email: string) => {
   await page.locator('#email').fill(email)
   await page.locator('#password').fill(PASSWORD)
   await page.getByRole('button', { name: 'Login' }).click()
+  await expect(page).not.toHaveURL(/\/login$/, { timeout: 15_000 })
 }
 
 const createUserContext = async (

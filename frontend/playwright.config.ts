@@ -1,42 +1,28 @@
 import { defineConfig, devices } from '@playwright/test';
-import * as fs from 'fs';
+import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 /**
- * Read environment variables from file.
- * Native lightweight loader (no external dependency required).
+ * Load variables from .env without overriding existing process env values.
  */
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
-const envFilePath = path.resolve(currentDir, '.env');
-if (fs.existsSync(envFilePath)) {
-  const content = fs.readFileSync(envFilePath, 'utf8');
-  content
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'))
-    .forEach((line) => {
-      const separatorIndex = line.indexOf('=');
-      if (separatorIndex <= 0) return;
-      const key = line.slice(0, separatorIndex).trim();
-      const value = line.slice(separatorIndex + 1).trim();
-      if (!(key in process.env)) {
-        process.env[key] = value;
-      }
-    });
-}
+dotenv.config({ path: path.resolve(currentDir, '.env'), quiet: true });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
   testDir: './tests',
+  expect: {
+    timeout: process.env.CI ? 15_000 : 5_000,
+  },
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries:0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
