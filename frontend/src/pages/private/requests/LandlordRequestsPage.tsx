@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion'
-import { Loader2, MessageCircle, Filter, ChevronDown } from 'lucide-react'
+import { Loader2, MessageCircle, Filter } from 'lucide-react'
 import type { IMessage, StompSubscription } from '@stomp/stompjs'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
@@ -69,7 +69,7 @@ async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatc
   const enriched = await Promise.all(
     matches.map(async (match) => {
       const mId = match.id;
-      const aId = match.apartmentId || (match.apartment ? match.apartment.id : null);
+      const aId = match.apartmentId;
       
       const [apt, details] = await Promise.all([
         aId ? getApartment(aId) : Promise.resolve(null),
@@ -122,14 +122,14 @@ export default function LandlordRequestsPage() {
   const [pendingItems, setPendingItems] = useState<EnrichedMatch[]>([])
   const [matchItems, setMatchItems] = useState<EnrichedMatch[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [_error, setError] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
 
   const [filteredApartmentLabel, setFilteredApartmentLabel] = useState<string | null>(null)
   const [selectedApartment, setSelectedApartment] = useState<
     (ApartmentDTO & { imageUrl: string }) | null
   >(null)
-  const [modalLoading, setModalLoading] = useState<number | null>(null)
+  const [modalLoading, _setModalLoading] = useState<number | null>(null)
   const [unreadMatches, setUnreadMatches] = useState<Set<number>>(new Set())
   const { client, connected } = useStompClient()
 
