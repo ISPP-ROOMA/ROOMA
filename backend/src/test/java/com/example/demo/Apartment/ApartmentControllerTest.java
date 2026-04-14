@@ -6,7 +6,6 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -44,7 +43,6 @@ import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.Jwt.JwtService;
 import com.example.demo.MemberApartment.ApartmentMemberEntity;
 import com.example.demo.MemberApartment.ApartmentMemberService;
-import com.example.demo.MemberApartment.DTOs.ApartmentMemberDTO;
 
 @WebMvcTest(ApartmentController.class)
 @Import(ApartmentControllerTest.SecurityTestConfig.class)
@@ -381,7 +379,6 @@ public class ApartmentControllerTest {
     @WithMockUser(roles = "LANDLORD")
     @DisplayName("updateApartment should return 400 when payload is invalid")
     public void updateApartment_InvalidPayload() throws Exception {
-        // Falta title/description y precio negativo para disparar Bean Validation
         String body = """
             {
               "title": "",

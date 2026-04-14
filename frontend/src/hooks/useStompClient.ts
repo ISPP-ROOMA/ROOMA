@@ -1,4 +1,5 @@
 import { Client } from '@stomp/stompjs'
+import SockJS from 'sockjs-client'
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '../store/authStore'
 
@@ -8,11 +9,13 @@ export const useStompClient = () => {
   const { token } = useAuthStore()
 
   useEffect(() => {
-    const API_BASE_URL = import.meta.env.VITE_API_URL ?? "localhost:8080"
-    const WS_URL = API_BASE_URL.replace(/^http/, 'ws') // http→ws, https→wss automatically
+
+    const API_BASE_URL = import.meta.env.VITE_API_URL;
+    const WS_PROFILE = import.meta.env.PROFILE === 'PROD' ? 'wss' : 'ws'
+
 
     const stompClient = new Client({
-      brokerURL: `${WS_URL}/ws`, // 👈 replaces webSocketFactory + SockJS
+      webSocketFactory: () => new SockJS(`${API_BASE_URL}/${WS_PROFILE}`),
       connectHeaders: {
         token: token || '',
       },

@@ -97,7 +97,7 @@ export default function TenantRequestsPage() {
           setNewMatchAnimationData(data)
         }
       } catch {
-        // Fallback to text-only intro if JSON is missing or invalid.
+        // Ignore error
       }
     }
 
@@ -160,7 +160,7 @@ export default function TenantRequestsPage() {
             newUnread.add(item.matchId)
           }
         } catch {
-          // no pasa nada
+          // Ignore error
         }
       }
       if (isMounted) {
@@ -353,7 +353,6 @@ export default function TenantRequestsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {visibleItems.map((item) => {
               const isCancelled = item.matchStatus === 'CANCELED' || item.matchStatus === 'REJECTED'
-              const isMatch = item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED'
               const isNewUnopenedMatch =
                 item.matchStatus === 'MATCH' && !item.tenantHasOpenedMatchDetails
 

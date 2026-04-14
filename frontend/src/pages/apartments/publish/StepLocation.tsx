@@ -1,13 +1,13 @@
 import type { ChangeEvent } from 'react'
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useCallback } from 'react'
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
-import type { Map as LeafletMap } from 'leaflet'
+import type { Map as LeafletMap, Marker as LeafletMarker } from 'leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { PublishFormData } from './publishForm'
 
 // Fix missing marker icons in strict bundler environments
-delete (L.Icon.Default.prototype as any)._getIconUrl
+delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -29,7 +29,6 @@ interface Props {
 
 const DEFAULT_CENTER: [number, number] = [37.3891, -5.9844] // Sevilla
 
-// Component to handle map clicks
 function MapEvents({
   setPosition,
   onPositionChanged,
@@ -50,11 +49,10 @@ function MapEvents({
 export default function StepLocation({ data, updateFields }: Props) {
   const [position, setPosition] = useState<[number, number]>(DEFAULT_CENTER)
   const mapRef = useRef<LeafletMap>(null)
-  const markerRef = useRef<any>(null)
+  const markerRef = useRef<LeafletMarker | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Reverse Geocoding (lat, lng -> address)
-  const fetchAddressFromCoords = async (lat: number, lng: number) => {
+  const fetchAddressFromCoords = useCallback(async (lat: number, lng: number) => {
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
@@ -77,7 +75,6 @@ export default function StepLocation({ data, updateFields }: Props) {
         let newStreet = road
         if (houseNumber) newStreet += ` ${houseNumber}`
         if (city && !newStreet.includes(city)) {
-          // If road is empty but city exists, just use city, else append city
           newStreet = newStreet ? `${newStreet}, ${city}` : city
         }
 
@@ -94,9 +91,8 @@ export default function StepLocation({ data, updateFields }: Props) {
     } catch (err) {
       console.error('Error in reverse geocoding:', err)
     }
-  }
+  }, [updateFields])
 
-  // Forward Geocoding (address -> lat, lng)
   const fetchCoordsFromAddress = async (address: string) => {
     if (!address.trim()) return
     try {
@@ -182,7 +178,7 @@ export default function StepLocation({ data, updateFields }: Props) {
         }
       },
     }),
-    []
+    [fetchAddressFromCoords]
   )
 
   return (

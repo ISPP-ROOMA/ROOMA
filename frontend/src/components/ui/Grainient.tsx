@@ -296,7 +296,7 @@ const Grainient: React.FC<GrainientProps> = ({ variant = 'default', ...props }) 
       try {
         container.removeChild(canvas)
       } catch {
-        // Ignore
+        // Ignore error
       }
     }
   }, [

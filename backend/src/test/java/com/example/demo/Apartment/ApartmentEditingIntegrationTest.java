@@ -82,7 +82,6 @@ class ApartmentEditingIntegrationTest {
                 principal.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);
         
-        // Ensure mock returns this user when requested during service execution
         when(userService.findCurrentUserEntity()).thenReturn(user);
         when(userService.findCurrentUser()).thenReturn(user.getEmail());
     }
@@ -111,7 +110,6 @@ class ApartmentEditingIntegrationTest {
         assertEquals("Madrid", updated.getUbication());
         assertEquals(ApartmentState.CLOSED, updated.getState());
         assertEquals("Nuevo perfil ideal", updated.getIdealTenantProfile());
-        // El propietario no cambia
         assertEquals(landlord.getId(), updated.getUser().getId());
     }
 

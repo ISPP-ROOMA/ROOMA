@@ -131,7 +131,6 @@ public class NotificationService {
                 logger.info("Sending push notification to endpoint: {}", sub.getEndpoint());
                 Subscription.Keys keys = new Subscription.Keys(sub.getP256dh(), sub.getAuth());
                 Subscription subscription = new Subscription(sub.getEndpoint(), keys);
-                // Creating a simple JSON payload manually for the push notification
                 String payload = String.format("{\"title\":\"%s\", \"message\":\"%s\", \"url\":\"%s\"}",
                         notification.getEventType().name(),
                         notification.getDescription().replace("\"", "\\\""),
@@ -141,7 +140,6 @@ public class NotificationService {
                 logger.info("Push notification sent successfully to {}", sub.getEndpoint());
             } catch (Exception e) {
                 logger.error("Error sending push notification to {}: {}", sub.getEndpoint(), e.getMessage());
-                // If it fails (e.g. 410 Gone), we could delete the subscription here
                 if (e.getMessage() != null && e.getMessage().contains("410")) {
                     logger.info("Subscription expired (410 Gone), deleting: {}", sub.getEndpoint());
                     pushSubscriptionRepository.deleteByEndpoint(sub.getEndpoint());

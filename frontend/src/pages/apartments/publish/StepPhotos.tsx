@@ -23,7 +23,6 @@ export default function StepPhotos({ images, onChangeImages, maxImages = 10 }: S
     const next = [...images, ...picked].slice(0, maxImages)
     onChangeImages(next)
 
-    // permite re-seleccionar el mismo archivo
     event.target.value = ''
   }
 

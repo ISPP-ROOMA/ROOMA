@@ -31,8 +31,8 @@ public class JwtServiceTest {
         String secret = Base64.getEncoder().encodeToString(rawSecret.getBytes());
 
         ReflectionTestUtils.setField(jwtService, "secretKey", secret);
-        ReflectionTestUtils.setField(jwtService, "expirationAt", 3600000L); // 1h
-        ReflectionTestUtils.setField(jwtService, "expirationRt", 86400000L); // 1 dia
+        ReflectionTestUtils.setField(jwtService, "expirationAt", 3600000L);
+        ReflectionTestUtils.setField(jwtService, "expirationRt", 86400000L);
     }
 
     // == TESTS de generateAccessTokenFromEmail ==

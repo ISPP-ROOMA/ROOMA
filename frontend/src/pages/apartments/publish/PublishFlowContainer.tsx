@@ -185,11 +185,21 @@ export default function PublishFlowContainer() {
           )}
 
           <button
-            onClick={() => handleNext()}
+            onClick={handleNext}
             disabled={!canContinue || isSubmitting}
             className={CONTINUE_BUTTON_CLASS}
+            aria-busy={isSubmitting}
           >
-            {isLastStep ? (isSubmitting ? 'Publicando...' : 'Finalizar') : 'Siguiente'}
+            {isSubmitting ? (
+              <>
+                <span className="loading loading-spinner loading-sm" aria-hidden="true" />
+                Publicando...
+              </>
+            ) : isLastStep ? (
+              'Finalizar'
+            ) : (
+              'Siguiente'
+            )}
           </button>
         </div>
       </footer>

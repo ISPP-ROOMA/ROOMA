@@ -10,7 +10,6 @@ export interface ToastProps {
 }
 
 const Toast: React.FC<ToastProps> = ({ id, message, type = 'info', onClose }) => {
-  // Map our toast types to DaisyUI alert classes
   const alertClass = {
     success: 'alert-success',
     error: 'alert-error',
@@ -18,7 +17,6 @@ const Toast: React.FC<ToastProps> = ({ id, message, type = 'info', onClose }) =>
     warning: 'alert-warning',
   }[type]
 
-  // Optional: mapping icons for different types
   const icon = {
     success: (
       <svg

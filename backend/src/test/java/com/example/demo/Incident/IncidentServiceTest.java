@@ -2,7 +2,6 @@ package com.example.demo.Incident;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -12,27 +11,19 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.example.demo.Incident.IncidentService;
-import com.example.demo.Incident.IncidentRepository;
-import com.example.demo.Incident.IncidentStatusHistoryRepository;
+
 import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.MemberApartment.ApartmentMemberService;
 import com.example.demo.Cloudinary.CloudinaryService;
 import com.example.demo.User.UserService;
-import com.example.demo.Incident.IncidentEntity;
 import com.example.demo.Incident.DTOs.IncidentDTO;
 import com.example.demo.Incident.DTOs.CreateIncidentRequest;
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.Role;
-import com.example.demo.Incident.IncidentCategory;
-import com.example.demo.Incident.IncidentZone;
-import com.example.demo.Incident.IncidentUrgency;
-import com.example.demo.Incident.IncidentStatus;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.Exceptions.ForbiddenException;
 import com.example.demo.MemberApartment.ApartmentMemberEntity;
-import com.example.demo.Incident.IncidentBucket;
 import com.example.demo.Exceptions.BadRequestException;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -1060,7 +1051,7 @@ public class IncidentServiceTest {
         incident.setId(incidentId);
         ApartmentEntity anotherApartment = new ApartmentEntity();
         anotherApartment.setId(2);
-        incident.setApartment(anotherApartment); // Different apartment
+        incident.setApartment(anotherApartment);
         incident.setTenant(tenant);
         incident.setStatus(IncidentStatus.OPEN);
 
@@ -1121,8 +1112,7 @@ public class IncidentServiceTest {
         incident.setApartment(apartment);
         UserEntity anotherTenant = new UserEntity();
         anotherTenant.setId(2);
-        incident.setTenant(anotherTenant); // Different tenant
-        incident.setStatus(IncidentStatus.OPEN);
+        incident.setTenant(anotherTenant);
 
         ApartmentMemberEntity activeMembership = new ApartmentMemberEntity();
         activeMembership.setApartment(apartment);
@@ -1154,7 +1144,7 @@ public class IncidentServiceTest {
         incident.setId(incidentId);
         incident.setApartment(apartment);
         incident.setTenant(tenant);
-        incident.setStatus(IncidentStatus.IN_PROGRESS); // Not RESOLVED
+        incident.setStatus(IncidentStatus.IN_PROGRESS);
 
         ApartmentMemberEntity activeMembership = new ApartmentMemberEntity();
         activeMembership.setApartment(apartment);
@@ -1279,7 +1269,7 @@ public class IncidentServiceTest {
         incident.setId(incidentId);
         ApartmentEntity anotherApartment = new ApartmentEntity();
         anotherApartment.setId(2);
-        incident.setApartment(anotherApartment); // Different apartment
+        incident.setApartment(anotherApartment);
         incident.setTenant(tenant);
         incident.setStatus(IncidentStatus.RESOLVED);
 
@@ -1340,7 +1330,7 @@ public class IncidentServiceTest {
         incident.setApartment(apartment);
         UserEntity anotherTenant = new UserEntity();
         anotherTenant.setId(2);
-        incident.setTenant(anotherTenant); // Different tenant
+        incident.setTenant(anotherTenant);
         incident.setStatus(IncidentStatus.RESOLVED);
 
         ApartmentMemberEntity activeMembership = new ApartmentMemberEntity();
@@ -1373,7 +1363,7 @@ public class IncidentServiceTest {
         incident.setId(incidentId);
         incident.setApartment(apartment);
         incident.setTenant(tenant);
-        incident.setStatus(IncidentStatus.IN_PROGRESS); // Not RESOLVED
+        incident.setStatus(IncidentStatus.IN_PROGRESS);
 
         ApartmentMemberEntity activeMembership = new ApartmentMemberEntity();
         activeMembership.setApartment(apartment);
