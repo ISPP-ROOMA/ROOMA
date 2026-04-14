@@ -546,7 +546,6 @@ public class ApartmentMatchServiceTest {
                 when(userService.findCurrentUserEntity()).thenReturn(candidate);
                 when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
                 when(apartmentMemberService.existsByUserIdAndRole(landlord.getId(), MemberRole.HOMEBODY)).thenReturn(true);
-                // Solo lanza excepción al intentar añadir al candidato
                 when(apartmentMemberService.addMember(eq(apartment.getId()), eq(candidate.getId()), any(LocalDate.class)))
                                 .thenThrow(new BadRequestException("User already belongs to this apartment"));
 

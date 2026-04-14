@@ -3,7 +3,6 @@ package com.example.demo.Apartment;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,7 +18,6 @@ import com.example.demo.User.UserService;
 @Service
 public class ApartmentService {
 
-    private static final String CREATE_APARTMENT_ENDPOINT = "POST:/api/apartments";
 
     private final ApartmentRepository apartmentsRepository;
     private final UserService userService;

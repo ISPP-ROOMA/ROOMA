@@ -32,7 +32,6 @@ export default function Navbar() {
   const moreRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
 
-  // Close menus on route change or outside click
   useEffect(() => {
     const id = requestAnimationFrame(() => {
       setMoreOpen(false)
@@ -119,17 +118,14 @@ export default function Navbar() {
     }
   })()
 
-  // For defining 'active' states
   const checkActive = (to: string, exact: boolean = false) => {
     return exact ? location.pathname === to : location.pathname.startsWith(to)
   }
 
-  // Mobile split functionality (if main items somehow exceed capacity, but usually they won't now)
   const MOBILE_MAX_ITEMS = 4
   const primaryItems = mainItems.slice(0, MOBILE_MAX_ITEMS)
   const secondaryMainItems = mainItems.slice(MOBILE_MAX_ITEMS)
 
-  // Mobile "mas" menu includes any spilled main items + Profile items + Logout
   const mobileOverflowMenu = [...secondaryMainItems, ...profileItems]
   const isMobileMoreActive = mobileOverflowMenu.some((item) => checkActive(item.to, item.end))
   const hasMobileMore = mobileOverflowMenu.length > 0 || !!token

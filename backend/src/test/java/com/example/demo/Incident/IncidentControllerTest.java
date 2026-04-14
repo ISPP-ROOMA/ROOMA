@@ -22,9 +22,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.demo.Jwt.JwtService;
-import com.example.demo.Incident.IncidentController;
-import com.example.demo.Incident.IncidentService;
-import com.example.demo.Incident.IncidentStatus;
 
 import java.util.List;
 

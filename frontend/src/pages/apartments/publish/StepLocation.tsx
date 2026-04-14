@@ -29,7 +29,6 @@ interface Props {
 
 const DEFAULT_CENTER: [number, number] = [37.3891, -5.9844] // Sevilla
 
-// Component to handle map clicks
 function MapEvents({
   setPosition,
   onPositionChanged,
@@ -53,7 +52,6 @@ export default function StepLocation({ data, updateFields }: Props) {
   const markerRef = useRef<LeafletMarker | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Reverse Geocoding (lat, lng -> address)
   const fetchAddressFromCoords = useCallback(async (lat: number, lng: number) => {
     try {
       const res = await fetch(
@@ -77,7 +75,6 @@ export default function StepLocation({ data, updateFields }: Props) {
         let newStreet = road
         if (houseNumber) newStreet += ` ${houseNumber}`
         if (city && !newStreet.includes(city)) {
-          // If road is empty but city exists, just use city, else append city
           newStreet = newStreet ? `${newStreet}, ${city}` : city
         }
 
@@ -96,7 +93,6 @@ export default function StepLocation({ data, updateFields }: Props) {
     }
   }, [updateFields])
 
-  // Forward Geocoding (address -> lat, lng)
   const fetchCoordsFromAddress = async (address: string) => {
     if (!address.trim()) return
     try {

@@ -13,7 +13,6 @@ import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.Exceptions.ForbiddenException;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
-import com.example.demo.User.UserRepository;
 import com.example.demo.User.UserService;
 
 @Service
@@ -22,15 +21,12 @@ public class ApartmentMemberService {
     private final ApartmentMemberRepository apartmentMemberRepository;
     private final ApartmentService apartmentService;
     private final UserService userService;
-    private final UserRepository userRepository;
     public ApartmentMemberService(ApartmentMemberRepository apartmentMemberRepository,
                                  ApartmentService apartmentService,
-                                 UserService userService,
-                                 UserRepository userRepository) {
+                                 UserService userService) {
         this.apartmentMemberRepository = apartmentMemberRepository;
         this.apartmentService = apartmentService;
         this.userService = userService;
-        this.userRepository = userRepository;
     }
 
     @Transactional 

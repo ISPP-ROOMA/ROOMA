@@ -59,7 +59,6 @@ public class BillingService {
             throw new ResourceNotFoundException("Apartment not found: " + apartmentId);
         }
         List<BillEntity> bills = billRepository.findByApartmentId(apartmentId);
-        // force eager load of tenantDebts + user to avoid lazy init issues
         for (BillEntity bill : bills) {
             if (bill.getTenantDebts() != null) {
                 bill.getTenantDebts().forEach(d -> {

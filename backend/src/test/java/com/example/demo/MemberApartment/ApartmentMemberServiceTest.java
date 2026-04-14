@@ -45,7 +45,7 @@ public class ApartmentMemberServiceTest {
 
     @BeforeEach
     public void setUp() {
-        apartmentMemberService = new ApartmentMemberService(apartmentMemberRepository, apartmentService, userService, userRepository);
+        apartmentMemberService = new ApartmentMemberService(apartmentMemberRepository, apartmentService, userService);
     }
     
     @Test

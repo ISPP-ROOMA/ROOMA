@@ -129,11 +129,8 @@ public class ApartmentMemberRepositoryTest {
     public void findLastMembershipByUserId_ReturnsMostRecentMembership() {
         UserEntity landlord = persistUser("landlord-a@test.com", Role.LANDLORD);
         UserEntity tenant = persistUser("tenant-a@test.com", Role.TENANT);
-        ApartmentEntity apartment1 = persistApartment("A1", "Madrid Centro", 500.0, ApartmentState.ACTIVE, landlord);
         ApartmentEntity apartment2 = persistApartment("A2", "Madrid Centro", 600.0, ApartmentState.ACTIVE, landlord);
 
-        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment1, LocalDate.now().minusMonths(3),
-                LocalDate.now().minusMonths(2));
         ApartmentMemberEntity member2 = persistApartmentMember(tenant, apartment2, LocalDate.now().minusDays(20),
                 LocalDate.now().minusDays(2));
 
@@ -156,11 +153,8 @@ public class ApartmentMemberRepositoryTest {
     public void findByUserIdAndApartmentId_ReturnsMostRecentMembership() {
         UserEntity landlord = persistUser("landlord-a@test.com", Role.LANDLORD);
         UserEntity tenant = persistUser("tenant-a@test.com", Role.TENANT);
-        ApartmentEntity apartment1 = persistApartment("A1", "Madrid Centro", 500.0, ApartmentState.ACTIVE, landlord);
         ApartmentEntity apartment2 = persistApartment("A2", "Madrid Centro", 600.0, ApartmentState.ACTIVE, landlord);
 
-        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment1, LocalDate.now().minusMonths(2),
-                LocalDate.now().minusMonths(1));
         ApartmentMemberEntity member2 = persistApartmentMember(tenant, apartment2, LocalDate.now().minusDays(20), null);
 
         Optional<ApartmentMemberEntity> foundMember = apartmentMemberRepository
@@ -183,11 +177,9 @@ public class ApartmentMemberRepositoryTest {
     public void findActiveMembershipsByUserId_ReturnsOnlyActiveMembershipsOrderedByJoinDate() {
         UserEntity landlord = persistUser("landlord-a@test.com", Role.LANDLORD);
         UserEntity tenant = persistUser("tenant-a@test.com", Role.TENANT);
-        ApartmentEntity apartment1 = persistApartment("A1", "Madrid Centro", 500.0, ApartmentState.ACTIVE, landlord);
+
         ApartmentEntity apartment2 = persistApartment("A2", "Madrid Centro", 600.0, ApartmentState.ACTIVE, landlord);
 
-        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment1, LocalDate.now().minusMonths(2),
-                LocalDate.now().minusMonths(1));
         ApartmentMemberEntity member2 = persistApartmentMember(tenant, apartment2, LocalDate.now().minusDays(20), null);
 
         List<ApartmentMemberEntity> activeMemberships = apartmentMemberRepository
@@ -225,8 +217,6 @@ public class ApartmentMemberRepositoryTest {
         UserEntity otherTenant = persistUser("tenant-b@test.com", Role.TENANT);
         ApartmentEntity apartment = persistApartment("A1", "Madrid Centro", 500.0, ApartmentState.ACTIVE, landlord);
 
-        ApartmentMemberEntity member1 = persistApartmentMember(tenant, apartment, LocalDate.now().minusMonths(2),
-                LocalDate.now().minusMonths(1));
         ApartmentMemberEntity member2 = persistApartmentMember(otherTenant, apartment, LocalDate.now().minusDays(20),
                 null);
 
