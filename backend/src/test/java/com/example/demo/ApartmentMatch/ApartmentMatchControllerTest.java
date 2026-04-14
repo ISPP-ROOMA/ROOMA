@@ -1,23 +1,15 @@
 package com.example.demo.ApartmentMatch;
 
+import java.util.List;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.List;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -32,6 +24,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentState;
@@ -261,7 +259,7 @@ public class ApartmentMatchControllerTest {
     @DisplayName("tenant detail endpoint returns landlord dto when authorized")
     void getApartmentMatchDetailsForTenant_ReturnsOk() throws Exception {
         ApartmentMatchEntity match = createMatch(710, 810, 910, MatchStatus.MATCH, Role.LANDLORD);
-        when(apartmentMatchService.findMyMatchForTenant(710)).thenReturn(match);
+        when(apartmentMatchService.markTenantMatchDetailsAsOpened(710)).thenReturn(match);
 
         mockMvc.perform(patch("/api/apartments-matches/apartmentMatch/{apartmentMatchId}/tenant-match-details", 710))
                 .andExpect(status().isOk())
@@ -502,7 +500,7 @@ public class ApartmentMatchControllerTest {
     @WithMockUser(roles = "TENANT")
     @DisplayName("tenant detail endpoint returns 403 when service denies access")
     void getApartmentMatchDetailsForTenant_AccessDenied_Returns403() throws Exception {
-        when(apartmentMatchService.findMyMatchForTenant(12))
+        when(apartmentMatchService.markTenantMatchDetailsAsOpened(12))
                 .thenThrow(new AccessDeniedException("You can only view your own matches"));
 
         mockMvc.perform(patch("/api/apartments-matches/apartmentMatch/{apartmentMatchId}/tenant-match-details", 12))

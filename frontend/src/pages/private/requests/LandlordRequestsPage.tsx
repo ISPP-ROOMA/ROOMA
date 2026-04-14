@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion'
-import { Loader2, MessageCircle, Filter, ChevronDown } from 'lucide-react'
+import { Loader2, MessageCircle, Filter } from 'lucide-react'
 import type { IMessage, StompSubscription } from '@stomp/stompjs'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
@@ -69,7 +69,7 @@ async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatc
   const enriched = await Promise.all(
     matches.map(async (match) => {
       const mId = match.id;
-      const aId = match.apartmentId || (match.apartment ? match.apartment.id : null);
+      const aId = match.apartmentId ?? null;
       
       const [apt, details] = await Promise.all([
         aId ? getApartment(aId) : Promise.resolve(null),
@@ -122,14 +122,13 @@ export default function LandlordRequestsPage() {
   const [pendingItems, setPendingItems] = useState<EnrichedMatch[]>([])
   const [matchItems, setMatchItems] = useState<EnrichedMatch[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
 
   const [filteredApartmentLabel, setFilteredApartmentLabel] = useState<string | null>(null)
   const [selectedApartment, setSelectedApartment] = useState<
     (ApartmentDTO & { imageUrl: string }) | null
   >(null)
-  const [modalLoading, setModalLoading] = useState<number | null>(null)
+  const [modalLoading] = useState<number | null>(null)
   const [unreadMatches, setUnreadMatches] = useState<Set<number>>(new Set())
   const { client, connected } = useStompClient()
 
@@ -150,7 +149,6 @@ export default function LandlordRequestsPage() {
   const fetchData = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
-    setError(null);
     
     try {
       const id = Number(userId);
@@ -192,7 +190,6 @@ export default function LandlordRequestsPage() {
       }
     } catch (err) {
       console.error('Error loading requests', err);
-      setError('No se pudieron cargar tus solicitudes. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -257,7 +254,10 @@ export default function LandlordRequestsPage() {
     }
   }, [matchItems, userId, connected, client])
 
-  const handleFilterChange = (field: keyof CandidateFilter, value: any) => {
+  const handleFilterChange = (
+    field: keyof CandidateFilter,
+    value: CandidateFilter[keyof CandidateFilter] | ''
+  ) => {
     setFilters(prev => ({ ...prev, [field]: value === '' ? undefined : value }))
   }
 

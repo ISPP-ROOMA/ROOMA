@@ -410,7 +410,7 @@ public class ApartmentMatchServiceTest {
                 ConflictException.class,
                 () -> apartmentMatchService.sendInvitation(matchId));
 
-        assertEquals("Cannot send invitation because the candidate already belongs to an apartment", exception.getMessage());
+        assertEquals("No puedes enviar esta invitación porque el candidato ya pertenece a un apartamento", exception.getMessage());
         verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
     }
 
@@ -590,7 +590,7 @@ public class ApartmentMatchServiceTest {
                 ConflictException.class,
                 () -> apartmentMatchService.respondToInvitation(matchId, true));
 
-        assertEquals("Cannot accept invitation because you already belong to an apartment", exception.getMessage());
+        assertEquals("No puedes aceptar esta invitación porque ya perteneces a un apartamento", exception.getMessage());
         verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
     }
 
