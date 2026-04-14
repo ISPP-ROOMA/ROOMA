@@ -410,7 +410,7 @@ public class ApartmentMatchServiceTest {
                 ConflictException.class,
                 () -> apartmentMatchService.sendInvitation(matchId));
 
-        assertEquals("Cannot send invitation because the candidate already belongs to an apartment", exception.getMessage());
+        assertEquals("No puedes enviar esta invitación porque el candidato ya pertenece a un apartamento", exception.getMessage());
         verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
     }
 
@@ -546,7 +546,6 @@ public class ApartmentMatchServiceTest {
                 when(userService.findCurrentUserEntity()).thenReturn(candidate);
                 when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
                 when(apartmentMemberService.existsByUserIdAndRole(landlord.getId(), MemberRole.HOMEBODY)).thenReturn(true);
-                // Solo lanza excepción al intentar añadir al candidato
                 when(apartmentMemberService.addMember(eq(apartment.getId()), eq(candidate.getId()), any(LocalDate.class)))
                                 .thenThrow(new BadRequestException("User already belongs to this apartment"));
 
@@ -590,7 +589,7 @@ public class ApartmentMatchServiceTest {
                 ConflictException.class,
                 () -> apartmentMatchService.respondToInvitation(matchId, true));
 
-        assertEquals("Cannot accept invitation because you already belong to an apartment", exception.getMessage());
+        assertEquals("No puedes aceptar esta invitación porque ya perteneces a un apartamento", exception.getMessage());
         verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
     }
 

@@ -1,15 +1,12 @@
 import { AnimatePresence } from 'framer-motion'
 import { Loader2, MessageCircle, Filter } from 'lucide-react'
 import type { IMessage, StompSubscription } from '@stomp/stompjs'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
+import CreateAppointmentModal from '../../../components/CreateAppointmentModal'
+import ViewAppointmentsModal from '../../../components/ViewAppointmentsModal'
 import { useStompClient } from '../../../hooks/useStompClient'
-import {
-  CHAT_TOPIC_SUBSCRIPTION,
-  getMessageHistory,
-  type ChatMessageDTO,
-} from '../../../service/chat.service'
 import type {
   ApartmentDTO,
   ApartmentMatchDTO,
@@ -22,8 +19,13 @@ import {
   rejectApartmentMatch,
 } from '../../../service/apartment.service'
 import { getApartment } from '../../../service/apartments.service'
-import { useAuthStore } from '../../../store/authStore'
+import {
+  CHAT_TOPIC_SUBSCRIPTION,
+  getMessageHistory,
+  type ChatMessageDTO,
+} from '../../../service/chat.service'
 import { getFilteredCandidates, type CandidateFilter } from '../../../service/requests.service'
+import { useAuthStore } from '../../../store/authStore'
 
 type ActiveTab = 'pending' | 'match'
 
@@ -69,13 +71,13 @@ async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatc
   const enriched = await Promise.all(
     matches.map(async (match) => {
       const mId = match.id;
-      const aId = match.apartmentId;
-      
+      const aId = match.apartmentId ?? null;
+
       const [apt, details] = await Promise.all([
         aId ? getApartment(aId) : Promise.resolve(null),
         getLandlordMatchDetails(mId),
       ])
-      
+
       const detailsApt = details?.apartment
       return {
         matchId: mId,
@@ -83,10 +85,10 @@ async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatc
         matchStatus: match.matchStatus || 'ACTIVE',
         title: detailsApt?.title ?? apt?.title ?? `Vivienda #${aId}`,
         location: detailsApt?.ubication ?? apt?.ubication ?? '—',
-        price: detailsApt?.price 
-          ? `${detailsApt.price.toLocaleString('es-ES')} €` 
-          : apt?.price 
-            ? `${apt.price.toLocaleString('es-ES')} €` 
+        price: detailsApt?.price
+          ? `${detailsApt.price.toLocaleString('es-ES')} €`
+          : apt?.price
+            ? `${apt.price.toLocaleString('es-ES')} €`
             : '—',
         imageUrl: apt?.coverImageUrl ?? 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
         tenantEmail: details?.tenant?.email ?? '—',
@@ -110,7 +112,6 @@ export default function LandlordRequestsPage() {
     return Number.isNaN(parsedApartmentId) ? null : parsedApartmentId
   }, [searchParams])
 
-  // --- Estados de Ranking ---
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<CandidateFilter>(location.state?.appliedFilters || {})
   const [selectedAptId, setSelectedAptId] = useState<number | null>(null)
@@ -129,7 +130,12 @@ export default function LandlordRequestsPage() {
   const [selectedApartment, setSelectedApartment] = useState<
     (ApartmentDTO & { imageUrl: string }) | null
   >(null)
-  const [modalLoading, _setModalLoading] = useState<number | null>(null)
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false)
+  const [showViewAppointmentsModal, setShowViewAppointmentsModal] = useState(false)
+  const [showAptSelectModal, setShowAptSelectModal] = useState<'create' | 'view' | null>(null)
+  const [modalAptId, setModalAptId] = useState<number | null>(null)
+  const [modalAptTitle, setModalAptTitle] = useState<string>('')
+  const [modalLoading] = useState<number | null>(null)
   const [unreadMatches, setUnreadMatches] = useState<Set<number>>(new Set())
   const { client, connected } = useStompClient()
 
@@ -137,7 +143,6 @@ export default function LandlordRequestsPage() {
     setActiveTab(initialTab)
   }, [initialTab])
 
-  // Selector de viviendas únicas para el filtro
   const uniqueApartments = useMemo(() => {
     const all = [...pendingItems, ...matchItems]
     const map = new Map()
@@ -150,12 +155,10 @@ export default function LandlordRequestsPage() {
   const fetchData = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
-    setError(null);
-    
+
     try {
       const id = Number(userId);
 
-      // 1. Obtener la vivienda filtrada si existe en URL (de trunk)
       const filteredApartment = apartmentFilterId ? await getApartment(apartmentFilterId) : undefined;
       setFilteredApartmentLabel(
         apartmentFilterId ? filteredApartment?.title ?? `Vivienda #${apartmentFilterId}` : null
@@ -164,17 +167,16 @@ export default function LandlordRequestsPage() {
       const matchesForApartment = (matches: ApartmentMatchDTO[]) =>
         apartmentFilterId ? matches.filter((match) => match.apartmentId === apartmentFilterId) : matches;
 
-      // 2. Lógica de filtrado y ranking (de feat/apartment-filters)
       if (selectedAptId && (filters.requiredProfession || filters.allowedSmoker !== undefined)) {
         setIsRanking(true);
         const rankedData = await getFilteredCandidates(selectedAptId, filters);
         const enrichedRanked = await enrichMatches(rankedData);
         setPendingItems(enrichedRanked);
-        
+
         const fullMatches = await getMatchesForLandlord(id, 'MATCH');
         setMatchItems(await enrichMatches(matchesForApartment(fullMatches)));
       } else {
-        setIsRanking(false); 
+        setIsRanking(false);
         const [activeMatches, successMatches, fullMatches] = await Promise.all([
           getMatchesForLandlord(id, 'ACTIVE'),
           getMatchesForLandlord(id, 'SUCCESSFUL'),
@@ -192,7 +194,6 @@ export default function LandlordRequestsPage() {
       }
     } catch (err) {
       console.error('Error loading requests', err);
-      setError('No se pudieron cargar tus solicitudes. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -203,10 +204,10 @@ export default function LandlordRequestsPage() {
   }, [fetchData, location.search])
 
   useEffect(() => {
-    const chatableMatches = matchItems.filter(item => 
+    const chatableMatches = matchItems.filter(item =>
       item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED' || item.matchStatus === 'SUCCESSFUL'
     )
-    
+
     if (chatableMatches.length === 0 || !userId) return
 
     let isMounted = true
@@ -222,14 +223,14 @@ export default function LandlordRequestsPage() {
             newUnread.add(item.matchId)
           }
         } catch {
-          // no pasa nada
+          // Ignore error
         }
       }
       if (isMounted) {
         setUnreadMatches(prev => {
-           const merged = new Set(prev)
-           newUnread.forEach(id => merged.add(id))
-           return merged
+          const merged = new Set(prev)
+          newUnread.forEach(id => merged.add(id))
+          return merged
         })
       }
     }
@@ -241,10 +242,10 @@ export default function LandlordRequestsPage() {
         const sub = client.subscribe(
           CHAT_TOPIC_SUBSCRIPTION({ type: 'match', id: item.matchId }),
           (payload: IMessage) => {
-             const newMessage = JSON.parse(payload.body) as ChatMessageDTO
-             if (newMessage.senderId !== Number(userId) && newMessage.status !== 'READ') {
-               setUnreadMatches(prev => new Set(prev).add(item.matchId))
-             }
+            const newMessage = JSON.parse(payload.body) as ChatMessageDTO
+            if (newMessage.senderId !== Number(userId) && newMessage.status !== 'READ') {
+              setUnreadMatches(prev => new Set(prev).add(item.matchId))
+            }
           }
         )
         subscriptions.push(sub)
@@ -257,14 +258,17 @@ export default function LandlordRequestsPage() {
     }
   }, [matchItems, userId, connected, client])
 
-  const handleFilterChange = (field: keyof CandidateFilter, value: any) => {
+  const handleFilterChange = (
+    field: keyof CandidateFilter,
+    value: CandidateFilter[keyof CandidateFilter] | ''
+  ) => {
     setFilters(prev => ({ ...prev, [field]: value === '' ? undefined : value }))
   }
 
   const handleReject = async (matchId: number) => {
     setUpdatingId(matchId)
     setPendingItems((prev) => prev.filter((i) => i.matchId !== matchId))
-    
+
     try {
       await rejectApartmentMatch(matchId)
     } catch (err) {
@@ -277,14 +281,14 @@ export default function LandlordRequestsPage() {
 
   const handleAccept = async (matchId: number) => {
     setUpdatingId(matchId)
-    
+
     const itemToMove = pendingItems.find((i) => i.matchId === matchId)
     if (!itemToMove) return
 
     setPendingItems((prev) => prev.filter((i) => i.matchId !== matchId))
     setMatchItems((prev) => [
       { ...itemToMove, matchStatus: 'SUCCESSFUL' as MatchStatus },
-      ...prev 
+      ...prev
     ])
 
     try {
@@ -314,12 +318,42 @@ export default function LandlordRequestsPage() {
       <header className="sticky top-0 z-20 px-4 sm:px-8 pt-5 pb-4 bg-[#F5F1E3]/90 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl sm:text-3xl font-bold text-[#050505]">Mis Solicitudes</h1>
-          <button 
-            onClick={() => setShowFilters(!showFilters)}
-            className={`p-2 rounded-xl border transition-all ${showFilters ? 'bg-[#008080] text-white' : 'bg-white text-[#050505] border-[#DDDBCB]'}`}
-          >
-            <Filter size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (apartmentFilterId && filteredApartmentLabel) {
+                  setModalAptId(apartmentFilterId)
+                  setModalAptTitle(filteredApartmentLabel)
+                  setShowViewAppointmentsModal(true)
+                } else {
+                  setShowAptSelectModal('view')
+                }
+              }}
+              className="bg-white border border-[#DDDBCB] text-[#008080] px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold hover:bg-[#F5F1E3] transition-colors shadow-sm"
+            >
+              Ver Visitas
+            </button>
+            <button
+              onClick={() => {
+                if (apartmentFilterId && filteredApartmentLabel) {
+                  setModalAptId(apartmentFilterId)
+                  setModalAptTitle(filteredApartmentLabel)
+                  setShowAppointmentModal(true)
+                } else {
+                  setShowAptSelectModal('create')
+                }
+              }}
+              className="bg-[#008080] text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold hover:bg-[#006d6d] transition-colors shadow-sm"
+            >
+              Organizar Visitas
+            </button>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`p-2 rounded-xl border transition-all ${showFilters ? 'bg-[#008080] text-white' : 'bg-white text-[#050505] border-[#DDDBCB]'}`}
+            >
+              <Filter size={20} />
+            </button>
+          </div>
         </div>
 
         {hasApartmentFilter && (
@@ -344,12 +378,12 @@ export default function LandlordRequestsPage() {
               <p className="text-xs font-bold text-[#008080] mb-3 uppercase tracking-tighter">
                 Ranking de Inquilino Ideal
               </p>
-              
+
               <div className="grid grid-cols-1 gap-4">
                 {/* Filtro de Vivienda */}
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] font-bold text-[#050505]/50 uppercase ml-1">Vivienda a evaluar</label>
-                  <select 
+                  <select
                     className="w-full p-2.5 bg-[#F5F1E3] border border-[#DDDBCB] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#008080]/20"
                     onChange={(e) => setSelectedAptId(Number(e.target.value))}
                     value={selectedAptId || ''}
@@ -360,14 +394,14 @@ export default function LandlordRequestsPage() {
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   {/* Filtro de Profesión */}
                   <div className="flex flex-col gap-1">
                     <label className="text-[10px] font-bold text-[#050505]/50 uppercase ml-1">Profesión requerida</label>
-                    <input 
-                      type="text" 
-                      placeholder="Ej: Ingeniero..." 
+                    <input
+                      type="text"
+                      placeholder="Ej: Ingeniero..."
                       className="p-2.5 bg-[#F5F1E3] border border-[#DDDBCB] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#008080]/20"
                       onChange={(e) => handleFilterChange('requiredProfession', e.target.value)}
                     />
@@ -376,7 +410,7 @@ export default function LandlordRequestsPage() {
                   {/* Filtro de Fumadores */}
                   <div className="flex flex-col gap-1">
                     <label className="text-[10px] font-bold text-[#050505]/50 uppercase ml-1">¿Permite fumadores?</label>
-                    <select 
+                    <select
                       className="p-2.5 bg-[#F5F1E3] border border-[#DDDBCB] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#008080]/20"
                       onChange={(e) => handleFilterChange('allowedSmoker', e.target.value === 'true' ? true : e.target.value === 'false' ? false : undefined)}
                     >
@@ -386,8 +420,8 @@ export default function LandlordRequestsPage() {
                     </select>
                   </div>
                 </div>
-                
-                <button 
+
+                <button
                   onClick={() => void fetchData()}
                   disabled={!selectedAptId || loading}
                   className="w-full py-3 mt-2 bg-[#008080] text-white rounded-xl text-sm font-bold shadow-md hover:bg-[#006d6d] transition-all disabled:opacity-50"
@@ -446,11 +480,11 @@ export default function LandlordRequestsPage() {
             {activeTab === 'pending' && isRanking && (
               <div className="col-span-full mb-2">
                 <span className="text-[10px] font-bold text-[#008080] bg-[#008080]/10 px-3 py-1.5 rounded-full uppercase tracking-wider">
-                   Ordenado por coincidencia con tu inquilino ideal
+                  Ordenado por coincidencia con tu inquilino ideal
                 </span>
               </div>
             )}
-            
+
             {visibleItems.map((item, index) => {
               const isCancelled = item.matchStatus === 'CANCELED' || item.matchStatus === 'REJECTED'
               const isTopRanked = index === 0 && isRanking && activeTab === 'pending'
@@ -459,16 +493,15 @@ export default function LandlordRequestsPage() {
                 <article
                   key={item.matchId}
                   onClick={(e) => void handleCardClick(item, e)}
-                  className={`relative overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm transition-all cursor-pointer hover:shadow-md hover:-translate-y-0.5 ${
-                    isCancelled ? 'opacity-60' : ''
-                  } ${isTopRanked ? 'ring-2 ring-[#008080] scale-[1.02]' : ''}`}
+                  className={`relative overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm transition-all cursor-pointer hover:shadow-md hover:-translate-y-0.5 ${isCancelled ? 'opacity-60' : ''
+                    } ${isTopRanked ? 'ring-2 ring-[#008080] scale-[1.02]' : ''}`}
                 >
                   {isTopRanked && (
                     <div className="absolute top-3 left-3 z-20 bg-[#008080] text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg uppercase">
                       Mejor Match
                     </div>
                   )}
-                  
+
                   {/* Image */}
                   <div className={`relative h-44 w-full ${isCancelled ? 'grayscale' : ''}`}>
                     <img
@@ -496,7 +529,7 @@ export default function LandlordRequestsPage() {
                       <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-tighter ${statusBadgeClass(item.matchStatus)}`}>
                         {statusLabel(item.matchStatus)}
                       </span>
-                      
+
                       <div className="flex items-center justify-end gap-2">
                         {item.matchStatus === 'ACTIVE' && (
                           <div className="flex items-center gap-2">
@@ -562,6 +595,58 @@ export default function LandlordRequestsPage() {
           />
         )}
       </AnimatePresence>
+
+      {showAptSelectModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl overflow-hidden p-5 animate-in fade-in zoom-in-95 duration-200">
+            <h2 className="text-[#050505] text-lg font-bold mb-1">Selecciona un inmueble</h2>
+            <p className="text-xs text-[#050505]/50 mb-4">
+              {showAptSelectModal === 'view' ? 'Para ver sus visitas programadas' : 'Para crear nuevas franjas horarias'}
+            </p>
+            <div className="flex flex-col gap-3">
+              {uniqueApartments.length === 0 ? (
+                <p className="text-sm text-[#050505]/60">Aún no tienes inmuebles con historial de solicitudes.</p>
+              ) : (
+                uniqueApartments.map(([id, title]) => (
+                  <button
+                    key={id as number}
+                    onClick={() => {
+                      const action = showAptSelectModal
+                      setShowAptSelectModal(null);
+                      setModalAptId(id as number);
+                      setModalAptTitle(title as string);
+                      if (action === 'view') setShowViewAppointmentsModal(true);
+                      else setShowAppointmentModal(true);
+                    }}
+                    className="w-full text-left p-3 rounded-xl border border-[#DDDBCB] hover:border-[#008080] hover:bg-[#F5F1E3] transition-colors font-medium text-[#050505]"
+                  >
+                    {title as string}
+                  </button>
+                ))
+              )}
+            </div>
+            <button onClick={() => setShowAptSelectModal(null)} className="mt-5 w-full py-2 bg-[#F5F1E3] text-[#050505] font-semibold rounded-xl hover:bg-[#DDDBCB] transition-colors">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showAppointmentModal && modalAptId && (
+        <CreateAppointmentModal
+          apartmentId={modalAptId}
+          apartmentTitle={modalAptTitle}
+          onClose={() => setShowAppointmentModal(false)}
+          onSuccess={() => setShowAppointmentModal(false)}
+        />
+      )}
+      {showViewAppointmentsModal && modalAptId && (
+        <ViewAppointmentsModal
+          apartmentId={modalAptId}
+          apartmentTitle={modalAptTitle}
+          onClose={() => setShowViewAppointmentsModal(false)}
+        />
+      )}
     </div>
   )
 }

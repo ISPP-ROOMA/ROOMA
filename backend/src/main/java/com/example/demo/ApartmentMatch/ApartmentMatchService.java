@@ -61,6 +61,11 @@ public class ApartmentMatchService {
         return apartmentMatchRepository.findAll();
     }
 
+    public ApartmentMatchEntity getMatchById(Integer matchId) {
+        return apartmentMatchRepository.findById(matchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Match not found"));
+    }
+
     @Transactional
     public ApartmentMatchEntity saveApartmentMatch(ApartmentMatchEntity apartmentMatch) {
         return apartmentMatchRepository.save(apartmentMatch);

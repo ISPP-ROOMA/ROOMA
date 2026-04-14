@@ -294,7 +294,6 @@ public class ReviewService {
                 List<ApartmentMemberEntity> memberships = apartmentMemberService.findPastLandlordMembershipsByUserIdAndApartmentId(currentUserId, apartment.getId());
                 userMembers = new ArrayList<>(memberships.stream().map(ApartmentMemberEntity::getUser).toList());
             } else {
-                // Comprobar si el inquilino ha dejado el apartamento o sigue activo
                 ApartmentMemberEntity currentMembership = apartmentMemberService.findByUserIdAndApartmentId(currentUserId, apartment.getId());
                 boolean isActive = currentMembership.getEndDate() == null || currentMembership.getEndDate().isAfter(LocalDate.now());
                 
@@ -309,7 +308,6 @@ public class ReviewService {
                 userMembers.removeIf(u -> u.getId().equals(currentUserId));
             }
 
-            // Para cada candidato, comprobar estado de reseñas mutuas
             List<PendingUserInfo> pendingUsers = new ArrayList<>();
             for (UserEntity candidate : userMembers) {
                 boolean youReviewedThem = reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(
@@ -317,7 +315,6 @@ public class ReviewService {
                 boolean hasReviewedYou = reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(
                         candidate.getId(), currentUserId, apartment.getId()).isPresent();
 
-                // Si ambos se han valorado, la publicación mutua ya se activó — no mostrar
                 if (youReviewedThem && hasReviewedYou) continue;
 
                 pendingUsers.add(new PendingUserInfo(candidate, hasReviewedYou, youReviewedThem));

@@ -187,17 +187,19 @@ export default function Home() {
       ) : (
         /* Card stack */
         <div className="relative w-full max-w-sm md:max-w-md h-[62vh] min-h-[480px] max-h-[660px] flex items-center justify-center">
-          <AnimatePresence>
-            {apartments.map((apartment, index) => {
-              const isTop = index === apartments.length - 1
+          <AnimatePresence initial={false}>
+            {apartments.slice(-3).map((apartment, index, array) => {
+              const isTop = index === array.length - 1
+              const depth = array.length - 1 - index
               return (
                 <div
                   key={apartment.id}
                   className={`absolute w-full h-full will-change-transform ${!isTop ? 'pointer-events-none' : ''}`}
                   style={{
                     zIndex: index,
-                    transform: `scale(${1 - (apartments.length - 1 - index) * 0.04}) translateY(-${(apartments.length - 1 - index) * 16}px)`,
-                    transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                    transform: `scale(${1 - depth * 0.05}) translateY(-${depth * 20}px)`,
+                    transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                    opacity: 1 - depth * 0.3,
                   }}
                 >
                   <SwipeableCard

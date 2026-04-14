@@ -40,7 +40,6 @@ export const generateDeviceId = (): string => {
     return crypto.randomUUID()
   }
 
-  // Fallback for browsers/environments that do not implement randomUUID.
   return `device-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`
 }
 

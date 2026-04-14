@@ -43,7 +43,6 @@ public class FavoriteControllerTest {
     @MockitoBean
     private FavoriteService favoriteService;
 
-    // Required because the production JWT filter is still part of the web slice context.
     @MockitoBean
     private JwtService jwtService;
 

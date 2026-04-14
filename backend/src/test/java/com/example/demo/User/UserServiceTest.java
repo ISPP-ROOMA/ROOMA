@@ -149,7 +149,7 @@ public class UserServiceTest {
 
         UpdateProfileRequest request = new UpdateProfileRequest(
                 null, null,
-                "same@email.com", // mismo email
+                "same@email.com",
                 null,
                 null,null,null,null,null,null,null,null
         );
@@ -509,7 +509,7 @@ public class UserServiceTest {
         UserEntity updateData = new UserEntity();
         updateData.setEmail("new@email.com");
         updateData.setRole(Role.ADMIN);
-        updateData.setPassword(""); // password vacío
+        updateData.setPassword("");
 
         doReturn(existingUser).when(userService).findById(1);
         when(userRepository.save(existingUser)).thenReturn(existingUser);

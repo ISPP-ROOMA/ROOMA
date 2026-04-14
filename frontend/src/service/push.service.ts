@@ -1,6 +1,5 @@
 import { api } from './api'
 
-// Base64Url string to Uint8Array for VAPID key
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -47,7 +46,6 @@ export async function requestPushPermissionAndSubscribe() {
       applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
     });
 
-    // Enviar suscripción al backend
     await api.post('/notifications/subscribe', subscription.toJSON());
     console.log('Suscripción generada y enviada al backend.');
 

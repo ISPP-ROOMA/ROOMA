@@ -18,7 +18,6 @@ export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: Swi
   const rotate = useTransform(x, [-200, 200], [-18, 18])
   const cardOpacity = useTransform(x, [-220, -100, 0, 100, 220], [0, 1, 1, 1, 0])
 
-  // Green/red overlay driven by horizontal drag
   const likeOpacity = useTransform(x, [20, 120], [0, 1])
   const nopeOpacity = useTransform(x, [-20, -120], [0, 1])
 
@@ -36,7 +35,6 @@ export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: Swi
     const ox = info.offset.x
     const oy = info.offset.y
 
-    // Swipe left / right (horizontal dominant)
     if (Math.abs(ox) > Math.abs(oy)) {
       if (ox > 90) {
         setExitX(1200)
@@ -50,7 +48,6 @@ export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: Swi
       return
     }
 
-    // Swipe up → open apartment modal details
     if (oy < -60) {
       onShowDetails()
     }
