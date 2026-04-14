@@ -12,6 +12,7 @@ import {
   type ChatMessageDTO,
 } from '../../../service/chat.service'
 import { useAuthStore } from '../../../store/authStore'
+import BookAppointmentModal from '../../../components/BookAppointmentModal'
 
 export default function ChatScreen() {
   const { matchId, incidentId } = useParams<{ matchId?: string; incidentId?: string }>()
@@ -40,6 +41,7 @@ export default function ChatScreen() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [filePreview, setFilePreview] = useState<string | null>(null)
   const [fileCaption, setFileCaption] = useState('')
+  const [showBookModal, setShowBookModal] = useState(false)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -246,7 +248,17 @@ export default function ChatScreen() {
                 )}
 
                 {msg.content && (
-                  <p className="text-sm sm:text-base leading-relaxed break-words">{msg.content}</p>
+                  <div>
+                    <p className="text-sm sm:text-base leading-relaxed break-words">{msg.content}</p>
+                    {msg.content.includes("reservar tu cita") && !isMe && (
+                      <button 
+                        onClick={() => setShowBookModal(true)} 
+                        className="mt-3 w-full bg-[#E8F7F7] text-[#008080] py-2 rounded-xl text-center font-bold text-xs uppercase hover:bg-[#D0EFEF] transition-colors"
+                      >
+                         📅 Elegir Fecha
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 <div
@@ -344,6 +356,14 @@ export default function ChatScreen() {
           )}
         </div>
       </footer>
+
+      {showBookModal && chatContext?.type === 'match' && (
+        <BookAppointmentModal 
+          matchId={chatContext.id} 
+          onClose={() => setShowBookModal(false)}
+          onSuccess={() => setShowBookModal(false)}
+        />
+      )}
     </div>
   )
 }

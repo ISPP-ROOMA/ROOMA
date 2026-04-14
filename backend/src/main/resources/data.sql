@@ -281,3 +281,9 @@ INSERT INTO incident_status_history (id, incident_id, status, changed_at, change
 (10, 3, 'RESOLVED', CURRENT_TIMESTAMP - INTERVAL '4 days', 1, 'landlord1@test.com'),
 (11, 3, 'CLOSED', CURRENT_TIMESTAMP - INTERVAL '3 days', 8, 'tenant3@test.com')
 ON CONFLICT (id) DO NOTHING;
+
+-- ==========================================
+-- 9. PATCH: Añadir APPOINTMENT al constraint de notifications
+-- ==========================================
+ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_event_type_check;
+ALTER TABLE notifications ADD CONSTRAINT notifications_event_type_check CHECK (event_type::text = ANY (ARRAY['MATCH','NEW_MATCH','INVITATION_ACCEPTED','INVITATION_SENT','INVITATION_REJECTED','REVIEW','NEW_BILL','BILL_PAID','APPOINTMENT']::text[]));
