@@ -1,5 +1,6 @@
 package com.example.demo.Apartment;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
@@ -49,6 +50,9 @@ public class ApartmentEntity {
 
     @Enumerated(EnumType.STRING)
     private ApartmentState state;
+
+    @Column
+    private LocalDateTime activationDate;
 
     @Column(length = 1000)
     private String idealTenantProfile;
@@ -126,6 +130,14 @@ public class ApartmentEntity {
 
     public void setState(ApartmentState state) {
         this.state = state;
+    }
+
+    public LocalDateTime getActivationDate() {
+        return activationDate;
+    }
+
+    public void setActivationDate(LocalDateTime activationDate) {
+        this.activationDate = activationDate;
     }
 
     public UserEntity getUser() {

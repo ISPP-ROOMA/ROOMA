@@ -1,24 +1,30 @@
 package com.example.demo.Apartment;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.Apartment.DTOs.CreateApartment;
+import com.example.demo.ApartmentMatch.ApartmentMatchEntity;
+import com.example.demo.ApartmentMatch.ApartmentMatchRepository;
+import com.example.demo.ApartmentMatch.MatchStatus;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
 import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
@@ -35,6 +41,9 @@ public class ApartmentServiceTest {
     private ApartmentRepository apartmentRepository;
 
     @Mock
+    private ApartmentMatchRepository apartmentMatchRepository;
+
+    @Mock
     private UserService userService;
 
     @Mock
@@ -44,6 +53,7 @@ public class ApartmentServiceTest {
     void setUp() {
         apartmentService = new ApartmentService(
                 apartmentRepository,
+            apartmentMatchRepository,
                 userService,
                 apartmentPhotoService);
     }
@@ -62,7 +72,24 @@ public class ApartmentServiceTest {
 
         assertNotNull(saved);
         assertEquals(landlord.getId(), saved.getUser().getId());
+        assertNotNull(saved.getActivationDate());
         verify(apartmentRepository).save(apartment);
+    }
+
+    @Test
+    @DisplayName("save does not set activationDate when apartment is not ACTIVE")
+    public void save_WhenApartmentNotActive_DoesNotSetActivationDate() {
+        ApartmentEntity apartment = baseApartment();
+        apartment.setState(ApartmentState.MATCHING);
+        UserEntity landlord = user(1001, "landlord-not-active@test.com", Role.LANDLORD);
+
+        when(userService.findCurrentUser()).thenReturn("landlord-not-active@test.com");
+        when(userService.findByEmail("landlord-not-active@test.com")).thenReturn(Optional.of(landlord));
+        when(apartmentRepository.save(any(ApartmentEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ApartmentEntity saved = apartmentService.save(apartment);
+
+        assertNull(saved.getActivationDate());
     }
 
     @Test
@@ -163,6 +190,7 @@ public class ApartmentServiceTest {
 
         when(userService.findCurrentUserEntity()).thenReturn(owner);
         when(apartmentRepository.findById(400)).thenReturn(Optional.of(existing));
+        when(apartmentMatchRepository.findByApartmentIdAndMatchStatusIn(eq(400), any())).thenReturn(List.of());
         when(apartmentRepository.save(any(ApartmentEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
         ApartmentEntity updated = apartmentService.update(400, updates);
@@ -175,6 +203,82 @@ public class ApartmentServiceTest {
         assertEquals(ApartmentState.MATCHING, updated.getState());
         assertEquals(50, updated.getUser().getId());
         verify(apartmentRepository).save(existing);
+    }
+
+    @Test
+    @DisplayName("update cancels pending matches when apartment goes from ACTIVE to non ACTIVE")
+    public void update_WhenDeactivatingApartment_CancelsPendingMatches() {
+        ApartmentEntity existing = baseApartment();
+        existing.setId(401);
+        existing.setState(ApartmentState.ACTIVE);
+        UserEntity owner = user(51, "owner51@test.com", Role.LANDLORD);
+        existing.setUser(owner);
+
+        ApartmentEntity updates = baseApartment();
+        updates.setState(ApartmentState.MATCHING);
+
+        ApartmentMatchEntity activeMatch = new ApartmentMatchEntity();
+        activeMatch.setMatchStatus(MatchStatus.ACTIVE);
+        ApartmentMatchEntity waitingMatch = new ApartmentMatchEntity();
+        waitingMatch.setMatchStatus(MatchStatus.WAITING);
+        List<ApartmentMatchEntity> pendingMatches = List.of(activeMatch, waitingMatch);
+
+        when(userService.findCurrentUserEntity()).thenReturn(owner);
+        when(apartmentRepository.findById(401)).thenReturn(Optional.of(existing));
+        when(apartmentMatchRepository.findByApartmentIdAndMatchStatusIn(eq(401), any())).thenReturn(pendingMatches);
+        when(apartmentRepository.save(any(ApartmentEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ApartmentEntity updated = apartmentService.update(401, updates);
+
+        assertEquals(ApartmentState.MATCHING, updated.getState());
+        assertEquals(MatchStatus.CANCELED, activeMatch.getMatchStatus());
+        assertEquals(MatchStatus.CANCELED, waitingMatch.getMatchStatus());
+        verify(apartmentMatchRepository).saveAll(pendingMatches);
+    }
+
+    @Test
+    @DisplayName("update does not cancel matches when apartment remains ACTIVE")
+    public void update_WhenStillActive_DoesNotCancelPendingMatches() {
+        ApartmentEntity existing = baseApartment();
+        existing.setId(402);
+        existing.setState(ApartmentState.ACTIVE);
+        UserEntity owner = user(52, "owner52@test.com", Role.LANDLORD);
+        existing.setUser(owner);
+
+        ApartmentEntity updates = baseApartment();
+        updates.setState(ApartmentState.ACTIVE);
+
+        when(userService.findCurrentUserEntity()).thenReturn(owner);
+        when(apartmentRepository.findById(402)).thenReturn(Optional.of(existing));
+        when(apartmentRepository.save(any(ApartmentEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        apartmentService.update(402, updates);
+
+        verify(apartmentMatchRepository, never()).findByApartmentIdAndMatchStatusIn(eq(402), any());
+        verify(apartmentMatchRepository, never()).saveAll(any());
+    }
+
+    @Test
+    @DisplayName("update sets activationDate when apartment is reactivated")
+    public void update_WhenReactivated_SetsActivationDate() {
+        ApartmentEntity existing = baseApartment();
+        existing.setId(403);
+        existing.setState(ApartmentState.MATCHING);
+        UserEntity owner = user(53, "owner53@test.com", Role.LANDLORD);
+        existing.setUser(owner);
+
+        ApartmentEntity updates = baseApartment();
+        updates.setState(ApartmentState.ACTIVE);
+
+        when(userService.findCurrentUserEntity()).thenReturn(owner);
+        when(apartmentRepository.findById(403)).thenReturn(Optional.of(existing));
+        when(apartmentRepository.save(any(ApartmentEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ApartmentEntity updated = apartmentService.update(403, updates);
+
+        assertNotNull(updated.getActivationDate());
+        verify(apartmentMatchRepository, never()).findByApartmentIdAndMatchStatusIn(eq(403), any());
+        verify(apartmentMatchRepository, never()).saveAll(any());
     }
 
     @Test

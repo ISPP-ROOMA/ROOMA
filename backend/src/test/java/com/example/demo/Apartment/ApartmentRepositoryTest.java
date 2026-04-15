@@ -1,12 +1,12 @@
 package com.example.demo.Apartment;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -16,6 +16,8 @@ import com.example.demo.ApartmentMatch.ApartmentMatchEntity;
 import com.example.demo.ApartmentMatch.MatchStatus;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
+
+import jakarta.persistence.EntityManager;
 
 @DataJpaTest
 @TestPropertySource(properties = "spring.sql.init.mode=never")
@@ -85,10 +87,35 @@ public class ApartmentRepositoryTest {
 
         persistMatch(candidate, swiped, MatchStatus.ACTIVE);
 
-        List<ApartmentEntity> deck = apartmentRepository.findDeckForCandidate(candidate.getId());
+        List<ApartmentEntity> deck = apartmentRepository.findDeckForCandidate(
+            candidate.getId(),
+            ApartmentState.ACTIVE);
 
         assertEquals(1, deck.size());
         assertEquals(expected.getId(), deck.get(0).getId());
+    }
+
+    @Test
+    public void findDeckForCandidate_ExcludesAnyApartmentWithPreviousInteractionUnlessReactivatedAfterMatch() {
+        UserEntity landlord = persistUser("landlord-e1@test.com", Role.LANDLORD);
+        UserEntity candidate = persistUser("tenant-e@test.com", Role.TENANT);
+
+        ApartmentEntity rejectedApartment = persistApartment("E1", "Sevilla", 550.0, ApartmentState.ACTIVE, landlord);
+        ApartmentEntity reactivatedApartment = persistApartment("E2", "Sevilla", 650.0, ApartmentState.ACTIVE, landlord);
+
+        LocalDateTime oldMatchDate = LocalDateTime.now().minusDays(5);
+        reactivatedApartment.setActivationDate(LocalDateTime.now().minusDays(1));
+        entityManager.flush();
+
+        persistMatch(candidate, rejectedApartment, MatchStatus.REJECTED, LocalDateTime.now().minusDays(2));
+        persistMatch(candidate, reactivatedApartment, MatchStatus.CANCELED, oldMatchDate);
+
+        List<ApartmentEntity> deck = apartmentRepository.findDeckForCandidate(
+            candidate.getId(),
+            ApartmentState.ACTIVE);
+
+        assertEquals(1, deck.size());
+        assertTrue(deck.stream().anyMatch(a -> a.getId().equals(reactivatedApartment.getId())));
     }
 
     private UserEntity persistUser(String email, Role role) {
@@ -116,12 +143,16 @@ public class ApartmentRepositoryTest {
     }
 
     private void persistMatch(UserEntity candidate, ApartmentEntity apartment, MatchStatus status) {
+        persistMatch(candidate, apartment, status, LocalDateTime.now());
+    }
+
+    private void persistMatch(UserEntity candidate, ApartmentEntity apartment, MatchStatus status, LocalDateTime matchDate) {
         ApartmentMatchEntity match = new ApartmentMatchEntity();
         match.setCandidate(candidate);
         match.setApartment(apartment);
         match.setCandidateInterest(true);
         match.setMatchStatus(status);
-        match.setMatchDate(LocalDateTime.now());
+        match.setMatchDate(matchDate);
         entityManager.persist(match);
         entityManager.flush();
     }

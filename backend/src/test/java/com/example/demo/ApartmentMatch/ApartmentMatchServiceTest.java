@@ -1,24 +1,26 @@
 package com.example.demo.ApartmentMatch;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -191,6 +193,57 @@ public class ApartmentMatchServiceTest {
         assertEquals("You have already swiped on this apartment", exception.getMessage());
         verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
     }
+
+        @Test
+        @DisplayName("processSwipe tenant allows swipe when previous match is before apartment activation")
+        public void processSwipe_PreviousMatchBeforeActivation_AllowsNewSwipe() {
+                Integer apartmentId = 16;
+                UserEntity tenant = createUser(900, Role.TENANT, "tenant-reactivated@test.com");
+                ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.ACTIVE,
+                                createUser(901, Role.LANDLORD, "landlord-reactivated@test.com"));
+                apartment.setActivationDate(LocalDateTime.now().minusDays(1));
+
+                ApartmentMatchEntity existingMatch = createMatch(101, MatchStatus.REJECTED, tenant, apartment, false, null);
+                existingMatch.setMatchDate(LocalDateTime.now().minusDays(5));
+
+                when(userService.findCurrentUserEntity()).thenReturn(tenant);
+                when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+                when(apartmentMatchRepository.findByCandidateIdAndApartmentId(tenant.getId(), apartmentId))
+                                .thenReturn(Optional.of(existingMatch));
+                when(apartmentMatchRepository.save(existingMatch)).thenReturn(existingMatch);
+
+                ApartmentMatchEntity result = apartmentMatchService.processSwipe(apartmentId, true);
+
+                assertEquals(MatchStatus.ACTIVE, result.getMatchStatus());
+                assertEquals(Boolean.TRUE, result.getCandidateInterest());
+                assertNotNull(result.getMatchDate());
+                verify(apartmentMatchRepository).save(existingMatch);
+        }
+
+        @Test
+        @DisplayName("processSwipe tenant blocks swipe for legacy apartment without activationDate when previous interaction exists")
+        public void processSwipe_LegacyRejectedWithoutActivationDate_ThrowsConflict() {
+                Integer apartmentId = 17;
+                UserEntity tenant = createUser(902, Role.TENANT, "tenant-legacy-rejected@test.com");
+                ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.ACTIVE,
+                                createUser(903, Role.LANDLORD, "landlord-legacy-rejected@test.com"));
+                apartment.setActivationDate(null);
+
+                ApartmentMatchEntity existingMatch = createMatch(102, MatchStatus.REJECTED, tenant, apartment, false, null);
+                existingMatch.setMatchDate(LocalDateTime.now().minusDays(2));
+
+                when(userService.findCurrentUserEntity()).thenReturn(tenant);
+                when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+                when(apartmentMatchRepository.findByCandidateIdAndApartmentId(tenant.getId(), apartmentId))
+                                .thenReturn(Optional.of(existingMatch));
+
+                ConflictException exception = assertThrows(
+                                ConflictException.class,
+                                () -> apartmentMatchService.processSwipe(apartmentId, true));
+
+                assertEquals("You have already swiped on this apartment", exception.getMessage());
+                verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
+        }
 
     @Test
     @DisplayName("processLandlordAction sets MATCH when landlord is interested")

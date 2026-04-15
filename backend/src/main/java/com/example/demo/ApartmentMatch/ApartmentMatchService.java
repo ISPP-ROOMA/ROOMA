@@ -237,11 +237,16 @@ public class ApartmentMatchService {
         if (apartment.getUser().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("You cannot swipe on your own apartment");
         }
-        if (apartmentMatchRepository.findByCandidateIdAndApartmentId(currentUser.getId(), apartmentId).isPresent()) {
+
+        ApartmentMatchEntity existingMatch = apartmentMatchRepository
+                .findByCandidateIdAndApartmentId(currentUser.getId(), apartmentId)
+                .orElse(null);
+
+        if (hasCandidateSwipedSinceActivation(existingMatch, apartment)) {
             throw new ConflictException("You have already swiped on this apartment");
         }
 
-        ApartmentMatchEntity apartmentMatch = createApartmentMatch(currentUser, apartment, interest);
+        ApartmentMatchEntity apartmentMatch = createApartmentMatch(existingMatch, currentUser, apartment, interest);
 
         String description = "El usuario \"" + currentUser.getName() + " " + currentUser.getSurname()
                 + "\" ha mostrado interés en tu apartamento \"" + apartment.getTitle() + "\" con localización: "
@@ -255,20 +260,43 @@ public class ApartmentMatchService {
 
     public ApartmentMatchEntity createApartmentMatch(UserEntity candidate, ApartmentEntity apartment,
             boolean interest) {
-        ApartmentMatchEntity newMatch = new ApartmentMatchEntity();
-        newMatch.setCandidateInterest(interest);
-        newMatch.setLandlordInterest(null);
-        newMatch.setCandidate(candidate);
-        newMatch.setApartment(apartment);
-        newMatch.setMatchDate(LocalDateTime.now(ZoneId.of("Europe/Madrid")));
+        return createApartmentMatch(null, candidate, apartment, interest);
+    }
+
+    public ApartmentMatchEntity createApartmentMatch(ApartmentMatchEntity existingMatch, UserEntity candidate,
+            ApartmentEntity apartment, boolean interest) {
+        ApartmentMatchEntity match = existingMatch != null ? existingMatch : new ApartmentMatchEntity();
+        match.setCandidateInterest(interest);
+        match.setLandlordInterest(null);
+        match.setCandidate(candidate);
+        match.setApartment(apartment);
+        match.setMatchDate(LocalDateTime.now(ZoneId.of("Europe/Madrid")));
 
         if (interest) {
-            newMatch.setMatchStatus(MatchStatus.ACTIVE);
+            match.setMatchStatus(MatchStatus.ACTIVE);
         } else {
-            newMatch.setMatchStatus(MatchStatus.REJECTED);
+            match.setMatchStatus(MatchStatus.REJECTED);
         }
-        newMatch.setTenantHasOpenedMatchDetails(false);
-        return newMatch;
+        match.setTenantHasOpenedMatchDetails(false);
+        return match;
+    }
+
+    private boolean hasCandidateSwipedSinceActivation(ApartmentMatchEntity existingMatch, ApartmentEntity apartment) {
+        if (existingMatch == null) {
+            return false;
+        }
+
+        LocalDateTime matchDate = existingMatch.getMatchDate();
+        if (matchDate == null) {
+            return true;
+        }
+
+        LocalDateTime activationDate = apartment.getActivationDate();
+        if (activationDate == null) {
+            return true;
+        }
+
+        return !matchDate.isBefore(activationDate);
     }
 
     @Transactional
