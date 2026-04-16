@@ -2,8 +2,12 @@ package com.example.demo.ApartmentMatch;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
@@ -13,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.Apartment.ApartmentState;
+import com.example.demo.ApartmentMatch.DTOs.CandidateFilterDTO;
 import com.example.demo.Exceptions.ConflictException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.MemberApartment.ApartmentMemberService;
@@ -336,7 +341,7 @@ public class ApartmentMatchService {
     }
 
     @Transactional(readOnly = true)
-    public List<ApartmentMatchEntity> getFilteredCandidates(Integer apartmentId, com.example.demo.ApartmentMatch.DTOs.CandidateFilterDTO filter) {
+    public List<ApartmentMatchEntity> getFilteredCandidates(Integer apartmentId, CandidateFilterDTO filter) {
         UserEntity currentUser = userService.findCurrentUserEntity();
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
         if (!apartment.getUser().getId().equals(currentUser.getId())) {
@@ -348,7 +353,7 @@ public class ApartmentMatchService {
             return candidates;
         }
 
-        java.util.Map<ApartmentMatchEntity, Integer> scores = new java.util.HashMap<>();
+        Map<ApartmentMatchEntity, Integer> scores = new HashMap<>();
         int maxScore = 0;
 
         for (ApartmentMatchEntity match : candidates) {
@@ -356,18 +361,18 @@ public class ApartmentMatchService {
             UserEntity user = match.getCandidate();
             
             if (filter.getMinAge() != null && user.getBirthDate() != null) {
-                int age = java.time.Period.between(user.getBirthDate(), java.time.LocalDate.now()).getYears();
+                int age = Period.between(user.getBirthDate(), LocalDate.now()).getYears();
                 if (age >= filter.getMinAge()) score++;
             }
             if (filter.getMaxAge() != null && user.getBirthDate() != null) {
-                int age = java.time.Period.between(user.getBirthDate(), java.time.LocalDate.now()).getYears();
+                int age = Period.between(user.getBirthDate(), LocalDate.now()).getYears();
                 if (age <= filter.getMaxAge()) score++;
             }
             if (filter.getRequiredProfession() != null && filter.getRequiredProfession().equalsIgnoreCase(user.getProfession())) {
                 score++;
             }
             if (filter.getAllowedSmoker() != null) {
-                if (java.util.Objects.equals(filter.getAllowedSmoker(), user.getSmoker())) {
+                if (Objects.equals(filter.getAllowedSmoker(), user.getSmoker())) {
                     score++;
                 }
             }
@@ -409,6 +414,9 @@ public class ApartmentMatchService {
                 match.setLandlordInterest(true);
                 break;
             case "WAIT":
+                if (match.getMatchStatus() != MatchStatus.ACTIVE) {
+                    throw new ConflictException("Only matches with status ACTIVE can be moved to WAITING");
+                }
                 match.setMatchStatus(MatchStatus.WAITING);
                 break;
             case "REJECT":

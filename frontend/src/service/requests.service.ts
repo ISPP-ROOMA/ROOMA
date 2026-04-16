@@ -1,9 +1,9 @@
-import { api } from './api'
 import { useAuthStore } from '../store/authStore'
+import { api } from './api'
 
-export type RequestStatus = 'PENDING' | 'ON_HOLD' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED'
+export type RequestStatus = 'PENDING' | 'WAITING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED'
 export type ApartmentStatus = 'FREE' | 'PAUSED' | 'RENTED'
-type BackendMatchStatus = 'ACTIVE' | 'MATCH' | 'REJECTED' | 'SUCCESSFUL' | 'CANCELED'
+type BackendMatchStatus = 'ACTIVE' | 'WAITING' | 'MATCH' | 'REJECTED' | 'SUCCESSFUL' | 'CANCELED'
 
 type BackendApartmentDTO = {
   id: number
@@ -48,17 +48,19 @@ export interface RequestItem {
   monthlyPrice?: number
 }
 export interface CandidateFilter {
-  minAge?: number;
-  maxAge?: number;
-  requiredProfession?: string;
-  allowedSmoker?: boolean;
-  requiredSchedule?: string;
+  minAge?: number
+  maxAge?: number
+  requiredProfession?: string
+  allowedSmoker?: boolean
+  requiredSchedule?: string
 }
 
 function mapBackendStatus(status: BackendMatchStatus): RequestStatus {
   switch (status) {
     case 'ACTIVE':
       return 'PENDING'
+    case 'WAITING':
+      return 'WAITING'
     case 'MATCH':
     case 'SUCCESSFUL':
       return 'ACCEPTED'
@@ -160,21 +162,27 @@ export async function getReceivedRequests(): Promise<RequestItem[]> {
 }
 
 export async function acceptRequest(apartmentMatchId: number): Promise<void> {
-  await api.post(
-    `/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-request?interest=true`
+  await api.patch(
+    `/apartments-matches/apartmentMatch/${apartmentMatchId}/landlord-decision?decision=ACCEPT`
   )
 }
 
 export async function rejectRequest(apartmentMatchId: number): Promise<void> {
-  await api.post(
-    `/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-request?interest=false`
+  await api.patch(
+    `/apartments-matches/apartmentMatch/${apartmentMatchId}/landlord-decision?decision=REJECT`
   )
 }
 
-export async function getFilteredCandidates(
-  apartmentId: number,
-  filter: CandidateFilter
-) {
-  const response = await api.post(`/apartments-matches/apartment/${apartmentId}/filtered-candidates`, filter);
-  return response.data;
+export async function waitRequest(apartmentMatchId: number): Promise<void> {
+  await api.patch(
+    `/apartments-matches/apartmentMatch/${apartmentMatchId}/landlord-decision?decision=WAIT`
+  )
+}
+
+export async function getFilteredCandidates(apartmentId: number, filter: CandidateFilter) {
+  const response = await api.post(
+    `/apartments-matches/apartment/${apartmentId}/filtered-candidates`,
+    filter
+  )
+  return response.data
 }

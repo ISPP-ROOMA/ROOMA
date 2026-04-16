@@ -10,6 +10,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +28,7 @@ import com.example.demo.ApartmentMatch.ApartmentMatchRepository;
 import com.example.demo.ApartmentMatch.MatchStatus;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
 import com.example.demo.Exceptions.BadRequestException;
+import com.example.demo.Exceptions.ForbiddenException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
@@ -278,6 +280,76 @@ public class ApartmentServiceTest {
 
         assertNotNull(updated.getActivationDate());
         verify(apartmentMatchRepository, never()).findByApartmentIdAndMatchStatusIn(eq(403), any());
+        verify(apartmentMatchRepository, never()).saveAll(any());
+    }
+
+    @Test
+    @DisplayName("update throws ForbiddenException when apartment has no landlord")
+    public void update_WhenApartmentHasNoLandlord_ThrowsForbidden() {
+        ApartmentEntity existing = baseApartment();
+        existing.setId(405);
+        existing.setUser(null);
+
+        ApartmentEntity updates = baseApartment();
+        updates.setState(ApartmentState.MATCHING);
+
+        UserEntity currentUser = user(55, "owner55@test.com", Role.LANDLORD);
+
+        when(userService.findCurrentUserEntity()).thenReturn(currentUser);
+        when(apartmentRepository.findById(405)).thenReturn(Optional.of(existing));
+
+        assertThrows(ForbiddenException.class, () -> apartmentService.update(405, updates));
+
+        verify(apartmentRepository, never()).save(any());
+        verify(apartmentMatchRepository, never()).findByApartmentIdAndMatchStatusIn(any(), any());
+        verify(apartmentMatchRepository, never()).saveAll(any());
+    }
+
+    @Test
+    @DisplayName("update throws ForbiddenException when current user is not apartment landlord")
+    public void update_WhenCurrentUserIsNotLandlord_ThrowsForbidden() {
+        ApartmentEntity existing = baseApartment();
+        existing.setId(406);
+        UserEntity owner = user(56, "owner56@test.com", Role.LANDLORD);
+        existing.setUser(owner);
+
+        ApartmentEntity updates = baseApartment();
+        updates.setState(ApartmentState.MATCHING);
+
+        UserEntity currentUser = user(57, "other57@test.com", Role.LANDLORD);
+
+        when(userService.findCurrentUserEntity()).thenReturn(currentUser);
+        when(apartmentRepository.findById(406)).thenReturn(Optional.of(existing));
+
+        assertThrows(ForbiddenException.class, () -> apartmentService.update(406, updates));
+
+        verify(apartmentRepository, never()).save(any());
+        verify(apartmentMatchRepository, never()).findByApartmentIdAndMatchStatusIn(any(), any());
+        verify(apartmentMatchRepository, never()).saveAll(any());
+    }
+
+    @Test
+    @DisplayName("update keeps activationDate when apartment stays ACTIVE and already has activationDate")
+    public void update_WhenStillActiveWithActivationDate_DoesNotResetActivationDate() {
+        ApartmentEntity existing = baseApartment();
+        existing.setId(404);
+        existing.setState(ApartmentState.ACTIVE);
+        UserEntity owner = user(54, "owner54@test.com", Role.LANDLORD);
+        existing.setUser(owner);
+        LocalDateTime originalActivationDate = LocalDateTime.of(2026, 1, 10, 12, 30);
+        existing.setActivationDate(originalActivationDate);
+
+        ApartmentEntity updates = baseApartment();
+        updates.setState(ApartmentState.ACTIVE);
+
+        when(userService.findCurrentUserEntity()).thenReturn(owner);
+        when(apartmentRepository.findById(404)).thenReturn(Optional.of(existing));
+        when(apartmentRepository.save(any(ApartmentEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ApartmentEntity updated = apartmentService.update(404, updates);
+
+        assertEquals(originalActivationDate, updated.getActivationDate());
+        verify(apartmentMatchRepository, never()).findByApartmentIdAndMatchStatusIn(eq(404), any());
         verify(apartmentMatchRepository, never()).saveAll(any());
     }
 

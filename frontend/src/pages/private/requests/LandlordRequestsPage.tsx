@@ -17,6 +17,7 @@ import {
   getLandlordMatchDetails,
   getMatchesForLandlord,
   rejectApartmentMatch,
+  waitApartmentMatch,
 } from '../../../service/apartment.service'
 import { getApartment } from '../../../service/apartments.service'
 import {
@@ -41,37 +42,48 @@ interface EnrichedMatch {
   score?: number
 }
 
-
 function statusLabel(status: MatchStatus): string {
   switch (status) {
-    case 'ACTIVE': return 'Pendiente'
-    case 'MATCH': return '¡Match!'
-    case 'INVITED': return 'Invitado'
-    case 'SUCCESSFUL': return 'Aceptada'
-    case 'REJECTED': return 'Rechazada'
-    case 'CANCELED': return 'Cancelada'
-    default: return status
+    case 'ACTIVE':
+      return 'Pendiente'
+    case 'MATCH':
+      return '¡Match!'
+    case 'INVITED':
+      return 'Invitado'
+    case 'SUCCESSFUL':
+      return 'Aceptada'
+    case 'REJECTED':
+      return 'Rechazada'
+    case 'CANCELED':
+      return 'Cancelada'
+    default:
+      return status
   }
 }
 
 function statusBadgeClass(status: MatchStatus): string {
   switch (status) {
-    case 'ACTIVE': return 'border border-[#050505] bg-white text-[#050505]'
+    case 'ACTIVE':
+      return 'border border-[#050505] bg-white text-[#050505]'
+    case 'WAITING':
+      return 'border border-[#e8a000] bg-[#fff7df] text-[#7a5a00]'
     case 'MATCH':
     case 'INVITED':
-    case 'SUCCESSFUL': return 'border-0 bg-[#008080] text-white'
+    case 'SUCCESSFUL':
+      return 'border-0 bg-[#008080] text-white'
     case 'REJECTED':
-    case 'CANCELED': return 'border border-[#DDDBCB] bg-[#F5F1E3] text-[#050505]/60'
-    default: return ''
+    case 'CANCELED':
+      return 'border border-[#DDDBCB] bg-[#F5F1E3] text-[#050505]/60'
+    default:
+      return ''
   }
 }
 
 async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatch[]> {
-
   const enriched = await Promise.all(
     matches.map(async (match) => {
-      const mId = match.id;
-      const aId = match.apartmentId ?? null;
+      const mId = match.id
+      const aId = match.apartmentId ?? null
 
       const [apt, details] = await Promise.all([
         aId ? getApartment(aId) : Promise.resolve(null),
@@ -90,7 +102,9 @@ async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatc
           : apt?.price
             ? `${apt.price.toLocaleString('es-ES')} €`
             : '—',
-        imageUrl: apt?.coverImageUrl ?? 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+        imageUrl:
+          apt?.coverImageUrl ??
+          'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
         tenantEmail: details?.tenant?.email ?? '—',
       } satisfies EnrichedMatch
     })
@@ -145,66 +159,75 @@ export default function LandlordRequestsPage() {
   const uniqueApartments = useMemo(() => {
     const all = [...pendingItems, ...matchItems]
     const map = new Map()
-    all.forEach(item => {
+    all.forEach((item) => {
       if (item.apartmentId) map.set(item.apartmentId, item.title)
     })
     return Array.from(map.entries())
   }, [pendingItems, matchItems])
 
   const fetchData = useCallback(async () => {
-    if (!userId) return;
-    setLoading(true);
+    if (!userId) return
+    setLoading(true)
 
     try {
-      const id = Number(userId);
+      const id = Number(userId)
 
-      const filteredApartment = apartmentFilterId ? await getApartment(apartmentFilterId) : undefined;
+      const filteredApartment = apartmentFilterId
+        ? await getApartment(apartmentFilterId)
+        : undefined
       setFilteredApartmentLabel(
-        apartmentFilterId ? filteredApartment?.title ?? `Vivienda #${apartmentFilterId}` : null
-      );
+        apartmentFilterId ? (filteredApartment?.title ?? `Vivienda #${apartmentFilterId}`) : null
+      )
 
       const matchesForApartment = (matches: ApartmentMatchDTO[]) =>
-        apartmentFilterId ? matches.filter((match) => match.apartmentId === apartmentFilterId) : matches;
+        apartmentFilterId
+          ? matches.filter((match) => match.apartmentId === apartmentFilterId)
+          : matches
 
       if (selectedAptId && (filters.requiredProfession || filters.allowedSmoker !== undefined)) {
-        setIsRanking(true);
-        const rankedData = await getFilteredCandidates(selectedAptId, filters);
-        const enrichedRanked = await enrichMatches(rankedData);
-        setPendingItems(enrichedRanked);
+        setIsRanking(true)
+        const rankedData = await getFilteredCandidates(selectedAptId, filters)
+        const enrichedRanked = await enrichMatches(rankedData)
+        setPendingItems(enrichedRanked)
 
-        const fullMatches = await getMatchesForLandlord(id, 'MATCH');
-        setMatchItems(await enrichMatches(matchesForApartment(fullMatches)));
+        const fullMatches = await getMatchesForLandlord(id, 'MATCH')
+        setMatchItems(await enrichMatches(matchesForApartment(fullMatches)))
       } else {
-        setIsRanking(false);
-        const [activeMatches, successMatches, fullMatches] = await Promise.all([
+        setIsRanking(false)
+        const [activeMatches, waitingMatches, successMatches, fullMatches] = await Promise.all([
           getMatchesForLandlord(id, 'ACTIVE'),
+          getMatchesForLandlord(id, 'WAITING'),
           getMatchesForLandlord(id, 'SUCCESSFUL'),
           getMatchesForLandlord(id, 'MATCH'),
-        ]);
+        ])
 
-        const [enrichedPending, enrichedSuccess, enrichedFull] = await Promise.all([
+        const [enrichedActive, enrichedWaiting, enrichedSuccess, enrichedFull] = await Promise.all([
           enrichMatches(matchesForApartment(activeMatches)),
+          enrichMatches(matchesForApartment(waitingMatches)),
           enrichMatches(matchesForApartment(successMatches)),
           enrichMatches(matchesForApartment(fullMatches)),
-        ]);
+        ])
 
-        setPendingItems(enrichedPending);
-        setMatchItems([...enrichedFull, ...enrichedSuccess]);
+        setPendingItems([...enrichedActive, ...enrichedWaiting])
+        setMatchItems([...enrichedFull, ...enrichedSuccess])
       }
     } catch (err) {
-      console.error('Error loading requests', err);
+      console.error('Error loading requests', err)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [userId, apartmentFilterId, selectedAptId, filters]);
+  }, [userId, apartmentFilterId, selectedAptId, filters])
 
   useEffect(() => {
     void fetchData()
   }, [fetchData, location.search])
 
   useEffect(() => {
-    const chatableMatches = matchItems.filter(item =>
-      item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED' || item.matchStatus === 'SUCCESSFUL'
+    const chatableMatches = matchItems.filter(
+      (item) =>
+        item.matchStatus === 'MATCH' ||
+        item.matchStatus === 'INVITED' ||
+        item.matchStatus === 'SUCCESSFUL'
     )
 
     if (chatableMatches.length === 0 || !userId) return
@@ -217,7 +240,9 @@ export default function LandlordRequestsPage() {
       for (const item of chatableMatches) {
         try {
           const history = await getMessageHistory({ type: 'match', id: item.matchId })
-          const hasUnread = history.some(m => m.senderId !== Number(userId) && m.status !== 'READ')
+          const hasUnread = history.some(
+            (m) => m.senderId !== Number(userId) && m.status !== 'READ'
+          )
           if (hasUnread) {
             newUnread.add(item.matchId)
           }
@@ -226,9 +251,9 @@ export default function LandlordRequestsPage() {
         }
       }
       if (isMounted) {
-        setUnreadMatches(prev => {
+        setUnreadMatches((prev) => {
           const merged = new Set(prev)
-          newUnread.forEach(id => merged.add(id))
+          newUnread.forEach((id) => merged.add(id))
           return merged
         })
       }
@@ -243,7 +268,7 @@ export default function LandlordRequestsPage() {
           (payload: IMessage) => {
             const newMessage = JSON.parse(payload.body) as ChatMessageDTO
             if (newMessage.senderId !== Number(userId) && newMessage.status !== 'READ') {
-              setUnreadMatches(prev => new Set(prev).add(item.matchId))
+              setUnreadMatches((prev) => new Set(prev).add(item.matchId))
             }
           }
         )
@@ -253,7 +278,7 @@ export default function LandlordRequestsPage() {
 
     return () => {
       isMounted = false
-      subscriptions.forEach(sub => sub.unsubscribe())
+      subscriptions.forEach((sub) => sub.unsubscribe())
     }
   }, [matchItems, userId, connected, client])
 
@@ -261,7 +286,7 @@ export default function LandlordRequestsPage() {
     field: keyof CandidateFilter,
     value: CandidateFilter[keyof CandidateFilter] | ''
   ) => {
-    setFilters(prev => ({ ...prev, [field]: value === '' ? undefined : value }))
+    setFilters((prev) => ({ ...prev, [field]: value === '' ? undefined : value }))
   }
 
   const handleReject = async (matchId: number) => {
@@ -285,10 +310,7 @@ export default function LandlordRequestsPage() {
     if (!itemToMove) return
 
     setPendingItems((prev) => prev.filter((i) => i.matchId !== matchId))
-    setMatchItems((prev) => [
-      { ...itemToMove, matchStatus: 'SUCCESSFUL' as MatchStatus },
-      ...prev
-    ])
+    setMatchItems((prev) => [{ ...itemToMove, matchStatus: 'MATCH' as MatchStatus }, ...prev])
 
     try {
       await acceptApartmentMatch(matchId)
@@ -300,9 +322,27 @@ export default function LandlordRequestsPage() {
     }
   }
 
+  const handleWait = async (matchId: number) => {
+    setUpdatingId(matchId)
+    setPendingItems((prev) =>
+      prev.map((item) =>
+        item.matchId === matchId ? { ...item, matchStatus: 'WAITING' as MatchStatus } : item
+      )
+    )
+
+    try {
+      await waitApartmentMatch(matchId)
+    } catch (err) {
+      console.error('Error setting match to waiting', err)
+      void fetchData()
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
   const handleCardClick = async (item: EnrichedMatch, e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return
-    if (item.matchStatus === 'ACTIVE') {
+    if (item.matchStatus === 'ACTIVE' || item.matchStatus === 'WAITING') {
       navigate(`/mis-solicitudes/recibidas/${item.matchId}`)
       return
     }
@@ -381,7 +421,9 @@ export default function LandlordRequestsPage() {
               <div className="grid grid-cols-1 gap-4">
                 {/* Filtro de Vivienda */}
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-[#050505]/50 uppercase ml-1">Vivienda a evaluar</label>
+                  <label className="text-[10px] font-bold text-[#050505]/50 uppercase ml-1">
+                    Vivienda a evaluar
+                  </label>
                   <select
                     className="w-full p-2.5 bg-[#F5F1E3] border border-[#DDDBCB] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#008080]/20"
                     onChange={(e) => setSelectedAptId(Number(e.target.value))}
@@ -389,7 +431,9 @@ export default function LandlordRequestsPage() {
                   >
                     <option value="">Selecciona vivienda...</option>
                     {uniqueApartments.map(([id, title]) => (
-                      <option key={id} value={id}>{title}</option>
+                      <option key={id} value={id}>
+                        {title}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -397,7 +441,9 @@ export default function LandlordRequestsPage() {
                 <div className="grid grid-cols-2 gap-3">
                   {/* Filtro de Profesión */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-bold text-[#050505]/50 uppercase ml-1">Profesión requerida</label>
+                    <label className="text-[10px] font-bold text-[#050505]/50 uppercase ml-1">
+                      Profesión requerida
+                    </label>
                     <input
                       type="text"
                       placeholder="Ej: Ingeniero..."
@@ -408,10 +454,21 @@ export default function LandlordRequestsPage() {
 
                   {/* Filtro de Fumadores */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-bold text-[#050505]/50 uppercase ml-1">¿Permite fumadores?</label>
+                    <label className="text-[10px] font-bold text-[#050505]/50 uppercase ml-1">
+                      ¿Permite fumadores?
+                    </label>
                     <select
                       className="p-2.5 bg-[#F5F1E3] border border-[#DDDBCB] rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#008080]/20"
-                      onChange={(e) => handleFilterChange('allowedSmoker', e.target.value === 'true' ? true : e.target.value === 'false' ? false : undefined)}
+                      onChange={(e) =>
+                        handleFilterChange(
+                          'allowedSmoker',
+                          e.target.value === 'true'
+                            ? true
+                            : e.target.value === 'false'
+                              ? false
+                              : undefined
+                        )
+                      }
                     >
                       <option value="">Cualquiera</option>
                       <option value="false">No</option>
@@ -439,7 +496,12 @@ export default function LandlordRequestsPage() {
             className={`flex-1 rounded-lg py-2 text-base font-medium transition-all ${activeTab === 'pending' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'}`}
             onClick={() => setActiveTab('pending')}
           >
-            Pendientes {pendingItems.length > 0 && <span className="ml-1 px-2 py-0.5 rounded-full bg-[#008080] text-white text-[10px]">{pendingItems.length}</span>}
+            Pendientes{' '}
+            {pendingItems.length > 0 && (
+              <span className="ml-1 px-2 py-0.5 rounded-full bg-[#008080] text-white text-[10px]">
+                {pendingItems.length}
+              </span>
+            )}
           </button>
           <button
             className={`flex-1 rounded-lg py-2 text-base font-medium transition-all ${activeTab === 'match' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'}`}
@@ -492,8 +554,9 @@ export default function LandlordRequestsPage() {
                 <article
                   key={item.matchId}
                   onClick={(e) => void handleCardClick(item, e)}
-                  className={`relative overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm transition-all cursor-pointer hover:shadow-md hover:-translate-y-0.5 ${isCancelled ? 'opacity-60' : ''
-                    } ${isTopRanked ? 'ring-2 ring-[#008080] scale-[1.02]' : ''}`}
+                  className={`relative overflow-hidden rounded-2xl border border-[#DDDBCB] bg-white shadow-sm transition-all cursor-pointer hover:shadow-md hover:-translate-y-0.5 ${
+                    isCancelled ? 'opacity-60' : ''
+                  } ${isTopRanked ? 'ring-2 ring-[#008080] scale-[1.02]' : ''}`}
                 >
                   {isTopRanked && (
                     <div className="absolute top-3 left-3 z-20 bg-[#008080] text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg uppercase">
@@ -522,61 +585,125 @@ export default function LandlordRequestsPage() {
                   <div className="p-4 flex flex-col h-[calc(100%-11rem)]">
                     <h2 className="text-lg font-bold text-[#050505] line-clamp-1">{item.title}</h2>
                     <p className="text-xs text-[#050505]/60 mb-2">{item.location}</p>
-                    <p className="text-sm font-medium text-[#008080] truncate mb-4">{item.tenantEmail}</p>
+                    <p className="text-sm font-medium text-[#008080] truncate mb-4">
+                      {item.tenantEmail}
+                    </p>
 
-                    <div className="flex items-center justify-between mt-auto">
-                      <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-tighter ${statusBadgeClass(item.matchStatus)}`}>
-                        {statusLabel(item.matchStatus)}
-                      </span>
+                    <div className="mt-auto">
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-tighter ${statusBadgeClass(item.matchStatus)}`}
+                        >
+                          {statusLabel(item.matchStatus)}
+                        </span>
 
-                      <div className="flex items-center justify-end gap-2">
-                        {item.matchStatus === 'ACTIVE' && (
-                          <div className="flex items-center gap-2">
-                            <button
-                              className="rounded-xl border border-[#DDDBCB] bg-white px-3 py-2 text-xs font-semibold text-[#050505] transition-colors hover:bg-[#F5F1E3] disabled:cursor-not-allowed disabled:opacity-60"
-                              onClick={(e) => { e.stopPropagation(); void handleReject(item.matchId); }}
-                              disabled={updatingId === item.matchId}
-                            >
-                              <span className="flex items-center justify-center gap-1.5">
-                                {updatingId === item.matchId && (
-                                  <Loader2 size={12} className="animate-spin" />
-                                )}
-                                Rechazar
-                              </span>
-                            </button>
-                            <button
-                              className="rounded-xl bg-[#008080] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#006d6d] disabled:cursor-not-allowed disabled:opacity-60"
-                              onClick={(e) => { e.stopPropagation(); void handleAccept(item.matchId); }}
-                              disabled={updatingId === item.matchId}
-                            >
-                              <span className="flex items-center justify-center gap-1.5">
-                                {updatingId === item.matchId && (
-                                  <Loader2 size={12} className="animate-spin" />
-                                )}
-                                Aceptar
-                              </span>
-                            </button>
-                          </div>
-                        )}
-                        {(item.matchStatus === 'MATCH' || item.matchStatus === 'INVITED' || item.matchStatus === 'SUCCESSFUL') && (
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              className="relative h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center transition-colors hover:bg-[#F5F1E3]"
-                              aria-label="Abrir chat"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                navigate(`/chat/${item.matchId}`)
-                              }}
-                            >
-                              <MessageCircle size={16} />
-                              {unreadMatches.has(item.matchId) && (
-                                <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 border border-white" />
-                              )}
-                            </button>
-                          </div>
+                        {(item.matchStatus === 'MATCH' ||
+                          item.matchStatus === 'INVITED' ||
+                          item.matchStatus === 'SUCCESSFUL') && (
+                          <button
+                            type="button"
+                            className="relative h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center transition-colors hover:bg-[#F5F1E3]"
+                            aria-label="Abrir chat"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              navigate(`/chat/${item.matchId}`)
+                            }}
+                          >
+                            <MessageCircle size={16} />
+                            {unreadMatches.has(item.matchId) && (
+                              <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 border border-white" />
+                            )}
+                          </button>
                         )}
                       </div>
+
+                      {item.matchStatus === 'ACTIVE' && (
+                        <div className="mt-2 grid grid-cols-3 gap-2">
+                          <button
+                            className="w-full rounded-xl border border-[#DDDBCB] bg-white px-2 py-2 text-[11px] font-semibold text-[#050505] transition-colors hover:bg-[#F5F1E3] disabled:cursor-not-allowed disabled:opacity-60"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              void handleReject(item.matchId)
+                            }}
+                            disabled={updatingId === item.matchId}
+                          >
+                            <span className="flex items-center justify-center gap-1">
+                              {updatingId === item.matchId && (
+                                <Loader2 size={11} className="animate-spin" />
+                              )}
+                              Rechazar
+                            </span>
+                          </button>
+
+                          <button
+                            className="w-full rounded-xl border border-[#e8a000] bg-[#fff7df] px-2 py-2 text-[11px] font-semibold text-[#7a5a00] transition-colors hover:bg-[#ffefbf] disabled:cursor-not-allowed disabled:opacity-60"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              void handleWait(item.matchId)
+                            }}
+                            disabled={updatingId === item.matchId}
+                          >
+                            <span className="flex items-center justify-center gap-1">
+                              {updatingId === item.matchId && (
+                                <Loader2 size={11} className="animate-spin" />
+                              )}
+                              En espera
+                            </span>
+                          </button>
+
+                          <button
+                            className="w-full rounded-xl bg-[#008080] px-2 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-[#006d6d] disabled:cursor-not-allowed disabled:opacity-60"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              void handleAccept(item.matchId)
+                            }}
+                            disabled={updatingId === item.matchId}
+                          >
+                            <span className="flex items-center justify-center gap-1">
+                              {updatingId === item.matchId && (
+                                <Loader2 size={11} className="animate-spin" />
+                              )}
+                              Aceptar
+                            </span>
+                          </button>
+                        </div>
+                      )}
+
+                      {item.matchStatus === 'WAITING' && (
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                          <button
+                            className="w-full rounded-xl border border-[#DDDBCB] bg-white px-2 py-2 text-[11px] font-semibold text-[#050505] transition-colors hover:bg-[#F5F1E3] disabled:cursor-not-allowed disabled:opacity-60"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              void handleReject(item.matchId)
+                            }}
+                            disabled={updatingId === item.matchId}
+                          >
+                            <span className="flex items-center justify-center gap-1">
+                              {updatingId === item.matchId && (
+                                <Loader2 size={11} className="animate-spin" />
+                              )}
+                              Rechazar
+                            </span>
+                          </button>
+
+                          <button
+                            className="w-full rounded-xl bg-[#008080] px-2 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-[#006d6d] disabled:cursor-not-allowed disabled:opacity-60"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              void handleAccept(item.matchId)
+                            }}
+                            disabled={updatingId === item.matchId}
+                          >
+                            <span className="flex items-center justify-center gap-1">
+                              {updatingId === item.matchId && (
+                                <Loader2 size={11} className="animate-spin" />
+                              )}
+                              Aceptar
+                            </span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </article>
@@ -600,22 +727,26 @@ export default function LandlordRequestsPage() {
           <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl overflow-hidden p-5 animate-in fade-in zoom-in-95 duration-200">
             <h2 className="text-[#050505] text-lg font-bold mb-1">Selecciona un inmueble</h2>
             <p className="text-xs text-[#050505]/50 mb-4">
-              {showAptSelectModal === 'view' ? 'Para ver sus visitas programadas' : 'Para crear nuevas franjas horarias'}
+              {showAptSelectModal === 'view'
+                ? 'Para ver sus visitas programadas'
+                : 'Para crear nuevas franjas horarias'}
             </p>
             <div className="flex flex-col gap-3">
               {uniqueApartments.length === 0 ? (
-                <p className="text-sm text-[#050505]/60">Aún no tienes inmuebles con historial de solicitudes.</p>
+                <p className="text-sm text-[#050505]/60">
+                  Aún no tienes inmuebles con historial de solicitudes.
+                </p>
               ) : (
                 uniqueApartments.map(([id, title]) => (
                   <button
                     key={id as number}
                     onClick={() => {
                       const action = showAptSelectModal
-                      setShowAptSelectModal(null);
-                      setModalAptId(id as number);
-                      setModalAptTitle(title as string);
-                      if (action === 'view') setShowViewAppointmentsModal(true);
-                      else setShowAppointmentModal(true);
+                      setShowAptSelectModal(null)
+                      setModalAptId(id as number)
+                      setModalAptTitle(title as string)
+                      if (action === 'view') setShowViewAppointmentsModal(true)
+                      else setShowAppointmentModal(true)
                     }}
                     className="w-full text-left p-3 rounded-xl border border-[#DDDBCB] hover:border-[#008080] hover:bg-[#F5F1E3] transition-colors font-medium text-[#050505]"
                   >
@@ -624,7 +755,10 @@ export default function LandlordRequestsPage() {
                 ))
               )}
             </div>
-            <button onClick={() => setShowAptSelectModal(null)} className="mt-5 w-full py-2 bg-[#F5F1E3] text-[#050505] font-semibold rounded-xl hover:bg-[#DDDBCB] transition-colors">
+            <button
+              onClick={() => setShowAptSelectModal(null)}
+              className="mt-5 w-full py-2 bg-[#F5F1E3] text-[#050505] font-semibold rounded-xl hover:bg-[#DDDBCB] transition-colors"
+            >
               Cancelar
             </button>
           </div>

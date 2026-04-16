@@ -85,7 +85,7 @@ public class ApartmentRepositoryTest {
         persistApartment("D4", "Madrid", 500.0, ApartmentState.ACTIVE, candidate);
         ApartmentEntity swiped = persistApartment("D5", "Madrid", 500.0, ApartmentState.ACTIVE, landlord2);
 
-        persistMatch(candidate, swiped, MatchStatus.ACTIVE);
+        persistMatch(candidate, swiped, MatchStatus.ACTIVE,LocalDateTime.now());
 
         List<ApartmentEntity> deck = apartmentRepository.findDeckForCandidate(
             candidate.getId(),
@@ -140,10 +140,6 @@ public class ApartmentRepositoryTest {
         entityManager.persist(apartment);
         entityManager.flush();
         return apartment;
-    }
-
-    private void persistMatch(UserEntity candidate, ApartmentEntity apartment, MatchStatus status) {
-        persistMatch(candidate, apartment, status, LocalDateTime.now());
     }
 
     private void persistMatch(UserEntity candidate, ApartmentEntity apartment, MatchStatus status, LocalDateTime matchDate) {
