@@ -69,6 +69,7 @@ class ApartmentEditingIntegrationTest {
                 "Gastos incluidos",
                 "Sevilla",
                 ApartmentState.ACTIVE,
+                4,
                 landlord);
         apartment.setIdealTenantProfile("Perfil original");
         apartment = apartmentRepository.saveAndFlush(apartment);
@@ -97,6 +98,7 @@ class ApartmentEditingIntegrationTest {
                 "Nuevos gastos",
                 "Madrid",
                 ApartmentState.CLOSED,
+                3,
                 null);
         payload.setIdealTenantProfile("Nuevo perfil ideal");
 
@@ -124,6 +126,7 @@ class ApartmentEditingIntegrationTest {
                 "Gastos hackeados",
                 "Ciudad",
                 ApartmentState.ACTIVE,
+                2,
                 null);
 
         assertThrows(ForbiddenException.class,
@@ -141,6 +144,7 @@ class ApartmentEditingIntegrationTest {
                 "Gastos",
                 "Ubicacion",
                 ApartmentState.ACTIVE,
+                1,
                 null);
 
         Integer nonExistingId = apartment.getId() + 9999;

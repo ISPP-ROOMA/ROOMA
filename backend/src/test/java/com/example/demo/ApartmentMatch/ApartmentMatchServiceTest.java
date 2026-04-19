@@ -1383,6 +1383,7 @@ public class ApartmentMatchServiceTest {
         apartment.setPrice(500.0);
         apartment.setBills("wifi");
         apartment.setUbication("Madrid");
+        apartment.setMaxTenants(4);
         return apartment;
     }
 

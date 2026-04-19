@@ -30,17 +30,17 @@ ON CONFLICT (id) DO NOTHING;
 -- ==========================================
 -- 3. APARTAMENTOS
 -- ==========================================
-INSERT INTO apartments (id, title, description, price, bills, ubication, state, user_id) VALUES 
-(1, 'Piso céntrico luminoso', '3 hab en el centro. Buscamos gente tranquila.', 350.0, 'Agua e Internet inc.', 'Madrid Centro', 'ACTIVE', 1),
-(2, 'Estudio Universitario', 'Cerca del campus. Ambiente de estudio.', 250.0, 'Gastos compartir', 'Valencia Benimaclet', 'ACTIVE', 1),
-(3, 'Ático con terraza', 'Ático moderno con gran terraza.', 450.0, 'Todo incluido', 'Barcelona Eixample', 'ACTIVE', 1),
-(4, 'Loft Estilo Industrial', 'Techos altos, paredes de ladrillo visto y grandes ventanales. Ideal para artistas.', 550.0, 'No incluido', 'Bilbao Abando', 'ACTIVE', 1),
-(5, 'Suite Rústica en las Afueras', 'Vigas de madera y ambiente acogedor. Perfecta para amantes de la naturaleza.', 300.0, 'Leña e Internet inc.', 'Granada Alpujarra', 'ACTIVE', 1),
-(6, 'Habitación Boho Chic', 'Decoración natural con mimbre y plantas. Muy luminosa y con balcón privado.', 320.0, 'Gastos fijos 50€', 'Sevilla Alameda', 'ACTIVE', 1),
-(7, 'Piso Clásico Señorial', 'Mobiliario elegante, molduras en el techo y lámparas de cristal. Muy espacioso.', 600.0, 'Calefacción central inc.', 'Madrid Salamanca', 'ACTIVE', 1),
-(8, 'Apartamento Minimalista', 'Espacios diáfanos, tonos blancos y máximo orden. Muy cerca del metro.', 400.0, 'Todo incluido', 'Valencia Ruzafa', 'ACTIVE', 1),
-(9, 'Vivienda Mediterránea', 'Arcos de medio punto, tonos tierra y vistas despejadas. Muy fresca en verano.', 380.0, 'Agua incluida', 'Málaga Pedregalejo', 'ACTIVE', 1),
-(10, 'Estudio Nórdico Moderno', 'Funcionalidad escandinava con madera clara. Recién reformado y equipado.', 370.0, 'Luz e Internet inc.', 'Barcelona Gràcia', 'ACTIVE', 1)
+INSERT INTO apartments (id, title, description, price, bills, ubication, state, max_tenants, user_id) VALUES 
+(1, 'Piso céntrico luminoso', '3 hab en el centro. Buscamos gente tranquila.', 350.0, 'Agua e Internet inc.', 'Madrid Centro', 'ACTIVE', 4, 1),
+(2, 'Estudio Universitario', 'Cerca del campus. Ambiente de estudio.', 250.0, 'Gastos compartir', 'Valencia Benimaclet', 'ACTIVE', 1, 1),
+(3, 'Ático con terraza', 'Ático moderno con gran terraza.', 450.0, 'Todo incluido', 'Barcelona Eixample', 'ACTIVE', 3, 1),
+(4, 'Loft Estilo Industrial', 'Techos altos, paredes de ladrillo visto y grandes ventanales. Ideal para artistas.', 550.0, 'No incluido', 'Bilbao Abando', 'ACTIVE', 2, 1),
+(5, 'Suite Rústica en las Afueras', 'Vigas de madera y ambiente acogedor. Perfecta para amantes de la naturaleza.', 300.0, 'Leña e Internet inc.', 'Granada Alpujarra', 'ACTIVE', 2, 1),
+(6, 'Habitación Boho Chic', 'Decoración natural con mimbre y plantas. Muy luminosa y con balcón privado.', 320.0, 'Gastos fijos 50€', 'Sevilla Alameda', 'ACTIVE', 1, 1),
+(7, 'Piso Clásico Señorial', 'Mobiliario elegante, molduras en el techo y lámparas de cristal. Muy espacioso.', 600.0, 'Calefacción central inc.', 'Madrid Salamanca', 'ACTIVE', 4, 1),
+(8, 'Apartamento Minimalista', 'Espacios diáfanos, tonos blancos y máximo orden. Muy cerca del metro.', 400.0, 'Todo incluido', 'Valencia Ruzafa', 'ACTIVE', 2, 1),
+(9, 'Vivienda Mediterránea', 'Arcos de medio punto, tonos tierra y vistas despejadas. Muy fresca en verano.', 380.0, 'Agua incluida', 'Málaga Pedregalejo', 'ACTIVE', 3, 1),
+(10, 'Estudio Nórdico Moderno', 'Funcionalidad escandinava con madera clara. Recién reformado y equipado.', 370.0, 'Luz e Internet inc.', 'Barcelona Gràcia', 'ACTIVE', 1, 1)
 ON CONFLICT (id) DO NOTHING;
 
 -- ==========================================

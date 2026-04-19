@@ -14,6 +14,7 @@ public record ApartmentDTO(
     String bills, 
     String ubication,
     ApartmentState state, 
+    Integer maxTenants,
     String coverImageUrl, 
     List<ApartmentMemberDTO> members,
     String idealTenantProfile
@@ -28,6 +29,7 @@ public record ApartmentDTO(
             apartment.getBills(), 
             apartment.getUbication(), 
             apartment.getState(),
+            apartment.getMaxTenants(),
             apartment.getCoverImageUrl(), 
             new ArrayList<>(),
             apartment.getIdealTenantProfile()
@@ -43,6 +45,7 @@ public record ApartmentDTO(
             apartment.getBills(), 
             apartment.getUbication(), 
             apartment.getState(),
+            apartment.getMaxTenants(),
             apartment.getCoverImageUrl(), 
             members,
             apartment.getIdealTenantProfile()

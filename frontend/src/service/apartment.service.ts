@@ -65,6 +65,7 @@ export interface ApartmentDTO {
   bills: string
   ubication: string
   state: string
+  maxTenants: number
   coverImageUrl?: string
   members?: ApartmentMemberDTO[]
   idealTenantProfile?: string

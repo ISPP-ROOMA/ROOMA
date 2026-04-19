@@ -50,6 +50,9 @@ public class ApartmentEntity {
     @Enumerated(EnumType.STRING)
     private ApartmentState state;
 
+    @Column(nullable = false)
+    private Integer maxTenants;
+
     @Column(length = 1000)
     private String idealTenantProfile;
 
@@ -61,7 +64,7 @@ public class ApartmentEntity {
     }
 
     public ApartmentEntity(String title, String description, Double price, String bills, String ubication,
-            ApartmentState state,
+            ApartmentState state, Integer maxTenants,
             UserEntity user) {
         this.title = title;
         this.description = description;
@@ -69,6 +72,7 @@ public class ApartmentEntity {
         this.bills = bills;
         this.ubication = ubication;
         this.state = state;
+        this.maxTenants = maxTenants;
         this.user = user;
     }
 
@@ -126,6 +130,14 @@ public class ApartmentEntity {
 
     public void setState(ApartmentState state) {
         this.state = state;
+    }
+
+    public Integer getMaxTenants() {
+        return maxTenants;
+    }
+
+    public void setMaxTenants(Integer maxTenants) {
+        this.maxTenants = maxTenants;
     }
 
     public UserEntity getUser() {
