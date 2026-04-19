@@ -15,6 +15,63 @@ interface ApartmentFilters {
   maxPrice?: number
 }
 
+interface PendingSwipe {
+  apartmentId: number
+  interest: boolean
+  timestamp: number
+}
+
+const getFromStorage = <T,>(key: string): T | null => {
+  try {
+    const item = localStorage.getItem(key)
+    return item ? JSON.parse(item) : null
+  } catch (error) {
+    console.error(`Error parsing localStorage key "${key}":`, error)
+    return null
+  }
+}
+
+const saveToStorage = <T,>(key: string, value: T): void => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch (error) {
+    console.error(`Error saving to localStorage key "${key}":`, error)
+  }
+}
+
+const getCachedApartments = (): ApartmentDTO[] => {
+  return getFromStorage<ApartmentDTO[]>('cached_apartments') ?? []
+}
+
+const setCachedApartments = (apartments: ApartmentDTO[]): void => {
+  saveToStorage('cached_apartments', apartments)
+}
+
+const getPendingSwipes = (): PendingSwipe[] => {
+  return getFromStorage<PendingSwipe[]>('pending_swipes') ?? []
+}
+
+const setPendingSwipes = (swipes: PendingSwipe[]): void => {
+  saveToStorage('pending_swipes', swipes)
+}
+
+const addPendingSwipe = (apartmentId: number, interest: boolean): void => {
+  const pending = getPendingSwipes()
+  const newSwipe: PendingSwipe = { apartmentId, interest, timestamp: Date.now() }
+  pending.push(newSwipe)
+  setPendingSwipes(pending)
+}
+
+const removePendingSwipe = (apartmentId: number): void => {
+  const pending = getPendingSwipes()
+  setPendingSwipes(pending.filter((s) => s.apartmentId !== apartmentId))
+}
+
+const filterOutPendingApartments = (apartments: ApartmentDTO[]): ApartmentDTO[] => {
+  const pendingIds = new Set(getPendingSwipes().map((s) => s.apartmentId))
+  return apartments.filter((apt) => !pendingIds.has(apt.id))
+}
+
 function HeroWrapper({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen w-full px-6 py-16 relative overflow-hidden">
@@ -64,7 +121,6 @@ export default function Home() {
     const relaxed: ApartmentFilters = {}
 
     if (filters.ubication) {
-      // Eliminar la ubicación para ampliar la búsqueda
       relaxed.ubication = undefined
     }
 
@@ -106,23 +162,38 @@ export default function Home() {
         setNoFilteredResults(false)
         setSuggestedFilters(null)
 
+        let data: ApartmentDTO[] = []
+
         if (Object.keys(appliedFilters).length > 0) {
-          const data = await searchApartments(
+          data = await searchApartments(
             appliedFilters.ubication,
             appliedFilters.minPrice,
             appliedFilters.maxPrice
           )
-          setApartments(data)
-          if (data.length === 0) {
-            setNoFilteredResults(true)
-            setSuggestedFilters(computeRelaxedFilters(appliedFilters))
-          }
         } else {
-          const data = await getDeckForCandidate(Number(userId))
-          setApartments(data)
+          data = await getDeckForCandidate(Number(userId))
+          setCachedApartments(data)
         }
-      } catch (error) {
+
+        const filteredData = filterOutPendingApartments(data)
+        setApartments(filteredData)
+
+        if (filteredData.length === 0 && Object.keys(appliedFilters).length > 0) {
+          setNoFilteredResults(true)
+          setSuggestedFilters(computeRelaxedFilters(appliedFilters))
+        }
+      } catch (error: any) {
         console.error('Failed to load apartments', error)
+
+        if (
+          Object.keys(appliedFilters).length === 0 &&
+          (!navigator.onLine || error?.message === 'Network Error')
+        ) {
+          const cached = getCachedApartments()
+          const filteredCached = filterOutPendingApartments(cached)
+          setApartments(filteredCached)
+          console.log('Loaded apartments from cache (offline mode)')
+        }
       } finally {
         setLoading(false)
       }
@@ -130,6 +201,59 @@ export default function Home() {
 
     fetchDeckOrFiltered()
   }, [token, role, userId, appliedFilters])
+
+  useEffect(() => {
+    const syncPendingSwipes = async () => {
+      const pending = getPendingSwipes()
+
+      if (pending.length === 0) {
+        return
+      }
+
+      console.log(`Sincronizando ${pending.length} swipes pendientes...`)
+      const successfulSwipes: number[] = []
+
+      for (const swipe of pending) {
+        try {
+          await swipeApartment(swipe.apartmentId, swipe.interest)
+          successfulSwipes.push(swipe.apartmentId)
+          console.log(`Swipe sincronizado: apartmentId=${swipe.apartmentId}, interest=${swipe.interest}`)
+        } catch (error: any) {
+          const status = error?.response?.status
+
+          if (status === 409) {
+            console.warn(`Conflicto detectado para apartmentId=${swipe.apartmentId}. Considerado sincronizado.`)
+            successfulSwipes.push(swipe.apartmentId)
+            continue
+          }
+
+          if (!navigator.onLine) {
+            console.warn(`Sin conexión. Deteniendo sincronización.`)
+            break
+          }
+
+          console.error(`Error sincronizando swipe ${swipe.apartmentId}:`, error)
+        }
+      }
+
+      
+      if (successfulSwipes.length > 0) {
+        const remaining = pending.filter((s) => !successfulSwipes.includes(s.apartmentId))
+        setPendingSwipes(remaining)
+        console.log(`Cola de swipes limpiada. Pendientes: ${remaining.length}`)
+
+        if (remaining.length === 0) {
+          showToast('¡Todos los swipes se sincronizaron correctamente!', 'success')
+        }
+      }
+    }
+
+    window.addEventListener('online', syncPendingSwipes)
+
+    return () => {
+      window.removeEventListener('online', syncPendingSwipes)
+    }
+  }, [showToast])
 
   const handleFilterChange = (
     field: keyof typeof filterInputs,
@@ -160,29 +284,40 @@ export default function Home() {
   }
 
   const handleSwipe = async (apartmentId: number, interest: boolean) => {
-    setApartments((prev) => prev.filter((apt) => apt.id !== apartmentId));
+    setApartments((prev) => prev.filter((apt) => apt.id !== apartmentId))
     try {
-      await swipeApartment(apartmentId, interest);
-    
-      if (interest) {
-        showToast('¡Solicitud enviada correctamente!', 'success');
-      }
-    } catch (error: any) {
-      const status = error?.response?.status;
-      const backendMessage = error?.response?.data?.message;
+      await swipeApartment(apartmentId, interest)
 
-      if (status === 409) {
-        console.warn('Swipe duplicado detectado:', backendMessage);
-        showToast('Ya has solicitado interés por este piso anteriormente.', 'warning');
+      if (interest) {
+        showToast('¡Solicitud enviada correctamente!', 'success')
+      }
+      removePendingSwipe(apartmentId)
+    } catch (error: any) {
+      const response = error?.response;
+  
+      if (!response) {
+        addPendingSwipe(apartmentId, interest);
+        showToast('Modo offline: El swipe se sincronizará cuando vuelvas.', 'warning');
+        console.log('Swipe guardado en cola offline (No response):', { apartmentId, interest });
         return; 
       }
 
+      const status = response.status;
+      const backendMessage = response.data?.message;
+
+      if (status === 409) {
+        console.warn('Swipe duplicado detectado:', backendMessage);
+        showToast('Ya has solicitado interés anteriormente.', 'warning');
+        removePendingSwipe(apartmentId);
+        return;
+      }
+
       showToast(
-        `No se pudo guardar: ${status === 404 ? 'No encontrado' : 'Error de conexión'}`, 
+        `Error ${status}: ${status === 404 ? 'No encontrado' : 'Fallo en el servidor'}`,
         'error'
-      );    
+      );
     }
-  };
+  }
 
   if (!token) {
     return (
