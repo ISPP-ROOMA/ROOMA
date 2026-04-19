@@ -1,5 +1,6 @@
 package com.example.demo.Apartment;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
@@ -52,6 +53,8 @@ public class ApartmentEntity {
 
     @Column(nullable = false)
     private Integer maxTenants;
+    @Column
+    private LocalDateTime activationDate;
 
     @Column(length = 1000)
     private String idealTenantProfile;
@@ -138,6 +141,14 @@ public class ApartmentEntity {
 
     public void setMaxTenants(Integer maxTenants) {
         this.maxTenants = maxTenants;
+    }
+    
+    public LocalDateTime getActivationDate() {
+        return activationDate;
+    }
+
+    public void setActivationDate(LocalDateTime activationDate) {
+        this.activationDate = activationDate;
     }
 
     public UserEntity getUser() {

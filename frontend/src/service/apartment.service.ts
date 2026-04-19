@@ -82,7 +82,14 @@ export interface SwipeActionDTO {
   interest: boolean
 }
 
-export type MatchStatus = 'ACTIVE' | 'MATCH' | 'INVITED' | 'REJECTED' | 'SUCCESSFUL' | 'CANCELED'
+export type MatchStatus =
+  | 'ACTIVE'
+  | 'WAITING'
+  | 'MATCH'
+  | 'INVITED'
+  | 'REJECTED'
+  | 'SUCCESSFUL'
+  | 'CANCELED'
 
 export interface ApartmentMatchDTO {
   id: number
@@ -232,11 +239,15 @@ export const cancelApartmentMatch = async (matchId: number): Promise<void> => {
 }
 
 export const rejectApartmentMatch = async (matchId: number): Promise<void> => {
-  await api.post(`/apartments-matches/apartmentMatch/${matchId}/respond-request?interest=false`)
+  await api.patch(`/apartments-matches/apartmentMatch/${matchId}/landlord-decision?decision=REJECT`)
 }
 
 export const acceptApartmentMatch = async (matchId: number): Promise<void> => {
-  await api.post(`/apartments-matches/apartmentMatch/${matchId}/respond-request?interest=true`)
+  await api.patch(`/apartments-matches/apartmentMatch/${matchId}/landlord-decision?decision=ACCEPT`)
+}
+
+export const waitApartmentMatch = async (matchId: number): Promise<void> => {
+  await api.patch(`/apartments-matches/apartmentMatch/${matchId}/landlord-decision?decision=WAIT`)
 }
 
 export const respondToInvitation = async (

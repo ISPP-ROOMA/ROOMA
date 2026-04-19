@@ -16,6 +16,8 @@ public interface ApartmentMatchRepository extends JpaRepository<ApartmentMatchEn
 
     List<ApartmentMatchEntity> findByApartmentIdAndMatchStatus(Integer apartmentId, MatchStatus matchStatus);
 
+    List<ApartmentMatchEntity> findByApartmentIdAndMatchStatusIn(Integer apartmentId, List<MatchStatus> matchStatuses);
+
     List<ApartmentMatchEntity> findByCandidateIdAndMatchStatus(Integer candidateId, MatchStatus matchStatus);
     
     @Query("SELECT am FROM ApartmentMatchEntity am WHERE am.apartment.user.id = :userId AND am.matchStatus = :matchStatus")

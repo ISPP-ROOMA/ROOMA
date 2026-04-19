@@ -2,8 +2,12 @@ package com.example.demo.ApartmentMatch;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
@@ -13,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.Apartment.ApartmentState;
+import com.example.demo.ApartmentMatch.DTOs.CandidateFilterDTO;
 import com.example.demo.Exceptions.ConflictException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.MemberApartment.ApartmentMemberService;
@@ -237,11 +242,16 @@ public class ApartmentMatchService {
         if (apartment.getUser().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("You cannot swipe on your own apartment");
         }
-        if (apartmentMatchRepository.findByCandidateIdAndApartmentId(currentUser.getId(), apartmentId).isPresent()) {
+
+        ApartmentMatchEntity existingMatch = apartmentMatchRepository
+                .findByCandidateIdAndApartmentId(currentUser.getId(), apartmentId)
+                .orElse(null);
+
+        if (hasCandidateSwipedSinceActivation(existingMatch, apartment)) {
             throw new ConflictException("You have already swiped on this apartment");
         }
 
-        ApartmentMatchEntity apartmentMatch = createApartmentMatch(currentUser, apartment, interest);
+        ApartmentMatchEntity apartmentMatch = createApartmentMatch(existingMatch, currentUser, apartment, interest);
 
         String description = "El usuario \"" + currentUser.getName() + " " + currentUser.getSurname()
                 + "\" ha mostrado interés en tu apartamento \"" + apartment.getTitle() + "\" con localización: "
@@ -255,20 +265,43 @@ public class ApartmentMatchService {
 
     public ApartmentMatchEntity createApartmentMatch(UserEntity candidate, ApartmentEntity apartment,
             boolean interest) {
-        ApartmentMatchEntity newMatch = new ApartmentMatchEntity();
-        newMatch.setCandidateInterest(interest);
-        newMatch.setLandlordInterest(null);
-        newMatch.setCandidate(candidate);
-        newMatch.setApartment(apartment);
-        newMatch.setMatchDate(LocalDateTime.now(ZoneId.of("Europe/Madrid")));
+        return createApartmentMatch(null, candidate, apartment, interest);
+    }
+
+    public ApartmentMatchEntity createApartmentMatch(ApartmentMatchEntity existingMatch, UserEntity candidate,
+            ApartmentEntity apartment, boolean interest) {
+        ApartmentMatchEntity match = existingMatch != null ? existingMatch : new ApartmentMatchEntity();
+        match.setCandidateInterest(interest);
+        match.setLandlordInterest(null);
+        match.setCandidate(candidate);
+        match.setApartment(apartment);
+        match.setMatchDate(LocalDateTime.now(ZoneId.of("Europe/Madrid")));
 
         if (interest) {
-            newMatch.setMatchStatus(MatchStatus.ACTIVE);
+            match.setMatchStatus(MatchStatus.ACTIVE);
         } else {
-            newMatch.setMatchStatus(MatchStatus.REJECTED);
+            match.setMatchStatus(MatchStatus.REJECTED);
         }
-        newMatch.setTenantHasOpenedMatchDetails(false);
-        return newMatch;
+        match.setTenantHasOpenedMatchDetails(false);
+        return match;
+    }
+
+    private boolean hasCandidateSwipedSinceActivation(ApartmentMatchEntity existingMatch, ApartmentEntity apartment) {
+        if (existingMatch == null) {
+            return false;
+        }
+
+        LocalDateTime matchDate = existingMatch.getMatchDate();
+        if (matchDate == null) {
+            return true;
+        }
+
+        LocalDateTime activationDate = apartment.getActivationDate();
+        if (activationDate == null) {
+            return true;
+        }
+
+        return !matchDate.isBefore(activationDate);
     }
 
     @Transactional
@@ -308,7 +341,7 @@ public class ApartmentMatchService {
     }
 
     @Transactional(readOnly = true)
-    public List<ApartmentMatchEntity> getFilteredCandidates(Integer apartmentId, com.example.demo.ApartmentMatch.DTOs.CandidateFilterDTO filter) {
+    public List<ApartmentMatchEntity> getFilteredCandidates(Integer apartmentId, CandidateFilterDTO filter) {
         UserEntity currentUser = userService.findCurrentUserEntity();
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
         if (!apartment.getUser().getId().equals(currentUser.getId())) {
@@ -320,7 +353,7 @@ public class ApartmentMatchService {
             return candidates;
         }
 
-        java.util.Map<ApartmentMatchEntity, Integer> scores = new java.util.HashMap<>();
+        Map<ApartmentMatchEntity, Integer> scores = new HashMap<>();
         int maxScore = 0;
 
         for (ApartmentMatchEntity match : candidates) {
@@ -328,18 +361,18 @@ public class ApartmentMatchService {
             UserEntity user = match.getCandidate();
             
             if (filter.getMinAge() != null && user.getBirthDate() != null) {
-                int age = java.time.Period.between(user.getBirthDate(), java.time.LocalDate.now()).getYears();
+                int age = Period.between(user.getBirthDate(), LocalDate.now()).getYears();
                 if (age >= filter.getMinAge()) score++;
             }
             if (filter.getMaxAge() != null && user.getBirthDate() != null) {
-                int age = java.time.Period.between(user.getBirthDate(), java.time.LocalDate.now()).getYears();
+                int age = Period.between(user.getBirthDate(), LocalDate.now()).getYears();
                 if (age <= filter.getMaxAge()) score++;
             }
             if (filter.getRequiredProfession() != null && filter.getRequiredProfession().equalsIgnoreCase(user.getProfession())) {
                 score++;
             }
             if (filter.getAllowedSmoker() != null) {
-                if (java.util.Objects.equals(filter.getAllowedSmoker(), user.getSmoker())) {
+                if (Objects.equals(filter.getAllowedSmoker(), user.getSmoker())) {
                     score++;
                 }
             }
@@ -381,6 +414,9 @@ public class ApartmentMatchService {
                 match.setLandlordInterest(true);
                 break;
             case "WAIT":
+                if (match.getMatchStatus() != MatchStatus.ACTIVE) {
+                    throw new ConflictException("Only matches with status ACTIVE can be moved to WAITING");
+                }
                 match.setMatchStatus(MatchStatus.WAITING);
                 break;
             case "REJECT":
