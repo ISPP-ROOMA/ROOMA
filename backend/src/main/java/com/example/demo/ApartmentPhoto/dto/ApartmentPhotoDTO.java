@@ -16,8 +16,8 @@ public record ApartmentPhotoDTO(
                 entity.getId(),
                 entity.getUrl(),
                 entity.getPublicId(),
-                entity.getOrden(),
-                entity.getPortada()
+                entity.getPhoto_order(),
+                entity.getCover()
         );
     }
 

@@ -37,20 +37,20 @@ public class ApartmentPhotoEntity {
     private String publicId;
 
     @Column(nullable = false)
-    private Integer orden;
+    private Integer photo_order;
 
     @Column(nullable = false)
-    private Boolean portada;
+    private Boolean cover;
 
     public ApartmentPhotoEntity() {
     }
 
-    public ApartmentPhotoEntity(Integer id, String url, String publicId, Integer orden, Boolean portada, ApartmentEntity apartment) {
+    public ApartmentPhotoEntity(Integer id, String url, String publicId, Integer order, Boolean cover, ApartmentEntity apartment) {
         this.id = id;
         this.url = url;
         this.publicId = publicId;
-        this.orden = orden;
-        this.portada = portada;
+        this.photo_order = order;
+        this.cover = cover;
         this.apartment = apartment;
     }
 
@@ -78,20 +78,20 @@ public class ApartmentPhotoEntity {
         this.publicId = publicId;
     }
 
-    public Integer getOrden() {
-        return orden;
+    public Integer getPhoto_order() {
+        return photo_order;
     }
 
-    public void setOrden(Integer orden) {
-        this.orden = orden;
+    public void setPhoto_order(Integer photo_order) {
+        this.photo_order = photo_order;
     }
 
-    public Boolean getPortada() {
-        return portada;
+    public Boolean getCover() {
+        return cover;
     }
 
-    public void setPortada(Boolean portada) {
-        this.portada = portada;
+    public void setCover(Boolean cover) {
+        this.cover = cover;
     }
 
     public ApartmentEntity getApartment() {

@@ -181,7 +181,7 @@ public class ApartmentEntity {
         }
 
         return photos.stream()
-                .filter(photo -> photo.getOrden() != null && photo.getOrden().equals(1))
+                .filter(photo -> photo.getPhoto_order() != null && photo.getPhoto_order().equals(1))
                 .map(ApartmentPhotoEntity::getUrl)
                 .findFirst()
                 .orElseGet(() -> photos.stream()
