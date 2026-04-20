@@ -6,28 +6,28 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.Exceptions.ForbiddenException;
-import com.example.demo.MemberApartment.DTOs.ReglaViviendaDTO;
-import com.example.demo.MemberApartment.DTOs.UpdateReglaVivienda;
+import com.example.demo.MemberApartment.DTOs.ApartmentRuleDTO;
+import com.example.demo.MemberApartment.DTOs.UpdateApartmentRule;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 
 @Service
-public class ReglaViviendaService {
+public class ApartmentRuleService {
 
-    private final ReglaViviendaRepository reglaViviendaRepository;
+    private final ApartmentRuleRepository apartmentRuleRepository;
     private final ApartmentService apartmentService;
     private final UserService userService;
 
-    public ReglaViviendaService(ReglaViviendaRepository reglaViviendaRepository,
+    public ApartmentRuleService(ApartmentRuleRepository apartmentRuleRepository,
                                 ApartmentService apartmentService,
                                 UserService userService) {
-        this.reglaViviendaRepository = reglaViviendaRepository;
+        this.apartmentRuleRepository = apartmentRuleRepository;
         this.apartmentService = apartmentService;
         this.userService = userService;
     }
 
     @Transactional
-    public ReglaViviendaDTO updateRules(Integer apartmentId, UpdateReglaVivienda request) {
+    public ApartmentRuleDTO updateRules(Integer apartmentId, UpdateApartmentRule request) {
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
 
         UserEntity currentUser = userService.findCurrentUserEntity();
@@ -35,19 +35,19 @@ public class ReglaViviendaService {
             throw new ForbiddenException("Only the landlord of this apartment can edit its rules");
         }
 
-        ReglaViviendaEntity entity = reglaViviendaRepository.findByViviendaId(apartmentId)
+        ApartmentRuleEntity entity = apartmentRuleRepository.findByApartmentId(apartmentId)
                 .orElseGet(() -> {
-                    ReglaViviendaEntity nueva = new ReglaViviendaEntity();
-                    nueva.setVivienda(apartment);
-                    return nueva;
+                    ApartmentRuleEntity newRule = new ApartmentRuleEntity();
+                    newRule.setApartment(apartment);
+                    return newRule;
                 });
 
-        entity.setPermiteMascotas(request.permiteMascotas());
-        entity.setPermiteFumadores(request.permiteFumadores());
-        entity.setFiestasPermitidas(request.fiestasPermitidas());
+        entity.setAllowsPets(request.allowsPets());
+        entity.setAllowsSmokers(request.allowsSmokers());
+        entity.setPartiesAllowed(request.partiesAllowed());
 
-        ReglaViviendaEntity saved = reglaViviendaRepository.save(entity);
-        return ReglaViviendaDTO.fromEntity(saved);
+        ApartmentRuleEntity saved = apartmentRuleRepository.save(entity);
+        return ApartmentRuleDTO.fromEntity(saved);
     }
 }
 
