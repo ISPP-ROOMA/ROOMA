@@ -267,18 +267,16 @@ const loginUi = async (page: Page, email: string) => {
 
 test.describe('CU-10 / RF-27: Alta de incidencia por inquilino', () => {
   let landlordToken = ''
-  let tenantToken = ''
   let tenantUserId = 0
   let apartmentId: number | null = null
   const tenantEmail = uniqueTenantEmail('rf27')
   const apartmentTitle = uniqueApartmentTitle('RF27')
 
-  test.beforeEach(async ({ request, page }) => {
+  test.beforeEach(async ({ request }) => {
     landlordToken = (await loginByApi(request, E2E_ENV.landlordEmail, 'rf27-landlord')).token
 
     await registerTenantByApi(request, tenantEmail, 'rf27-register')
     const tenantLogin = await loginByApi(request, tenantEmail, 'rf27-tenant')
-    tenantToken = tenantLogin.token
     tenantUserId = tenantLogin.userId
 
     const apt = await createApartmentByApi(request, landlordToken, apartmentTitle)
@@ -387,7 +385,7 @@ test.describe('CU-10 / RF-28: Timeline de estados y transiciones (casero)', () =
   const tenantEmail = uniqueTenantEmail('rf28')
   const apartmentTitle = uniqueApartmentTitle('RF28')
 
-  test.beforeEach(async ({ request, page }) => {
+  test.beforeEach(async ({ request }) => {
     landlordToken = (await loginByApi(request, E2E_ENV.landlordEmail, 'rf28-landlord')).token
 
     await registerTenantByApi(request, tenantEmail, 'rf28-register')
@@ -502,7 +500,7 @@ test.describe('CU-10 / RF-30: Confirmar/rechazar solucion por inquilino', () => 
   const tenantEmail = uniqueTenantEmail('rf30')
   const apartmentTitle = uniqueApartmentTitle('RF30')
 
-  test.beforeEach(async ({ request, page }) => {
+  test.beforeEach(async ({ request }) => {
     landlordToken = (await loginByApi(request, E2E_ENV.landlordEmail, 'rf30-landlord')).token
 
     await registerTenantByApi(request, tenantEmail, 'rf30-register')
@@ -615,7 +613,7 @@ test.describe('CU-10 / RF-31: Lista de incidencias del inquilino', () => {
     await addMemberByApi(request, landlordToken, apt.id, tenantUserId)
 
     // Crear varias incidencias con diferentes estados
-    const inc1 = await createIncidentByApi(request, tenantToken, apt.id, {
+    await createIncidentByApi(request, tenantToken, apt.id, {
       title: 'Grifo roto cocina',
       category: 'PLUMBING',
       zone: 'KITCHEN',
@@ -724,7 +722,7 @@ test.describe('CU-10 / RF-32: Panel kanban del casero', () => {
     await addMemberByApi(request, landlordToken, apt.id, tenantUserId)
 
     // Crear incidencias en diferentes estados
-    const inc1 = await createIncidentByApi(request, tenantToken, apt.id, {
+    await createIncidentByApi(request, tenantToken, apt.id, {
       title: 'Calefaccion rota',
       category: 'CLIMATE',
       zone: 'LIVING_ROOM',
@@ -853,7 +851,7 @@ test.describe('CU-10 / RF-29: Chat tecnico vinculado a incidencia', () => {
   const tenantEmail = uniqueTenantEmail('rf29')
   const apartmentTitle = uniqueApartmentTitle('RF29')
 
-  test.beforeEach(async ({ request, page }) => {
+  test.beforeEach(async ({ request }) => {
     landlordToken = (await loginByApi(request, E2E_ENV.landlordEmail, 'rf29-landlord')).token
 
     await registerTenantByApi(request, tenantEmail, 'rf29-register')
@@ -920,7 +918,7 @@ test.describe('CU-10 / RF-34: Navegacion desde lista y volver', () => {
   const tenantEmail = uniqueTenantEmail('rf34')
   const apartmentTitle = uniqueApartmentTitle('RF34')
 
-  test.beforeEach(async ({ request, page }) => {
+  test.beforeEach(async ({ request }) => {
     landlordToken = (await loginByApi(request, E2E_ENV.landlordEmail, 'rf34-landlord')).token
 
     await registerTenantByApi(request, tenantEmail, 'rf34-register')
