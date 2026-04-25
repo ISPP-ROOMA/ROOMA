@@ -20,7 +20,7 @@ export default function BookAppointmentModal({ matchId, onClose, onSuccess }: Pr
       .then(setSlots)
       .catch(() => showToast('Error al cargar horarios disponibles', 'error'))
       .finally(() => setLoading(false))
-  }, [matchId])
+  }, [matchId, showToast])
 
   const handleBook = async (slotId: number) => {
     setBookingId(slotId)

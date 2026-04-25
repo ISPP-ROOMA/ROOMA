@@ -207,6 +207,10 @@ public class UserService {
     }
 
     private void validateBirthDate(LocalDate birthDate, UserEntity user) {
+        if (birthDate == null) {
+            return;
+        }
+
         if (birthDate.isAfter(LocalDate.now())) {
             throw new BadRequestException("Birth date cannot be in the future");
         }
