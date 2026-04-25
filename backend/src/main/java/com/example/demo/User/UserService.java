@@ -1,21 +1,21 @@
 package com.example.demo.User;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.dao.DataIntegrityViolationException;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeParseException;
 
-import com.example.demo.Exceptions.ResourceNotFoundException;
-import com.example.demo.Exceptions.ConflictException;
 import com.example.demo.Exceptions.BadRequestException;
+import com.example.demo.Exceptions.ConflictException;
+import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.Jwt.UserDetailsImpl;
 import com.example.demo.User.DTOs.UpdateProfileRequest;
 
@@ -134,7 +134,9 @@ public class UserService {
         }
 
         if (request.birthDate() != null) {
-            currentUser.setBirthDate(parseBirthDate(request.birthDate()));
+            LocalDate parsedBirthDate = parseBirthDate(request.birthDate());
+            validateBirthDate(parsedBirthDate, currentUser);
+            currentUser.setBirthDate(parsedBirthDate);
         }
 
         if (request.phone() != null) {
@@ -201,6 +203,16 @@ public class UserService {
             } catch (DateTimeParseException inner) {
                 throw new BadRequestException("Invalid birthDate format");
             }
+        }
+    }
+
+    private void validateBirthDate(LocalDate birthDate, UserEntity user) {
+        if (birthDate.isAfter(LocalDate.now())) {
+            throw new BadRequestException("Birth date cannot be in the future");
+        }
+
+        if (user.getCreatedAt() != null && birthDate.isAfter(user.getCreatedAt().toLocalDate())) {
+            throw new BadRequestException("Birth date cannot be after account creation date");
         }
     }
 
