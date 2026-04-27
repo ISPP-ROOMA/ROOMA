@@ -20,6 +20,7 @@ import com.example.demo.Exceptions.ForbiddenException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.MemberApartment.ApartmentMemberEntity;
 import com.example.demo.MemberApartment.ApartmentMemberService;
+import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 import com.example.demo.billing.BillEntity;
@@ -105,12 +106,17 @@ public class BillingServiceTests {
         Integer apartmentId = 1;
         apartment.setId(apartmentId);
 
+        UserEntity currentUser = new UserEntity();
+        currentUser.setId(99);
+        currentUser.setRole(Role.ADMIN);
+
         BillEntity bill1 = new BillEntity();
         BillEntity bill2 = new BillEntity();
         bill1.setApartment(apartment);
         bill2.setApartment(apartment);
 
         when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+        when(userService.findCurrentUserEntity()).thenReturn(currentUser);
         when(billRepository.findByApartmentId(apartmentId)).thenReturn(List.of(bill1, bill2));
 
         List<BillEntity> bills = billingService.getBillsForApartment(apartmentId);
@@ -126,7 +132,12 @@ public class BillingServiceTests {
         ApartmentEntity apartment = new ApartmentEntity();
         apartment.setId(apartmentId);
 
+        UserEntity currentUser = new UserEntity();
+        currentUser.setId(99);
+        currentUser.setRole(Role.ADMIN);
+
         when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+        when(userService.findCurrentUserEntity()).thenReturn(currentUser);
         when(billRepository.findByApartmentId(apartmentId)).thenReturn(List.of());
 
         List<BillEntity> bills = billingService.getBillsForApartment(apartmentId);

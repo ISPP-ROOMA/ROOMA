@@ -1,4 +1,5 @@
 import { api } from './api'
+import { AxiosError } from 'axios'
 
 export type IncidentStatus =
   | 'OPEN'
@@ -81,6 +82,10 @@ export const getApartmentIncidents = async (
     })
     return response.data ?? []
   } catch (error) {
+    const err = error as AxiosError
+    if (err.response?.status === 403 || err.response?.status === 404) {
+      throw error
+    }
     console.error('Error fetching incidents:', error)
     return []
   }

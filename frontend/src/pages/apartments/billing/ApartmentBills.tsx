@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getApartmentBills, type BillDTO, type BillStatus } from '../../../service/billing.service'
+import { getMyApartments } from '../../../service/apartments.service'
 
 /* ── helpers ──────────────────────────────────────────────── */
 
@@ -79,12 +80,26 @@ export default function ApartmentBills() {
   useEffect(() => {
     if (!id) return
     const load = async () => {
-      const data = await getApartmentBills(Number(id))
-      setBills(data)
-      setIsLoading(false)
+      try {
+        const apartmentId = Number(id)
+        const myApartments = await getMyApartments()
+        const isOwner = myApartments.some((apartment) => apartment.id === apartmentId)
+        if (!isOwner) {
+          navigate('/apartments/my', { replace: true })
+          return
+        }
+
+        const data = await getApartmentBills(apartmentId)
+        setBills(data)
+      } catch (error) {
+        console.error('Error loading apartment bills', error)
+        navigate('/apartments/my', { replace: true })
+      } finally {
+        setIsLoading(false)
+      }
     }
     void load()
-  }, [id])
+  }, [id, navigate])
 
   const pending = useMemo(
     () =>
