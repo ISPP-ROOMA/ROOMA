@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { X, Heart } from 'lucide-react'
 import FavoriteButton from '../../components/FavoriteButton'
 import {
   getFavorites,
+  removeFavorite,
   type FavoriteItem,
   type FavoriteAvailabilityStatus,
 } from '../../service/favorites.service'
+import { swipeApartment, getMatchesForCandidate, type MatchStatus } from '../../service/apartment.service'
+import { useToast } from '../../hooks/useToast'
+import { useAuthStore } from '../../store/authStore'
 
 const GRID_CLASS = 'grid grid-cols-1 sm:grid-cols-2 gap-6'
 
@@ -18,6 +23,10 @@ export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [decidingApartmentId, setDecidingApartmentId] = useState<number | null>(null)
+  const [swipedApartmentIds, setSwipedApartmentIds] = useState<Set<number>>(new Set())
+  const { showToast } = useToast()
+  const userId = useAuthStore((s) => s.userId) as number | null
 
   useEffect(() => {
     const fetchFavorites = async () => {
@@ -25,6 +34,16 @@ export default function FavoritesPage() {
         setIsLoading(true)
         const data = await getFavorites()
         setFavorites(data)
+
+        // If we have a logged user, fetch matches to know which apartments were already swiped
+        if (userId) {
+          const statuses: MatchStatus[] = ['ACTIVE', 'MATCH', 'REJECTED', 'SUCCESSFUL', 'INVITED', 'CANCELED', 'WAITING']
+          const promises = statuses.map((s) => getMatchesForCandidate(Number(userId), s))
+          const results = await Promise.all(promises)
+          const ids = new Set<number>()
+          results.flat().forEach((m) => ids.add(m.apartmentId))
+          setSwipedApartmentIds(ids)
+        }
       } catch (err) {
         console.error('Error fetching favorites', err)
         setError('No se pudieron cargar tus favoritos.')
@@ -34,11 +53,38 @@ export default function FavoritesPage() {
     }
 
     void fetchFavorites()
-  }, [])
+  }, [userId])
 
   const handleFavoriteChange = (apartmentId: number, isFavorite: boolean) => {
     if (!isFavorite) {
       setFavorites((prev) => prev.filter((item) => item.apartmentId !== apartmentId))
+    }
+  }
+
+  const handleDecision = async (apartmentId: number, interest: boolean) => {
+    if (decidingApartmentId !== null) {
+      return
+    }
+
+    try {
+      setDecidingApartmentId(apartmentId)
+      await swipeApartment(apartmentId, interest)
+      // Also remove from favorites so it doesn't reappear when reloading
+      try {
+        await removeFavorite(apartmentId)
+      } catch (err) {
+        console.warn('Could not remove favorite after swipe', err)
+      }
+      setFavorites((prev) => prev.filter((item) => item.apartmentId !== apartmentId))
+      showToast(
+        interest ? 'Has marcado la vivienda como Like.' : 'Has marcado la vivienda como Dislike.',
+        'success'
+      )
+    } catch (error) {
+      console.error('Error registering favorite decision', error)
+      showToast('No se pudo registrar tu decisión. Inténtalo de nuevo.', 'error')
+    } finally {
+      setDecidingApartmentId(null)
     }
   }
 
@@ -119,13 +165,7 @@ export default function FavoritesPage() {
                       </span>
                     )}
 
-                    <div className="absolute top-3 right-3">
-                      <FavoriteButton
-                        apartmentId={fav.apartmentId}
-                        initialIsFavorite={fav.isFavorite}
-                        onChange={(isFavorite) => handleFavoriteChange(fav.apartmentId, isFavorite)}
-                      />
-                    </div>
+
                   </div>
 
                   <div className="p-4 flex flex-col gap-2 flex-1">
@@ -139,6 +179,61 @@ export default function FavoritesPage() {
                         <span className="text-sm font-normal text-gray-400"> / mes</span>
                       </span>
                     </div>
+
+                    {!isUnavailable && !swipedApartmentIds.has(fav.apartmentId) && (
+                      <div className="mt-2 flex items-center justify-center gap-6">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault()
+                            event.stopPropagation()
+                            void handleDecision(fav.apartmentId, false)
+                          }}
+                          disabled={decidingApartmentId === fav.apartmentId}
+                          className="btn btn-circle shadow hover:scale-105 active:scale-95 bg-[#e5e7eb] border-[#e5e7eb]"
+                          style={{ width: 52, height: 52 }}
+                          aria-label={`Marcar ${fav.title} como Dislike`}
+                        >
+                          <X size={22} />
+                        </button>
+                        <div>
+                          <FavoriteButton
+                            apartmentId={fav.apartmentId}
+                            initialIsFavorite={fav.isFavorite}
+                            onChange={(isFavorite) => handleFavoriteChange(fav.apartmentId, isFavorite)}
+                            className="btn btn-circle shadow"
+                            style={{ width: 52, height: 52 }}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault()
+                            event.stopPropagation()
+                            void handleDecision(fav.apartmentId, true)
+                          }}
+                          disabled={decidingApartmentId === fav.apartmentId}
+                          className="btn btn-circle shadow text-white bg-[#008080] border-[#008080]"
+                          style={{ width: 52, height: 52 }}
+                          aria-label={`Marcar ${fav.title} como Like`}
+                        >
+                          <Heart size={22} />
+                          {/* visually we keep no label to match deck style, but preserve aria-label */}
+                        </button>
+                      </div>
+                    )}
+
+                    {!isUnavailable && swipedApartmentIds.has(fav.apartmentId) && (
+                      <div className="mt-2 flex items-center justify-center">
+                        <FavoriteButton
+                          apartmentId={fav.apartmentId}
+                          initialIsFavorite={fav.isFavorite}
+                          onChange={(isFavorite) => handleFavoriteChange(fav.apartmentId, isFavorite)}
+                          className="btn btn-circle shadow"
+                          style={{ width: 52, height: 52 }}
+                        />
+                      </div>
+                    )}
 
                     {isUnavailable && fav.statusMessage && (
                       <p className="mt-2 text-xs text-error/80 bg-error/5 rounded-lg px-3 py-2">

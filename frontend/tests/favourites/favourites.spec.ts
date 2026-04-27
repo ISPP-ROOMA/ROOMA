@@ -286,4 +286,39 @@ test.describe('HU-49 / RF-07 / RI-02 / RNF-03', () => {
     expect(saved).toBeDefined()
     expect(saved?.availabilityStatus).toBe('AVAILABLE')
   })
+
+  test('Permite decidir Like o Dislike desde favoritos y registra el swipe', async ({
+    page,
+  }) => {
+    expect(apartmentId).not.toBeNull()
+    const targetApartmentId = apartmentId as number
+
+    const swipeCalls: Array<{ apartmentId: number; interest: boolean }> = []
+    await page.route('**/api/apartments-matches/swipe/apartment/*/tenant', async (route) => {
+      const request = route.request()
+      const match = request.url().match(/apartment\/(\d+)\/tenant/)
+      const routedApartmentId = match ? Number(match[1]) : 0
+      const interest = request.postData()?.trim() === 'true'
+      swipeCalls.push({ apartmentId: routedApartmentId, interest })
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: Date.now(),
+          apartmentId: routedApartmentId,
+          matchStatus: interest ? 'ACTIVE' : 'REJECTED',
+        }),
+      })
+    })
+
+    await expect(page.getByRole('button', { name: /Marcar .* como Like/ })).toBeVisible()
+    await page.getByRole('button', { name: /Marcar .* como Like/ }).click()
+
+    await expect.poll(() => swipeCalls.length).toBe(1)
+    expect(swipeCalls[0]).toEqual({ apartmentId: targetApartmentId, interest: true })
+
+    await expect(page.getByText(apartmentTitle)).not.toBeVisible()
+    await expect(page.getByText('Todavía no tienes propiedades favoritas.')).toBeVisible()
+  })
 })
