@@ -2,6 +2,7 @@ package com.example.demo.MemberApartment;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +22,13 @@ public class ReglaViviendaController {
 
     public ReglaViviendaController(ReglaViviendaService reglaViviendaService) {
         this.reglaViviendaService = reglaViviendaService;
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('LANDLORD')")
+    public ResponseEntity<ReglaViviendaDTO> getRules(@PathVariable Integer apartmentId) {
+        ReglaViviendaDTO dto = reglaViviendaService.getRules(apartmentId);
+        return ResponseEntity.ok(dto);
     }
 
     @PutMapping

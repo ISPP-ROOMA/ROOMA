@@ -5,6 +5,7 @@ import {
   type BillDTO,
   type TenantDebtInBill,
 } from '../../../service/billing.service'
+import { getMyApartments } from '../../../service/apartments.service'
 
 /* ── helpers ──────────────────────────────────────────────── */
 
@@ -54,13 +55,27 @@ export default function LandlordBillDetail() {
   useEffect(() => {
     if (!apartmentId || !billId) return
     const load = async () => {
-      const bills = await getApartmentBills(Number(apartmentId))
-      const found = bills.find((b) => b.id === Number(billId))
-      setBill(found ?? null)
-      setIsLoading(false)
+      try {
+        const parsedApartmentId = Number(apartmentId)
+        const myApartments = await getMyApartments()
+        const isOwner = myApartments.some((myApartment) => myApartment.id === parsedApartmentId)
+        if (!isOwner) {
+          navigate('/apartments/my', { replace: true })
+          return
+        }
+
+        const bills = await getApartmentBills(parsedApartmentId)
+        const found = bills.find((b) => b.id === Number(billId))
+        setBill(found ?? null)
+      } catch (error) {
+        console.error('Error loading landlord bill detail', error)
+        navigate('/apartments/my', { replace: true })
+      } finally {
+        setIsLoading(false)
+      }
     }
     void load()
-  }, [apartmentId, billId])
+  }, [apartmentId, billId, navigate])
 
   if (isLoading) {
     return (

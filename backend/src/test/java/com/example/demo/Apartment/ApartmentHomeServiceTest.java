@@ -29,6 +29,7 @@ import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 import com.example.demo.billing.BillingService;
 import com.example.demo.billing.dto.BillingSummaryDTO;
+import com.example.demo.Incident.IncidentService;
 
 @ExtendWith(MockitoExtension.class)
 public class ApartmentHomeServiceTest {
@@ -50,6 +51,9 @@ public class ApartmentHomeServiceTest {
     @Mock
     private BillingService billingService;
 
+    @Mock
+    private IncidentService incidentService;
+
     @BeforeEach
     public void setUp() {
         apartmentHomeService = new ApartmentHomeService(
@@ -57,7 +61,8 @@ public class ApartmentHomeServiceTest {
                 apartmentMemberRepository,
                 apartmentMemberService,
                 apartmentPhotoService,
-                billingService
+                billingService,
+                incidentService
         );
     }
 

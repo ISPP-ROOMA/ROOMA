@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   getApartment,
+  getMyApartments,
   type Apartment,
   updateApartment,
   updateApartmentSchema,
@@ -12,6 +13,7 @@ import {
 } from '../../service/apartments.service'
 import {
   getApartmentPhotos,
+  getApartmentRules,
   type ApartmentPhotoDTO,
   type ApartmentRulesDTO,
   updateApartmentRules,
@@ -81,6 +83,13 @@ export default function ApartmentEdit() {
 
     const fetch = async () => {
       try {
+        const myApartments = await getMyApartments()
+        const isOwner = myApartments.some((myApartment) => myApartment.id === apartmentId)
+        if (!isOwner) {
+          setLoadError('No tienes permiso para editar este anuncio')
+          return
+        }
+
         const apt = await getApartment(apartmentId)
         if (!apt) {
           setLoadError('Inmueble no encontrado')
@@ -97,9 +106,14 @@ export default function ApartmentEdit() {
           idealTenantProfile: apt.idealTenantProfile ?? '',
         })
 
-        const imgs = await getApartmentPhotos(apartmentId)
+        const [imgs, loadedRules] = await Promise.all([
+          getApartmentPhotos(apartmentId),
+          getApartmentRules(apartmentId),
+        ])
         setPhotos(imgs)
-        // Nota: no hay endpoint de lectura de reglas aún; se inicializan por defecto
+        if (loadedRules) {
+          setRules(loadedRules)
+        }
       } catch (error) {
         console.error('Error loading apartment for edit', error)
         setLoadError('Error cargando el anuncio')

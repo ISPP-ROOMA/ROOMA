@@ -1,15 +1,17 @@
 import { motion, useAnimation, useMotionValue, useTransform, type PanInfo } from 'framer-motion'
 import { Heart, MapPin, X } from 'lucide-react'
+import FavoriteButton from './FavoriteButton'
 import { useEffect, useState } from 'react'
 import type { ApartmentDTO } from '../service/apartment.service'
 
 interface SwipeableCardProps {
   apartment: ApartmentDTO
   onSwipe: (interest: boolean) => void
+  onFavoriteAdded?: () => void
   onShowDetails: () => void
 }
 
-export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: SwipeableCardProps) {
+export default function SwipeableCard({ apartment, onSwipe, onFavoriteAdded, onShowDetails }: SwipeableCardProps) {
   /* ── Horizontal swipe (like / dislike) ── */
   const x = useMotionValue(0)
   const controls = useAnimation()
@@ -127,7 +129,7 @@ export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: Swi
       </div>
 
       {/* ── Action buttons ── */}
-      <div className="absolute bottom-5 inset-x-0 z-50 flex items-center justify-center gap-8">
+      <div className="absolute bottom-5 inset-x-0 z-50 flex items-center justify-center gap-6">
         <button
           onClick={() => handleManualSwipe(false)}
           className="btn btn-circle shadow-xl hover:scale-110 active:scale-95 transition-transform bg-[#e5e7eb] border-[#e5e7eb]"
@@ -135,6 +137,11 @@ export default function SwipeableCard({ apartment, onSwipe, onShowDetails }: Swi
         >
           <X size={30} />
         </button>
+
+        <div>
+          <FavoriteButton apartmentId={apartment.id} initialIsFavorite={false} className="btn btn-circle shadow-xl" style={{ width: 64, height: 64 }} onSuccess={onFavoriteAdded} />
+        </div>
+
         <button
           onClick={() => handleManualSwipe(true)}
           className="btn btn-circle shadow-xl hover:scale-110 active:scale-95 transition-transform text-white bg-[#008080] border-[#008080]"

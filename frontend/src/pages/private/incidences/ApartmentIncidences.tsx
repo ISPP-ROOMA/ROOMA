@@ -14,6 +14,7 @@ import {
     type IncidentZone,
 } from '../../../service/incidents.service'
 import { useAuthStore } from '../../../store/authStore'
+import { getMyApartments } from '../../../service/apartments.service'
 
 const MAX_PHOTOS = 5
 
@@ -203,10 +204,27 @@ export default function ApartmentIncidences() {
         }
 
         setIsLoading(true);
-        const data = await getApartmentIncidents(apartmentId);
-        setIncidents(data);
-        setIsLoading(false);
-    }, [apartmentId]);
+        try {
+            if (role === 'LANDLORD') {
+                const myApartments = await getMyApartments()
+                const isOwner = myApartments.some((myApartment) => myApartment.id === apartmentId)
+                if (!isOwner) {
+                    navigate('/apartments/my', { replace: true })
+                    return
+                }
+            }
+
+            const data = await getApartmentIncidents(apartmentId);
+            setIncidents(data);
+        } catch (error) {
+            console.error('Error loading incidents', error)
+            if (role === 'LANDLORD') {
+                navigate('/apartments/my', { replace: true })
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    }, [apartmentId, navigate, role]);
 
     useEffect(() => {
         void loadIncidents()

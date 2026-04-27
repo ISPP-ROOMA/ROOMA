@@ -1,4 +1,5 @@
 import { api } from './api'
+import { AxiosError } from 'axios'
 
 export type DebtStatus = 'PENDING' | 'PAID'
 export type BillStatus = 'PENDING' | 'PAID' | 'CANCELLED'
@@ -90,6 +91,10 @@ export const getApartmentMembers = async (apartmentId: number): Promise<Apartmen
     const response = await api.get<ApartmentMemberDTO[]>(`/apartments/${apartmentId}/members`)
     return response.data
   } catch (error) {
+    const err = error as AxiosError
+    if (err.response?.status === 403 || err.response?.status === 404) {
+      throw error
+    }
     console.error('Error fetching apartment members:', error)
     return []
   }
@@ -100,6 +105,10 @@ export const getApartmentBills = async (apartmentId: number): Promise<BillDTO[]>
     const response = await api.get<BillDTO[]>(`/bills/apartment/${apartmentId}`)
     return response.data
   } catch (error) {
+    const err = error as AxiosError
+    if (err.response?.status === 403 || err.response?.status === 404) {
+      throw error
+    }
     console.error('Error fetching apartment bills:', error)
     return []
   }

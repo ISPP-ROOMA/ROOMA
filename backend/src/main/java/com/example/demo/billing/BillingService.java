@@ -23,6 +23,7 @@ import com.example.demo.MemberApartment.ApartmentMemberEntity;
 import com.example.demo.MemberApartment.ApartmentMemberService;
 import com.example.demo.Notification.EventType;
 import com.example.demo.Notification.NotificationService;
+import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 import com.example.demo.billing.dto.BillingSummaryDTO;
@@ -58,6 +59,13 @@ public class BillingService {
         if(apartmentId == null || apartmentService.findById(apartmentId) == null) {
             throw new ResourceNotFoundException("Apartment not found: " + apartmentId);
         }
+        ApartmentEntity apartment = apartmentService.findById(apartmentId);
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        if (currentUser.getRole() != Role.ADMIN
+                && (apartment.getUser() == null || !apartment.getUser().getId().equals(currentUser.getId()))) {
+            throw new ForbiddenException("Only the landlord of this apartment can view its bills");
+        }
+
         List<BillEntity> bills = billRepository.findByApartmentId(apartmentId);
         for (BillEntity bill : bills) {
             if (bill.getTenantDebts() != null) {
