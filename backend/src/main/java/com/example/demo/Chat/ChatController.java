@@ -22,7 +22,7 @@ import com.example.demo.Chat.DTOs.ChatMessageDTO;
 @RequestMapping("/api/chat")
 public class ChatController {
 
-    public record IncidentChatStatusDTO(boolean closed, boolean canParticipate, String incidentTenantName) {}
+    public record IncidentChatStatusDTO(boolean closed, boolean canParticipate, String incidentTenantName, Integer apartmentId) {}
 
     private final ChatService chatService;
     private final SimpMessagingTemplate messagingTemplate;
@@ -74,7 +74,7 @@ public class ChatController {
     public ResponseEntity<IncidentChatStatusDTO> getIncidentChatStatus(@PathVariable Integer incidentId) {
         ChatService.IncidentChatAccessInfo accessInfo = chatService.getIncidentChatAccessInfo(incidentId);
         return ResponseEntity.ok(
-                new IncidentChatStatusDTO(accessInfo.closed(), accessInfo.canParticipate(), accessInfo.incidentTenantName())
+            new IncidentChatStatusDTO(accessInfo.closed(), accessInfo.canParticipate(), accessInfo.incidentTenantName(), accessInfo.apartmentId())
         );
     }
 

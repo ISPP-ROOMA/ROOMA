@@ -35,6 +35,10 @@ export interface IncidentChatStatusDTO {
   incidentTenantName: string
 }
 
+export interface IncidentChatStatusDTOv2 extends IncidentChatStatusDTO {
+  apartmentId?: number | null
+}
+
 export const WS_ENDPOINT = '/ws'
 
 export const CHAT_TOPIC_SUBSCRIPTION = (context: ChatContext) =>

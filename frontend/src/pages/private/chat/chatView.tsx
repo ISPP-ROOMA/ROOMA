@@ -11,7 +11,9 @@ import {
   markMessagesAsRead,
   uploadChatFile,
   type ChatMessageDTO,
+  type IncidentChatStatusDTOv2,
 } from '../../../service/chat.service'
+import { getApartmentMembers } from '../../../service/billing.service'
 import { useAuthStore } from '../../../store/authStore'
 import BookAppointmentModal from '../../../components/BookAppointmentModal'
 
@@ -46,6 +48,7 @@ export default function ChatScreen() {
   const [incidentChatClosed, setIncidentChatClosed] = useState(false)
   const [incidentChatRestricted, setIncidentChatRestricted] = useState(false)
   const [incidentChatTenantName, setIncidentChatTenantName] = useState<string>('')
+  const [apartmentTenantIds, setApartmentTenantIds] = useState<Set<number> | null>(null)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -60,7 +63,7 @@ export default function ChatScreen() {
       setLoading(true)
       try {
         if (chatContext.type === 'incident') {
-          const status = await getIncidentChatStatus(chatContext.id)
+          const status = (await getIncidentChatStatus(chatContext.id)) as IncidentChatStatusDTOv2 | null
           const closed = Boolean(status?.closed)
           const canParticipate = Boolean(status?.canParticipate)
 
@@ -68,14 +71,22 @@ export default function ChatScreen() {
           setIncidentChatRestricted(!canParticipate)
           setIncidentChatTenantName(status?.incidentTenantName ?? '')
 
-          if (!canParticipate) {
-            setMessages([])
-            return
+          // if we have an apartment id, fetch current apartment tenants to allow tenant-to-tenant mapping
+          if (status?.apartmentId) {
+            try {
+              const members = await getApartmentMembers(status.apartmentId)
+              const tenantIds = new Set<number>(members.map((m) => m.userId))
+              setApartmentTenantIds(tenantIds)
+            } catch (err) {
+              console.error('Error loading apartment members', err)
+              setApartmentTenantIds(null)
+            }
           }
         } else {
           setIncidentChatClosed(false)
           setIncidentChatRestricted(false)
           setIncidentChatTenantName('')
+          setApartmentTenantIds(null)
         }
 
         const history = await getMessageHistory(chatContext)
@@ -237,7 +248,11 @@ export default function ChatScreen() {
         )}
 
         {messages.map((msg) => {
-          const isMe = msg.senderId === Number(userId)
+          // treat messages from other tenants of the same apartment as 'mine' for tenant viewers
+          const isSenderTenantInApartment = apartmentTenantIds ? apartmentTenantIds.has(msg.senderId) : false
+          const amITenantInApartment = apartmentTenantIds ? apartmentTenantIds.has(Number(userId)) : false
+          const isMe =
+            msg.senderId === Number(userId) || (isSenderTenantInApartment && amITenantInApartment && msg.senderId !== Number(userId))
           return (
             <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
               <div

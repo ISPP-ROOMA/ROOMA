@@ -21,26 +21,30 @@ import com.example.demo.Incident.IncidentStatus;
 import com.example.demo.Incident.IncidentRepository;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
+import com.example.demo.MemberApartment.ApartmentMemberService;
 
 @Service
 public class ChatService {
 
-    public record IncidentChatAccessInfo(boolean closed, boolean canParticipate, String incidentTenantName) {}
+    public record IncidentChatAccessInfo(boolean closed, boolean canParticipate, String incidentTenantName, Integer apartmentId) {}
 
     private final ChatMessageRepository chatMessageRepository;
     private final ApartmentMatchRepository apartmentMatchRepository;
     private final IncidentRepository incidentRepository;
+    private final ApartmentMemberService apartmentMemberService;
     private final UserService userService;
     private final CloudinaryService cloudinaryService;
 
     public ChatService(ChatMessageRepository chatMessageRepository,
                        ApartmentMatchRepository apartmentMatchRepository,
                        IncidentRepository incidentRepository,
+                       ApartmentMemberService apartmentMemberService,
                        UserService userService,
                        CloudinaryService cloudinaryService) {
         this.chatMessageRepository = chatMessageRepository;
         this.apartmentMatchRepository = apartmentMatchRepository;
         this.incidentRepository = incidentRepository;
+        this.apartmentMemberService = apartmentMemberService;
         this.userService = userService;
         this.cloudinaryService = cloudinaryService;
     }
@@ -61,7 +65,7 @@ public class ChatService {
     public List<ChatMessageDTO> getIncidentMessageHistory(Integer incidentId) {
         IncidentEntity incident = findIncidentOrThrow(incidentId);
         UserEntity currentUser = userService.findCurrentUserEntity();
-        validateIncidentParticipant(incident, currentUser);
+        validateIncidentReadAllowed(incident, currentUser);
 
         List<ChatMessageEntity> messages = chatMessageRepository
                 .findByIncidentIdOrderBySentAtAsc(incidentId);
@@ -228,6 +232,25 @@ public class ChatService {
         return isTenant || isLandlord;
     }
 
+    private boolean isIncidentReader(IncidentEntity incident, UserEntity user) {
+        if (isIncidentParticipant(incident, user)) {
+            return true;
+        }
+        try {
+            Integer apartmentId = incident.getApartment().getId();
+            return apartmentMemberService.findCurrentTenantsByApartmentId(apartmentId).stream()
+                    .anyMatch(m -> m.getUser() != null && m.getUser().getId().equals(user.getId()));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void validateIncidentReadAllowed(IncidentEntity incident, UserEntity user) {
+        if (!isIncidentReader(incident, user)) {
+            throw new AccessDeniedException("You are not a participant of this incident");
+        }
+    }
+
     private void validateIncidentChatAllowed(IncidentEntity incident) {
         if (incident.getStatus() == IncidentStatus.CLOSED || incident.getStatus() == IncidentStatus.CLOSED_INACTIVITY) {
             throw new ConflictException("Incident chat is closed");
@@ -253,7 +276,8 @@ public class ChatService {
             tenantDisplayName = incident.getTenant().getEmail();
         }
 
-        return new IncidentChatAccessInfo(closed, canParticipate, tenantDisplayName);
+        Integer apartmentId = incident.getApartment() != null ? incident.getApartment().getId() : null;
+        return new IncidentChatAccessInfo(closed, canParticipate, tenantDisplayName, apartmentId);
     }
 
     @Transactional
@@ -284,7 +308,7 @@ public class ChatService {
         IncidentEntity incident = findIncidentOrThrow(incidentId);
         UserEntity reader = userService.findByEmail(readerEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        validateIncidentParticipant(incident, reader);
+        validateIncidentReadAllowed(incident, reader);
 
         List<ChatMessageEntity> messages = chatMessageRepository
                 .findByIncidentIdOrderBySentAtAsc(incidentId);
