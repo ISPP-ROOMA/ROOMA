@@ -17,12 +17,15 @@ import com.example.demo.Cloudinary.CloudinaryService;
 import com.example.demo.Exceptions.ConflictException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.Incident.IncidentEntity;
+import com.example.demo.Incident.IncidentStatus;
 import com.example.demo.Incident.IncidentRepository;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 
 @Service
 public class ChatService {
+
+    public record IncidentChatAccessInfo(boolean closed, boolean canParticipate, String incidentTenantName) {}
 
     private final ChatMessageRepository chatMessageRepository;
     private final ApartmentMatchRepository apartmentMatchRepository;
@@ -93,6 +96,7 @@ public class ChatService {
         UserEntity sender = userService.findByEmail(senderEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         validateIncidentParticipant(incident, sender);
+        validateIncidentChatAllowed(incident);
 
         if (content == null || content.isBlank()) {
             throw new ConflictException("Message content cannot be empty");
@@ -147,6 +151,7 @@ public class ChatService {
         UserEntity sender = userService.findByEmail(senderEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         validateIncidentParticipant(incident, sender);
+        validateIncidentChatAllowed(incident);
 
         if (file == null || file.isEmpty()) {
             throw new ConflictException("File cannot be empty");
@@ -212,11 +217,43 @@ public class ChatService {
     }
 
     private void validateIncidentParticipant(IncidentEntity incident, UserEntity user) {
-        boolean isTenant = incident.getTenant().getId().equals(user.getId());
-        boolean isLandlord = incident.getLandlord().getId().equals(user.getId());
-        if (!isTenant && !isLandlord) {
+        if (!isIncidentParticipant(incident, user)) {
             throw new AccessDeniedException("You are not a participant of this incident");
         }
+    }
+
+    private boolean isIncidentParticipant(IncidentEntity incident, UserEntity user) {
+        boolean isTenant = incident.getTenant().getId().equals(user.getId());
+        boolean isLandlord = incident.getLandlord().getId().equals(user.getId());
+        return isTenant || isLandlord;
+    }
+
+    private void validateIncidentChatAllowed(IncidentEntity incident) {
+        if (incident.getStatus() == IncidentStatus.CLOSED || incident.getStatus() == IncidentStatus.CLOSED_INACTIVITY) {
+            throw new ConflictException("Incident chat is closed");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public IncidentChatAccessInfo getIncidentChatAccessInfo(Integer incidentId) {
+        IncidentEntity incident = findIncidentOrThrow(incidentId);
+        UserEntity currentUser = userService.findCurrentUserEntity();
+
+        boolean closed = incident.getStatus() == IncidentStatus.CLOSED || incident.getStatus() == IncidentStatus.CLOSED_INACTIVITY;
+        boolean canParticipate = isIncidentParticipant(incident, currentUser);
+
+        String tenantName = incident.getTenant().getName();
+        String tenantSurname = incident.getTenant().getSurname();
+        String tenantDisplayName = String.format("%s %s",
+                tenantName == null ? "" : tenantName.trim(),
+                tenantSurname == null ? "" : tenantSurname.trim())
+                .trim();
+
+        if (tenantDisplayName.isBlank()) {
+            tenantDisplayName = incident.getTenant().getEmail();
+        }
+
+        return new IncidentChatAccessInfo(closed, canParticipate, tenantDisplayName);
     }
 
     @Transactional

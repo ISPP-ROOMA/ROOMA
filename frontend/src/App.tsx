@@ -43,6 +43,7 @@ import { useAuthStore } from './store/authStore'
 function App() {
   const { token, role } = useAuthStore()
   const location = useLocation()
+  const isChatRoute = location.pathname.startsWith('/chat')
 
   const showBackground =
     location.pathname === '/login' ||
@@ -232,7 +233,7 @@ function App() {
 
   return (
     <ToastProvider>
-      <div className="flex flex-col min-h-screen relative overflow-hidden text-base-content font-sans">
+      <div className={`flex flex-col relative text-base-content font-sans ${isChatRoute ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
         {/* Animated Background */}
         {showBackground && (
           <div className="fixed inset-0 z-[-1] pointer-events-none">
@@ -264,7 +265,8 @@ function App() {
         {/* Only show Navbar if not on Home screen unauthenticated */}
         {(token || location.pathname !== '/') && <Navbar />}
 
-        <main className="mx-auto flex-grow w-full pb-20 md:pb-0 relative z-0">
+        
+        <main className={`mx-auto flex-grow w-full relative z-0 ${isChatRoute ? 'overflow-hidden' : 'pb-20 md:pb-0'}`}>
           <Routes>
             <Route path="/" element={<Home />} />
 

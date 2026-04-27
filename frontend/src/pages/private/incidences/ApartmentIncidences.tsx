@@ -115,20 +115,14 @@ const LANDLORD_TRANSITIONS: Partial<Record<IncidentStatus, IncidentStatus[]>> = 
     TECHNICIAN_NOTIFIED: ['IN_PROGRESS', 'RESOLVED'],
 }
 
-const formatDate = (value: string) => {
-    const d = new Date(value)
-    if (Number.isNaN(d.getTime())) return value
-    return new Intl.DateTimeFormat('es-ES', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    }).format(d)
-}
-
-const getReporterLabel = (incident: IncidentDTO) => {
-    return incident.tenantEmail
+const getUrgencyMeta = (urgency: IncidentUrgency) => {
+    return (
+        URGENCY_OPTIONS.find((option) => option.value === urgency) ?? {
+            value: urgency,
+            label: urgency,
+            className: 'bg-base-200 text-base-content/70 border-base-200',
+        }
+    )
 }
 
 const getDropStatusAtPoint = (x: number, y: number): IncidentStatus | null => {
@@ -473,8 +467,8 @@ export default function ApartmentIncidences() {
 
     const renderIncidentCard = (incident: IncidentDTO, compact = false) => {
         const currentMeta = STATUS_META[incident.status]
-        const allowedTransitions = LANDLORD_TRANSITIONS[incident.status] ?? []
         const isBusy = movingIncidentId === incident.id
+        const urgencyMeta = getUrgencyMeta(incident.urgency)
 
         return (
             <div
@@ -506,22 +500,11 @@ export default function ApartmentIncidences() {
                 <div className="space-y-3 pt-3">
                     <div className="flex items-start justify-between gap-2">
                         <div className="space-y-1">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-base-content/40">
-                                {currentMeta.label}
-                            </p>
-                            <h4 className="max-w-[70%] text-[1.02rem] font-semibold leading-tight text-base-content transition-colors group-hover:text-primary">
+                            <h4 className="text-[1.02rem] font-semibold leading-tight text-base-content transition-colors group-hover:text-primary">
                                 {incident.title}
                             </h4>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span
-                                className={`shrink-0 rounded-full px-2 py-1 text-[11px] ${
-                                    URGENCY_OPTIONS.find((option) => option.value === incident.urgency)?.className ??
-                                    'bg-base-200 text-base-content/70 border-base-200'
-                                }`}
-                            >
-                                {URGENCY_OPTIONS.find((option) => option.value === incident.urgency)?.label ?? incident.urgency}
-                            </span>
                             {role === 'LANDLORD' && (
                                 <button
                                     type="button"
@@ -538,37 +521,11 @@ export default function ApartmentIncidences() {
                     <p className={`${compact ? 'line-clamp-4' : 'line-clamp-3'} text-sm leading-6 text-base-content/70`}>
                         {incident.description}
                     </p>
-                    <div className="flex flex-wrap gap-2">
-                        <span className="rounded-full bg-base-200/80 px-2.5 py-1 text-[11px] font-medium text-base-content/65">
-                            {ZONE_OPTIONS.find((option) => option.value === incident.zone)?.label ?? incident.zone}
-                        </span>
-                        <span className="rounded-full bg-base-200/80 px-2.5 py-1 text-[11px] font-medium text-base-content/65">
-                            {getReporterLabel(incident)}
+                    <div>
+                        <span className={`inline-flex rounded-full px-2 py-1 text-[11px] ${urgencyMeta.className}`}>
+                            {urgencyMeta.label}
                         </span>
                     </div>
-                    <div className="space-y-1 text-xs text-base-content/55">
-                        <p>Abierta: {formatDate(incident.createdAt)}</p>
-                        <p>{compact ? 'Toca para ver el detalle o usa el asa para arrastrar.' : 'Accede al detalle para consultar el historial completo.'}</p>
-                    </div>
-                    {role === 'LANDLORD' && allowedTransitions.length > 0 && (
-                        <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
-                            {allowedTransitions.map((status) => (
-                                <button
-                                    key={`${incident.id}-${status}`}
-                                    type="button"
-                                    disabled={isBusy}
-                                    onClick={(event) => {
-                                        event.stopPropagation()
-                                        
-                                        void moveIncidentToStatus(incident, status)
-                                    }}
-                                    className="min-h-11 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 to-primary/5 px-3 py-2 text-xs font-semibold text-primary shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:from-primary/15 hover:to-primary/10 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                    {STATUS_META[status].label}
-                                </button>
-                            ))}
-                        </div>
-                    )}
                 </div>
             </div>
         )
@@ -592,19 +549,6 @@ export default function ApartmentIncidences() {
                                     ? 'Controla el estado de cada incidencia, prioriza los casos urgentes y mueve el flujo sin perder contexto.'
                                     : 'Reporta problemas y sigue su estado hasta el cierre.'}
                                 </p>
-                                {role === 'LANDLORD' && (
-                                    <div className="mt-4 flex flex-wrap gap-2">
-                                        <span className="rounded-full border border-base-300 bg-white/85 px-3 py-1.5 text-xs text-base-content/60 shadow-sm">
-                                            {activeIncidents.length} activas
-                                        </span>
-                                        <span className="rounded-full border border-base-300 bg-white/85 px-3 py-1.5 text-xs text-base-content/60 shadow-sm">
-                                            {closedIncidents.length} cerradas
-                                        </span>
-                                        <span className="rounded-full border border-base-300 bg-white/85 px-3 py-1.5 text-xs text-base-content/60 shadow-sm">
-                                            {activeIncidents.filter((incident) => incident.urgency === 'URGENT').length} urgentes
-                                        </span>
-                                    </div>
-                                )}
                             </div>
                             <div className="flex w-full flex-wrap gap-3">
                                 <button
@@ -628,162 +572,183 @@ export default function ApartmentIncidences() {
                 </header>
 
                 {role === 'TENANT' && showForm && (
-                    <article className="overflow-hidden rounded-[30px] border border-base-300/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.07)]">
-                        <div className="border-b border-base-200/80 bg-gradient-to-r from-primary/8 via-base-100 to-base-100 px-5 py-5 sm:px-6">
-                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70">
+                    <article className="overflow-hidden rounded-[32px] border border-base-300/80 bg-white/95 shadow-[0_22px_52px_rgba(15,23,42,0.09)] backdrop-blur">
+                        <div className="border-b border-base-200/80 bg-[radial-gradient(circle_at_top_left,rgba(20,184,166,0.12),transparent_38%),linear-gradient(135deg,rgba(255,255,255,1),rgba(248,250,252,0.92))] px-5 py-6 sm:px-6">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary/75">
                                 Nuevo reporte
                             </p>
-                            <h2 className="mt-2 text-xl font-semibold">Formulario de nueva incidencia</h2>
-                            <p className="mt-2 max-w-lg text-sm leading-6 text-base-content/60">
+                            <h2 className="mt-2 text-2xl font-semibold leading-tight">Formulario de nueva incidencia</h2>
+                            <p className="mt-2 max-w-2xl text-sm leading-6 text-base-content/60">
                                 Describe el problema con claridad para que el casero pueda priorizarlo y gestionarlo cuanto antes.
                             </p>
                         </div>
-                        <div className="space-y-4 p-5 sm:p-6">
+                        <div className="space-y-5 p-5 sm:p-6">
+                            <div className="grid gap-5 rounded-[26px] border border-base-200/80 bg-base-100/70 p-4 sm:p-5 lg:grid-cols-12">
+                                <div className="space-y-5 lg:col-span-5">
+                                    <label className="form-control items-start">
+                                        <span className="label-text mb-2 block text-left text-sm font-semibold text-base-content/70">
+                                            Titulo
+                                        </span>
+                                        <input
+                                            className="input input-bordered h-12 rounded-2xl border-base-300 bg-white shadow-sm transition focus:border-primary/35 focus:outline-none focus:ring-2 focus:ring-primary/10"
+                                            value={form.title}
+                                            maxLength={100}
+                                            onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+                                            placeholder="Ej. Fuga en lavabo del bano"
+                                        />
+                                    </label>
 
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <label className="form-control">
-                                <span className="label-text text-sm mb-1">Titulo</span>
-                                <input
-                                    className="input input-bordered transition focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/10"
-                                    value={form.title}
-                                    maxLength={100}
-                                    onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                                    placeholder="Ej. Fuga en lavabo del bano"
-                                />
-                            </label>
+                                    <label className="form-control items-start">
+                                        <span className="label-text mt-4 mb-2 block text-left text-sm font-semibold text-base-content/70">
+                                            Categoria
+                                        </span>
+                                        <select
+                                            className="select select-bordered h-12 rounded-2xl border-base-300 bg-white shadow-sm transition focus:border-primary/35 focus:outline-none focus:ring-2 focus:ring-primary/10"
+                                            value={form.category}
+                                            onChange={(e) =>
+                                                setForm((prev) => ({ ...prev, category: e.target.value as IncidentCategory }))
+                                            }
+                                        >
+                                            {CATEGORY_OPTIONS.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
 
-                            <label className="form-control">
-                                <span className="label-text text-sm mb-1">Categoria</span>
-                                <select
-                                    className="select select-bordered transition focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/10"
-                                    value={form.category}
-                                    onChange={(e) =>
-                                        setForm((prev) => ({ ...prev, category: e.target.value as IncidentCategory }))
-                                    }
-                                >
-                                    {CATEGORY_OPTIONS.map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
+                                    <label className="form-control items-start">
+                                        <span className="label-text mt-4 mb-2 block text-left text-sm font-semibold text-base-content/70">
+                                            Zona
+                                        </span>
+                                        <select
+                                            className="select select-bordered h-12 rounded-2xl border-base-300 bg-white shadow-sm transition focus:border-primary/35 focus:outline-none focus:ring-2 focus:ring-primary/10"
+                                            value={form.zone}
+                                            onChange={(e) => setForm((prev) => ({ ...prev, zone: e.target.value as IncidentZone }))}
+                                        >
+                                            {ZONE_OPTIONS.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                </div>
 
-                            <label className="form-control sm:col-span-2">
-                                <span className="label-text text-sm mb-1">Descripcion</span>
-                                <textarea
-                                    className="textarea textarea-bordered min-h-28 transition focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/10"
-                                    value={form.description}
-                                    maxLength={1000}
-                                    onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-                                    placeholder="Describe el problema con detalle"
-                                />
-                            </label>
-
-                            <label className="form-control">
-                                <span className="label-text text-sm mb-1">Zona</span>
-                                <select
-                                    className="select select-bordered transition focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/10"
-                                    value={form.zone}
-                                    onChange={(e) => setForm((prev) => ({ ...prev, zone: e.target.value as IncidentZone }))}
-                                >
-                                    {ZONE_OPTIONS.map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-                        </div>
-
-                        <div className="space-y-2">
-                            <p className="text-sm font-medium">Urgencia</p>
-                            <div className="flex flex-wrap gap-2">
-                                {URGENCY_OPTIONS.map((option) => (
-                                    <button
-                                        key={option.value}
-                                        type="button"
-                                        onClick={() => setForm((prev) => ({ ...prev, urgency: option.value }))}
-                                        className={`rounded-full border px-3 py-1.5 text-sm transition duration-300 hover:-translate-y-0.5 ${
-                                            form.urgency === option.value
-                                                ? option.className
-                                                : 'bg-white text-base-content/70 border-base-200'
-                                        }`}
-                                    >
-                                        {option.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="space-y-3">
-                            <p className="text-sm font-medium">Fotos (max. {MAX_PHOTOS})</p>
-                            <div className="flex flex-wrap gap-2">
-                                <input
-                                    ref={galleryInputRef}
-                                    className="hidden"
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    onChange={(e) => {
-                                        handleFilesPicked(e.target.files)
-                                        e.target.value = ''
-                                    }}
-                                />
-                                <input
-                                    ref={cameraInputRef}
-                                    className="hidden"
-                                    type="file"
-                                    accept="image/*"
-                                    capture="environment"
-                                    onChange={(e) => {
-                                        handleFilesPicked(e.target.files)
-                                        e.target.value = ''
-                                    }}
-                                />
-                                <button type="button" className="btn btn-outline btn-sm rounded-full transition hover:-translate-y-0.5" onClick={() => galleryInputRef.current?.click()}>
-                                    Elegir de galeria
-                                </button>
-                                <button type="button" className="btn btn-outline btn-sm rounded-full transition hover:-translate-y-0.5" onClick={() => cameraInputRef.current?.click()}>
-                                    Tomar foto
-                                </button>
+                                <label className="form-control items-start lg:col-span-7">
+                                    <span className="label-text mb-2 block text-left text-sm font-semibold text-base-content/70">
+                                        Descripcion
+                                    </span>
+                                    <textarea
+                                        className="textarea textarea-bordered min-h-58 w-full rounded-2xl border-base-300 bg-white shadow-sm transition focus:border-primary/35 focus:outline-none focus:ring-2 focus:ring-primary/10"
+                                        value={form.description}
+                                        maxLength={1000}
+                                        onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                                        placeholder="Describe el problema con detalle"
+                                    />
+                                </label>
                             </div>
 
-                            {images.length > 0 && (
-                                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                                    {images.map((file, index) => (
-                                        <div key={`${file.name}-${index}`} className="relative rounded-xl overflow-hidden bg-base-200 aspect-square">
-                                            <img
-                                                src={URL.createObjectURL(file)}
-                                                alt={file.name}
-                                                className="w-full h-full object-cover"
-                                            />
-                                            <button
-                                                type="button"
-                                                className="btn btn-xs btn-circle absolute top-1 right-1"
-                                                onClick={() => removeImage(index)}
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
+                            <div className="rounded-[24px] border border-base-200/80 bg-white p-4 shadow-sm sm:p-5">
+                                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-base-content/55">
+                                    Urgencia
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {URGENCY_OPTIONS.map((option) => (
+                                        <button
+                                            key={option.value}
+                                            type="button"
+                                            onClick={() => setForm((prev) => ({ ...prev, urgency: option.value }))}
+                                            className={`rounded-full border px-3 py-1.5 text-sm font-medium transition duration-300 hover:-translate-y-0.5 ${
+                                                form.urgency === option.value
+                                                    ? `${option.className} shadow-sm`
+                                                    : 'border-base-200 bg-white text-base-content/70 hover:border-base-300'
+                                            }`}
+                                        >
+                                            {option.label}
+                                        </button>
                                     ))}
                                 </div>
-                            )}
-                        </div>
+                            </div>
 
-                        <div className="flex justify-end gap-2">
-                            <button type="button" className="btn btn-ghost btn-sm rounded-full" onClick={resetForm}>
-                                Limpiar
-                            </button>
-                            <button
-                                type="button"
-                                className="btn btn-primary btn-sm rounded-full px-5 shadow-sm transition hover:-translate-y-0.5"
-                                disabled={isSubmitting}
-                                onClick={() => void handleCreateIncident()}
-                            >
-                                {isSubmitting ? 'Creando...' : 'Crear incidencia'}
-                            </button>
-                        </div>
+                            <div className="rounded-[24px] border border-base-200/80 bg-white p-4 shadow-sm sm:p-5">
+                                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-base-content/55">
+                                    Fotos (max. {MAX_PHOTOS})
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    <input
+                                        ref={galleryInputRef}
+                                        className="hidden"
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={(e) => {
+                                            handleFilesPicked(e.target.files)
+                                            e.target.value = ''
+                                        }}
+                                    />
+                                    <input
+                                        ref={cameraInputRef}
+                                        className="hidden"
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        onChange={(e) => {
+                                            handleFilesPicked(e.target.files)
+                                            e.target.value = ''
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline btn-sm rounded-full transition hover:-translate-y-0.5"
+                                        onClick={() => galleryInputRef.current?.click()}
+                                    >
+                                        Elegir de galeria
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline btn-sm rounded-full transition hover:-translate-y-0.5"
+                                        onClick={() => cameraInputRef.current?.click()}
+                                    >
+                                        Tomar foto
+                                    </button>
+                                </div>
+
+                                {images.length > 0 && (
+                                    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+                                        {images.map((file, index) => (
+                                            <div key={`${file.name}-${index}`} className="relative aspect-square overflow-hidden rounded-xl bg-base-200">
+                                                <img
+                                                    src={URL.createObjectURL(file)}
+                                                    alt={file.name}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-xs btn-circle absolute right-1 top-1"
+                                                    onClick={() => removeImage(index)}
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex flex-wrap justify-end gap-2 border-t border-base-200 pt-4">
+                                <button type="button" className="btn btn-ghost btn-sm rounded-full" onClick={resetForm}>
+                                    Limpiar
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary btn-sm rounded-full px-6 shadow-sm transition hover:-translate-y-0.5"
+                                    disabled={isSubmitting}
+                                    onClick={() => void handleCreateIncident()}
+                                >
+                                    {isSubmitting ? 'Creando...' : 'Crear incidencia'}
+                                </button>
+                            </div>
                         </div>
                     </article>
                 )}
@@ -844,7 +809,7 @@ export default function ApartmentIncidences() {
                                 <div>
                                     <h2 className="text-2xl font-semibold leading-tight">Tablero de gestion</h2>
                                     <p className="mt-2 max-w-xl text-sm leading-6 text-base-content/60">
-                                        En movil el flujo se entiende como una ruta vertical clara. En escritorio mantiene una lectura de tablero por columnas.
+                                         Mueve las incidencias en el tablero para indicar en qué fase se encuentran.
                                     </p>
                                 </div>
                                 <span className="inline-flex w-fit rounded-full border border-base-300 bg-base-100 px-3 py-1.5 text-xs font-medium text-base-content/60">
@@ -918,7 +883,7 @@ export default function ApartmentIncidences() {
                                                     <p className="mt-1 text-xs text-base-content/45">Cuando haya actividad aparecerá aquí en el flujo.</p>
                                                 </div>
                                             ) : (
-                                                <div className="space-y-3">
+                                                <div className="max-h-[23rem] space-y-3 overflow-y-auto pr-1 overscroll-contain">
                                                     {columnIncidents.map((incident) =>
                                                         renderIncidentCard(incident, true)
                                                     )}
@@ -954,10 +919,9 @@ export default function ApartmentIncidences() {
                                         {columnIncidents.length === 0 ? (
                                             <div className="rounded-[22px] border border-dashed border-base-300 bg-white/85 px-4 py-5 text-center">
                                                 <p className="text-sm font-medium text-base-content/65">Sin incidencias en esta fase</p>
-                                                <p className="mt-1 text-xs text-base-content/45">La siguiente incidencia aparecerá aquí automáticamente.</p>
                                             </div>
                                         ) : (
-                                            <div className="space-y-3">
+                                            <div className="max-h-[23rem] space-y-3 overflow-y-auto pr-1 overscroll-contain">
                                                 {columnIncidents.map((incident) => renderIncidentCard(incident))}
                                             </div>
                                         )}
@@ -988,6 +952,7 @@ export default function ApartmentIncidences() {
                                 <ul className="space-y-3">
                                     {closedIncidents.map((incident) => {
                                         const meta = STATUS_META[incident.status]
+                                        const urgencyMeta = getUrgencyMeta(incident.urgency)
                                         return (
                                             <li key={incident.id}>
                                                 <button
@@ -999,17 +964,11 @@ export default function ApartmentIncidences() {
                                                     <div className="p-4 sm:p-5 space-y-2">
                                                         <div className="flex flex-wrap items-center justify-between gap-2">
                                                             <h3 className="font-semibold text-base sm:text-lg">{incident.title}</h3>
-                                                            <span className={`text-xs px-2 py-1 rounded-full ${meta.badge}`}>
-                                                                {meta.label}
+                                                            <span className={`text-xs px-2 py-1 rounded-full ${urgencyMeta.className}`}>
+                                                                {urgencyMeta.label}
                                                             </span>
                                                         </div>
                                                         <p className="text-sm text-base-content/70 line-clamp-2">{incident.description}</p>
-                                                        <p className="text-xs text-base-content/55">
-                                                            Reportada por: {getReporterLabel(incident)}
-                                                        </p>
-                                                        <p className="text-xs text-base-content/50">
-                                                            Cerrada: {formatDate(incident.closedAt ?? incident.updatedAt)}
-                                                        </p>
                                                     </div>
                                                 </button>
                                             </li>
@@ -1044,6 +1003,7 @@ export default function ApartmentIncidences() {
                                 <ul className="space-y-3">
                                     {activeIncidents.map((incident) => {
                                         const meta = STATUS_META[incident.status]
+                                        const urgencyMeta = getUrgencyMeta(incident.urgency)
                                         return (
                                             <li key={incident.id}>
                                                 <button
@@ -1054,15 +1014,11 @@ export default function ApartmentIncidences() {
                                                     <div className="p-4 sm:p-5 space-y-2">
                                                         <div className="flex flex-wrap items-center justify-between gap-2">
                                                             <h3 className="font-semibold text-base sm:text-lg">{incident.title}</h3>
-                                                            <span className={`text-xs px-2 py-1 rounded-full ${meta.badge}`}>
-                                                                {meta.label}
+                                                            <span className={`text-xs px-2 py-1 rounded-full ${urgencyMeta.className}`}>
+                                                                {urgencyMeta.label}
                                                             </span>
                                                         </div>
                                                         <p className="text-sm text-base-content/70 line-clamp-2">{incident.description}</p>
-                                                        <p className="text-xs text-base-content/55">
-                                                            Reportada por: {getReporterLabel(incident)}
-                                                        </p>
-                                                        <p className="text-xs text-base-content/50">Abierta: {formatDate(incident.createdAt)}</p>
                                                     </div>
                                                 </button>
                                             </li>
@@ -1095,6 +1051,7 @@ export default function ApartmentIncidences() {
                                 <ul className="space-y-3">
                                     {closedIncidents.map((incident) => {
                                         const meta = STATUS_META[incident.status]
+                                        const urgencyMeta = getUrgencyMeta(incident.urgency)
                                         return (
                                             <li key={incident.id}>
                                                 <button
@@ -1105,17 +1062,11 @@ export default function ApartmentIncidences() {
                                                     <div className="p-4 sm:p-5 space-y-2">
                                                         <div className="flex flex-wrap items-center justify-between gap-2">
                                                             <h3 className="font-semibold text-base sm:text-lg">{incident.title}</h3>
-                                                            <span className={`text-xs px-2 py-1 rounded-full ${meta.badge}`}>
-                                                                {meta.label}
+                                                            <span className={`text-xs px-2 py-1 rounded-full ${urgencyMeta.className}`}>
+                                                                {urgencyMeta.label}
                                                             </span>
                                                         </div>
                                                         <p className="text-sm text-base-content/70 line-clamp-2">{incident.description}</p>
-                                                        <p className="text-xs text-base-content/55">
-                                                            Reportada por: {getReporterLabel(incident)}
-                                                        </p>
-                                                        <p className="text-xs text-base-content/50">
-                                                            Cerrada: {formatDate(incident.closedAt ?? incident.updatedAt)}
-                                                        </p>
                                                     </div>
                                                 </button>
                                             </li>
