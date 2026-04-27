@@ -1,4 +1,5 @@
 import { api } from './api'
+import { AxiosError } from 'axios'
 
 export interface UserDTO {
   id: number
@@ -158,6 +159,22 @@ export const updateApartmentRules = async (
   rules: ApartmentRulesDTO
 ): Promise<void> => {
   await api.put(`/apartments/${apartmentId}/rules`, rules)
+}
+
+export const getApartmentRules = async (
+  apartmentId: number
+): Promise<ApartmentRulesDTO | null> => {
+  try {
+    const response = await api.get<ApartmentRulesDTO>(`/apartments/${apartmentId}/rules`)
+    return response.data
+  } catch (error) {
+    const err = error as AxiosError
+    if (err.response?.status === 403 || err.response?.status === 404) {
+      throw error
+    }
+    console.error('Error fetching apartment rules:', error)
+    return null
+  }
 }
 
 export const uploadApartmentImages = async (

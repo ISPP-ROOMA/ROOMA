@@ -17,6 +17,7 @@ import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
 import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ForbiddenException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
+import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 
@@ -80,6 +81,19 @@ public class ApartmentService {
     public ApartmentEntity findById(Integer id) {
         return apartmentsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public ApartmentEntity findByIdForCurrentUser(Integer id) {
+        ApartmentEntity apartment = findById(id);
+        UserEntity currentUser = userService.findCurrentUserEntity();
+
+        if (currentUser.getRole() == Role.LANDLORD
+                && (apartment.getUser() == null || !apartment.getUser().getId().equals(currentUser.getId()))) {
+            throw new ForbiddenException("Landlords can only access their own apartments");
+        }
+
+        return apartment;
     }
 
     public List<ApartmentEntity> findMyApartments() {

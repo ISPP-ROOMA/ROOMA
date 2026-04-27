@@ -84,7 +84,7 @@ public class ApartmentController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApartmentDTO> getApartmentById(@PathVariable Integer id) {
-        ApartmentEntity apartment = apartmentsService.findById(id);
+        ApartmentEntity apartment = apartmentsService.findByIdForCurrentUser(id);
         return ResponseEntity.ok(mapToDTOWithMembers(apartment));
     }
 
@@ -117,7 +117,7 @@ public class ApartmentController {
 
     @GetMapping("/{id}/photos")
     public ResponseEntity<?> getApartmentAndPhotos(@PathVariable Integer id) {
-        ApartmentEntity apartment = apartmentsService.findById(id);
+        ApartmentEntity apartment = apartmentsService.findByIdForCurrentUser(id);
         List<ApartmentPhotoEntity> images = apartmentPhotoService.findPhotosByApartmentId(id);
 
         Map<String, Object> response = new HashMap<>();
