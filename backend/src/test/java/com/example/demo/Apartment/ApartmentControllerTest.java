@@ -110,7 +110,7 @@ public class ApartmentControllerTest {
     @WithMockUser(roles = "TENANT")
     @DisplayName("getMyHomeSnapshot should return 200 for tenant")
     public void getMyHomeSnapshot_Tenant() throws Exception {
-        ApartmentHomeDTO home = new ApartmentHomeDTO(ApartmentDTO.fromApartmentEntity(apartment(10)), List.of(), List.of(), null);
+        ApartmentHomeDTO home = new ApartmentHomeDTO(ApartmentDTO.fromApartmentEntity(apartment(10)), List.of(), List.of(), null, 1);
         when(apartmentHomeService.getCurrentUserHome()).thenReturn(home);
 
         mockMvc.perform(get("/api/apartments/me/home"))
@@ -182,7 +182,7 @@ public class ApartmentControllerTest {
         photo.setId(66);
         photo.setUrl("https://img/test.jpg");
 
-        when(apartmentService.findById(6)).thenReturn(apartment);
+        when(apartmentService.findByIdForCurrentUser(6)).thenReturn(apartment);
         when(apartmentPhotoService.findPhotosByApartmentId(6)).thenReturn(List.of(photo));
 
         mockMvc.perform(get("/api/apartments/{id}/photos", 6))
@@ -226,7 +226,7 @@ public class ApartmentControllerTest {
     @DisplayName("getApartmentById should return 200 with apartment data")
     public void getApartmentById_ReturnsOk() throws Exception {
         ApartmentEntity apartment = apartment(3);
-        when(apartmentService.findById(3)).thenReturn(apartment);
+        when(apartmentService.findByIdForCurrentUser(3)).thenReturn(apartment);
         when(apartmentMemberService.findCurrentMembers(3)).thenReturn(List.of());
 
         mockMvc.perform(get("/api/apartments/{id}", 3))
@@ -239,7 +239,7 @@ public class ApartmentControllerTest {
     @WithMockUser(roles = "TENANT")
     @DisplayName("getApartmentById should return 404 when apartment does not exist")
     public void getApartmentById_WhenNotFound_Returns404() throws Exception {
-        when(apartmentService.findById(998))
+        when(apartmentService.findByIdForCurrentUser(998))
                 .thenThrow(new ResourceNotFoundException("Apartment not found"));
 
         mockMvc.perform(get("/api/apartments/{id}", 998))

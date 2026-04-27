@@ -351,4 +351,13 @@ public class IncidentService {
             }
         }).toList();
     }
+
+    public List<IncidentDTO> findIncidentsNotClosedByApartmentId(Integer apartmentId) {
+        ApartmentEntity apartment = apartmentService.findById(apartmentId);
+        UserEntity currentUser = userService.findCurrentUserEntity();
+        validateApartmentAccess(apartment, currentUser);
+
+        List<IncidentEntity> incidents = incidentRepository.findIncidentsNotClosedByApartmentId(apartmentId);
+        return incidents.stream().map(this::toDTO).toList();
+    }
 }
