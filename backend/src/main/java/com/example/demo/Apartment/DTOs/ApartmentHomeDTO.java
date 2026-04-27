@@ -10,5 +10,6 @@ public record ApartmentHomeDTO(
         ApartmentDTO apartment,
         List<RoommateDTO> roommates,
         List<ApartmentPhotoDTO> photos,
-        BillingSummaryDTO billing
+        BillingSummaryDTO billing,
+        Integer openIncidences
 ) {}

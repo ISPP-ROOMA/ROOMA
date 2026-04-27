@@ -75,6 +75,7 @@ export interface ApartmentHomeDTO {
   roommates: RoommateDTO[]
   photos: ApartmentPhotoDTO[]
   billing: BillingSummaryDTO
+  openIncidences: number
 }
 
 export interface SwipeActionDTO {

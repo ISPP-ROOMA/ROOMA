@@ -110,7 +110,7 @@ public class ApartmentControllerTest {
     @WithMockUser(roles = "TENANT")
     @DisplayName("getMyHomeSnapshot should return 200 for tenant")
     public void getMyHomeSnapshot_Tenant() throws Exception {
-        ApartmentHomeDTO home = new ApartmentHomeDTO(ApartmentDTO.fromApartmentEntity(apartment(10)), List.of(), List.of(), null);
+        ApartmentHomeDTO home = new ApartmentHomeDTO(ApartmentDTO.fromApartmentEntity(apartment(10)), List.of(), List.of(), null, 1);
         when(apartmentHomeService.getCurrentUserHome()).thenReturn(home);
 
         mockMvc.perform(get("/api/apartments/me/home"))
