@@ -127,8 +127,8 @@ INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date,end_da
 (1, 1, 6, 'HOMEBODY', '2024-01-01', NULL),
 (2, 1, 7, 'RENTER', '2024-01-01', NULL),
 (3, 1, 8, 'RENTER', '2024-01-01', NULL),
-(6, 1, 11, 'RENTER', '2024-01-15', NULL),
-(7, 1, 12, 'RENTER', '2024-01-20', NULL)
+(6, 1, 11, 'RENTER', '2024-01-15', CURRENT_DATE - INTERVAL '7 days'),
+(7, 1, 12, 'RENTER', '2024-01-20', CURRENT_DATE - INTERVAL '3 days')
 ON CONFLICT (id) DO NOTHING;;
 
 -- Piso 2: tenant4(9)
