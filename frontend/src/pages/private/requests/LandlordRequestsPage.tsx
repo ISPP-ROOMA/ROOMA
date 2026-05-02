@@ -28,7 +28,7 @@ import {
 import { getFilteredCandidates, type CandidateFilter } from '../../../service/requests.service'
 import { useAuthStore } from '../../../store/authStore'
 
-type ActiveTab = 'pending' | 'match'
+type ActiveTab = 'pending' | 'waiting' | 'match'
 
 interface EnrichedMatch {
   matchId: number
@@ -131,10 +131,12 @@ export default function LandlordRequestsPage() {
   const [selectedAptId, setSelectedAptId] = useState<number | null>(null)
   const [isRanking, setIsRanking] = useState(false)
   const initialTab = useMemo<ActiveTab>(() => {
-    return searchParams.get('tab') === 'match' ? 'match' : 'pending'
+    const t = searchParams.get('tab')
+    return t === 'match' ? 'match' : t === 'waiting' ? 'waiting' : 'pending'
   }, [searchParams])
   const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab)
   const [pendingItems, setPendingItems] = useState<EnrichedMatch[]>([])
+  const [waitingItems, setWaitingItems] = useState<EnrichedMatch[]>([])
   const [matchItems, setMatchItems] = useState<EnrichedMatch[]>([])
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
@@ -157,13 +159,13 @@ export default function LandlordRequestsPage() {
   }, [initialTab])
 
   const uniqueApartments = useMemo(() => {
-    const all = [...pendingItems, ...matchItems]
+    const all = [...pendingItems, ...waitingItems, ...matchItems]
     const map = new Map()
     all.forEach((item) => {
       if (item.apartmentId) map.set(item.apartmentId, item.title)
     })
     return Array.from(map.entries())
-  }, [pendingItems, matchItems])
+  }, [pendingItems, waitingItems, matchItems])
 
   const fetchData = useCallback(async () => {
     if (!userId) return
@@ -208,7 +210,8 @@ export default function LandlordRequestsPage() {
           enrichMatches(matchesForApartment(fullMatches)),
         ])
 
-        setPendingItems([...enrichedActive, ...enrichedWaiting])
+        setPendingItems(enrichedActive)
+        setWaitingItems(enrichedWaiting)
         setMatchItems([...enrichedFull, ...enrichedSuccess])
       }
     } catch (err) {
@@ -292,6 +295,7 @@ export default function LandlordRequestsPage() {
   const handleReject = async (matchId: number) => {
     setUpdatingId(matchId)
     setPendingItems((prev) => prev.filter((i) => i.matchId !== matchId))
+    setWaitingItems((prev) => prev.filter((i) => i.matchId !== matchId))
 
     try {
       await rejectApartmentMatch(matchId)
@@ -306,10 +310,12 @@ export default function LandlordRequestsPage() {
   const handleAccept = async (matchId: number) => {
     setUpdatingId(matchId)
 
-    const itemToMove = pendingItems.find((i) => i.matchId === matchId)
+    const itemToMove = pendingItems.find((i) => i.matchId === matchId) ||
+      waitingItems.find((i) => i.matchId === matchId)
     if (!itemToMove) return
 
     setPendingItems((prev) => prev.filter((i) => i.matchId !== matchId))
+    setWaitingItems((prev) => prev.filter((i) => i.matchId !== matchId))
     setMatchItems((prev) => [{ ...itemToMove, matchStatus: 'MATCH' as MatchStatus }, ...prev])
 
     try {
@@ -324,11 +330,11 @@ export default function LandlordRequestsPage() {
 
   const handleWait = async (matchId: number) => {
     setUpdatingId(matchId)
-    setPendingItems((prev) =>
-      prev.map((item) =>
-        item.matchId === matchId ? { ...item, matchStatus: 'WAITING' as MatchStatus } : item
-      )
-    )
+    const item = pendingItems.find((i) => i.matchId === matchId)
+    if (item) {
+      setPendingItems((prev) => prev.filter((i) => i.matchId !== matchId))
+      setWaitingItems((prev) => [{ ...item, matchStatus: 'WAITING' as MatchStatus }, ...prev])
+    }
 
     try {
       await waitApartmentMatch(matchId)
@@ -349,7 +355,8 @@ export default function LandlordRequestsPage() {
     navigate(`/mis-solicitudes/recibidas/${item.matchId}/match`)
   }
 
-  const visibleItems = activeTab === 'pending' ? pendingItems : matchItems
+  const visibleItems =
+    activeTab === 'pending' ? pendingItems : activeTab === 'waiting' ? waitingItems : matchItems
   const hasApartmentFilter = apartmentFilterId !== null
 
   return (
@@ -503,6 +510,19 @@ export default function LandlordRequestsPage() {
               </span>
             )}
           </button>
+
+          <button
+            className={`flex-1 rounded-lg py-2 text-base font-medium transition-all ${activeTab === 'waiting' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'}`}
+            onClick={() => setActiveTab('waiting')}
+          >
+            En espera
+            {waitingItems.length > 0 && (
+              <span className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#e8a000] text-[#7a5a00] text-xs font-bold">
+                {waitingItems.length}
+              </span>
+            )}
+          </button>
+
           <button
             className={`flex-1 rounded-lg py-2 text-base font-medium transition-all ${activeTab === 'match' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'}`}
             onClick={() => setActiveTab('match')}
@@ -525,15 +545,21 @@ export default function LandlordRequestsPage() {
           </div>
         ) : visibleItems.length === 0 ? (
           <div className="rounded-2xl border border-[#DDDBCB] bg-white p-10 text-center">
-            <div className="text-5xl mb-4">{activeTab === 'pending' ? '📋' : '🤝'}</div>
+            <div className="text-5xl mb-4">
+              {activeTab === 'pending' ? '📋' : activeTab === 'waiting' ? '⏳' : '🤝'}
+            </div>
             <p className="text-[#050505]/70 font-medium">
               {hasApartmentFilter
                 ? activeTab === 'pending'
                   ? 'Este inmueble no tiene solicitudes activas.'
-                  : 'Este inmueble no tiene matches.'
+                  : activeTab === 'waiting'
+                    ? 'Este inmueble no tiene candidatos en espera.'
+                    : 'Este inmueble no tiene matches.'
                 : activeTab === 'pending'
                   ? 'Aún no tienes solicitudes activas. ¡Desliza pisos en el inicio!'
-                  : 'Todavía no tienes matches. ¡Sigue explorando!'}
+                  : activeTab === 'waiting'
+                    ? 'No hay candidatos en espera.'
+                    : 'Todavía no tienes matches. ¡Sigue explorando!'}
             </p>
           </div>
         ) : (
