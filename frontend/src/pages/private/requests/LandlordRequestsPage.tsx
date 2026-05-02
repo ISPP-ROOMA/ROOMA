@@ -14,6 +14,7 @@ import type {
 } from '../../../service/apartment.service'
 import {
   acceptApartmentMatch,
+  cancelApartmentMatch,
   getLandlordMatchDetails,
   getMatchesForLandlord,
   rejectApartmentMatch,
@@ -310,7 +311,8 @@ export default function LandlordRequestsPage() {
   const handleAccept = async (matchId: number) => {
     setUpdatingId(matchId)
 
-    const itemToMove = pendingItems.find((i) => i.matchId === matchId) ||
+    const itemToMove =
+      pendingItems.find((i) => i.matchId === matchId) ||
       waitingItems.find((i) => i.matchId === matchId)
     if (!itemToMove) return
 
@@ -340,6 +342,20 @@ export default function LandlordRequestsPage() {
       await waitApartmentMatch(matchId)
     } catch (err) {
       console.error('Error setting match to waiting', err)
+      void fetchData()
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const handleCancel = async (matchId: number) => {
+    setUpdatingId(matchId)
+    setMatchItems((prev) => prev.filter((item) => item.matchId !== matchId))
+
+    try {
+      await cancelApartmentMatch(matchId)
+    } catch (err) {
+      console.error('Error cancelling match', err)
       void fetchData()
     } finally {
       setUpdatingId(null)
@@ -623,24 +639,40 @@ export default function LandlordRequestsPage() {
                           {statusLabel(item.matchStatus)}
                         </span>
 
-                        {(item.matchStatus === 'MATCH' ||
-                          item.matchStatus === 'INVITED' ||
-                          item.matchStatus === 'SUCCESSFUL') && (
-                          <button
-                            type="button"
-                            className="relative h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center transition-colors hover:bg-[#F5F1E3]"
-                            aria-label="Abrir chat"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              navigate(`/chat/${item.matchId}`)
-                            }}
-                          >
-                            <MessageCircle size={16} />
-                            {unreadMatches.has(item.matchId) && (
-                              <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 border border-white" />
-                            )}
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {(item.matchStatus === 'MATCH' ||
+                            item.matchStatus === 'INVITED' ||
+                            item.matchStatus === 'SUCCESSFUL') && (
+                            <button
+                              type="button"
+                              className="relative h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center transition-colors hover:bg-[#F5F1E3]"
+                              aria-label="Abrir chat"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                navigate(`/chat/${item.matchId}`)
+                              }}
+                            >
+                              <MessageCircle size={16} />
+                              {unreadMatches.has(item.matchId) && (
+                                <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 border border-white" />
+                              )}
+                            </button>
+                          )}
+
+                          {item.matchStatus === 'MATCH' && (
+                            <button
+                              type="button"
+                              className="min-w-[104px] rounded-xl border border-[#DDDBCB] bg-white px-4 py-2 text-xs font-semibold text-[#b42318] transition-colors hover:bg-[#F5F1E3] disabled:cursor-not-allowed disabled:opacity-60"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                void handleCancel(item.matchId)
+                              }}
+                              disabled={updatingId === item.matchId}
+                            >
+                              {updatingId === item.matchId ? 'Cancelando...' : 'Cancelar'}
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {item.matchStatus === 'ACTIVE' && (
