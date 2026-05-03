@@ -131,6 +131,11 @@ INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date,end_da
 (7, 1, 12, 'RENTER', '2024-01-20', CURRENT_DATE - INTERVAL '3 days')
 ON CONFLICT (id) DO NOTHING;;
 
+-- For review flows: mark one tenant as recently departed so current/past overlap logic yields pending review candidates.
+UPDATE apartment_members
+SET end_date = CURRENT_DATE - 7
+WHERE id = 2;
+
 -- Piso 2: tenant4(9)
 INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date) VALUES 
 (4, 2, 9, 'HOMEBODY', '2024-02-01')

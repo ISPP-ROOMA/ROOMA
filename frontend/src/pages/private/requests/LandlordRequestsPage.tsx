@@ -1,6 +1,6 @@
-import type { IMessage, StompSubscription } from '@stomp/stompjs'
 import { AnimatePresence } from 'framer-motion'
-import { Filter, Loader2, MessageCircle } from 'lucide-react'
+import { Loader2, MessageCircle, Filter } from 'lucide-react'
+import type { IMessage, StompSubscription } from '@stomp/stompjs'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
@@ -140,6 +140,7 @@ export default function LandlordRequestsPage() {
   const [waitingItems, setWaitingItems] = useState<EnrichedMatch[]>([])
   const [matchItems, setMatchItems] = useState<EnrichedMatch[]>([])
   const [loading, setLoading] = useState(true)
+  const [_error, _setError] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
 
   const [filteredApartmentLabel, setFilteredApartmentLabel] = useState<string | null>(null)
