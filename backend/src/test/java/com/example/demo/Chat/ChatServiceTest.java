@@ -22,6 +22,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.doAnswer;
@@ -42,6 +43,8 @@ import com.example.demo.Exceptions.ConflictException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.Incident.IncidentEntity;
 import com.example.demo.Incident.IncidentRepository;
+import com.example.demo.Notification.EventType;
+import com.example.demo.Notification.NotificationService;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 
@@ -59,6 +62,9 @@ public class ChatServiceTest {
 
     @Mock
     private CloudinaryService cloudinaryService;
+
+        @Mock
+        private NotificationService notificationService;
 
     @Mock
     private UserService userService;
@@ -270,6 +276,12 @@ public class ChatServiceTest {
 
         assertNotNull(result);
         assertEquals("Hello", result.content()); // 🔥 trim
+        verify(notificationService).createNotification(
+                eq(EventType.CHAT),
+                anyString(),
+                eq("/chat/" + matchId),
+                eq(match.getApartment().getUser())
+        );
     }
 
     @Test

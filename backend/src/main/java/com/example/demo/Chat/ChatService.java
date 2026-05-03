@@ -18,6 +18,8 @@ import com.example.demo.Exceptions.ConflictException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.Incident.IncidentEntity;
 import com.example.demo.Incident.IncidentRepository;
+import com.example.demo.Notification.EventType;
+import com.example.demo.Notification.NotificationService;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 
@@ -29,17 +31,20 @@ public class ChatService {
     private final IncidentRepository incidentRepository;
     private final UserService userService;
     private final CloudinaryService cloudinaryService;
+    private final NotificationService notificationService;
 
     public ChatService(ChatMessageRepository chatMessageRepository,
                        ApartmentMatchRepository apartmentMatchRepository,
                        IncidentRepository incidentRepository,
                        UserService userService,
-                       CloudinaryService cloudinaryService) {
+                       CloudinaryService cloudinaryService,
+                       NotificationService notificationService) {
         this.chatMessageRepository = chatMessageRepository;
         this.apartmentMatchRepository = apartmentMatchRepository;
         this.incidentRepository = incidentRepository;
         this.userService = userService;
         this.cloudinaryService = cloudinaryService;
+        this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
@@ -84,6 +89,7 @@ public class ChatService {
         message.setMessageType(MessageType.TEXT);
 
         ChatMessageEntity saved = chatMessageRepository.save(message);
+        notifyMatchParticipant(match, sender, content.trim(), saved.getId());
         return ChatMessageDTO.fromEntity(saved);
     }
 
@@ -105,6 +111,7 @@ public class ChatService {
         message.setMessageType(MessageType.TEXT);
 
         ChatMessageEntity saved = chatMessageRepository.save(message);
+        notifyIncidentParticipant(incident, sender, content.trim(), saved.getId());
         return ChatMessageDTO.fromEntity(saved);
     }
 
@@ -137,6 +144,7 @@ public class ChatService {
         message.setFileName(file.getOriginalFilename());
 
         ChatMessageEntity saved = chatMessageRepository.save(message);
+        notifyMatchParticipant(match, sender, caption, saved.getId());
         return ChatMessageDTO.fromEntity(saved);
     }
 
@@ -168,8 +176,45 @@ public class ChatService {
         message.setFileName(file.getOriginalFilename());
 
         ChatMessageEntity saved = chatMessageRepository.save(message);
+        notifyIncidentParticipant(incident, sender, caption, saved.getId());
         return ChatMessageDTO.fromEntity(saved);
     }
+
+        private void notifyMatchParticipant(ApartmentMatchEntity match, UserEntity sender, String content, Integer messageId) {
+        UserEntity recipient = match.getCandidate().getId().equals(sender.getId())
+            ? match.getApartment().getUser()
+            : match.getCandidate();
+
+        String senderName = sender.getName() != null ? sender.getName() : sender.getEmail();
+        String description = content == null || content.isBlank()
+            ? senderName + " te ha enviado un mensaje"
+            : senderName + ": " + content;
+
+        notificationService.createNotification(
+            EventType.CHAT,
+            description,
+            "/chat/" + match.getId(),
+            recipient
+        );
+        }
+
+        private void notifyIncidentParticipant(IncidentEntity incident, UserEntity sender, String content, Integer messageId) {
+        UserEntity recipient = incident.getTenant().getId().equals(sender.getId())
+            ? incident.getLandlord()
+            : incident.getTenant();
+
+        String senderName = sender.getName() != null ? sender.getName() : sender.getEmail();
+        String description = content == null || content.isBlank()
+            ? senderName + " te ha enviado un mensaje"
+            : senderName + ": " + content;
+
+        notificationService.createNotification(
+            EventType.CHAT,
+            description,
+            "/chat/incidents/" + incident.getId(),
+            recipient
+        );
+        }
 
     private MessageType resolveMessageType(String contentType) {
         if (contentType == null) {
