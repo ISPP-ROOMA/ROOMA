@@ -199,7 +199,7 @@ export default function Home() {
       }
     }
 
-    fetchDeckOrFiltered()
+    void fetchDeckOrFiltered()
   }, [token, role, userId, appliedFilters])
 
   useEffect(() => {
@@ -248,10 +248,18 @@ export default function Home() {
       }
     }
 
-    window.addEventListener('online', syncPendingSwipes)
+    const handleOnlineStatus = () => {
+      void syncPendingSwipes(); 
+    };
+
+    handleOnlineStatus();
+
+
+
+    window.addEventListener('online', handleOnlineStatus)
 
     return () => {
-      window.removeEventListener('online', syncPendingSwipes)
+      window.removeEventListener('online', handleOnlineStatus)
     }
   }, [showToast])
 
@@ -426,7 +434,7 @@ export default function Home() {
                 <input
                   type="text"
                   value={filterInputs.ubication}
-                  onChange={(e) => handleFilterChange('ubication', e.target.value)}
+                  onChange={(e) => { handleFilterChange('ubication', e.target.value); }}
                   placeholder="Ciudad, barrio..."
                   className="input input-bordered input-sm w-full mt-2"
                 />
