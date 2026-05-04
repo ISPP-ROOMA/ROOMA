@@ -33,6 +33,7 @@ type NotificationsResponse =
 
 const EVENT_TYPE_LABELS: Map<string, string> = new Map([
   ['MATCH', 'Nuevo match'],
+  ['CHAT', 'Nuevo mensaje'],
   ['INVOICE', 'Factura'],
   ['REVIEW', 'Valoración'],
   ['REQUEST', 'Solicitud'],

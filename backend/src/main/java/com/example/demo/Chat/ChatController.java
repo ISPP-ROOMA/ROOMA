@@ -22,6 +22,8 @@ import com.example.demo.Chat.DTOs.ChatMessageDTO;
 @RequestMapping("/api/chat")
 public class ChatController {
 
+    public record IncidentChatStatusDTO(boolean closed, boolean canParticipate, String incidentTenantName, Integer apartmentId) {}
+
     private final ChatService chatService;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -66,6 +68,14 @@ public class ChatController {
             }
         }
         return ResponseEntity.ok(messages);
+    }
+
+    @GetMapping("/incidents/{incidentId}/status")
+    public ResponseEntity<IncidentChatStatusDTO> getIncidentChatStatus(@PathVariable Integer incidentId) {
+        ChatService.IncidentChatAccessInfo accessInfo = chatService.getIncidentChatAccessInfo(incidentId);
+        return ResponseEntity.ok(
+            new IncidentChatStatusDTO(accessInfo.closed(), accessInfo.canParticipate(), accessInfo.incidentTenantName(), accessInfo.apartmentId())
+        );
     }
 
     @PostMapping("/{matchId}/file")

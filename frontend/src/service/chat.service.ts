@@ -29,6 +29,16 @@ export interface ChatContext {
   id: number
 }
 
+export interface IncidentChatStatusDTO {
+  closed: boolean
+  canParticipate: boolean
+  incidentTenantName: string
+}
+
+export interface IncidentChatStatusDTOv2 extends IncidentChatStatusDTO {
+  apartmentId?: number | null
+}
+
 export const WS_ENDPOINT = '/ws'
 
 export const CHAT_TOPIC_SUBSCRIPTION = (context: ChatContext) =>
@@ -82,6 +92,16 @@ export const uploadChatFile = async (
     return response.data
   } catch (error) {
     console.error('Error uploading file to chat:', error)
+    return null
+  }
+}
+
+export const getIncidentChatStatus = async (incidentId: number): Promise<IncidentChatStatusDTO | null> => {
+  try {
+    const response = await api.get<IncidentChatStatusDTO>(`/chat/incidents/${incidentId}/status`)
+    return response.data
+  } catch (error) {
+    console.error(`Error loading incident chat status for incident ${incidentId}:`, error)
     return null
   }
 }

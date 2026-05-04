@@ -319,6 +319,11 @@ export default function Home() {
     }
   }
 
+  const handleFavoriteAdded = (apartmentId: number) => {
+    // Remove card from deck when added to favorites (no swipe action)
+    setApartments((prev) => prev.filter((apt) => apt.id !== apartmentId))
+  }
+
   if (!token) {
     return (
       <HeroWrapper>
@@ -544,6 +549,7 @@ export default function Home() {
                   <SwipeableCard
                     apartment={apartment}
                     onSwipe={(interest) => handleSwipe(apartment.id, interest)}
+                    onFavoriteAdded={() => handleFavoriteAdded(apartment.id)}
                     onShowDetails={() => setSelectedApartment(apartment)}
                   />
                 </div>

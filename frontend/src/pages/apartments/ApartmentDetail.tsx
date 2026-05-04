@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { getApartment, type Apartment } from '../../service/apartments.service'
+import { getApartment, getMyApartments, type Apartment } from '../../service/apartments.service'
 import { useAuthStore } from '../../store/authStore'
 
 const CLOUDINARY_CLOUD_NAME = 'djuqshdey'
@@ -20,6 +20,7 @@ export default function ApartmentDetail() {
   const navigate = useNavigate()
   const [apartment, setApartment] = useState<Apartment | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isForbidden, setIsForbidden] = useState(false)
 
   useEffect(() => {
     const fetch = async () => {
@@ -35,6 +36,15 @@ export default function ApartmentDetail() {
       }
 
       try {
+        if (role === 'LANDLORD') {
+          const myApartments = await getMyApartments()
+          const isOwner = myApartments.some((myApartment) => myApartment.id === apartmentId)
+          if (!isOwner) {
+            setIsForbidden(true)
+            return
+          }
+        }
+
         const data = await getApartment(apartmentId)
         if (data) setApartment(data)
       } catch (error) {
@@ -57,6 +67,11 @@ export default function ApartmentDetail() {
   if (!apartment) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-base-200/50">
+        {isForbidden ? (
+          <p className="text-lg font-medium text-gray-500">No tienes permiso para ver este inmueble</p>
+        ) : (
+          <p className="text-lg font-medium text-gray-500">Inmueble no encontrado</p>
+        )}
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-base-200">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -73,7 +88,6 @@ export default function ApartmentDetail() {
             />
           </svg>
         </div>
-        <p className="text-lg font-medium text-gray-500">Inmueble no encontrado</p>
         <Link
           to="/apartments/my"
           className="text-sm font-semibold text-teal-600 transition hover:text-teal-700"

@@ -6,11 +6,14 @@ import { useStompClient } from '../../../hooks/useStompClient'
 import {
   CHAT_SEND_DESTINATION,
   CHAT_TOPIC_SUBSCRIPTION,
+  getIncidentChatStatus,
   getMessageHistory,
   markMessagesAsRead,
   uploadChatFile,
   type ChatMessageDTO,
+  type IncidentChatStatusDTOv2,
 } from '../../../service/chat.service'
+import { getApartmentMembers } from '../../../service/billing.service'
 import { useAuthStore } from '../../../store/authStore'
 import BookAppointmentModal from '../../../components/BookAppointmentModal'
 
@@ -42,6 +45,10 @@ export default function ChatScreen() {
   const [filePreview, setFilePreview] = useState<string | null>(null)
   const [fileCaption, setFileCaption] = useState('')
   const [showBookModal, setShowBookModal] = useState(false)
+  const [incidentChatClosed, setIncidentChatClosed] = useState(false)
+  const [incidentChatRestricted, setIncidentChatRestricted] = useState(false)
+  const [incidentChatTenantName, setIncidentChatTenantName] = useState<string>('')
+  const [apartmentTenantIds, setApartmentTenantIds] = useState<Set<number> | null>(null)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -55,6 +62,33 @@ export default function ChatScreen() {
     const initChat = async () => {
       setLoading(true)
       try {
+        if (chatContext.type === 'incident') {
+          const status = (await getIncidentChatStatus(chatContext.id)) as IncidentChatStatusDTOv2 | null
+          const closed = Boolean(status?.closed)
+          const canParticipate = Boolean(status?.canParticipate)
+
+          setIncidentChatClosed(closed)
+          setIncidentChatRestricted(!canParticipate)
+          setIncidentChatTenantName(status?.incidentTenantName ?? '')
+
+          // if we have an apartment id, fetch current apartment tenants to allow tenant-to-tenant mapping
+          if (status?.apartmentId) {
+            try {
+              const members = await getApartmentMembers(status.apartmentId)
+              const tenantIds = new Set<number>(members.map((m) => m.userId))
+              setApartmentTenantIds(tenantIds)
+            } catch (err) {
+              console.error('Error loading apartment members', err)
+              setApartmentTenantIds(null)
+            }
+          }
+        } else {
+          setIncidentChatClosed(false)
+          setIncidentChatRestricted(false)
+          setIncidentChatTenantName('')
+          setApartmentTenantIds(null)
+        }
+
         const history = await getMessageHistory(chatContext)
         setMessages(history)
         await markMessagesAsRead(chatContext)
@@ -104,6 +138,8 @@ export default function ChatScreen() {
   }, [messages])
 
   const handleSendMessage = () => {
+    if (chatContext?.type === 'incident' && incidentChatRestricted) return
+    if (chatContext?.type === 'incident' && incidentChatClosed) return
     if (!inputValue.trim() || !connected || !client || !chatContext) return
 
     client.publish({
@@ -127,6 +163,8 @@ export default function ChatScreen() {
   }
 
   const handleSendFile = async () => {
+    if (chatContext?.type === 'incident' && incidentChatRestricted) return
+    if (chatContext?.type === 'incident' && incidentChatClosed) return
     if (!selectedFile || !chatContext) return
     setSendingFile(true)
     try {
@@ -202,7 +240,7 @@ export default function ChatScreen() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#F5F1E3]">
+      <main className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 bg-[#F5F1E3]">
         {messages.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center text-[#050505]/40 italic">
             <p>No hay mensajes aún. ¡Saluda!</p>
@@ -210,7 +248,11 @@ export default function ChatScreen() {
         )}
 
         {messages.map((msg) => {
-          const isMe = msg.senderId === Number(userId)
+          // treat messages from other tenants of the same apartment as 'mine' for tenant viewers
+          const isSenderTenantInApartment = apartmentTenantIds ? apartmentTenantIds.has(msg.senderId) : false
+          const amITenantInApartment = apartmentTenantIds ? apartmentTenantIds.has(Number(userId)) : false
+          const isMe =
+            msg.senderId === Number(userId) || (isSenderTenantInApartment && amITenantInApartment && msg.senderId !== Number(userId))
           return (
             <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
               <div
@@ -279,82 +321,92 @@ export default function ChatScreen() {
         <div ref={scrollRef} className="h-2" />
       </main>
 
-      <footer className="flex-none border-t border-[#DDDBCB] bg-white p-4 pb-6 sm:pb-4 shadow-inner">
-        <div className="flex items-center gap-2 max-w-4xl mx-auto">
-          <input
-            type="file"
-            hidden
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept="image/*,application/pdf,audio/*"
-          />
-          <button
-            disabled={sendingFile || !!selectedFile}
-            onClick={() => fileInputRef.current?.click()}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F5F1E3] text-[#050505] hover:bg-[#EBE7D5] transition-colors disabled:opacity-50"
-          >
-            {sendingFile ? (
-              <Loader2 size={20} className="animate-spin text-[#008080]" />
-            ) : (
-              <Paperclip size={20} />
-            )}
-          </button>
-          {selectedFile ? (
-            <div className="flex flex-1 items-center gap-2 bg-[#F5F1E3] rounded-xl border border-[#DDDBCB] px-3 py-2">
-              {filePreview && (
-                <img src={filePreview} alt="preview" className="max-h-12 max-w-12 rounded" />
+      <footer className="flex-none border-t border-[#DDDBCB] bg-white p-4 pb-24 sm:pb-4 shadow-inner">
+        {chatContext.type === 'incident' && incidentChatClosed ? (
+          <div className="max-w-4xl mx-auto rounded-xl border border-[#DDDBCB] bg-[#F5F1E3] px-4 py-3 text-center text-sm font-medium text-[#050505]/70">
+            Esta incidencia ha sido cerrada.
+          </div>
+        ) : chatContext.type === 'incident' && incidentChatRestricted ? (
+          <div className="max-w-4xl mx-auto rounded-xl border border-[#DDDBCB] bg-[#F5F1E3] px-4 py-3 text-center text-sm font-medium text-[#050505]/70">
+            No puedes participar en esta conversacion. La persona que inicio esta incidencia es {incidentChatTenantName || 'el inquilino titular'}.
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 max-w-4xl mx-auto">
+            <input
+              type="file"
+              hidden
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*,application/pdf,audio/*"
+            />
+            <button
+              disabled={sendingFile || !!selectedFile}
+              onClick={() => fileInputRef.current?.click()}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F5F1E3] text-[#050505] hover:bg-[#EBE7D5] transition-colors disabled:opacity-50"
+            >
+              {sendingFile ? (
+                <Loader2 size={20} className="animate-spin text-[#008080]" />
+              ) : (
+                <Paperclip size={20} />
               )}
-              <div className="flex-1 flex flex-col gap-1">
-                <span className="text-xs text-[#008080] font-medium truncate">
-                  {selectedFile.name}
-                </span>
+            </button>
+            {selectedFile ? (
+              <div className="flex flex-1 items-center gap-2 bg-[#F5F1E3] rounded-xl border border-[#DDDBCB] px-3 py-2">
+                {filePreview && (
+                  <img src={filePreview} alt="preview" className="max-h-12 max-w-12 rounded" />
+                )}
+                <div className="flex-1 flex flex-col gap-1">
+                  <span className="text-xs text-[#008080] font-medium truncate">
+                    {selectedFile.name}
+                  </span>
+                  <input
+                    type="text"
+                    value={fileCaption}
+                    onChange={(e) => setFileCaption(e.target.value)}
+                    placeholder="Añade un mensaje (opcional)"
+                    className="h-8 rounded border border-[#DDDBCB] bg-white px-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#008080]/10"
+                    disabled={sendingFile}
+                  />
+                </div>
+                <button
+                  onClick={handleSendFile}
+                  disabled={sendingFile}
+                  className="ml-2 flex h-9 w-9 items-center justify-center rounded-xl bg-[#008080] text-white shadow-md active:scale-95 disabled:opacity-50 transition-all"
+                >
+                  {sendingFile ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                </button>
+                <button
+                  onClick={handleCancelFile}
+                  disabled={sendingFile}
+                  className="ml-1 flex h-9 w-9 items-center justify-center rounded-xl bg-red-100 text-red-600 hover:bg-red-200 transition-all"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <>
                 <input
                   type="text"
-                  value={fileCaption}
-                  onChange={(e) => setFileCaption(e.target.value)}
-                  placeholder="Añade un mensaje (opcional)"
-                  className="h-8 rounded border border-[#DDDBCB] bg-white px-2 text-xs focus:outline-none focus:ring-2 focus:ring-[#008080]/10"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSendMessage()
+                  }}
+                  placeholder="Escribe un mensaje..."
+                  className="flex-1 h-11 rounded-xl border border-[#DDDBCB] bg-[#F5F1E3] px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#008080]/10 transition-shadow"
                   disabled={sendingFile}
                 />
-              </div>
-              <button
-                onClick={handleSendFile}
-                disabled={sendingFile}
-                className="ml-2 flex h-9 w-9 items-center justify-center rounded-xl bg-[#008080] text-white shadow-md active:scale-95 disabled:opacity-50 transition-all"
-              >
-                {sendingFile ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-              </button>
-              <button
-                onClick={handleCancelFile}
-                disabled={sendingFile}
-                className="ml-1 flex h-9 w-9 items-center justify-center rounded-xl bg-red-100 text-red-600 hover:bg-red-200 transition-all"
-              >
-                ✕
-              </button>
-            </div>
-          ) : (
-            <>
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSendMessage()
-                }}
-                placeholder="Escribe un mensaje..."
-                className="flex-1 h-11 rounded-xl border border-[#DDDBCB] bg-[#F5F1E3] px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#008080]/10 transition-shadow"
-                disabled={sendingFile}
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={!inputValue.trim() || !connected || sendingFile}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#008080] text-white shadow-md active:scale-95 disabled:opacity-50 transition-all"
-              >
-                <Send size={18} />
-              </button>
-            </>
-          )}
-        </div>
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!inputValue.trim() || !connected || sendingFile}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#008080] text-white shadow-md active:scale-95 disabled:opacity-50 transition-all"
+                >
+                  <Send size={18} />
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </footer>
 
       {showBookModal && chatContext?.type === 'match' && (

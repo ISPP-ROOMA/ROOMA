@@ -37,6 +37,13 @@ jwt:
 
 cors:
   allowed-origins: "http://localhost:5173"
+
+app:
+  cookie:
+    refresh:
+      secure: false
+      same-site: Lax
+      domain: ""
   
 cloudinary:
   cloud_name: ${CLOUDINARY_CLOUD_NAME:}

@@ -1,6 +1,6 @@
-import type { IMessage, StompSubscription } from '@stomp/stompjs'
 import { AnimatePresence } from 'framer-motion'
-import { Filter, Loader2, MessageCircle } from 'lucide-react'
+import { Loader2, MessageCircle, Filter } from 'lucide-react'
+import type { IMessage, StompSubscription } from '@stomp/stompjs'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import ApartmentDetailModal from '../../../components/ApartmentDetailModal'
@@ -14,6 +14,7 @@ import type {
 } from '../../../service/apartment.service'
 import {
   acceptApartmentMatch,
+  cancelApartmentMatch,
   getLandlordMatchDetails,
   getMatchesForLandlord,
   rejectApartmentMatch,
@@ -28,7 +29,7 @@ import {
 import { getFilteredCandidates, type CandidateFilter } from '../../../service/requests.service'
 import { useAuthStore } from '../../../store/authStore'
 
-type ActiveTab = 'pending' | 'match'
+type ActiveTab = 'pending' | 'waiting' | 'match'
 
 interface EnrichedMatch {
   matchId: number
@@ -131,12 +132,15 @@ export default function LandlordRequestsPage() {
   const [selectedAptId, setSelectedAptId] = useState<number | null>(null)
   const [isRanking, setIsRanking] = useState(false)
   const initialTab = useMemo<ActiveTab>(() => {
-    return searchParams.get('tab') === 'match' ? 'match' : 'pending'
+    const t = searchParams.get('tab')
+    return t === 'match' ? 'match' : t === 'waiting' ? 'waiting' : 'pending'
   }, [searchParams])
   const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab)
   const [pendingItems, setPendingItems] = useState<EnrichedMatch[]>([])
+  const [waitingItems, setWaitingItems] = useState<EnrichedMatch[]>([])
   const [matchItems, setMatchItems] = useState<EnrichedMatch[]>([])
   const [loading, setLoading] = useState(true)
+  const [_error, _setError] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
 
   const [filteredApartmentLabel, setFilteredApartmentLabel] = useState<string | null>(null)
@@ -157,13 +161,13 @@ export default function LandlordRequestsPage() {
   }, [initialTab])
 
   const uniqueApartments = useMemo(() => {
-    const all = [...pendingItems, ...matchItems]
+    const all = [...pendingItems, ...waitingItems, ...matchItems]
     const map = new Map()
     all.forEach((item) => {
       if (item.apartmentId) map.set(item.apartmentId, item.title)
     })
     return Array.from(map.entries())
-  }, [pendingItems, matchItems])
+  }, [pendingItems, waitingItems, matchItems])
 
   const fetchData = useCallback(async () => {
     if (!userId) return
@@ -208,7 +212,8 @@ export default function LandlordRequestsPage() {
           enrichMatches(matchesForApartment(fullMatches)),
         ])
 
-        setPendingItems([...enrichedActive, ...enrichedWaiting])
+        setPendingItems(enrichedActive)
+        setWaitingItems(enrichedWaiting)
         setMatchItems([...enrichedFull, ...enrichedSuccess])
       }
     } catch (err) {
@@ -292,6 +297,7 @@ export default function LandlordRequestsPage() {
   const handleReject = async (matchId: number) => {
     setUpdatingId(matchId)
     setPendingItems((prev) => prev.filter((i) => i.matchId !== matchId))
+    setWaitingItems((prev) => prev.filter((i) => i.matchId !== matchId))
 
     try {
       await rejectApartmentMatch(matchId)
@@ -306,10 +312,13 @@ export default function LandlordRequestsPage() {
   const handleAccept = async (matchId: number) => {
     setUpdatingId(matchId)
 
-    const itemToMove = pendingItems.find((i) => i.matchId === matchId)
+    const itemToMove =
+      pendingItems.find((i) => i.matchId === matchId) ||
+      waitingItems.find((i) => i.matchId === matchId)
     if (!itemToMove) return
 
     setPendingItems((prev) => prev.filter((i) => i.matchId !== matchId))
+    setWaitingItems((prev) => prev.filter((i) => i.matchId !== matchId))
     setMatchItems((prev) => [{ ...itemToMove, matchStatus: 'MATCH' as MatchStatus }, ...prev])
 
     try {
@@ -324,16 +333,30 @@ export default function LandlordRequestsPage() {
 
   const handleWait = async (matchId: number) => {
     setUpdatingId(matchId)
-    setPendingItems((prev) =>
-      prev.map((item) =>
-        item.matchId === matchId ? { ...item, matchStatus: 'WAITING' as MatchStatus } : item
-      )
-    )
+    const item = pendingItems.find((i) => i.matchId === matchId)
+    if (item) {
+      setPendingItems((prev) => prev.filter((i) => i.matchId !== matchId))
+      setWaitingItems((prev) => [{ ...item, matchStatus: 'WAITING' as MatchStatus }, ...prev])
+    }
 
     try {
       await waitApartmentMatch(matchId)
     } catch (err) {
       console.error('Error setting match to waiting', err)
+      void fetchData()
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const handleCancel = async (matchId: number) => {
+    setUpdatingId(matchId)
+    setMatchItems((prev) => prev.filter((item) => item.matchId !== matchId))
+
+    try {
+      await cancelApartmentMatch(matchId)
+    } catch (err) {
+      console.error('Error cancelling match', err)
       void fetchData()
     } finally {
       setUpdatingId(null)
@@ -349,7 +372,8 @@ export default function LandlordRequestsPage() {
     navigate(`/mis-solicitudes/recibidas/${item.matchId}/match`)
   }
 
-  const visibleItems = activeTab === 'pending' ? pendingItems : matchItems
+  const visibleItems =
+    activeTab === 'pending' ? pendingItems : activeTab === 'waiting' ? waitingItems : matchItems
   const hasApartmentFilter = apartmentFilterId !== null
 
   return (
@@ -503,6 +527,19 @@ export default function LandlordRequestsPage() {
               </span>
             )}
           </button>
+
+          <button
+            className={`flex-1 rounded-lg py-2 text-base font-medium transition-all ${activeTab === 'waiting' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'}`}
+            onClick={() => setActiveTab('waiting')}
+          >
+            En espera
+            {waitingItems.length > 0 && (
+              <span className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#e8a000] text-[#7a5a00] text-xs font-bold">
+                {waitingItems.length}
+              </span>
+            )}
+          </button>
+
           <button
             className={`flex-1 rounded-lg py-2 text-base font-medium transition-all ${activeTab === 'match' ? 'bg-white text-[#050505] shadow-sm' : 'text-[#050505]/70'}`}
             onClick={() => setActiveTab('match')}
@@ -525,15 +562,21 @@ export default function LandlordRequestsPage() {
           </div>
         ) : visibleItems.length === 0 ? (
           <div className="rounded-2xl border border-[#DDDBCB] bg-white p-10 text-center">
-            <div className="text-5xl mb-4">{activeTab === 'pending' ? '📋' : '🤝'}</div>
+            <div className="text-5xl mb-4">
+              {activeTab === 'pending' ? '📋' : activeTab === 'waiting' ? '⏳' : '🤝'}
+            </div>
             <p className="text-[#050505]/70 font-medium">
               {hasApartmentFilter
                 ? activeTab === 'pending'
                   ? 'Este inmueble no tiene solicitudes activas.'
-                  : 'Este inmueble no tiene matches.'
+                  : activeTab === 'waiting'
+                    ? 'Este inmueble no tiene candidatos en espera.'
+                    : 'Este inmueble no tiene matches.'
                 : activeTab === 'pending'
                   ? 'Aún no tienes solicitudes activas. ¡Desliza pisos en el inicio!'
-                  : 'Todavía no tienes matches. ¡Sigue explorando!'}
+                  : activeTab === 'waiting'
+                    ? 'No hay candidatos en espera.'
+                    : 'Todavía no tienes matches. ¡Sigue explorando!'}
             </p>
           </div>
         ) : (
@@ -597,24 +640,40 @@ export default function LandlordRequestsPage() {
                           {statusLabel(item.matchStatus)}
                         </span>
 
-                        {(item.matchStatus === 'MATCH' ||
-                          item.matchStatus === 'INVITED' ||
-                          item.matchStatus === 'SUCCESSFUL') && (
-                          <button
-                            type="button"
-                            className="relative h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center transition-colors hover:bg-[#F5F1E3]"
-                            aria-label="Abrir chat"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              navigate(`/chat/${item.matchId}`)
-                            }}
-                          >
-                            <MessageCircle size={16} />
-                            {unreadMatches.has(item.matchId) && (
-                              <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 border border-white" />
-                            )}
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {(item.matchStatus === 'MATCH' ||
+                            item.matchStatus === 'INVITED' ||
+                            item.matchStatus === 'SUCCESSFUL') && (
+                            <button
+                              type="button"
+                              className="relative h-8 w-8 rounded-full border border-[#DDDBCB] bg-white text-[#008080] flex items-center justify-center transition-colors hover:bg-[#F5F1E3]"
+                              aria-label="Abrir chat"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                navigate(`/chat/${item.matchId}`)
+                              }}
+                            >
+                              <MessageCircle size={16} />
+                              {unreadMatches.has(item.matchId) && (
+                                <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 border border-white" />
+                              )}
+                            </button>
+                          )}
+
+                          {item.matchStatus === 'MATCH' && (
+                            <button
+                              type="button"
+                              className="min-w-[104px] rounded-xl border border-[#DDDBCB] bg-white px-4 py-2 text-xs font-semibold text-[#b42318] transition-colors hover:bg-[#F5F1E3] disabled:cursor-not-allowed disabled:opacity-60"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                void handleCancel(item.matchId)
+                              }}
+                              disabled={updatingId === item.matchId}
+                            >
+                              {updatingId === item.matchId ? 'Cancelando...' : 'Cancelar'}
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {item.matchStatus === 'ACTIVE' && (

@@ -42,10 +42,7 @@ export default function NotificationsPage() {
   }
 
   const handleNotificationClick = async (notification: PendingNotification) => {
-    // Si tiene un ID válido de base de datos
-    if (notification.id > 100) {
-      await markNotificationAsRead(notification.id);
-    }
+    await markNotificationAsRead(notification.id)
 
     if (notification.link) {
       navigate(notification.link);

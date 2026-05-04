@@ -314,26 +314,12 @@ export default function IncidentDetail() {
               Historial completo
             </span>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {timeline.map((step) => (
-              <span
-                key={`badge-${step.status}`}
-                className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  step.status === incident.status
-                    ? 'bg-primary text-white'
-                    : 'border border-base-300 bg-base-100 text-base-content/60'
-                }`}
-              >
-                {step.label}
-              </span>
-            ))}
-          </div>
-          <ol className="space-y-4">
+          <ol className="mt-3 space-y-2">
             {timeline.map((step, idx) => (
-              <li key={step.status} className="flex items-start gap-3 rounded-[22px] border border-base-200/70 bg-base-100/70 px-3 py-3 transition duration-300 hover:border-base-300 hover:bg-base-100">
+              <li key={step.status} className="flex items-start gap-3 px-1 py-0.5">
                 <div className="flex flex-col items-center">
                   <span className={`w-3 h-3 rounded-full ${STATUS_COLORS[step.status]}`} />
-                  {idx !== timeline.length - 1 && <span className="w-px h-8 bg-base-300 mt-1" />}
+                  {idx !== timeline.length - 1 && <span className="mt-0.5 h-7 w-px bg-base-300" />}
                 </div>
                 <div className="flex-1 pb-2">
                   <p className="font-medium text-sm">{step.label}</p>

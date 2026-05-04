@@ -17,6 +17,7 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
         AND (:eventType IS NULL OR n.eventType = :eventType)
         AND (n.timestamp >= COALESCE(:startDate, n.timestamp))
         AND (n.timestamp <= COALESCE(:endDate, n.timestamp))
+        ORDER BY n.timestamp DESC
     """)
     Page<NotificationEntity> searchNotifications(
         @Param("userId") Integer userId,

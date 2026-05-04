@@ -412,6 +412,11 @@ public class ApartmentMatchService {
             case "ACCEPT":
                 match.setMatchStatus(MatchStatus.MATCH);
                 match.setLandlordInterest(true);
+                String description = "El arrendador " + match.getApartment().getUser().getEmail() + " ha aceptado tu solicitud para el apartamento \""
+                        + match.getApartment().getTitle() + "\" con localización: " + match.getApartment().getUbication()
+                        + "\"\n Ahora tienes que hablar con el arrendador para concretar los detalles de la visita al apartamento y la posible firma del contrato.";
+                String link = "/mis-solicitudes/enviadas";
+                notificationService.createNotification(EventType.MATCH, description, link, match.getCandidate());
                 break;
             case "WAIT":
                 if (match.getMatchStatus() != MatchStatus.ACTIVE) {
@@ -492,12 +497,11 @@ public class ApartmentMatchService {
         }
 
         match.setMatchStatus(MatchStatus.INVITED);
-        String description = "El arrendador \"" + match.getApartment().getUser().getName() + " "
-                + match.getApartment().getUser().getSurname()
-                + "\" te ha enviado una invitación para unirte al apartamento \"" + match.getApartment().getTitle()
-                + "\" con localización: " + match.getApartment().getUbication()
-                + "\"\n Por favor, responde a esta invitación lo antes posible para confirmar si estás interesado en unirte al apartamento.";
-        String link = "/mis-solicitudes/recibidas/";
+        String description = "El arrendador " + match.getApartment().getUser().getEmail()
+            + " te ha enviado una invitación para unirte al apartamento \"" + match.getApartment().getTitle()
+            + "\" con localización: " + match.getApartment().getUbication()
+            + "\"\n Por favor, responde a esta invitación lo antes posible para confirmar si estás interesado en unirte al apartamento.";
+        String link = "/mis-solicitudes/enviadas";
         notificationService.createNotification(EventType.INVITATION_SENT, description, link, match.getCandidate());
         return apartmentMatchRepository.save(match);
     }

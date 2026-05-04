@@ -127,9 +127,14 @@ INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date,end_da
 (1, 1, 6, 'HOMEBODY', '2024-01-01', NULL),
 (2, 1, 7, 'RENTER', '2024-01-01', NULL),
 (3, 1, 8, 'RENTER', '2024-01-01', NULL),
-(6, 1, 11, 'RENTER', '2024-01-15', NULL),
-(7, 1, 12, 'RENTER', '2024-01-20', NULL)
+(6, 1, 11, 'RENTER', '2024-01-15', CURRENT_DATE - INTERVAL '7 days'),
+(7, 1, 12, 'RENTER', '2024-01-20', CURRENT_DATE - INTERVAL '3 days')
 ON CONFLICT (id) DO NOTHING;;
+
+-- For review flows: mark one tenant as recently departed so current/past overlap logic yields pending review candidates.
+UPDATE apartment_members
+SET end_date = CURRENT_DATE - 7
+WHERE id = 2;
 
 -- Piso 2: tenant4(9)
 INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date) VALUES 
@@ -286,4 +291,4 @@ ON CONFLICT (id) DO NOTHING;
 -- 9. PATCH: Añadir APPOINTMENT al constraint de notifications
 -- ==========================================
 ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_event_type_check;
-ALTER TABLE notifications ADD CONSTRAINT notifications_event_type_check CHECK (event_type::text = ANY (ARRAY['MATCH','NEW_MATCH','INVITATION_ACCEPTED','INVITATION_SENT','INVITATION_REJECTED','REVIEW','NEW_BILL','BILL_PAID','APPOINTMENT']::text[]));
+ALTER TABLE notifications ADD CONSTRAINT notifications_event_type_check CHECK (event_type::text = ANY (ARRAY['MATCH','NEW_MATCH','INVITATION_ACCEPTED','INVITATION_SENT','INVITATION_REJECTED','REVIEW','NEW_BILL','BILL_PAID','APPOINTMENT','CHAT']::text[]));

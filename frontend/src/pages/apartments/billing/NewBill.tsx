@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useContext } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getApartment, type Apartment } from '../../../service/apartments.service'
+import { getApartment, getMyApartments, type Apartment } from '../../../service/apartments.service'
 import {
   createBill,
   getApartmentMembers,
@@ -101,6 +101,13 @@ export default function NewBill() {
       }
 
       try {
+        const myApartments = await getMyApartments()
+        const isOwner = myApartments.some((myApartment) => myApartment.id === apartmentId)
+        if (!isOwner) {
+          navigate('/apartments/my', { replace: true })
+          return
+        }
+
         const [apt, members] = await Promise.all([
           getApartment(apartmentId),
           getApartmentMembers(apartmentId),
@@ -123,13 +130,14 @@ export default function NewBill() {
         setTenants(rows)
       } catch (err) {
         console.error(err)
+        navigate('/apartments/my', { replace: true })
       } finally {
         setIsLoading(false)
       }
     }
 
     void load()
-  }, [apartmentId])
+  }, [apartmentId, navigate])
 
   /* ── derived: amounts ──────────────────────────────────── */
 
