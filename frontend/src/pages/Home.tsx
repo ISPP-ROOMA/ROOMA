@@ -187,7 +187,7 @@ export default function Home() {
 
         if (
           Object.keys(appliedFilters).length === 0 &&
-          (!navigator.onLine || (error as any)?.message === 'Network Error')
+          (!navigator.onLine || (error as { message?: string })?.message === 'Network Error')
         ) {
           const cached = getCachedApartments()
           const filteredCached = filterOutPendingApartments(cached)
@@ -218,8 +218,14 @@ export default function Home() {
           await swipeApartment(swipe.apartmentId, swipe.interest)
           successfulSwipes.push(swipe.apartmentId)
           console.log(`Swipe sincronizado: apartmentId=${swipe.apartmentId}, interest=${swipe.interest}`)
-        } catch (error: any) {
-          const status = error?.response?.status
+        } catch (error: unknown) {
+
+          const err = error as { 
+            response?: { status: number }, 
+            message?: string 
+          };
+
+          const status = err?.response?.status
 
           if (status === 409) {
             console.warn(`Conflicto detectado para apartmentId=${swipe.apartmentId}. Considerado sincronizado.`)
@@ -227,7 +233,7 @@ export default function Home() {
             continue
           }
 
-          if (!navigator.onLine) {
+          if (!navigator.onLine || err.message === 'Network Error') {
             console.warn(`Sin conexión. Deteniendo sincronización.`)
             break
           }
