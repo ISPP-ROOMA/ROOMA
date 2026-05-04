@@ -26,8 +26,8 @@ public class ApartmentRuleController {
 
     @GetMapping
     @PreAuthorize("hasRole('LANDLORD')")
-    public ResponseEntity<ReglaViviendaDTO> getRules(@PathVariable Integer apartmentId) {
-        ReglaViviendaDTO dto = reglaViviendaService.getRules(apartmentId);
+    public ResponseEntity<ApartmentRuleDTO> getRules(@PathVariable Integer apartmentId) {
+        ApartmentRuleDTO dto = apartmentRuleService.getRules(apartmentId);
         return ResponseEntity.ok(dto);
     }
 

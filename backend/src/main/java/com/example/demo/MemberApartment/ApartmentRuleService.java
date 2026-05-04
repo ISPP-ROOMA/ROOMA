@@ -27,7 +27,7 @@ public class ApartmentRuleService {
     }
 
     @Transactional(readOnly = true)
-    public ReglaViviendaDTO getRules(Integer apartmentId) {
+    public ApartmentRuleDTO getRules(Integer apartmentId) {
         ApartmentEntity apartment = apartmentService.findById(apartmentId);
 
         UserEntity currentUser = userService.findCurrentUserEntity();
@@ -35,17 +35,17 @@ public class ApartmentRuleService {
             throw new ForbiddenException("Only the landlord of this apartment can view its rules");
         }
 
-        ReglaViviendaEntity entity = reglaViviendaRepository.findByViviendaId(apartmentId)
+        ApartmentRuleEntity entity = apartmentRuleRepository.findByApartmentId(apartmentId)
                 .orElseGet(() -> {
-                    ReglaViviendaEntity nueva = new ReglaViviendaEntity();
-                    nueva.setVivienda(apartment);
-                    nueva.setPermiteMascotas(false);
-                    nueva.setPermiteFumadores(false);
-                    nueva.setFiestasPermitidas(false);
+                    ApartmentRuleEntity nueva = new ApartmentRuleEntity();
+                    nueva.setApartment(apartment);
+                    nueva.setAllowsPets(false);
+                    nueva.setAllowsSmokers(false);
+                    nueva.setPartiesAllowed(false);
                     return nueva;
                 });
 
-        return ReglaViviendaDTO.fromEntity(entity);
+        return ApartmentRuleDTO.fromEntity(entity);
     }
 
     @Transactional
