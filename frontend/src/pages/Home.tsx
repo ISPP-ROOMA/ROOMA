@@ -182,12 +182,12 @@ export default function Home() {
           setNoFilteredResults(true)
           setSuggestedFilters(computeRelaxedFilters(appliedFilters))
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Failed to load apartments', error)
 
         if (
           Object.keys(appliedFilters).length === 0 &&
-          (!navigator.onLine || error?.message === 'Network Error')
+          (!navigator.onLine || (error as any)?.message === 'Network Error')
         ) {
           const cached = getCachedApartments()
           const filteredCached = filterOutPendingApartments(cached)
