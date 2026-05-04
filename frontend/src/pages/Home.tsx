@@ -187,7 +187,7 @@ export default function Home() {
 
         if (
           Object.keys(appliedFilters).length === 0 &&
-          (!navigator.onLine || (error as { message?: string })?.message === 'Network Error')
+          (!navigator.onLine || (error as { message?: string }).message === 'Network Error')
         ) {
           const cached = getCachedApartments()
           const filteredCached = filterOutPendingApartments(cached)
@@ -225,7 +225,7 @@ export default function Home() {
             message?: string 
           };
 
-          const status = err?.response?.status
+          const status = err.response?.status
 
           if (status === 409) {
             console.warn(`Conflicto detectado para apartmentId=${swipe.apartmentId}. Considerado sincronizado.`)
@@ -306,8 +306,14 @@ export default function Home() {
         showToast('¡Solicitud enviada correctamente!', 'success')
       }
       removePendingSwipe(apartmentId)
-    } catch (error: any) {
-      const response = error?.response;
+    } catch (error: unknown) {
+
+      const err = error as { 
+            response?: { status: number;
+            data?: { message?: string };}, 
+            message?: string 
+          };
+      const response = err.response;
   
       if (!response) {
         addPendingSwipe(apartmentId, interest);
