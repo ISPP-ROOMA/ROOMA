@@ -101,6 +101,7 @@ export default function Home() {
   const [appliedFilters, setAppliedFilters] = useState<ApartmentFilters>({})
   const [noFilteredResults, setNoFilteredResults] = useState(false)
   const [suggestedFilters, setSuggestedFilters] = useState<ApartmentFilters | null>(null)
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
 
   const buildSearchFilters = (inputs: typeof filterInputs): ApartmentFilters => {
     const query: ApartmentFilters = {}
@@ -438,64 +439,85 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[85vh] w-full px-4 md:px-8 py-6 overflow-hidden relative">
       <div className="w-full max-w-4xl mb-6 space-y-4">
-        <div className="bg-base-100 border border-base-200 rounded-3xl shadow-sm p-6">
-          <div className="flex flex-col md:flex-row gap-4 md:items-end md:justify-between">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
-              <label className="block text-sm font-medium text-base-content/80">
-                Ubicación
-                <input
-                  type="text"
-                  value={filterInputs.ubication}
-                  onChange={(e) => { handleFilterChange('ubication', e.target.value); }}
-                  placeholder="Ciudad, barrio..."
-                  className="input input-bordered input-sm w-full mt-2"
-                />
-              </label>
-              <label className="block text-sm font-medium text-base-content/80">
-                Precio mínimo
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*" 
-                  value={filterInputs.minPrice}
-                  onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, ''); 
-                  handleFilterChange('minPrice', value);
-                  }}
-                  placeholder="ej: 0€"
-                  className="input input-bordered input-sm w-full mt-2"
-                />
-              </label>
-              <label className="block text-sm font-medium text-base-content/80">
-                Precio máximo
-                <input
-                  type="text" 
-                  inputMode="numeric" 
-                  pattern="[0-9]*" 
-                  value={filterInputs.maxPrice}
-                  onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, ''); 
-                  handleFilterChange('maxPrice', value);
-                  }}
-                  placeholder="ej: 999€"
-                  className="input input-bordered input-sm w-full mt-2"
-                />
-              </label>
+        <div className="bg-base-100 border border-base-200 rounded-3xl shadow-sm mb-6">
+          {/* Mobile Filter Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            className="md:hidden w-full flex justify-between items-center font-medium p-4 border-b border-base-200"
+          >
+            <span>Filtros de Búsqueda</span>
+            <svg
+              className={`w-5 h-5 transition-transform ${isFiltersOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Filter Inputs - Hidden on mobile unless isFiltersOpen is true */}
+          <div className={`${isFiltersOpen ? 'block' : 'hidden'} md:block p-4 md:p-6`}>
+            <div className="flex flex-col md:flex-row gap-4 md:items-end md:justify-between">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
+                <label className="block text-sm font-medium text-base-content/80">
+                  Ubicación
+                  <input
+                    type="text"
+                    value={filterInputs.ubication}
+                    onChange={(e) => { handleFilterChange('ubication', e.target.value); }}
+                    placeholder="Ciudad, barrio..."
+                    className="input input-bordered input-sm w-full mt-2"
+                  />
+                </label>
+                <label className="block text-sm font-medium text-base-content/80">
+                  Precio mínimo
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*" 
+                    value={filterInputs.minPrice}
+                    onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, ''); 
+                    handleFilterChange('minPrice', value);
+                    }}
+                    placeholder="ej: 0€"
+                    className="input input-bordered input-sm w-full mt-2"
+                  />
+                </label>
+                <label className="block text-sm font-medium text-base-content/80">
+                  Precio máximo
+                  <input
+                    type="text" 
+                    inputMode="numeric" 
+                    pattern="[0-9]*" 
+                    value={filterInputs.maxPrice}
+                    onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, ''); 
+                    handleFilterChange('maxPrice', value);
+                    }}
+                    placeholder="ej: 999€"
+                    className="input input-bordered input-sm w-full mt-2"
+                  />
+                </label>
+              </div>
+              <div className="flex gap-2 mt-4 md:mt-0 self-start md:self-auto">
+                <button type="button" onClick={applyFilters} className="btn btn-primary btn-sm rounded-full">
+                  Buscar
+                </button>
+                <button type="button" onClick={resetFilters} className="btn btn-outline btn-sm rounded-full">
+                  Limpiar
+                </button>
+              </div>
             </div>
-            <div className="flex gap-2 self-start md:self-auto">
-              <button type="button" onClick={applyFilters} className="btn btn-primary btn-sm rounded-full">
-                Buscar
-              </button>
-              <button type="button" onClick={resetFilters} className="btn btn-outline btn-sm rounded-full">
-                Limpiar
-              </button>
-            </div>
+            
+            {Object.keys(appliedFilters).length > 0 && (
+              <p className="mt-4 text-sm text-base-content/70">
+                Mostrando resultados de búsqueda ampliada.
+              </p>
+            )}
           </div>
-          {Object.keys(appliedFilters).length > 0 && (
-            <p className="mt-4 text-sm text-base-content/70">
-              Mostrando resultados de búsqueda ampliada.
-            </p>
-          )}
         </div>
         {noFilteredResults && (
           <div className="bg-warning/10 border border-warning/30 rounded-3xl p-5 text-warning">

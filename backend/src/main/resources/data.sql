@@ -46,7 +46,7 @@ ON CONFLICT (id) DO NOTHING;
 -- ==========================================
 -- 4. FOTOS
 -- ==========================================
-INSERT INTO apartment_photos (id, apartment_id, orden, portada, public_id, url) VALUES
+INSERT INTO apartment_photos (id, apartment_id, photo_order, cover, public_id, url) VALUES
 -- Apartamento 1
 (1, 1, 1, true,  'rooma/apartments/dgfh1070gkygrbgmrd0w', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773686395/rooma/apartments/dgfh1070gkygrbgmrd0w.jpg'),
 (2, 1, 2, false, 'rooma/apartments/l7zljsfbijp0c3vbgzmc', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773740478/rooma/apartments/l7zljsfbijp0c3vbgzmc.png'),
