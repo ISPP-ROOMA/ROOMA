@@ -79,6 +79,7 @@ export default function PublishFlowContainer() {
           price: parsedPrice,
           bills: billsText,
           ubication: ubicationText,
+          maxTenants: formData.maxTenants,
           state: 'ACTIVE',
         },
         formData.images

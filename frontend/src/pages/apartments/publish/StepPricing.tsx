@@ -46,6 +46,14 @@ export default function StepPricing({ data, updateFields }: Props) {
     updateFields({ includedBills: next })
   }
 
+  const decreaseMaxTenants = () => {
+    updateFields({ maxTenants: Math.max(1, data.maxTenants - 1) })
+  }
+
+  const increaseMaxTenants = () => {
+    updateFields({ maxTenants: Math.min(10, data.maxTenants + 1) })
+  }
+
   return (
     <div className={WRAPPER_CLASS}>
       <div>
@@ -78,6 +86,21 @@ export default function StepPricing({ data, updateFields }: Props) {
             {data.deposit}
           </span>
           <button type="button" onClick={increaseDeposit} className={DEPOSIT_BUTTON_CLASS}>
+            +
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label className="text-sm font-semibold text-base-content block mb-2">Máximo inquilinos</label>
+        <div className="flex items-center gap-4">
+          <button type="button" onClick={decreaseMaxTenants} className={DEPOSIT_BUTTON_CLASS}>
+            −
+          </button>
+          <span className="text-2xl font-bold text-base-content w-8 text-center">
+            {data.maxTenants}
+          </span>
+          <button type="button" onClick={increaseMaxTenants} className={DEPOSIT_BUTTON_CLASS}>
             +
           </button>
         </div>

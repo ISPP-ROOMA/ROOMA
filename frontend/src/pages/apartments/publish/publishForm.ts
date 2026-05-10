@@ -4,6 +4,7 @@ export interface PublishFormData {
   priceInput: string
   deposit: number
   includedBills: string[]
+  maxTenants: number
   images: File[]
   postalCode: string
 }
@@ -22,6 +23,7 @@ export const INITIAL_PUBLISH_FORM_DATA: PublishFormData = {
   neighborhood: '',
   priceInput: '450',
   deposit: 1,
+  maxTenants: 1,
   includedBills: [],
   images: [],
   postalCode: '',

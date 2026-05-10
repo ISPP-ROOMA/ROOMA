@@ -21,6 +21,7 @@ export interface CreateApartmentPayload {
   bills: string
   ubication: string
   state: string
+  maxTenants: number
 }
 
 export const updateApartmentSchema = z.object({
