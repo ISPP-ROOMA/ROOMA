@@ -87,7 +87,7 @@ public class AuthService {
     @Transactional
     public AuthResult login(String email, String password, String deviceId) {
         UserEntity user = userService.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Email not found. Please check and try again or register."));
 
         if (user.getPassword() == null) {
             throw new InvalidPasswordException("This account uses Google Sign-In. Please log in with Google.");
@@ -96,7 +96,7 @@ public class AuthService {
         boolean validPassword = passwordEncoder.matches(password, user.getPassword());
 
         if (!validPassword) {
-            throw new InvalidPasswordException("Invalid password");
+            throw new InvalidPasswordException("Incorrect password. Please try again.");
         }
 
         user.setLastConnectionAt(LocalDateTime.now());

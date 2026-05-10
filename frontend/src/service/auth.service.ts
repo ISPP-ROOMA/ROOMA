@@ -67,9 +67,14 @@ export const registerUser = async (loginData: LoginData): Promise<AuthResponse> 
       }
     }
     return response.data
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(error)
-    return { error: 'Invalid credentials', token: '', role: 'TENANT', userId: 0 }
+    let errorMessage = 'Registration failed'
+    if (typeof error === 'object' && error !== null && 'response' in error) {
+      const axiosError = error as any
+      errorMessage = axiosError.response?.data?.message ?? errorMessage
+    }
+    return { error: errorMessage, token: '', role: 'TENANT', userId: 0 }
   }
 }
 
@@ -88,9 +93,14 @@ export const loginUser = async (loginData: LoginData): Promise<AuthResponse> => 
       }
     }
     return response.data
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(error)
-    return { error: 'Invalid credentials', token: '', role: 'TENANT', userId: 0 }
+    let errorMessage = 'Login failed'
+    if (typeof error === 'object' && error !== null && 'response' in error) {
+      const axiosError = error as any
+      errorMessage = axiosError.response?.data?.message ?? errorMessage
+    }
+    return { error: errorMessage, token: '', role: 'TENANT', userId: 0 }
   }
 }
 
