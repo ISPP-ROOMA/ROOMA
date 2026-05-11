@@ -404,10 +404,10 @@ public class ReviewServiceTest {
         when(userService.findCurrentUser()).thenReturn("landlord@test.com");
         when(userService.findByEmail("landlord@test.com")).thenReturn(Optional.of(currentLandlord));
         when(apartmentMemberService.findLastApartmentsByLandlordIdAndApartmentId(1)).thenReturn(List.of(apartment));
-        when(apartmentMemberService.findPastLandlordMembershipsByUserIdAndApartmentId(1, 100))
-                .thenReturn(List.of(membership(formerTenant, apartment, LocalDate.now().minusDays(20), LocalDate.now().minusDays(2))));
+        when(apartmentService.findLandlordByApartmentId(100)).thenReturn(currentLandlord);
+        when(apartmentMemberService.listMembersInternal(100))
+            .thenReturn(List.of(membership(formerTenant, apartment, LocalDate.now().minusDays(20), LocalDate.now().minusDays(2))));
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(1, 2, 100)).thenReturn(Optional.empty());
-        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(2, 1, 100)).thenReturn(Optional.empty());
 
         List<ReviewService.PendingReviewApartment> result = reviewService.getPendingReviewApartments();
 
@@ -428,13 +428,12 @@ public class ReviewServiceTest {
         when(userService.findCurrentUser()).thenReturn("tenant@test.com");
         when(userService.findByEmail("tenant@test.com")).thenReturn(Optional.of(currentTenant));
         when(apartmentMemberService.findLastApartmentsByTenantIdAndApartmentId(3)).thenReturn(List.of(apartment));
-        when(apartmentMemberService.findByUserIdAndApartmentId(3, 100)).thenReturn(currentMembership);
-        when(apartmentMemberService.findCurrentTenantsByApartmentId(100)).thenReturn(List.of(flatmateMembership));
         when(apartmentService.findLandlordByApartmentId(100)).thenReturn(landlord);
+        when(apartmentMemberService.listMembersInternal(100)).thenReturn(List.of(currentMembership, flatmateMembership));
 
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 1, 100)).thenReturn(Optional.empty());
-        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(1, 3, 100)).thenReturn(Optional.empty());
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 9, 100)).thenReturn(Optional.empty());
+        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(1, 3, 100)).thenReturn(Optional.empty());
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(9, 3, 100)).thenReturn(Optional.empty());
 
         List<ReviewService.PendingReviewApartment> result = reviewService.getPendingReviewApartments();
@@ -446,6 +445,7 @@ public class ReviewServiceTest {
     @Test
     void getPendingReviewApartments_tenantActivePath() {
         UserEntity currentTenant = user(3, Role.TENANT, "tenant@test.com");
+        UserEntity landlord = user(1, Role.LANDLORD, "landlord@test.com");
         UserEntity pastFlatmate = user(8, Role.TENANT, "past@test.com");
         ApartmentEntity apartment = apartment(100);
 
@@ -455,15 +455,17 @@ public class ReviewServiceTest {
         when(userService.findCurrentUser()).thenReturn("tenant@test.com");
         when(userService.findByEmail("tenant@test.com")).thenReturn(Optional.of(currentTenant));
         when(apartmentMemberService.findLastApartmentsByTenantIdAndApartmentId(3)).thenReturn(List.of(apartment));
-        when(apartmentMemberService.findByUserIdAndApartmentId(3, 100)).thenReturn(currentMembership);
-        when(apartmentMemberService.findPastTenantMembershipsByUserIdAndApartmentId(3, 100)).thenReturn(List.of(pastMembership));
+        when(apartmentService.findLandlordByApartmentId(100)).thenReturn(landlord);
+        when(apartmentMemberService.listMembersInternal(100)).thenReturn(List.of(currentMembership, pastMembership));
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 8, 100)).thenReturn(Optional.empty());
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(8, 3, 100)).thenReturn(Optional.empty());
+        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 1, 100)).thenReturn(Optional.empty());
+        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(1, 3, 100)).thenReturn(Optional.empty());
 
         List<ReviewService.PendingReviewApartment> result = reviewService.getPendingReviewApartments();
 
         assertEquals(1, result.size());
-        assertEquals(1, result.get(0).pendingUsers().size());
+        assertEquals(2, result.get(0).pendingUsers().size());
     }
 
     @Test
@@ -475,8 +477,9 @@ public class ReviewServiceTest {
         when(userService.findCurrentUser()).thenReturn("landlord@test.com");
         when(userService.findByEmail("landlord@test.com")).thenReturn(Optional.of(currentLandlord));
         when(apartmentMemberService.findLastApartmentsByLandlordIdAndApartmentId(1)).thenReturn(List.of(apartment));
-        when(apartmentMemberService.findPastLandlordMembershipsByUserIdAndApartmentId(1, 100))
-                .thenReturn(List.of(membership(formerTenant, apartment, LocalDate.now().minusDays(20), LocalDate.now().minusDays(2))));
+        when(apartmentService.findLandlordByApartmentId(100)).thenReturn(currentLandlord);
+        when(apartmentMemberService.listMembersInternal(100))
+            .thenReturn(List.of(membership(formerTenant, apartment, LocalDate.now().minusDays(20), LocalDate.now().minusDays(2))));
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(1, 2, 100)).thenReturn(Optional.of(review(77, 1, 2, 100)));
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(2, 1, 100)).thenReturn(Optional.of(review(78, 2, 1, 100)));
 

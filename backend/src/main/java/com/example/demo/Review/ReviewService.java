@@ -3,7 +3,9 @@ package com.example.demo.Review;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -251,16 +253,7 @@ public class ReviewService {
                 .orElseThrow(() -> new ResourceNotFoundException("Current user not found"));
         Integer currentUserId = currentUser.getId();
 
-        java.util.Set<UserEntity> candidates = new java.util.LinkedHashSet<>();
-
-        UserEntity landlord = apartmentService.findLandlordByApartmentId(apartmentId);
-        candidates.add(landlord);
-
-        List<ApartmentMemberEntity> members = apartmentMemberService.listMembersInternal(apartmentId);
-        for (ApartmentMemberEntity m : members) {
-            candidates.add(m.getUser());
-        }
-
+        List<UserEntity> candidates = getReviewCandidates(apartmentId);
         candidates.removeIf(u -> u.getId().equals(currentUserId));
 
         List<UserEntity> reviewable = new java.util.ArrayList<>();
@@ -288,25 +281,8 @@ public class ReviewService {
         }
         List<PendingReviewApartment> result = new ArrayList<>();
         for (ApartmentEntity apartment : apartments) {
-            List<UserEntity> userMembers = new ArrayList<>();
-            
-            if(currentUser.getRole().equals(Role.LANDLORD)) {
-                List<ApartmentMemberEntity> memberships = apartmentMemberService.findPastLandlordMembershipsByUserIdAndApartmentId(currentUserId, apartment.getId());
-                userMembers = new ArrayList<>(memberships.stream().map(ApartmentMemberEntity::getUser).toList());
-            } else {
-                ApartmentMemberEntity currentMembership = apartmentMemberService.findByUserIdAndApartmentId(currentUserId, apartment.getId());
-                boolean isActive = currentMembership.getEndDate() == null || currentMembership.getEndDate().isAfter(LocalDate.now());
-                
-                if (isActive) {
-                    List<ApartmentMemberEntity> memberships = apartmentMemberService.findPastTenantMembershipsByUserIdAndApartmentId(currentUserId, apartment.getId());
-                    userMembers.addAll(memberships.stream().map(ApartmentMemberEntity::getUser).toList());
-                } else {
-                    List<ApartmentMemberEntity> currentMembers = apartmentMemberService.findCurrentTenantsByApartmentId(apartment.getId());
-                    userMembers.add(apartmentService.findLandlordByApartmentId(apartment.getId()));
-                    userMembers.addAll(currentMembers.stream().map(ApartmentMemberEntity::getUser).toList());
-                }
-                userMembers.removeIf(u -> u.getId().equals(currentUserId));
-            }
+            List<UserEntity> userMembers = getReviewCandidates(apartment.getId());
+            userMembers.removeIf(u -> u.getId().equals(currentUserId));
 
             List<PendingUserInfo> pendingUsers = new ArrayList<>();
             for (UserEntity candidate : userMembers) {
@@ -325,6 +301,25 @@ public class ReviewService {
             }
         }
         return result;
+    }
+
+    private List<UserEntity> getReviewCandidates(Integer apartmentId) {
+        Map<Integer, UserEntity> candidates = new LinkedHashMap<>();
+
+        UserEntity landlord = apartmentService.findLandlordByApartmentId(apartmentId);
+        if (landlord != null && landlord.getId() != null) {
+            candidates.putIfAbsent(landlord.getId(), landlord);
+        }
+
+        List<ApartmentMemberEntity> members = apartmentMemberService.listMembersInternal(apartmentId);
+        for (ApartmentMemberEntity member : members) {
+            UserEntity user = member.getUser();
+            if (user != null && user.getId() != null) {
+                candidates.putIfAbsent(user.getId(), user);
+            }
+        }
+
+        return new ArrayList<>(candidates.values());
     }
 
     public record PendingUserInfo(UserEntity user, boolean hasReviewedYou, boolean youReviewedThem) {}
