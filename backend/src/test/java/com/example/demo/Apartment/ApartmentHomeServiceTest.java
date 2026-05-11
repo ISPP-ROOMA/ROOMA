@@ -80,8 +80,8 @@ public class ApartmentHomeServiceTest {
         photo.setId(50);
         photo.setUrl("https://img/apartment.jpg");
         photo.setPublicId("photo-50");
-        photo.setOrden(1);
-        photo.setPortada(true);
+        photo.setPhoto_order(1);
+        photo.setCover(true);
 
         BillingSummaryDTO billing = new BillingSummaryDTO(2, BigDecimal.valueOf(400), LocalDate.now().plusDays(5), "Rent");
 

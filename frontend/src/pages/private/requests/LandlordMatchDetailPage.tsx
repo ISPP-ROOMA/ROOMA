@@ -1,17 +1,15 @@
-import { Loader2, MapPin, Star } from 'lucide-react'
 import axios from 'axios'
+import { Loader2, MapPin, Star } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useToast } from '../../../hooks/useToast'
 import {
+  cancelApartmentMatch,
   getLandlordMatchDetails,
   sendInvitationToMatch,
   type ApartmentMatchTenantDetailsDTO,
 } from '../../../service/apartment.service'
-import {
-  getReceivedReviewsByUser,
-  type ReviewDTO,
-} from '../../../service/review.service'
-import { useToast } from '../../../hooks/useToast'
+import { getReceivedReviewsByUser, type ReviewDTO } from '../../../service/review.service'
 
 const FALLBACK_COVER =
   'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80'
@@ -112,6 +110,26 @@ export default function LandlordMatchDetailPage() {
     }
   }
 
+  const handleCancelMatch = async () => {
+    if (!details) return
+
+    setInviteLoading(true)
+    try {
+      await cancelApartmentMatch(details.id)
+      showToast('Solicitud cancelada correctamente.', 'success')
+      navigate('/mis-solicitudes/recibidas')
+    } catch (err) {
+      console.error('Error cancelling match', err)
+      const message = axios.isAxiosError(err)
+        ? ((err.response?.data as { message?: string } | undefined)?.message ??
+          'No se pudo cancelar la solicitud. Intentalo de nuevo.')
+        : 'No se pudo cancelar la solicitud. Intentalo de nuevo.'
+      showToast(message, 'error')
+    } finally {
+      setInviteLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div
@@ -174,10 +192,7 @@ export default function LandlordMatchDetailPage() {
   const hasReviews = reviews.length > 0
 
   return (
-    <div
-      data-theme="light"
-      className="mx-auto w-full max-w-2xl min-h-dvh text-[#050505] pb-10"
-    >
+    <div data-theme="light" className="mx-auto w-full max-w-2xl min-h-dvh text-[#050505] pb-10">
       <header className="sticky top-0 z-10 px-4 sm:px-8 pt-5 pb-4">
         <div className="flex items-center justify-between">
           <button
@@ -321,7 +336,9 @@ export default function LandlordMatchDetailPage() {
                               <p className="text-sm font-semibold text-[#050505] line-clamp-1">
                                 {reviewerName}
                               </p>
-                              <span className="text-xs text-[#050505]/60 shrink-0">{reviewDate}</span>
+                              <span className="text-xs text-[#050505]/60 shrink-0">
+                                {reviewDate}
+                              </span>
                             </div>
 
                             <div className="mt-2 flex items-center gap-1 text-[#e8a000]">
@@ -329,12 +346,16 @@ export default function LandlordMatchDetailPage() {
                                 <Star
                                   key={`${review.id}-star-${index}`}
                                   size={14}
-                                  className={index < review.rating ? 'fill-current' : 'text-[#DDDBCB]'}
+                                  className={
+                                    index < review.rating ? 'fill-current' : 'text-[#DDDBCB]'
+                                  }
                                 />
                               ))}
                             </div>
 
-                            <p className="mt-2 text-sm text-[#050505]/85 leading-relaxed">{review.comment}</p>
+                            <p className="mt-2 text-sm text-[#050505]/85 leading-relaxed">
+                              {review.comment}
+                            </p>
                           </article>
                         )
                       })}
@@ -358,6 +379,18 @@ export default function LandlordMatchDetailPage() {
                 className="w-full rounded-xl border border-[#DDDBCB] bg-white px-4 py-3 text-sm font-semibold text-[#050505] transition-colors hover:bg-[#F5F1E3]"
               >
                 Gestionar Visita (Próximamente...)
+              </button>
+
+              <button
+                type="button"
+                className="w-full rounded-xl border border-[#c53030] bg-[#fff5f5] px-4 py-3 text-sm font-semibold text-[#b42318] transition-colors hover:bg-[#ffe3e3] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => void handleCancelMatch()}
+                disabled={inviteLoading}
+              >
+                <span className="flex items-center justify-center gap-2">
+                  {inviteLoading && <Loader2 size={15} className="animate-spin" />}
+                  Cancelar solicitud
+                </span>
               </button>
 
               <button

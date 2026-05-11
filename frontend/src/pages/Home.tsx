@@ -6,8 +6,71 @@ import ApartmentDetailModal from '../components/ApartmentDetailModal'
 import SwipeableCard from '../components/SwipeableCard'
 import { useToast } from '../hooks/useToast'
 import type { ApartmentDTO } from '../service/apartment.service'
-import { getDeckForCandidate, swipeApartment } from '../service/apartment.service'
+import { getDeckForCandidate, searchApartments, swipeApartment } from '../service/apartment.service'
 import { useAuthStore } from '../store/authStore'
+
+interface ApartmentFilters {
+  ubication?: string
+  minPrice?: number
+  maxPrice?: number
+}
+
+interface PendingSwipe {
+  apartmentId: number
+  interest: boolean
+  timestamp: number
+}
+
+const getFromStorage = <T,>(key: string): T | null => {
+  try {
+    const item = localStorage.getItem(key)
+    return item ? JSON.parse(item) : null
+  } catch (error) {
+    console.error(`Error parsing localStorage key "${key}":`, error)
+    return null
+  }
+}
+
+const saveToStorage = <T,>(key: string, value: T): void => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch (error) {
+    console.error(`Error saving to localStorage key "${key}":`, error)
+  }
+}
+
+const getCachedApartments = (): ApartmentDTO[] => {
+  return getFromStorage<ApartmentDTO[]>('cached_apartments') ?? []
+}
+
+const setCachedApartments = (apartments: ApartmentDTO[]): void => {
+  saveToStorage('cached_apartments', apartments)
+}
+
+const getPendingSwipes = (): PendingSwipe[] => {
+  return getFromStorage<PendingSwipe[]>('pending_swipes') ?? []
+}
+
+const setPendingSwipes = (swipes: PendingSwipe[]): void => {
+  saveToStorage('pending_swipes', swipes)
+}
+
+const addPendingSwipe = (apartmentId: number, interest: boolean): void => {
+  const pending = getPendingSwipes()
+  const newSwipe: PendingSwipe = { apartmentId, interest, timestamp: Date.now() }
+  pending.push(newSwipe)
+  setPendingSwipes(pending)
+}
+
+const removePendingSwipe = (apartmentId: number): void => {
+  const pending = getPendingSwipes()
+  setPendingSwipes(pending.filter((s) => s.apartmentId !== apartmentId))
+}
+
+const filterOutPendingApartments = (apartments: ApartmentDTO[]): ApartmentDTO[] => {
+  const pendingIds = new Set(getPendingSwipes().map((s) => s.apartmentId))
+  return apartments.filter((apt) => !pendingIds.has(apt.id))
+}
 
 function HeroWrapper({ children }: { children: React.ReactNode }) {
   return (
@@ -30,6 +93,63 @@ export default function Home() {
   const [apartments, setApartments] = useState<ApartmentDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedApartment, setSelectedApartment] = useState<ApartmentDTO | null>(null)
+  const [filterInputs, setFilterInputs] = useState({
+    ubication: '',
+    minPrice: '',
+    maxPrice: '',
+  })
+  const [appliedFilters, setAppliedFilters] = useState<ApartmentFilters>({})
+  const [noFilteredResults, setNoFilteredResults] = useState(false)
+  const [suggestedFilters, setSuggestedFilters] = useState<ApartmentFilters | null>(null)
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+
+  const buildSearchFilters = (inputs: typeof filterInputs): ApartmentFilters => {
+    const query: ApartmentFilters = {}
+    if (inputs.ubication.trim()) query.ubication = inputs.ubication.trim()
+    if (inputs.minPrice !== '') query.minPrice = Number(inputs.minPrice)
+    if (inputs.maxPrice !== '') query.maxPrice = Number(inputs.maxPrice)
+    return query
+  }
+
+  const computeRelaxedFilters = (filters: ApartmentFilters): ApartmentFilters | null => {
+    const hasFilter = !!(
+      filters.ubication ||
+      filters.minPrice !== undefined ||
+      filters.maxPrice !== undefined
+    )
+    if (!hasFilter) return null
+
+    const relaxed: ApartmentFilters = {}
+
+    if (filters.ubication) {
+      relaxed.ubication = undefined
+    }
+
+    if (filters.minPrice !== undefined) {
+      relaxed.minPrice = Math.max(0, filters.minPrice - 200)
+    }
+
+    if (filters.maxPrice !== undefined) {
+      relaxed.maxPrice = filters.maxPrice + 200
+    }
+
+    return relaxed
+  }
+
+  const getSuggestionDescription = (filters: ApartmentFilters, relaxed: ApartmentFilters | null) => {
+    if (!relaxed) return ''
+    const changes: string[] = []
+    if (filters.ubication && relaxed.ubication === undefined) {
+      changes.push('eliminar la ubicación')
+    }
+    if (filters.minPrice !== undefined && relaxed.minPrice !== undefined) {
+      changes.push(`bajar el precio mínimo a ${relaxed.minPrice}€`)
+    }
+    if (filters.maxPrice !== undefined && relaxed.maxPrice !== undefined) {
+      changes.push(`subir el precio máximo a ${relaxed.maxPrice}€`)
+    }
+    return changes.length > 0 ? `Prueba a ${changes.join(', ')}.` : 'Prueba a ampliar los filtros.'
+  }
 
   useEffect(() => {
     if (!token || role !== 'TENANT' || !userId) {
@@ -37,36 +157,186 @@ export default function Home() {
       return
     }
 
-    const fetchDeck = async () => {
+    const fetchDeckOrFiltered = async () => {
       try {
         setLoading(true)
-        const data = await getDeckForCandidate(Number(userId))
-        setApartments(data)
-      } catch (error) {
-        console.error('Failed to load deck', error)
+        setNoFilteredResults(false)
+        setSuggestedFilters(null)
+
+        let data: ApartmentDTO[] = []
+
+        if (Object.keys(appliedFilters).length > 0) {
+          data = await searchApartments(
+            appliedFilters.ubication,
+            appliedFilters.minPrice,
+            appliedFilters.maxPrice
+          )
+        } else {
+          data = await getDeckForCandidate(Number(userId))
+          setCachedApartments(data)
+        }
+
+        const filteredData = filterOutPendingApartments(data)
+        setApartments(filteredData)
+
+        if (filteredData.length === 0 && Object.keys(appliedFilters).length > 0) {
+          setNoFilteredResults(true)
+          setSuggestedFilters(computeRelaxedFilters(appliedFilters))
+        }
+      } catch (error: unknown) {
+        console.error('Failed to load apartments', error)
+
+        if (
+          Object.keys(appliedFilters).length === 0 &&
+          (!navigator.onLine || (error as { message?: string }).message === 'Network Error')
+        ) {
+          const cached = getCachedApartments()
+          const filteredCached = filterOutPendingApartments(cached)
+          setApartments(filteredCached)
+          console.log('Loaded apartments from cache (offline mode)')
+        }
       } finally {
         setLoading(false)
       }
     }
 
-    fetchDeck()
-  }, [token, role, userId])
+    void fetchDeckOrFiltered()
+  }, [token, role, userId, appliedFilters])
+
+  useEffect(() => {
+    const syncPendingSwipes = async () => {
+      const pending = getPendingSwipes()
+
+      if (pending.length === 0) {
+        return
+      }
+
+      console.log(`Sincronizando ${pending.length} swipes pendientes...`)
+      const successfulSwipes: number[] = []
+
+      for (const swipe of pending) {
+        try {
+          await swipeApartment(swipe.apartmentId, swipe.interest)
+          successfulSwipes.push(swipe.apartmentId)
+          console.log(`Swipe sincronizado: apartmentId=${swipe.apartmentId}, interest=${swipe.interest}`)
+        } catch (error: unknown) {
+
+          const err = error as { 
+            response?: { status: number }, 
+            message?: string 
+          };
+
+          const status = err.response?.status
+
+          if (status === 409) {
+            console.warn(`Conflicto detectado para apartmentId=${swipe.apartmentId}. Considerado sincronizado.`)
+            successfulSwipes.push(swipe.apartmentId)
+            continue
+          }
+
+          if (!navigator.onLine || err.message === 'Network Error') {
+            console.warn(`Sin conexión. Deteniendo sincronización.`)
+            break
+          }
+
+          console.error(`Error sincronizando swipe ${swipe.apartmentId}:`, error)
+        }
+      }
+
+      
+      if (successfulSwipes.length > 0) {
+        const remaining = pending.filter((s) => !successfulSwipes.includes(s.apartmentId))
+        setPendingSwipes(remaining)
+        console.log(`Cola de swipes limpiada. Pendientes: ${remaining.length}`)
+
+        if (remaining.length === 0) {
+          showToast('¡Todos los swipes se sincronizaron correctamente!', 'success')
+        }
+      }
+    }
+
+    const handleOnlineStatus = () => {
+      void syncPendingSwipes(); 
+    };
+
+    handleOnlineStatus();
+
+
+
+    window.addEventListener('online', handleOnlineStatus)
+
+    return () => {
+      window.removeEventListener('online', handleOnlineStatus)
+    }
+  }, [showToast])
+
+  const handleFilterChange = (
+    field: keyof typeof filterInputs,
+    value: string
+  ) => {
+    setFilterInputs((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const applyFilters = () => {
+    setAppliedFilters(buildSearchFilters(filterInputs))
+  }
+
+  const resetFilters = () => {
+    setFilterInputs({ ubication: '', minPrice: '', maxPrice: ''})
+    setAppliedFilters({})
+    setNoFilteredResults(false)
+    setSuggestedFilters(null)
+  }
+
+  const expandFilters = () => {
+    if (!suggestedFilters) return
+    setFilterInputs({
+      ubication: suggestedFilters.ubication ?? '',
+      minPrice: suggestedFilters.minPrice !== undefined ? String(suggestedFilters.minPrice) : '',
+      maxPrice: suggestedFilters.maxPrice !== undefined ? String(suggestedFilters.maxPrice) : '',
+    })
+    setAppliedFilters(suggestedFilters)
+  }
 
   const handleSwipe = async (apartmentId: number, interest: boolean) => {
     setApartments((prev) => prev.filter((apt) => apt.id !== apartmentId))
     try {
       await swipeApartment(apartmentId, interest)
+
       if (interest) {
         showToast('¡Solicitud enviada correctamente!', 'success')
       }
+      removePendingSwipe(apartmentId)
     } catch (error: unknown) {
-      const axiosError = error as { response?: { status: number; data: unknown } }
-      console.error(
-        'Failed to register swipe',
-        axiosError?.response?.status,
-        axiosError?.response?.data
-      )
-      showToast(`Error al registrar el swipe (${axiosError?.response?.status ?? 'red'})`, 'error')
+
+      const err = error as { 
+            response?: { status: number;
+            data?: { message?: string };}, 
+            message?: string 
+          };
+      const response = err.response;
+  
+      if (!response) {
+        addPendingSwipe(apartmentId, interest);
+        showToast('Modo offline: El swipe se sincronizará cuando vuelvas.', 'warning');
+        console.log('Swipe guardado en cola offline (No response):', { apartmentId, interest });
+        return; 
+      }
+
+      const status = response.status;
+      const backendMessage = response.data?.message;
+
+      if (status === 409) {
+        console.warn('Swipe duplicado detectado:', backendMessage);
+        showToast('Ya has solicitado interés anteriormente.', 'warning');
+        removePendingSwipe(apartmentId);
+        return;
+      }
+
+      showToast(
+        `Error ${status}: ${status === 404 ? 'No encontrado' : 'Fallo en el servidor'}`,
+        'error'
+      );
     }
   }
 
@@ -168,6 +438,105 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[85vh] w-full px-4 md:px-8 py-6 overflow-hidden relative">
+      <div className="w-full max-w-4xl mb-6 space-y-4">
+        <div className="bg-base-100 border border-base-200 rounded-3xl shadow-sm mb-6">
+          {/* Mobile Filter Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            className="md:hidden w-full flex justify-between items-center font-medium p-4 border-b border-base-200"
+          >
+            <span>Filtros de Búsqueda</span>
+            <svg
+              className={`w-5 h-5 transition-transform ${isFiltersOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Filter Inputs - Hidden on mobile unless isFiltersOpen is true */}
+          <div className={`${isFiltersOpen ? 'block' : 'hidden'} md:block p-4 md:p-6`}>
+            <div className="flex flex-col md:flex-row gap-4 md:items-end md:justify-between">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
+                <label className="block text-sm font-medium text-base-content/80">
+                  Ubicación
+                  <input
+                    type="text"
+                    value={filterInputs.ubication}
+                    onChange={(e) => { handleFilterChange('ubication', e.target.value); }}
+                    placeholder="Ciudad, barrio..."
+                    className="input input-bordered input-sm w-full mt-2"
+                  />
+                </label>
+                <label className="block text-sm font-medium text-base-content/80">
+                  Precio mínimo
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*" 
+                    value={filterInputs.minPrice}
+                    onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, ''); 
+                    handleFilterChange('minPrice', value);
+                    }}
+                    placeholder="ej: 0€"
+                    className="input input-bordered input-sm w-full mt-2"
+                  />
+                </label>
+                <label className="block text-sm font-medium text-base-content/80">
+                  Precio máximo
+                  <input
+                    type="text" 
+                    inputMode="numeric" 
+                    pattern="[0-9]*" 
+                    value={filterInputs.maxPrice}
+                    onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, ''); 
+                    handleFilterChange('maxPrice', value);
+                    }}
+                    placeholder="ej: 999€"
+                    className="input input-bordered input-sm w-full mt-2"
+                  />
+                </label>
+              </div>
+              <div className="flex gap-2 mt-4 md:mt-0 self-start md:self-auto">
+                <button type="button" onClick={applyFilters} className="btn btn-primary btn-sm rounded-full">
+                  Buscar
+                </button>
+                <button type="button" onClick={resetFilters} className="btn btn-outline btn-sm rounded-full">
+                  Limpiar
+                </button>
+              </div>
+            </div>
+            
+            {Object.keys(appliedFilters).length > 0 && (
+              <p className="mt-4 text-sm text-base-content/70">
+                Mostrando resultados de búsqueda ampliada.
+              </p>
+            )}
+          </div>
+        </div>
+        {noFilteredResults && (
+          <div className="bg-warning/10 border border-warning/30 rounded-3xl p-5 text-warning">
+            <p className="font-semibold">No hay viviendas disponibles con estos filtros.</p>
+            <p className="mt-2 text-sm text-base-content/70">
+              {getSuggestionDescription(appliedFilters, suggestedFilters)}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button type="button" onClick={expandFilters} className="btn btn-outline btn-sm rounded-full">
+                Ampliar filtros
+              </button>
+              <button type="button" onClick={resetFilters} className="btn btn-outline btn-sm rounded-full">
+                Ver todas las viviendas
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {loading ? (
         <motion.div
           initial={{ opacity: 0 }}
@@ -176,6 +545,18 @@ export default function Home() {
         >
           <Loader2 className="animate-spin" size={48} />
           <p className="font-medium animate-pulse text-lg">Buscando tus opciones...</p>
+        </motion.div>
+      ) : noFilteredResults ? (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center p-10 bg-base-100 rounded-3xl shadow-lg w-full max-w-sm border border-base-200"
+        >
+          <div className="text-6xl mb-6">🔎</div>
+          <h2 className="text-2xl font-bold mb-3">No se encontraron viviendas</h2>
+          <p className="text-base-content/60 text-sm leading-relaxed">
+            Ajusta o amplía tus filtros para ver más opciones.
+          </p>
         </motion.div>
       ) : apartments.length === 0 ? (
         <motion.div

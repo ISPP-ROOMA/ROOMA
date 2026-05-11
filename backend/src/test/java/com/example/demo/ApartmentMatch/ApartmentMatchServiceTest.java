@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -36,6 +38,7 @@ import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.MemberApartment.ApartmentMemberEntity;
 import com.example.demo.MemberApartment.ApartmentMemberService;
 import com.example.demo.MemberApartment.MemberRole;
+import com.example.demo.Notification.EventType;
 import com.example.demo.Notification.NotificationService;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
@@ -414,6 +417,11 @@ public class ApartmentMatchServiceTest {
         assertEquals(MatchStatus.MATCH, result.getMatchStatus());
         assertEquals(Boolean.TRUE, result.getLandlordInterest());
         verify(apartmentMatchRepository).save(match);
+        verify(notificationService).createNotification(
+                eq(EventType.MATCH),
+                anyString(),
+                eq("/mis-solicitudes/enviadas"),
+                eq(match.getCandidate()));
     }
 
         @ParameterizedTest(name = "processLandlordDecision REJECT from {0} sets REJECTED")
@@ -495,6 +503,11 @@ public class ApartmentMatchServiceTest {
 
         assertEquals(MatchStatus.INVITED, result.getMatchStatus());
         verify(apartmentMatchRepository).save(match);
+        verify(notificationService).createNotification(
+                eq(EventType.INVITATION_SENT),
+                contains(landlord.getEmail()),
+                eq("/mis-solicitudes/recibidas/"),
+                eq(match.getCandidate()));
     }
 
     @Test
@@ -1803,6 +1816,7 @@ public class ApartmentMatchServiceTest {
         apartment.setPrice(500.0);
         apartment.setBills("wifi");
         apartment.setUbication("Madrid");
+        apartment.setMaxTenants(4);
         return apartment;
     }
 

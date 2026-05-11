@@ -108,7 +108,7 @@ public class ApartmentServiceTest {
     @Test
     @DisplayName("createWithImages converts dto, saves and delegates photo save with replace false")
     public void createWithImages_SavesAndDelegatesPhotoSave() {
-        CreateApartment dto = new CreateApartment("title", "desc", 500.0, "wifi", "Madrid", "ACTIVE");
+        CreateApartment dto = new CreateApartment("title", "desc", 500.0, "wifi", "Madrid", "ACTIVE", 4);
         UserEntity landlord = user(11, "owner@test.com", Role.LANDLORD);
         ApartmentEntity persisted = baseApartment();
         persisted.setId(100);
@@ -187,6 +187,7 @@ public class ApartmentServiceTest {
                 "new bills",
                 "Barcelona",
                 ApartmentState.MATCHING,
+                5,
                 null
         );
 
@@ -408,6 +409,7 @@ public class ApartmentServiceTest {
         apartment.setBills("bills");
         apartment.setUbication("Madrid");
         apartment.setState(ApartmentState.ACTIVE);
+        apartment.setMaxTenants(4);
         return apartment;
     }
 

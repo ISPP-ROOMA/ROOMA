@@ -9,34 +9,34 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.demo.MemberApartment.DTOs.ReglaViviendaDTO;
-import com.example.demo.MemberApartment.DTOs.UpdateReglaVivienda;
+import com.example.demo.MemberApartment.DTOs.ApartmentRuleDTO;
+import com.example.demo.MemberApartment.DTOs.UpdateApartmentRule;
 
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/apartments/{apartmentId}/rules")
-public class ReglaViviendaController {
+public class ApartmentRuleController {
 
-    private final ReglaViviendaService reglaViviendaService;
+    private final ApartmentRuleService apartmentRuleService;
 
-    public ReglaViviendaController(ReglaViviendaService reglaViviendaService) {
-        this.reglaViviendaService = reglaViviendaService;
+    public ApartmentRuleController(ApartmentRuleService apartmentRuleService) {
+        this.apartmentRuleService = apartmentRuleService;
     }
 
     @GetMapping
     @PreAuthorize("hasRole('LANDLORD')")
-    public ResponseEntity<ReglaViviendaDTO> getRules(@PathVariable Integer apartmentId) {
-        ReglaViviendaDTO dto = reglaViviendaService.getRules(apartmentId);
+    public ResponseEntity<ApartmentRuleDTO> getRules(@PathVariable Integer apartmentId) {
+        ApartmentRuleDTO dto = apartmentRuleService.getRules(apartmentId);
         return ResponseEntity.ok(dto);
     }
 
     @PutMapping
     @PreAuthorize("hasRole('LANDLORD')")
-    public ResponseEntity<ReglaViviendaDTO> updateRules(
+    public ResponseEntity<ApartmentRuleDTO> updateRules(
             @PathVariable Integer apartmentId,
-            @Valid @RequestBody UpdateReglaVivienda request) {
-        ReglaViviendaDTO dto = reglaViviendaService.updateRules(apartmentId, request);
+            @Valid @RequestBody UpdateApartmentRule request) {
+        ApartmentRuleDTO dto = apartmentRuleService.updateRules(apartmentId, request);
         return ResponseEntity.ok(dto);
     }
 }

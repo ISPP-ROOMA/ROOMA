@@ -149,7 +149,7 @@ public class ApartmentControllerTest {
                                 "data",
                                 "data",
                                 MediaType.APPLICATION_JSON_VALUE,
-                                "{\"title\":\"Flat C\",\"description\":\"Desc\",\"price\":700.0,\"bills\":\"wifi\",\"ubication\":\"Madrid\",\"state\":\"ACTIVE\"}"
+                                "{\"title\":\"Flat C\",\"description\":\"Desc\",\"price\":700.0,\"bills\":\"wifi\",\"ubication\":\"Madrid\",\"state\":\"ACTIVE\",\"maxTenants\":1}"
                                         .getBytes(StandardCharsets.UTF_8)
                         )))
                 .andExpect(status().isForbidden());
@@ -261,7 +261,7 @@ public class ApartmentControllerTest {
                                 "data",
                                 "data",
                                 MediaType.APPLICATION_JSON_VALUE,
-                                "{\"title\":\"Flat A\",\"description\":\"Desc\",\"price\":700.0,\"bills\":\"wifi\",\"ubication\":\"Madrid\",\"state\":\"ACTIVE\"}"
+                                "{\"title\":\"Flat A\",\"description\":\"Desc\",\"price\":700.0,\"bills\":\"wifi\",\"ubication\":\"Madrid\",\"state\":\"ACTIVE\",\"maxTenants\":1}"
                                         .getBytes(StandardCharsets.UTF_8)
                         )))
                 .andExpect(status().isCreated())
@@ -282,7 +282,8 @@ public class ApartmentControllerTest {
               "bills": "incluido",
               "ubication": "Madrid",
               "state": "ACTIVE",
-              "idealTenantProfile": "Perfil"
+              "idealTenantProfile": "Perfil",
+              "maxTenants": 2
             }
             """;
 
@@ -304,7 +305,8 @@ public class ApartmentControllerTest {
               "bills": "incluido",
               "ubication": "Madrid",
               "state": "ACTIVE",
-              "idealTenantProfile": "Perfil"
+              "idealTenantProfile": "Perfil",
+              "maxTenants": 2
             }
             """;
 
@@ -334,7 +336,8 @@ public class ApartmentControllerTest {
               "bills": "incluido",
               "ubication": "Sevilla",
               "state": "ACTIVE",
-              "idealTenantProfile": "Perfil ideal"
+              "idealTenantProfile": "Perfil ideal",
+              "maxTenants": 2
             }
             """;
 
@@ -363,7 +366,8 @@ public class ApartmentControllerTest {
               "bills": "incluido",
               "ubication": "Madrid",
               "state": "ACTIVE",
-              "idealTenantProfile": "Perfil ideal"
+              "idealTenantProfile": "Perfil ideal",
+              "maxTenants": 2
             }
             """;
 
@@ -386,7 +390,8 @@ public class ApartmentControllerTest {
               "price": -10.0,
               "bills": "incluido",
               "ubication": "",
-              "state": "ACTIVE"
+              "state": "ACTIVE",
+              "maxTenants": 2
             }
             """;
 
@@ -413,7 +418,8 @@ public class ApartmentControllerTest {
               "bills": "incluido",
               "ubication": "Madrid",
               "state": "ACTIVE",
-              "idealTenantProfile": "Perfil ideal"
+              "idealTenantProfile": "Perfil ideal",
+              "maxTenants": 2
             }
             """;
 

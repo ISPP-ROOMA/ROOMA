@@ -19,7 +19,7 @@ import { createPortal } from 'react-dom'
 import type { ApartmentDTO, ApartmentPhotoDTO, UserDTO } from '../service/apartment.service'
 import { getApartmentPhotos } from '../service/apartment.service'
 import { api } from '../service/api'
-import { useAuthStore } from '../store/authStore'
+//import { useAuthStore } from '../store/authStore'
 
 interface ApartmentDetailModalProps {
   apartment: ApartmentDTO
@@ -340,7 +340,7 @@ export default function ApartmentDetailModal({
   showBackButton = false,
   onBack,
 }: ApartmentDetailModalProps) {
-  const { token } = useAuthStore()
+  //const { token } = useAuthStore()
   const [roommates, setRoommates] = useState<UserDTO[]>([])
   const [photos, setPhotos] = useState<ApartmentPhotoDTO[]>([])
   const [currentPhoto, setCurrentPhoto] = useState(0)

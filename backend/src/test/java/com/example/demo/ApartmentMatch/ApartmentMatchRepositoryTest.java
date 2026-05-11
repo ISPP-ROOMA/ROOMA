@@ -160,6 +160,7 @@ public class ApartmentMatchRepositoryTest {
         apartment.setBills("wifi");
         apartment.setUbication("Madrid");
         apartment.setState(state);
+        apartment.setMaxTenants(2);
         apartment.setUser(owner);
         entityManager.persist(apartment);
         entityManager.flush();

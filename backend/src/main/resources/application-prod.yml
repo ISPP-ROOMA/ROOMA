@@ -37,6 +37,13 @@ jwt:
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS}
 
+app:
+  cookie:
+    refresh:
+      secure: ${REFRESH_COOKIE_SECURE:true}
+      same-site: ${REFRESH_COOKIE_SAME_SITE:None}
+      domain: ${REFRESH_COOKIE_DOMAIN:}
+
 cloudinary:
   cloud_name: ${CLOUDINARY_CLOUD_NAME}
   api_key: ${CLOUDINARY_API_KEY}
