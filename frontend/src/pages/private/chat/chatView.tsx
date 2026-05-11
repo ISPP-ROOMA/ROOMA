@@ -383,20 +383,28 @@ export default function ChatScreen() {
               </div>
             ) : (
               <>
-                <input
-                  type="text"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSendMessage()
-                  }}
-                  placeholder="Escribe un mensaje..."
-                  className="flex-1 h-11 rounded-xl border border-[#DDDBCB] bg-[#F5F1E3] px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#008080]/10 transition-shadow"
-                  disabled={sendingFile}
-                />
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    value={inputValue}
+                    maxLength={500}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSendMessage()
+                    }}
+                    placeholder="Escribe un mensaje..."
+                    className="w-full h-11 rounded-xl border border-[#DDDBCB] bg-[#F5F1E3] px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#008080]/10 transition-shadow"
+                    disabled={sendingFile}
+                  />
+                  {inputValue.length > 450 && (
+                    <span className={`absolute right-2 bottom-[-18px] text-[10px] font-medium ${inputValue.length >= 500 ? 'text-red-500' : 'text-[#050505]/40'}`}>
+                      {inputValue.length}/500
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={handleSendMessage}
-                  disabled={!inputValue.trim() || !connected || sendingFile}
+                  disabled={!inputValue.trim() || !connected || sendingFile || inputValue.length > 500}
                   className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#008080] text-white shadow-md active:scale-95 disabled:opacity-50 transition-all"
                 >
                   <Send size={18} />

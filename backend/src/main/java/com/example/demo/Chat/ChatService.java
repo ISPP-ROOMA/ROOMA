@@ -198,6 +198,9 @@ public class ChatService {
         String description = content == null || content.isBlank()
             ? senderName + " te ha enviado un mensaje"
             : senderName + ": " + content;
+        if (description.length() > 400) {
+            description = description.substring(0, 400) + "...";
+        }
 
         notificationService.createNotification(
             EventType.CHAT,
@@ -216,6 +219,9 @@ public class ChatService {
         String description = content == null || content.isBlank()
             ? senderName + " te ha enviado un mensaje"
             : senderName + ": " + content;
+        if (description.length() > 497) {
+            description = description.substring(0, 497) + "...";
+        }
 
         notificationService.createNotification(
             EventType.CHAT,

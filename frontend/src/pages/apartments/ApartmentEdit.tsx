@@ -19,6 +19,7 @@ import {
   updateApartmentRules,
   uploadApartmentImages,
 } from '../../service/apartment.service'
+import { normalizePriceInput } from './publish/publishForm'
 
 const PAGE_CLASS = 'h-[calc(100dvh-5rem)] md:h-dvh bg-base-200/40 flex flex-col'
 const SHELL_CLASS =
@@ -70,10 +71,14 @@ export default function ApartmentEdit() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<UpdateApartmentPayload>({
     resolver: zodResolver(updateApartmentSchema),
   })
+
+  const { ref: priceRef } = register('price')
+  const [priceInput, setPriceInput] = useState('')
 
   useEffect(() => {
     if (invalidId) {
@@ -104,6 +109,7 @@ export default function ApartmentEdit() {
           state: apt.state as UpdateApartmentPayload['state'],
           idealTenantProfile: apt.idealTenantProfile ?? '',
         })
+        setPriceInput(String(apt.price))
 
         const [imgs, loadedRules] = await Promise.all([
           getApartmentPhotos(apartmentId),
@@ -277,12 +283,21 @@ export default function ApartmentEdit() {
                 </label>
                 <div className="flex items-end gap-3">
                   <input
-                    type="number"
-                    step="0.01"
+                    ref={priceRef}
+                    type="text"
+                    inputMode="decimal"
+                    value={priceInput}
+                    placeholder="450"
                     className={`input input-bordered text-2xl md:text-3xl font-extrabold text-base-content w-40 text-center rounded-xl bg-base-100 focus:outline-primary tracking-tight ${
                       errors.price ? 'input-error' : ''
                     }`}
-                    {...register('price', { valueAsNumber: true })}
+                    onChange={(e) => {
+                      const normalized = normalizePriceInput(e.target.value)
+                      if (normalized === null) return
+                      setPriceInput(normalized)
+                      const num = parseFloat(normalized)
+                      setValue('price', isNaN(num) ? NaN : num)
+                    }}
                   />
                   <span className="text-lg font-semibold text-base-content/60 mb-2">
                     € / mes
