@@ -98,9 +98,9 @@ export default function NotificationsPage() {
                 onClick={() => { void handleNotificationClick(notification) }}
               >
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                  <div className="space-y-1">
-                    <h2 className="text-lg font-semibold">{notification.title}</h2>
-                    <p className="text-base-content/80">
+                  <div className="space-y-1 min-w-0">
+                    <h2 className="text-lg font-semibold break-words">{notification.title}</h2>
+                    <p className="text-base-content/80 break-words">
                       {notification.message || 'Sin contenido.'}
                     </p>
                   </div>
