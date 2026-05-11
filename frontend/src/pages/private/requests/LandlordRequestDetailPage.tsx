@@ -20,9 +20,11 @@ export default function LandlordRequestDetailPage() {
   const navigate = useNavigate()
   const { apartmentMatchId } = useParams<{ apartmentMatchId: string }>()
 
+  const parsedId = useMemo(() => Number(apartmentMatchId), [apartmentMatchId])
+  const invalidId = !parsedId || Number.isNaN(parsedId)
   const [details, setDetails] = useState<ApartmentMatchTenantDetailsDTO | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(() => !invalidId)
+  const [error, setError] = useState<string | null>(() => (invalidId ? 'Solicitud no válida.' : null))
   const [actionLoading, setActionLoading] = useState<'accept' | 'wait' | 'reject' | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [reviews, setReviews] = useState<ReviewDTO[]>([])
@@ -32,11 +34,7 @@ export default function LandlordRequestDetailPage() {
   const parsedId = useMemo(() => Number(apartmentMatchId), [apartmentMatchId])
 
   useEffect(() => {
-    if (!parsedId || Number.isNaN(parsedId)) {
-      setError('Solicitud no válida.')
-      setLoading(false)
-      return
-    }
+    if (invalidId) return
 
     const fetchDetails = async () => {
       setLoading(true)
@@ -61,10 +59,7 @@ export default function LandlordRequestDetailPage() {
 
   useEffect(() => {
     const tenantId = details?.tenant?.id
-    if (!tenantId) {
-      setReviews([])
-      return
-    }
+    if (!tenantId) return
 
     const fetchReviews = async () => {
       setReviewsLoading(true)

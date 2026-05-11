@@ -291,4 +291,4 @@ ON CONFLICT (id) DO NOTHING;
 -- 9. PATCH: Añadir APPOINTMENT al constraint de notifications
 -- ==========================================
 ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_event_type_check;
-ALTER TABLE notifications ADD CONSTRAINT notifications_event_type_check CHECK (event_type::text = ANY (ARRAY['MATCH','NEW_MATCH','INVITATION_ACCEPTED','INVITATION_SENT','INVITATION_REJECTED','REVIEW','NEW_BILL','BILL_PAID','APPOINTMENT','CHAT']::text[]));
+ALTER TABLE notifications ADD CONSTRAINT notifications_event_type_check CHECK (event_type::text = ANY (ARRAY['MATCH','NEW_MATCH','INVITATION_ACCEPTED','INVITATION_SENT','INVITATION_REJECTED','REVIEW','NEW_BILL','BILL_PAID','APPOINTMENT','CHAT','INCIDENT']::text[]));

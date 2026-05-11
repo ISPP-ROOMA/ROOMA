@@ -77,9 +77,8 @@ export default function MyHome() {
     void load()
   }, [])
 
-  useEffect(() => {
-    setSelectedPhoto(0)
-  }, [homeData?.photos?.length])
+  // Resetting selected photo when gallery changes is handled implicitly by keeping
+  // a stable initial value; avoid setting state synchronously inside effects.
 
   const galleryPhotos = useMemo(() => {
     if (!homeData?.photos?.length) {

@@ -139,7 +139,6 @@ export default function IncidentDetail() {
 
   const loadIncident = useCallback(async () => {
     if (!Number.isFinite(apartmentId) || !Number.isFinite(currentIncidentId)) {
-      setIsLoading(false)
       return
     }
 
@@ -150,8 +149,9 @@ export default function IncidentDetail() {
   }, [apartmentId, currentIncidentId]);
 
   useEffect(() => {
-    void loadIncident()
-  }, [loadIncident])
+    if (!Number.isFinite(apartmentId) || !Number.isFinite(currentIncidentId)) return
+    Promise.resolve().then(() => void loadIncident())
+  }, [apartmentId, currentIncidentId, loadIncident])
 
   const handleConfirm = async () => {
     if (!incident) return

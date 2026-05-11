@@ -91,7 +91,7 @@ export default function Home() {
   const { token, role, userId } = useAuthStore()
   const { showToast } = useToast()
   const [apartments, setApartments] = useState<ApartmentDTO[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => Boolean(token && role === 'TENANT' && userId))
   const [selectedApartment, setSelectedApartment] = useState<ApartmentDTO | null>(null)
   const [filterInputs, setFilterInputs] = useState({
     ubication: '',
@@ -153,7 +153,6 @@ export default function Home() {
 
   useEffect(() => {
     if (!token || role !== 'TENANT' || !userId) {
-      setLoading(false)
       return
     }
 

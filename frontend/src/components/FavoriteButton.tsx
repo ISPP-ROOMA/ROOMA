@@ -1,5 +1,5 @@
 import { Bookmark} from 'lucide-react'
-import { type MouseEvent, useEffect, useState } from 'react'
+import { type MouseEvent, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../hooks/useToast'
 import { addFavorite, removeFavorite } from '../service/favorites.service'
@@ -30,12 +30,8 @@ export default function FavoriteButton({
   const navigate = useNavigate()
   const { showToast } = useToast()
 
-  const [isFavorite, setIsFavorite] = useState(initialIsFavorite)
+  const [isFavorite, setIsFavorite] = useState(() => initialIsFavorite)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  useEffect(() => {
-    setIsFavorite(initialIsFavorite)
-  }, [initialIsFavorite])
 
   const handleClick = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()

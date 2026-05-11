@@ -23,21 +23,17 @@ export default function LandlordMatchDetailPage() {
   const { showToast } = useToast()
 
   const [details, setDetails] = useState<ApartmentMatchTenantDetailsDTO | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const parsedId = useMemo(() => Number(apartmentMatchId), [apartmentMatchId])
+  const invalidId = !parsedId || Number.isNaN(parsedId)
+  const [loading, setLoading] = useState(() => !invalidId)
+  const [error, setError] = useState<string | null>(() => (invalidId ? 'Solicitud no válida.' : null))
   const [inviteLoading, setInviteLoading] = useState(false)
   const [reviews, setReviews] = useState<ReviewDTO[]>([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
   const [reviewsError, setReviewsError] = useState<string | null>(null)
 
-  const parsedId = useMemo(() => Number(apartmentMatchId), [apartmentMatchId])
-
   useEffect(() => {
-    if (!parsedId || Number.isNaN(parsedId)) {
-      setError('Solicitud no válida.')
-      setLoading(false)
-      return
-    }
+    if (invalidId) return
 
     const fetchDetails = async () => {
       setLoading(true)
@@ -58,14 +54,11 @@ export default function LandlordMatchDetailPage() {
     }
 
     void fetchDetails()
-  }, [parsedId])
+  }, [parsedId, invalidId])
 
   useEffect(() => {
     const tenantId = details?.tenant?.id
-    if (!tenantId) {
-      setReviews([])
-      return
-    }
+    if (!tenantId) return
 
     const fetchReviews = async () => {
       setReviewsLoading(true)

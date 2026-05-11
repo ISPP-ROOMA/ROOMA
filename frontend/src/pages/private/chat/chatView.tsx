@@ -36,9 +36,8 @@ export default function ChatScreen() {
     return null
   }, [matchId, incidentId])
   const { client, connected } = useStompClient()
-
   const [messages, setMessages] = useState<ChatMessageDTO[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => Boolean(chatContext))
   const [inputValue, setInputValue] = useState('')
   const [sendingFile, setSendingFile] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -55,7 +54,6 @@ export default function ChatScreen() {
 
   useEffect(() => {
     if (!chatContext) {
-      setLoading(false)
       return
     }
 

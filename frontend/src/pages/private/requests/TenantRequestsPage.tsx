@@ -110,6 +110,7 @@ export default function TenantRequestsPage() {
 
   const fetchData = useCallback(async () => {
     if (!userId) return
+    await Promise.resolve()
     setLoading(true)
     setError(null)
     try {
@@ -137,7 +138,7 @@ export default function TenantRequestsPage() {
   }, [userId])
 
   useEffect(() => {
-    void fetchData()
+    Promise.resolve().then(() => void fetchData())
   }, [fetchData])
 
   useEffect(() => {

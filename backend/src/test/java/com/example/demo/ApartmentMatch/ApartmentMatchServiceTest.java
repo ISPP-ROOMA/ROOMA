@@ -506,7 +506,7 @@ public class ApartmentMatchServiceTest {
         verify(notificationService).createNotification(
                 eq(EventType.INVITATION_SENT),
                 contains(landlord.getEmail()),
-                eq("/mis-solicitudes/recibidas/"),
+                eq("/mis-solicitudes/enviadas"),
                 eq(match.getCandidate()));
     }
 

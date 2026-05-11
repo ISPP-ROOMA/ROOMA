@@ -159,15 +159,26 @@ export const updateApartmentRules = async (
   apartmentId: number,
   rules: ApartmentRulesDTO
 ): Promise<void> => {
-  await api.put(`/apartments/${apartmentId}/rules`, rules)
+  const payload = {
+    allowsPets: rules.permiteMascotas,
+    allowsSmokers: rules.permiteFumadores,
+    partiesAllowed: rules.fiestasPermitidas,
+  }
+
+  await api.put(`/apartments/${apartmentId}/rules`, payload)
 }
 
 export const getApartmentRules = async (
   apartmentId: number
 ): Promise<ApartmentRulesDTO | null> => {
   try {
-    const response = await api.get<ApartmentRulesDTO>(`/apartments/${apartmentId}/rules`)
-    return response.data
+    const response = await api.get(`/apartments/${apartmentId}/rules`)
+    const data = response.data
+    return {
+      permiteMascotas: data?.allowsPets ?? false,
+      permiteFumadores: data?.allowsSmokers ?? false,
+      fiestasPermitidas: data?.partiesAllowed ?? false,
+    }
   } catch (error) {
     const err = error as AxiosError
     if (err.response?.status === 403 || err.response?.status === 404) {

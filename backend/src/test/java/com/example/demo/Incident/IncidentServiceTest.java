@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.eq;
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -16,6 +17,7 @@ import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.MemberApartment.ApartmentMemberService;
 import com.example.demo.Cloudinary.CloudinaryService;
 import com.example.demo.User.UserService;
+import com.example.demo.Notification.NotificationService;
 import com.example.demo.Incident.DTOs.IncidentDTO;
 import com.example.demo.Incident.DTOs.CreateIncidentRequest;
 import com.example.demo.Apartment.ApartmentEntity;
@@ -59,9 +61,12 @@ public class IncidentServiceTest {
     @Mock
     private CloudinaryService cloudinaryService;
 
+    @Mock
+    private NotificationService notificationService;
+
     @BeforeEach
     public void setUp() {
-        incidentService = new IncidentService(incidentRepository, incidentStatusHistoryRepository, userService, apartmentService, apartmentMemberService, cloudinaryService);
+        incidentService = new IncidentService(incidentRepository, incidentStatusHistoryRepository, userService, apartmentService, apartmentMemberService, cloudinaryService, notificationService);
     }
 
     @Test
@@ -514,6 +519,12 @@ public class IncidentServiceTest {
         assertNotNull(result);
         assertEquals(savedIncident.getId(), result.id());
         assertEquals(request.title(), result.title());
+
+        verify(notificationService).createNotification(
+            eq(com.example.demo.Notification.EventType.INCIDENT),
+            eq("Nueva incidencia de tenant@example.com: Test Incident (HIGH)"),
+            eq("/apartments/1/incidences/1"),
+            eq(landlord));
     }
 
     @Test

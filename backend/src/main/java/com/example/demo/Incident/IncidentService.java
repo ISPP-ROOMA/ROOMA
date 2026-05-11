@@ -1,12 +1,12 @@
 package com.example.demo.Incident;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-import java.io.IOException;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +23,8 @@ import com.example.demo.Incident.DTOs.IncidentDTO;
 import com.example.demo.Incident.DTOs.IncidentStatusHistoryDTO;
 import com.example.demo.MemberApartment.ApartmentMemberEntity;
 import com.example.demo.MemberApartment.ApartmentMemberService;
+import com.example.demo.Notification.EventType;
+import com.example.demo.Notification.NotificationService;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
@@ -49,19 +51,22 @@ public class IncidentService {
     private final ApartmentService apartmentService;
     private final ApartmentMemberService apartmentMemberService;
     private final CloudinaryService cloudinaryService;
+    private final NotificationService notificationService;
 
     public IncidentService(IncidentRepository incidentRepository,
                            IncidentStatusHistoryRepository incidentStatusHistoryRepository,
                            UserService userService,
                            ApartmentService apartmentService,
                            ApartmentMemberService apartmentMemberService,
-                           CloudinaryService cloudinaryService) {
+                           CloudinaryService cloudinaryService,
+                           NotificationService notificationService) {
         this.incidentRepository = incidentRepository;
         this.incidentStatusHistoryRepository = incidentStatusHistoryRepository;
         this.userService = userService;
         this.apartmentService = apartmentService;
         this.apartmentMemberService = apartmentMemberService;
         this.cloudinaryService = cloudinaryService;
+        this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
@@ -131,6 +136,17 @@ public class IncidentService {
 
         IncidentEntity saved = incidentRepository.save(incident);
         appendStatusHistory(saved, IncidentStatus.OPEN, currentUser);
+        
+        // Notify landlord of the new incident
+        String tenantName = currentUser.getName() != null ? currentUser.getName() : currentUser.getEmail();
+        String description = "Nueva incidencia de " + tenantName + ": " + request.title() + " (" + request.urgency() + ")";
+        notificationService.createNotification(
+            EventType.INCIDENT,
+            description,
+            "/apartments/" + apartmentId + "/incidences/" + saved.getId(),
+            apartment.getUser()
+        );
+        
         return toDTO(saved);
     }
 
