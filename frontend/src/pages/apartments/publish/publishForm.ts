@@ -35,6 +35,8 @@ export const parsePrice = (value: string): number => {
   return Math.round(clamped * 100) / 100
 }
 
+export const isPostalCodeValid = (value: string): boolean => /^\d{5}$/.test(value.trim())
+
 export const normalizePriceInput = (value: string): string | null => {
   const raw = value.replace(',', '.')
   if (!/^\d*(\.\d{0,2})?$/.test(raw)) return null
@@ -53,7 +55,11 @@ export const normalizePriceInput = (value: string): string | null => {
 
 export const isPublishStepValid = (step: number, data: PublishFormData): boolean => {
   if (step === 0) {
-    return data.street.trim().length > 0 && data.neighborhood.length > 0 && data.postalCode.trim().length > 0
+    return (
+      data.street.trim().length > 0 &&
+      data.neighborhood.trim().length > 0 &&
+      isPostalCodeValid(data.postalCode)
+    )
   }
 
   if (step === 1) {

@@ -40,7 +40,8 @@ export default defineConfig({
   ],
   test: {
     globals: true,
-    environment: 'jsdom',
+    environment: 'node',
+    pool: 'threads',
     exclude: ['**/node_modules/**', '**/dist/**', '**/tests/**'],
   },
   define: {

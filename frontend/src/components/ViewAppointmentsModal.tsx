@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { CalendarCheck, ChevronDown, ChevronUp, Loader2, User, X } from 'lucide-react'
 import { getBlocksForApartment, cancelAppointmentSlot, type AvailabilityBlockDTO } from '../service/appointment.service'
 import { useToast } from '../hooks/useToast'
@@ -16,7 +16,7 @@ export default function ViewAppointmentsModal({ apartmentId, apartmentTitle, onC
   const [cancelingId, setCancelingId] = useState<number | null>(null)
   const { showToast } = useToast()
 
-  const loadBlocks = () => {
+  const loadBlocks = useCallback(() => {
     setLoading(true)
     getBlocksForApartment(apartmentId)
       .then(data => {
@@ -25,11 +25,11 @@ export default function ViewAppointmentsModal({ apartmentId, apartmentTitle, onC
       })
       .catch(() => showToast('Error al cargar las visitas', 'error'))
       .finally(() => setLoading(false))
-  }
+  }, [apartmentId, showToast])
 
   useEffect(() => {
     loadBlocks()
-  }, [apartmentId])
+  }, [loadBlocks])
 
   const handleCancel = async (slotId: number) => {
     setCancelingId(slotId)

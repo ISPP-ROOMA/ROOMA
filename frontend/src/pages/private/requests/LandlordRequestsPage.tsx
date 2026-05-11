@@ -123,7 +123,6 @@ export default function LandlordRequestsPage() {
   const [pendingItems, setPendingItems] = useState<EnrichedMatch[]>([])
   const [matchItems, setMatchItems] = useState<EnrichedMatch[]>([])
   const [loading, setLoading] = useState(true)
-  const [_error, _setError] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
 
   const [filteredApartmentLabel, setFilteredApartmentLabel] = useState<string | null>(null)
