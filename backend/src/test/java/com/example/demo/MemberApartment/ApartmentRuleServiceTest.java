@@ -21,18 +21,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.Exceptions.ForbiddenException;
-import com.example.demo.MemberApartment.DTOs.ReglaViviendaDTO;
-import com.example.demo.MemberApartment.DTOs.UpdateReglaVivienda;
+import com.example.demo.MemberApartment.DTOs.ApartmentRuleDTO;
+import com.example.demo.MemberApartment.DTOs.UpdateApartmentRule;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 
 @ExtendWith(MockitoExtension.class)
-class ReglaViviendaServiceTest {
+class ApartmentRuleServiceTest {
 
-    private ReglaViviendaService reglaViviendaService;
+    private ApartmentRuleService apartmentRuleService;
 
     @Mock
-    private ReglaViviendaRepository reglaViviendaRepository;
+    private ApartmentRuleRepository apartmentRuleRepository;
 
     @Mock
     private ApartmentService apartmentService;
@@ -42,7 +42,7 @@ class ReglaViviendaServiceTest {
 
     @BeforeEach
     void setUp() {
-        reglaViviendaService = new ReglaViviendaService(reglaViviendaRepository, apartmentService, userService);
+        apartmentRuleService = new ApartmentRuleService(apartmentRuleRepository, apartmentService, userService);
     }
 
     @Test
@@ -55,23 +55,23 @@ class ReglaViviendaServiceTest {
         landlord.setId(5);
         apartment.setUser(landlord);
 
-        ReglaViviendaEntity existing = new ReglaViviendaEntity();
-        existing.setVivienda(apartment);
+        ApartmentRuleEntity existing = new ApartmentRuleEntity();
+        existing.setApartment(apartment);
 
         when(apartmentService.findById(10)).thenReturn(apartment);
         when(userService.findCurrentUserEntity()).thenReturn(landlord);
-        when(reglaViviendaRepository.findByViviendaId(10)).thenReturn(Optional.of(existing));
-        when(reglaViviendaRepository.save(any(ReglaViviendaEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(apartmentRuleRepository.findByApartmentId(10)).thenReturn(Optional.of(existing));
+        when(apartmentRuleRepository.save(any(ApartmentRuleEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        UpdateReglaVivienda request = new UpdateReglaVivienda(true, false, true);
+        UpdateApartmentRule request = new UpdateApartmentRule(true, false, true);
 
-        ReglaViviendaDTO result = reglaViviendaService.updateRules(10, request);
+        ApartmentRuleDTO result = apartmentRuleService.updateRules(10, request);
 
-        assertEquals(10, result.viviendaId());
-        assertTrue(result.permiteMascotas());
-        assertFalse(result.permiteFumadores());
-        assertTrue(result.fiestasPermitidas());
-        verify(reglaViviendaRepository).save(existing);
+        assertEquals(10, result.apartmentId());
+        assertTrue(result.allowsPets());
+        assertFalse(result.allowsSmokers());
+        assertTrue(result.partiesAllowed());
+        verify(apartmentRuleRepository).save(existing);
     }
 
     @Test
@@ -86,22 +86,22 @@ class ReglaViviendaServiceTest {
 
         when(apartmentService.findById(20)).thenReturn(apartment);
         when(userService.findCurrentUserEntity()).thenReturn(landlord);
-        when(reglaViviendaRepository.findByViviendaId(20)).thenReturn(Optional.empty());
-        when(reglaViviendaRepository.save(any(ReglaViviendaEntity.class))).thenAnswer(inv -> {
-            ReglaViviendaEntity e = inv.getArgument(0);
+        when(apartmentRuleRepository.findByApartmentId(20)).thenReturn(Optional.empty());
+        when(apartmentRuleRepository.save(any(ApartmentRuleEntity.class))).thenAnswer(inv -> {
+            ApartmentRuleEntity e = inv.getArgument(0);
             e.setId(99);
             return e;
         });
 
-        UpdateReglaVivienda request = new UpdateReglaVivienda(true, true, false);
+        UpdateApartmentRule request = new UpdateApartmentRule(true, true, false);
 
-        ReglaViviendaDTO result = reglaViviendaService.updateRules(20, request);
+        ApartmentRuleDTO result = apartmentRuleService.updateRules(20, request);
 
-        assertEquals(20, result.viviendaId());
-        assertTrue(result.permiteMascotas());
-        assertTrue(result.permiteFumadores());
-        assertFalse(result.fiestasPermitidas());
-        verify(reglaViviendaRepository).save(any(ReglaViviendaEntity.class));
+        assertEquals(20, result.apartmentId());
+        assertTrue(result.allowsPets());
+        assertTrue(result.allowsSmokers());
+        assertFalse(result.partiesAllowed());
+        verify(apartmentRuleRepository).save(any(ApartmentRuleEntity.class));
     }
 
     @Test
@@ -120,10 +120,10 @@ class ReglaViviendaServiceTest {
         when(apartmentService.findById(30)).thenReturn(apartment);
         when(userService.findCurrentUserEntity()).thenReturn(otherUser);
 
-        UpdateReglaVivienda request = new UpdateReglaVivienda(false, false, false);
+        UpdateApartmentRule request = new UpdateApartmentRule(false, false, false);
 
-        assertThrows(ForbiddenException.class, () -> reglaViviendaService.updateRules(30, request));
-        verify(reglaViviendaRepository, never()).save(any(ReglaViviendaEntity.class));
+        assertThrows(ForbiddenException.class, () -> apartmentRuleService.updateRules(30, request));
+        verify(apartmentRuleRepository, never()).save(any(ApartmentRuleEntity.class));
     }
 }
 

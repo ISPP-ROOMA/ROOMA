@@ -378,21 +378,24 @@ public class ReviewServiceTest {
         UserEntity landlord = user(1, Role.LANDLORD, "landlord@test.com");
         UserEntity flatmate = user(9, Role.TENANT, "flatmate@test.com");
         ApartmentEntity apartment = apartment(100);
+        ApartmentMemberEntity currentMembership = membership(current, apartment, LocalDate.now().minusDays(10), null);
+        ApartmentMemberEntity flatmateMembership = membership(flatmate, apartment, LocalDate.now().minusDays(8), null);
 
         when(userService.findCurrentUser()).thenReturn("tenant@test.com");
         when(userService.findByEmail("tenant@test.com")).thenReturn(Optional.of(current));
         when(apartmentService.findLandlordByApartmentId(100)).thenReturn(landlord);
         when(apartmentMemberService.listMembersInternal(100)).thenReturn(List.of(
-                membership(current, apartment, LocalDate.now().minusDays(10), null),
-                membership(flatmate, apartment, LocalDate.now().minusDays(8), null)
+                currentMembership,
+                flatmateMembership
         ));
+        when(apartmentMemberService.findByUserIdAndApartmentId(3, 100)).thenReturn(currentMembership);
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 1, 100)).thenReturn(Optional.empty());
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 9, 100)).thenReturn(Optional.of(review(99, 3, 9, 100)));
 
         List<UserEntity> result = reviewService.getReviewableUsers(100);
 
-        assertEquals(1, result.size());
-        assertEquals(1, result.get(0).getId());
+        // Active tenant cannot review landlord and already reviewed the active flatmate
+        assertEquals(0, result.size());
     }
 
     @Test
@@ -404,15 +407,16 @@ public class ReviewServiceTest {
         when(userService.findCurrentUser()).thenReturn("landlord@test.com");
         when(userService.findByEmail("landlord@test.com")).thenReturn(Optional.of(currentLandlord));
         when(apartmentMemberService.findLastApartmentsByLandlordIdAndApartmentId(1)).thenReturn(List.of(apartment));
-        when(apartmentMemberService.findPastLandlordMembershipsByUserIdAndApartmentId(1, 100))
-                .thenReturn(List.of(membership(formerTenant, apartment, LocalDate.now().minusDays(20), LocalDate.now().minusDays(2))));
+        when(apartmentService.findLandlordByApartmentId(100)).thenReturn(currentLandlord);
+        when(apartmentMemberService.listMembersInternal(100))
+            .thenReturn(List.of(membership(formerTenant, apartment, LocalDate.now().minusDays(20), LocalDate.now().minusDays(2))));
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(1, 2, 100)).thenReturn(Optional.empty());
-        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(2, 1, 100)).thenReturn(Optional.empty());
 
         List<ReviewService.PendingReviewApartment> result = reviewService.getPendingReviewApartments();
 
         assertEquals(1, result.size());
         assertEquals(1, result.get(0).pendingUsers().size());
+        assertFalse(result.get(0).userIsActive());
     }
 
     @Test
@@ -428,24 +432,26 @@ public class ReviewServiceTest {
         when(userService.findCurrentUser()).thenReturn("tenant@test.com");
         when(userService.findByEmail("tenant@test.com")).thenReturn(Optional.of(currentTenant));
         when(apartmentMemberService.findLastApartmentsByTenantIdAndApartmentId(3)).thenReturn(List.of(apartment));
-        when(apartmentMemberService.findByUserIdAndApartmentId(3, 100)).thenReturn(currentMembership);
-        when(apartmentMemberService.findCurrentTenantsByApartmentId(100)).thenReturn(List.of(flatmateMembership));
         when(apartmentService.findLandlordByApartmentId(100)).thenReturn(landlord);
+        when(apartmentMemberService.listMembersInternal(100)).thenReturn(List.of(currentMembership, flatmateMembership));
+        when(apartmentMemberService.findByUserIdAndApartmentId(3, 100)).thenReturn(currentMembership);
 
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 1, 100)).thenReturn(Optional.empty());
-        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(1, 3, 100)).thenReturn(Optional.empty());
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 9, 100)).thenReturn(Optional.empty());
+        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(1, 3, 100)).thenReturn(Optional.empty());
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(9, 3, 100)).thenReturn(Optional.empty());
 
         List<ReviewService.PendingReviewApartment> result = reviewService.getPendingReviewApartments();
 
         assertEquals(1, result.size());
         assertEquals(2, result.get(0).pendingUsers().size());
+        assertFalse(result.get(0).userIsActive());
     }
 
     @Test
     void getPendingReviewApartments_tenantActivePath() {
         UserEntity currentTenant = user(3, Role.TENANT, "tenant@test.com");
+        UserEntity landlord = user(1, Role.LANDLORD, "landlord@test.com");
         UserEntity pastFlatmate = user(8, Role.TENANT, "past@test.com");
         ApartmentEntity apartment = apartment(100);
 
@@ -455,34 +461,48 @@ public class ReviewServiceTest {
         when(userService.findCurrentUser()).thenReturn("tenant@test.com");
         when(userService.findByEmail("tenant@test.com")).thenReturn(Optional.of(currentTenant));
         when(apartmentMemberService.findLastApartmentsByTenantIdAndApartmentId(3)).thenReturn(List.of(apartment));
+        when(apartmentService.findLandlordByApartmentId(100)).thenReturn(landlord);
+        when(apartmentMemberService.listMembersInternal(100)).thenReturn(List.of(currentMembership, pastMembership));
         when(apartmentMemberService.findByUserIdAndApartmentId(3, 100)).thenReturn(currentMembership);
-        when(apartmentMemberService.findPastTenantMembershipsByUserIdAndApartmentId(3, 100)).thenReturn(List.of(pastMembership));
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 8, 100)).thenReturn(Optional.empty());
         when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(8, 3, 100)).thenReturn(Optional.empty());
+        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 1, 100)).thenReturn(Optional.empty());
+        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(1, 3, 100)).thenReturn(Optional.empty());
 
         List<ReviewService.PendingReviewApartment> result = reviewService.getPendingReviewApartments();
 
         assertEquals(1, result.size());
+        // Active tenant can only review the past flatmate, not the landlord
         assertEquals(1, result.get(0).pendingUsers().size());
+        assertEquals(8, result.get(0).pendingUsers().get(0).user().getId());
+        assertTrue(result.get(0).userIsActive());
     }
 
     @Test
-    void getPendingReviewApartments_skipsMutuallyReviewedUsers() {
-        UserEntity currentLandlord = user(1, Role.LANDLORD, "landlord@test.com");
-        UserEntity formerTenant = user(2, Role.TENANT, "tenant@test.com");
+    void getReviewableUsers_tenantInactiveCanReviewLandlord() {
+        UserEntity inactiveTenant = user(3, Role.TENANT, "tenant@test.com");
+        UserEntity landlord = user(1, Role.LANDLORD, "landlord@test.com");
+        UserEntity flatmate = user(9, Role.TENANT, "flatmate@test.com");
         ApartmentEntity apartment = apartment(100);
+        ApartmentMemberEntity inactiveMembership = membership(inactiveTenant, apartment, LocalDate.now().minusDays(20), LocalDate.now().minusDays(1));
+        ApartmentMemberEntity flatmateMembership = membership(flatmate, apartment, LocalDate.now().minusDays(10), LocalDate.now().minusDays(1));
 
-        when(userService.findCurrentUser()).thenReturn("landlord@test.com");
-        when(userService.findByEmail("landlord@test.com")).thenReturn(Optional.of(currentLandlord));
-        when(apartmentMemberService.findLastApartmentsByLandlordIdAndApartmentId(1)).thenReturn(List.of(apartment));
-        when(apartmentMemberService.findPastLandlordMembershipsByUserIdAndApartmentId(1, 100))
-                .thenReturn(List.of(membership(formerTenant, apartment, LocalDate.now().minusDays(20), LocalDate.now().minusDays(2))));
-        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(1, 2, 100)).thenReturn(Optional.of(review(77, 1, 2, 100)));
-        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(2, 1, 100)).thenReturn(Optional.of(review(78, 2, 1, 100)));
+        when(userService.findCurrentUser()).thenReturn("tenant@test.com");
+        when(userService.findByEmail("tenant@test.com")).thenReturn(Optional.of(inactiveTenant));
+        when(apartmentService.findLandlordByApartmentId(100)).thenReturn(landlord);
+        when(apartmentMemberService.listMembersInternal(100)).thenReturn(List.of(
+                inactiveMembership,
+                flatmateMembership
+        ));
+        when(apartmentMemberService.findByUserIdAndApartmentId(3, 100)).thenReturn(inactiveMembership);
+        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 1, 100)).thenReturn(Optional.empty());
+        when(reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(3, 9, 100)).thenReturn(Optional.of(review(99, 3, 9, 100)));
 
-        List<ReviewService.PendingReviewApartment> result = reviewService.getPendingReviewApartments();
+        List<UserEntity> result = reviewService.getReviewableUsers(100);
 
-        assertTrue(result.isEmpty());
+        // Inactive tenant CAN review landlord (contract ended)
+        assertEquals(1, result.size());
+        assertEquals(1, result.get(0).getId());
     }
 
     @Test

@@ -5,12 +5,10 @@ import {
   acceptApartmentMatch,
   getLandlordMatchDetails,
   rejectApartmentMatch,
+  waitApartmentMatch,
   type ApartmentMatchTenantDetailsDTO,
 } from '../../../service/apartment.service'
-import {
-  getReceivedReviewsByUser,
-  type ReviewDTO,
-} from '../../../service/review.service'
+import { getReceivedReviewsByUser, type ReviewDTO } from '../../../service/review.service'
 
 const FALLBACK_COVER =
   'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80'
@@ -22,23 +20,19 @@ export default function LandlordRequestDetailPage() {
   const navigate = useNavigate()
   const { apartmentMatchId } = useParams<{ apartmentMatchId: string }>()
 
+  const parsedId = useMemo(() => Number(apartmentMatchId), [apartmentMatchId])
+  const invalidId = !parsedId || Number.isNaN(parsedId)
   const [details, setDetails] = useState<ApartmentMatchTenantDetailsDTO | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [actionLoading, setActionLoading] = useState<'accept' | 'reject' | null>(null)
+  const [loading, setLoading] = useState(() => !invalidId)
+  const [error, setError] = useState<string | null>(() => (invalidId ? 'Solicitud no válida.' : null))
+  const [actionLoading, setActionLoading] = useState<'accept' | 'wait' | 'reject' | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [reviews, setReviews] = useState<ReviewDTO[]>([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
   const [reviewsError, setReviewsError] = useState<string | null>(null)
 
-  const parsedId = useMemo(() => Number(apartmentMatchId), [apartmentMatchId])
-
   useEffect(() => {
-    if (!parsedId || Number.isNaN(parsedId)) {
-      setError('Solicitud no válida.')
-      setLoading(false)
-      return
-    }
+    if (invalidId) return
 
     const fetchDetails = async () => {
       setLoading(true)
@@ -63,10 +57,7 @@ export default function LandlordRequestDetailPage() {
 
   useEffect(() => {
     const tenantId = details?.tenant?.id
-    if (!tenantId) {
-      setReviews([])
-      return
-    }
+    if (!tenantId) return
 
     const fetchReviews = async () => {
       setReviewsLoading(true)
@@ -152,7 +143,7 @@ export default function LandlordRequestDetailPage() {
   const tenantAvatar = tenantProfileImage ?? FALLBACK_AVATAR
   const hasReviews = reviews.length > 0
 
-  const isActiveRequest = details.matchStatus === 'ACTIVE'
+  const canProcessRequest = details.matchStatus === 'ACTIVE' || details.matchStatus === 'WAITING'
 
   const handleReject = async () => {
     setActionLoading('reject')
@@ -182,11 +173,22 @@ export default function LandlordRequestDetailPage() {
     }
   }
 
+  const handleWait = async () => {
+    setActionLoading('wait')
+    setActionError(null)
+    try {
+      await waitApartmentMatch(details.id)
+      navigate('/mis-solicitudes/recibidas')
+    } catch (err) {
+      console.error('Error setting match to waiting from detail', err)
+      setActionError('No se pudo poner la solicitud en espera. Inténtalo de nuevo.')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
   return (
-    <div
-      data-theme="light"
-      className="mx-auto w-full max-w-2xl min-h-dvh text-[#050505] pb-10"
-    >
+    <div data-theme="light" className="mx-auto w-full max-w-2xl min-h-dvh text-[#050505] pb-10">
       <header className="sticky top-0 z-10 px-4 sm:px-8 pt-5 pb-4">
         <div className="flex items-center justify-between">
           <button
@@ -330,7 +332,9 @@ export default function LandlordRequestDetailPage() {
                               <p className="text-sm font-semibold text-[#050505] line-clamp-1">
                                 {reviewerName}
                               </p>
-                              <span className="text-xs text-[#050505]/60 shrink-0">{reviewDate}</span>
+                              <span className="text-xs text-[#050505]/60 shrink-0">
+                                {reviewDate}
+                              </span>
                             </div>
 
                             <div className="mt-2 flex items-center gap-1 text-[#e8a000]">
@@ -338,12 +342,16 @@ export default function LandlordRequestDetailPage() {
                                 <Star
                                   key={`${review.id}-star-${index}`}
                                   size={14}
-                                  className={index < review.rating ? 'fill-current' : 'text-[#DDDBCB]'}
+                                  className={
+                                    index < review.rating ? 'fill-current' : 'text-[#DDDBCB]'
+                                  }
                                 />
                               ))}
                             </div>
 
-                            <p className="mt-2 text-sm text-[#050505]/85 leading-relaxed">{review.comment}</p>
+                            <p className="mt-2 text-sm text-[#050505]/85 leading-relaxed">
+                              {review.comment}
+                            </p>
                           </article>
                         )
                       })}
@@ -354,7 +362,7 @@ export default function LandlordRequestDetailPage() {
             </div>
 
             <div className="mt-5 grid grid-cols-1 gap-3">
-              {isActiveRequest && (
+              {canProcessRequest && (
                 <>
                   <button
                     className="w-full rounded-xl border border-[#DDDBCB] bg-white px-4 py-3 text-sm font-semibold text-[#050505] transition-colors hover:bg-[#F5F1E3] disabled:cursor-not-allowed disabled:opacity-60"
@@ -366,6 +374,18 @@ export default function LandlordRequestDetailPage() {
                       Rechazar solicitud
                     </span>
                   </button>
+                  {details.matchStatus === 'ACTIVE' && (
+                    <button
+                      className="w-full rounded-xl border border-[#e8a000] bg-[#fff7df] px-4 py-3 text-sm font-semibold text-[#7a5a00] transition-colors hover:bg-[#ffefbf] disabled:cursor-not-allowed disabled:opacity-60"
+                      onClick={() => void handleWait()}
+                      disabled={actionLoading !== null}
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        {actionLoading === 'wait' && <Loader2 size={15} className="animate-spin" />}
+                        Poner en espera
+                      </span>
+                    </button>
+                  )}
                   <button
                     className="w-full rounded-xl bg-[#008080] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#006d6d] disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={() => void handleAccept()}

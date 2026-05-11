@@ -38,7 +38,7 @@ public class ApartmentPhotoService {
         }
 
         int nextOrder = apartmentPhotoRepository.findByApartmentId(apartment.getId()).stream()
-            .map(ApartmentPhotoEntity::getOrden)
+            .map(ApartmentPhotoEntity::getPhoto_order)
             .filter(o -> o != null)
             .max(Comparator.naturalOrder())
             .orElse(0) + 1;
@@ -50,8 +50,8 @@ public class ApartmentPhotoService {
                 img.setApartment(apartment);
                 img.setUrl((String) result.get("secure_url"));
                 img.setPublicId((String) result.get("public_id"));
-                img.setOrden(nextOrder);
-                img.setPortada(nextOrder == 1); // primera como portada
+                img.setPhoto_order(nextOrder);
+                img.setCover(nextOrder == 1); // primera como portada
                 apartmentPhotoRepository.save(img);
                 nextOrder++;
             } catch (IOException e) {

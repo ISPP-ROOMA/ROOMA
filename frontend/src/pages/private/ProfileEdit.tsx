@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { z } from 'zod'
 import {
   getUserProfile,
   updateUserProfile,
@@ -11,7 +12,78 @@ import {
 import type { UpdateUserPayload, User } from '../../service/users.service'
 import { useAuthStore } from '../../store/authStore'
 import { useToast } from '../../hooks/useToast'
-import { profileSchema, type ProfileFormValues } from './profileSchema'
+
+const GENDER_OPTIONS = ['Male', 'Female', 'Other', 'Prefer not to say'] as const
+const MAX_PROFILE_TEXT_LENGTH = 300
+const PHONE_MIN_LENGTH = 9
+const PHONE_MAX_LENGTH = 15
+
+const optionalText = z.string().optional().or(z.literal(''))
+
+const isFutureDate = (value: string) => {
+  const parsed = new Date(value)
+
+  if (Number.isNaN(parsed.getTime())) {
+    return false
+  }
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  parsed.setHours(0, 0, 0, 0)
+
+  return parsed > today
+}
+
+const toDateInputValue = (date: Date) => date.toISOString().split('T')[0]
+
+const profileSchema = z
+  .object({
+    name: optionalText,
+    surname: optionalText,
+    email: z.string().email({ message: 'Email inválido' }),
+    role: z.string(),
+    phone: optionalText
+      .refine((value) => !value || /^\d+$/.test(value), 'El teléfono solo puede contener números')
+      .refine(
+        (value) =>
+          !value || (value.length >= PHONE_MIN_LENGTH && value.length <= PHONE_MAX_LENGTH),
+        `El teléfono debe tener entre ${PHONE_MIN_LENGTH} y ${PHONE_MAX_LENGTH} dígitos`
+      ),
+    birthDate: optionalText.refine(
+      (value) => !value || !isFutureDate(value),
+      'La fecha de nacimiento no puede ser posterior a la actual'
+    ),
+    gender: z.enum(GENDER_OPTIONS, { error: 'Selecciona un género válido' }).optional().or(z.literal('')),
+    smoker: z.enum(['true', 'false']).optional().or(z.literal('')),
+    hobbies: optionalText.refine(
+      (value) => !value || value.length <= MAX_PROFILE_TEXT_LENGTH,
+      `Máximo ${MAX_PROFILE_TEXT_LENGTH} caracteres`
+    ),
+    schedule: optionalText.refine(
+      (value) => !value || value.length <= MAX_PROFILE_TEXT_LENGTH,
+      `Máximo ${MAX_PROFILE_TEXT_LENGTH} caracteres`
+    ),
+    profession: optionalText.refine(
+      (value) => !value || !/\d/.test(value),
+      'La profesión no puede contener números'
+    ),
+    password: z.string().min(4, { message: 'Mínimo 4 caracteres' }).optional().or(z.literal('')),
+    confirmPassword: z.string().optional().or(z.literal('')),
+  })
+  .refine(
+    (data) => {
+      if (data.password && data.password.length > 0) {
+        return data.password === data.confirmPassword
+      }
+      return true
+    },
+    {
+      message: 'Las contraseñas no coinciden',
+      path: ['confirmPassword'],
+    }
+  )
+
+type ProfileFormValues = z.infer<typeof profileSchema>
 
 export default function ProfileEdit() {
   const navigate = useNavigate()
@@ -28,10 +100,25 @@ export default function ProfileEdit() {
     register,
     handleSubmit,
     reset,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
   })
+
+  const maxBirthDate = (() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const createdAt = userData?.createdAt ? new Date(userData.createdAt) : null
+    if (!createdAt || Number.isNaN(createdAt.getTime())) {
+      return toDateInputValue(today)
+    }
+
+    createdAt.setHours(0, 0, 0, 0)
+    return toDateInputValue(createdAt < today ? createdAt : today)
+  })()
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -47,8 +134,10 @@ export default function ProfileEdit() {
             role: res.role || role || 'TENANT',
             phone: res.phone || '',
             birthDate: res.birthDate ? new Date(res.birthDate).toISOString().split('T')[0] : '',
-            gender: res.gender || '',
-            smoker: res.smoker !== undefined && res.smoker !== null ? String(res.smoker) : '',
+            gender: (res.gender || '') as ProfileFormValues['gender'],
+            smoker: (
+              res.smoker !== undefined && res.smoker !== null ? String(res.smoker) : ''
+            ) as ProfileFormValues['smoker'],
             hobbies: res.hobbies || '',
             schedule: res.schedule || '',
             profession: res.profession || '',
@@ -96,6 +185,27 @@ export default function ProfileEdit() {
   const onSubmit = async (data: ProfileFormValues) => {
     setIsSubmitting(true)
 
+    if (data.birthDate && userData?.createdAt) {
+      const birthDate = new Date(data.birthDate)
+      const createdAt = new Date(userData.createdAt)
+
+      if (!Number.isNaN(birthDate.getTime()) && !Number.isNaN(createdAt.getTime())) {
+        birthDate.setHours(0, 0, 0, 0)
+        createdAt.setHours(0, 0, 0, 0)
+
+        if (birthDate > createdAt) {
+          setError('birthDate', {
+            type: 'manual',
+            message: 'La fecha de nacimiento no puede ser posterior a la fecha de alta',
+          })
+          setIsSubmitting(false)
+          return
+        }
+
+        clearErrors('birthDate')
+      }
+    }
+
     const payload: UpdateUserPayload = {
       name: data.name,
       surname: data.surname,
@@ -119,6 +229,15 @@ export default function ProfileEdit() {
       showToast('No se pudo actualizar el perfil.', 'error')
     }
     setIsSubmitting(false)
+  }
+
+  const handleCancel = () => {
+    reset((currentValues) => ({
+      ...currentValues,
+      password: '',
+      confirmPassword: '',
+    }))
+    navigate('/profile', { replace: true })
   }
 
   if (isLoading) return <p className="text-center mt-10 text-gray-500">Cargando...</p>
@@ -242,6 +361,9 @@ export default function ProfileEdit() {
                 </label>
                 <input
                   type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={PHONE_MAX_LENGTH}
                   className={`input input-bordered w-full ${errors.phone ? 'input-error' : ''}`}
                   {...register('phone')}
                 />
@@ -259,6 +381,7 @@ export default function ProfileEdit() {
                 </label>
                 <input
                   type="date"
+                  max={maxBirthDate}
                   className={`input input-bordered w-full ${errors.birthDate ? 'input-error' : ''}`}
                   {...register('birthDate')}
                 />
@@ -276,6 +399,7 @@ export default function ProfileEdit() {
                 </label>
                 <input
                   type="text"
+                  inputMode="text"
                   className={`input input-bordered w-full ${errors.profession ? 'input-error' : ''}`}
                   {...register('profession')}
                 />
@@ -338,6 +462,7 @@ export default function ProfileEdit() {
                 className={`textarea textarea-bordered w-full ${errors.hobbies ? 'textarea-error' : ''}`}
                 placeholder="Ej: Leer, cocinar, deporte..."
                 rows={2}
+                maxLength={MAX_PROFILE_TEXT_LENGTH}
                 {...register('hobbies')}
               />
               {errors.hobbies && (
@@ -356,6 +481,7 @@ export default function ProfileEdit() {
                 className={`textarea textarea-bordered w-full ${errors.schedule ? 'textarea-error' : ''}`}
                 placeholder="Ej: Trabajo de 9 a 18, noches tranquilas..."
                 rows={2}
+                maxLength={MAX_PROFILE_TEXT_LENGTH}
                 {...register('schedule')}
               />
               {errors.schedule && (
@@ -376,6 +502,7 @@ export default function ProfileEdit() {
                 </label>
                 <input
                   type="password"
+                  autoComplete="new-password"
                   className={`input input-bordered w-full ${errors.password ? 'input-error' : ''}`}
                   placeholder="••••••••"
                   {...register('password')}
@@ -393,6 +520,7 @@ export default function ProfileEdit() {
                 </label>
                 <input
                   type="password"
+                  autoComplete="new-password"
                   className={`input input-bordered w-full ${errors.confirmPassword ? 'input-error' : ''}`}
                   placeholder="••••••••"
                   {...register('confirmPassword')}
@@ -419,9 +547,9 @@ export default function ProfileEdit() {
           </form>
 
           <div className="flex flex-col items-center gap-2 mt-4 w-full">
-            <Link to="/profile" className="btn btn-ghost w-full">
+            <button type="button" onClick={handleCancel} className="btn btn-ghost w-full">
               Cancelar
-            </Link>
+            </button>
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { api } from './api'
+import { AxiosError } from 'axios'
 
 export interface UserDTO {
   id: number
@@ -65,6 +66,7 @@ export interface ApartmentDTO {
   bills: string
   ubication: string
   state: string
+  maxTenants: number
   coverImageUrl?: string
   members?: ApartmentMemberDTO[]
   idealTenantProfile?: string
@@ -75,13 +77,21 @@ export interface ApartmentHomeDTO {
   roommates: RoommateDTO[]
   photos: ApartmentPhotoDTO[]
   billing: BillingSummaryDTO
+  openIncidences: number
 }
 
 export interface SwipeActionDTO {
   interest: boolean
 }
 
-export type MatchStatus = 'ACTIVE' | 'MATCH' | 'INVITED' | 'REJECTED' | 'SUCCESSFUL' | 'CANCELED'
+export type MatchStatus =
+  | 'ACTIVE'
+  | 'WAITING'
+  | 'MATCH'
+  | 'INVITED'
+  | 'REJECTED'
+  | 'SUCCESSFUL'
+  | 'CANCELED'
 
 export interface ApartmentMatchDTO {
   id: number
@@ -149,7 +159,34 @@ export const updateApartmentRules = async (
   apartmentId: number,
   rules: ApartmentRulesDTO
 ): Promise<void> => {
-  await api.put(`/apartments/${apartmentId}/rules`, rules)
+  const payload = {
+    allowsPets: rules.permiteMascotas,
+    allowsSmokers: rules.permiteFumadores,
+    partiesAllowed: rules.fiestasPermitidas,
+  }
+
+  await api.put(`/apartments/${apartmentId}/rules`, payload)
+}
+
+export const getApartmentRules = async (
+  apartmentId: number
+): Promise<ApartmentRulesDTO | null> => {
+  try {
+    const response = await api.get(`/apartments/${apartmentId}/rules`)
+    const data = response.data
+    return {
+      permiteMascotas: data?.allowsPets ?? false,
+      permiteFumadores: data?.allowsSmokers ?? false,
+      fiestasPermitidas: data?.partiesAllowed ?? false,
+    }
+  } catch (error) {
+    const err = error as AxiosError
+    if (err.response?.status === 403 || err.response?.status === 404) {
+      throw error
+    }
+    console.error('Error fetching apartment rules:', error)
+    return null
+  }
 }
 
 export const uploadApartmentImages = async (
@@ -231,11 +268,15 @@ export const cancelApartmentMatch = async (matchId: number): Promise<void> => {
 }
 
 export const rejectApartmentMatch = async (matchId: number): Promise<void> => {
-  await api.post(`/apartments-matches/apartmentMatch/${matchId}/respond-request?interest=false`)
+  await api.patch(`/apartments-matches/apartmentMatch/${matchId}/landlord-decision?decision=REJECT`)
 }
 
 export const acceptApartmentMatch = async (matchId: number): Promise<void> => {
-  await api.post(`/apartments-matches/apartmentMatch/${matchId}/respond-request?interest=true`)
+  await api.patch(`/apartments-matches/apartmentMatch/${matchId}/landlord-decision?decision=ACCEPT`)
+}
+
+export const waitApartmentMatch = async (matchId: number): Promise<void> => {
+  await api.patch(`/apartments-matches/apartmentMatch/${matchId}/landlord-decision?decision=WAIT`)
 }
 
 export const respondToInvitation = async (

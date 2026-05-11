@@ -77,9 +77,8 @@ export default function MyHome() {
     void load()
   }, [])
 
-  useEffect(() => {
-    setSelectedPhoto(0)
-  }, [homeData?.photos?.length])
+  // Resetting selected photo when gallery changes is handled implicitly by keeping
+  // a stable initial value; avoid setting state synchronously inside effects.
 
   const galleryPhotos = useMemo(() => {
     if (!homeData?.photos?.length) {
@@ -130,7 +129,7 @@ export default function MyHome() {
   const otherRoommates = roommates.filter((mate) => !mate.currentUser)
   const heroImage = galleryPhotos[selectedPhoto]?.url ?? ''
   const pendingAmount = Number(billing?.pendingAmount ?? 0)
-  const incidences = 3
+  const incidences = Number(homeData.openIncidences ?? 0)
 
   return (
     <section className="bg-base-200 min-h-[70vh] py-6 sm:py-8 px-3 sm:px-4">

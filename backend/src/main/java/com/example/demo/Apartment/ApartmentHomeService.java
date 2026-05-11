@@ -10,6 +10,7 @@ import com.example.demo.Apartment.DTOs.ApartmentHomeDTO;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
 import com.example.demo.ApartmentPhoto.dto.ApartmentPhotoDTO;
 import com.example.demo.Exceptions.ResourceNotFoundException;
+import com.example.demo.Incident.IncidentService;
 import com.example.demo.MemberApartment.ApartmentMemberEntity;
 import com.example.demo.MemberApartment.ApartmentMemberRepository;
 import com.example.demo.MemberApartment.ApartmentMemberService;
@@ -27,17 +28,20 @@ public class ApartmentHomeService {
     private final ApartmentMemberService apartmentMemberService;
     private final ApartmentPhotoService apartmentPhotoService;
     private final BillingService billingService;
+    private final IncidentService incidentService;
 
     public ApartmentHomeService(UserService userService,
                                 ApartmentMemberRepository apartmentMemberRepository,
                                 ApartmentMemberService apartmentMemberService,
                                 ApartmentPhotoService apartmentPhotoService,
-                                BillingService billingService) {
+                                BillingService billingService,
+                                IncidentService incidentService) {
         this.userService = userService;
         this.apartmentMemberRepository = apartmentMemberRepository;
         this.apartmentMemberService = apartmentMemberService;
         this.apartmentPhotoService = apartmentPhotoService;
         this.billingService = billingService;
+        this.incidentService = incidentService;
     }
 
     @Transactional(readOnly = true)
@@ -60,12 +64,14 @@ public class ApartmentHomeService {
         );
 
         BillingSummaryDTO billingSummary = billingService.getBillingSummaryForUser(currentUser.getId());
+        Integer openIncidences = incidentService.findIncidentsNotClosedByApartmentId(apartment.getId()).size();
 
         return new ApartmentHomeDTO(
                 ApartmentDTO.fromApartmentEntity(apartment),
                 roommates,
                 photos,
-                billingSummary
+                billingSummary,
+                openIncidences
         );
     }
 }

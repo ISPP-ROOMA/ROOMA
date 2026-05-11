@@ -79,9 +79,9 @@ function ReviewCard({
   return (
     <div className="rounded-2xl border border-[#E5E7EB] bg-white px-5 py-4">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-[1.05rem] font-semibold text-[#111827]">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[1.05rem] font-semibold text-[#111827] break-words">
             {type === 'received' ? `De: ${personName}` : `A: ${personName}`}
           </p>
           <p className="mt-0.5 text-[0.85rem] text-[#9CA3AF]">{date}</p>
@@ -91,7 +91,7 @@ function ReviewCard({
 
       {/* Comment */}
       {commentText && (
-        <p className="mt-3 text-[0.95rem] leading-relaxed text-[#374151]">{commentText}</p>
+        <p className="mt-3 text-[0.95rem] leading-relaxed text-[#374151] break-words">{commentText}</p>
       )}
 
       {/* Response (if exists) */}
@@ -101,7 +101,7 @@ function ReviewCard({
             <Reply size={13} />
             {type === 'received' ? 'Tu respuesta' : 'Respuesta'}
           </p>
-          <p className="mt-1 text-[0.9rem] leading-relaxed text-[#374151]">{review.response}</p>
+          <p className="mt-1 text-[0.9rem] leading-relaxed text-[#374151] break-words">{review.response}</p>
         </div>
       )}
 

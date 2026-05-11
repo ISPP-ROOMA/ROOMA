@@ -6,8 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ReglaViviendaRepository extends JpaRepository<ReglaViviendaEntity, Integer> {
+public interface ApartmentRuleRepository extends JpaRepository<ApartmentRuleEntity, Integer> {
 
-    Optional<ReglaViviendaEntity> findByViviendaId(Integer viviendaId);
+    Optional<ApartmentRuleEntity> findByApartmentId(Integer apartmentId);
 }
 

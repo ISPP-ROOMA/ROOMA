@@ -25,14 +25,10 @@ const formatDate = (value?: string) => {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<PendingNotification[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default')
+  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>(() =>
+    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default'
+  )
   const navigate = useNavigate()
-
-  useEffect(() => {
-    if ('Notification' in window) {
-      setPermissionStatus(Notification.permission)
-    }
-  }, [])
 
   const enablePush = async () => {
     const success = await requestPushPermissionAndSubscribe();
@@ -42,10 +38,7 @@ export default function NotificationsPage() {
   }
 
   const handleNotificationClick = async (notification: PendingNotification) => {
-    // Si tiene un ID válido de base de datos
-    if (notification.id > 100) {
-      await markNotificationAsRead(notification.id);
-    }
+    await markNotificationAsRead(notification.id)
 
     if (notification.link) {
       navigate(notification.link);
@@ -105,9 +98,9 @@ export default function NotificationsPage() {
                 onClick={() => { void handleNotificationClick(notification) }}
               >
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                  <div className="space-y-1">
-                    <h2 className="text-lg font-semibold">{notification.title}</h2>
-                    <p className="text-base-content/80">
+                  <div className="space-y-1 min-w-0">
+                    <h2 className="text-lg font-semibold break-words">{notification.title}</h2>
+                    <p className="text-base-content/80 break-words">
                       {notification.message || 'Sin contenido.'}
                     </p>
                   </div>

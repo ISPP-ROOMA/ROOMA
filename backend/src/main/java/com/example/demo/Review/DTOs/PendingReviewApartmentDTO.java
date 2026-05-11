@@ -6,6 +6,7 @@ public record PendingReviewApartmentDTO(
         Integer apartmentId,
         String apartmentTitle,
         String apartmentUbication,
-        List<ReviewableUserDTO> pendingUsers
+        List<ReviewableUserDTO> pendingUsers,
+        Boolean userIsActive
 ) {
 }

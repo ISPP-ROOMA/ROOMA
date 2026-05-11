@@ -19,9 +19,7 @@ import { createPortal } from 'react-dom'
 import type { ApartmentDTO, ApartmentPhotoDTO, UserDTO } from '../service/apartment.service'
 import { getApartmentPhotos } from '../service/apartment.service'
 import { api } from '../service/api'
-import { getFavoriteApartmentIds } from '../service/favorites.service'
-import { useAuthStore } from '../store/authStore'
-import FavoriteButton from './FavoriteButton'
+//import { useAuthStore } from '../store/authStore'
 
 interface ApartmentDetailModalProps {
   apartment: ApartmentDTO
@@ -342,13 +340,11 @@ export default function ApartmentDetailModal({
   showBackButton = false,
   onBack,
 }: ApartmentDetailModalProps) {
-  const { token } = useAuthStore()
+  //const { token } = useAuthStore()
   const [roommates, setRoommates] = useState<UserDTO[]>([])
   const [photos, setPhotos] = useState<ApartmentPhotoDTO[]>([])
   const [currentPhoto, setCurrentPhoto] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
-  const [favoriteApartmentId, setFavoriteApartmentId] = useState<number | null>(null)
-  const initialIsFavorite = Boolean(token && favoriteApartmentId === apartment.id)
 
   // Animation controls
   const modalControls = useAnimation()
@@ -392,33 +388,6 @@ export default function ApartmentDetailModal({
     }
     fetchPhotos()
   }, [apartment.id])
-
-  useEffect(() => {
-    if (!token || !apartment.id) {
-      return
-    }
-
-    let cancelled = false
-
-    const loadFavoriteState = async () => {
-      try {
-        const favoriteIds = await getFavoriteApartmentIds([apartment.id])
-        if (!cancelled) {
-          setFavoriteApartmentId(favoriteIds.includes(apartment.id) ? apartment.id : null)
-        }
-      } catch {
-        if (!cancelled) {
-          setFavoriteApartmentId(null)
-        }
-      }
-    }
-
-    void loadFavoriteState()
-
-    return () => {
-      cancelled = true
-    }
-  }, [apartment.id, token])
 
   // ── Animations ─────────────────────────────────────────────────
 
@@ -641,10 +610,6 @@ export default function ApartmentDetailModal({
               onOpenLightbox={photos.length > 0 ? () => setLightboxOpen(true) : undefined}
               height="h-64 sm:h-80 md:h-[26rem]"
             />
-
-            <div className="absolute top-16 left-3 z-20">
-              <FavoriteButton apartmentId={apartment.id} initialIsFavorite={initialIsFavorite} />
-            </div>
 
             {/* Title + Price overlay */}
             <div className="absolute bottom-0 inset-x-0 px-5 pb-4 pt-16 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none z-[5]">

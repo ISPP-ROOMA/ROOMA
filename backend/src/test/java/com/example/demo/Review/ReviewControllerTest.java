@@ -144,7 +144,7 @@ public class ReviewControllerTest {
 
         ApartmentEntity apt = apartment(100);
         ReviewService.PendingUserInfo pendingUserInfo = new ReviewService.PendingUserInfo(user, true, false);
-        ReviewService.PendingReviewApartment pendingReviewApartment = new ReviewService.PendingReviewApartment(apt, List.of(pendingUserInfo));
+        ReviewService.PendingReviewApartment pendingReviewApartment = new ReviewService.PendingReviewApartment(apt, List.of(pendingUserInfo), false);
         when(reviewService.getPendingReviewApartments()).thenReturn(List.of(pendingReviewApartment));
 
         mockMvc.perform(get("/api/reviews/reviewable/100"))

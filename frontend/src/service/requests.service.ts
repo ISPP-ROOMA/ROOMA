@@ -1,9 +1,9 @@
-import { api } from './api'
 import { useAuthStore } from '../store/authStore'
+import { api } from './api'
 
-export type RequestStatus = 'PENDING' | 'ON_HOLD' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED'
+export type RequestStatus = 'PENDING' | 'WAITING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED'
 export type ApartmentStatus = 'FREE' | 'PAUSED' | 'RENTED'
-type BackendMatchStatus = 'ACTIVE' | 'MATCH' | 'REJECTED' | 'SUCCESSFUL' | 'CANCELED'
+type BackendMatchStatus = 'ACTIVE' | 'WAITING' | 'MATCH' | 'REJECTED' | 'SUCCESSFUL' | 'CANCELED'
 
 type BackendApartmentDTO = {
   id: number
@@ -35,6 +35,13 @@ type LandlordRequestDTO = {
   createdAt?: string
 }
 
+type FilteredCandidateDTO = {
+  id: number
+  matchStatus: BackendMatchStatus
+  apartment?: BackendApartmentDTO
+  tenantHasOpenedMatchDetails?: boolean
+}
+
 export interface RequestItem {
   id: number
   apartmentId: number
@@ -48,17 +55,19 @@ export interface RequestItem {
   monthlyPrice?: number
 }
 export interface CandidateFilter {
-  minAge?: number;
-  maxAge?: number;
-  requiredProfession?: string;
-  allowedSmoker?: boolean;
-  requiredSchedule?: string;
+  minAge?: number
+  maxAge?: number
+  requiredProfession?: string
+  allowedSmoker?: boolean
+  requiredSchedule?: string
 }
 
 function mapBackendStatus(status: BackendMatchStatus): RequestStatus {
   switch (status) {
     case 'ACTIVE':
       return 'PENDING'
+    case 'WAITING':
+      return 'WAITING'
     case 'MATCH':
     case 'SUCCESSFUL':
       return 'ACCEPTED'
@@ -160,21 +169,35 @@ export async function getReceivedRequests(): Promise<RequestItem[]> {
 }
 
 export async function acceptRequest(apartmentMatchId: number): Promise<void> {
-  await api.post(
-    `/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-request?interest=true`
+  await api.patch(
+    `/apartments-matches/apartmentMatch/${apartmentMatchId}/landlord-decision?decision=ACCEPT`
   )
 }
 
 export async function rejectRequest(apartmentMatchId: number): Promise<void> {
-  await api.post(
-    `/apartments-matches/apartmentMatch/${apartmentMatchId}/respond-request?interest=false`
+  await api.patch(
+    `/apartments-matches/apartmentMatch/${apartmentMatchId}/landlord-decision?decision=REJECT`
   )
 }
 
-export async function getFilteredCandidates(
-  apartmentId: number,
-  filter: CandidateFilter
-) {
-  const response = await api.post(`/apartments-matches/apartment/${apartmentId}/filtered-candidates`, filter);
-  return response.data;
+export async function waitRequest(apartmentMatchId: number): Promise<void> {
+  await api.patch(
+    `/apartments-matches/apartmentMatch/${apartmentMatchId}/landlord-decision?decision=WAIT`
+  )
+}
+
+export async function getFilteredCandidates(apartmentId: number, filter: CandidateFilter) {
+  const response = await api.post<FilteredCandidateDTO[]>(
+    `/apartments-matches/apartment/${apartmentId}/filtered-candidates`,
+    filter
+  )
+  // The backend returns ApartmentMatchLandlordDTO objects (with nested `apartment`),
+  // but the UI expects a flat structure with `id` and `apartmentId` like other endpoints.
+  return (response.data || []).map((item) => ({
+    id: item.id,
+    apartmentId: item.apartment?.id ?? null,
+    matchStatus: item.matchStatus,
+    // preserve optional fields if present
+    tenantHasOpenedMatchDetails: item.tenantHasOpenedMatchDetails,
+  }))
 }

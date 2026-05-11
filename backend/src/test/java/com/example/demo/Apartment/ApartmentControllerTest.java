@@ -110,7 +110,7 @@ public class ApartmentControllerTest {
     @WithMockUser(roles = "TENANT")
     @DisplayName("getMyHomeSnapshot should return 200 for tenant")
     public void getMyHomeSnapshot_Tenant() throws Exception {
-        ApartmentHomeDTO home = new ApartmentHomeDTO(ApartmentDTO.fromApartmentEntity(apartment(10)), List.of(), List.of(), null);
+        ApartmentHomeDTO home = new ApartmentHomeDTO(ApartmentDTO.fromApartmentEntity(apartment(10)), List.of(), List.of(), null, 1);
         when(apartmentHomeService.getCurrentUserHome()).thenReturn(home);
 
         mockMvc.perform(get("/api/apartments/me/home"))
@@ -149,7 +149,7 @@ public class ApartmentControllerTest {
                                 "data",
                                 "data",
                                 MediaType.APPLICATION_JSON_VALUE,
-                                "{\"title\":\"Flat C\",\"description\":\"Desc\",\"price\":700.0,\"bills\":\"wifi\",\"ubication\":\"Madrid\",\"state\":\"ACTIVE\"}"
+                                "{\"title\":\"Flat C\",\"description\":\"Desc\",\"price\":700.0,\"bills\":\"wifi\",\"ubication\":\"Madrid\",\"state\":\"ACTIVE\",\"maxTenants\":1}"
                                         .getBytes(StandardCharsets.UTF_8)
                         )))
                 .andExpect(status().isForbidden());
@@ -182,7 +182,7 @@ public class ApartmentControllerTest {
         photo.setId(66);
         photo.setUrl("https://img/test.jpg");
 
-        when(apartmentService.findById(6)).thenReturn(apartment);
+        when(apartmentService.findByIdForCurrentUser(6)).thenReturn(apartment);
         when(apartmentPhotoService.findPhotosByApartmentId(6)).thenReturn(List.of(photo));
 
         mockMvc.perform(get("/api/apartments/{id}/photos", 6))
@@ -226,7 +226,7 @@ public class ApartmentControllerTest {
     @DisplayName("getApartmentById should return 200 with apartment data")
     public void getApartmentById_ReturnsOk() throws Exception {
         ApartmentEntity apartment = apartment(3);
-        when(apartmentService.findById(3)).thenReturn(apartment);
+        when(apartmentService.findByIdForCurrentUser(3)).thenReturn(apartment);
         when(apartmentMemberService.findCurrentMembers(3)).thenReturn(List.of());
 
         mockMvc.perform(get("/api/apartments/{id}", 3))
@@ -239,7 +239,7 @@ public class ApartmentControllerTest {
     @WithMockUser(roles = "TENANT")
     @DisplayName("getApartmentById should return 404 when apartment does not exist")
     public void getApartmentById_WhenNotFound_Returns404() throws Exception {
-        when(apartmentService.findById(998))
+        when(apartmentService.findByIdForCurrentUser(998))
                 .thenThrow(new ResourceNotFoundException("Apartment not found"));
 
         mockMvc.perform(get("/api/apartments/{id}", 998))
@@ -261,7 +261,7 @@ public class ApartmentControllerTest {
                                 "data",
                                 "data",
                                 MediaType.APPLICATION_JSON_VALUE,
-                                "{\"title\":\"Flat A\",\"description\":\"Desc\",\"price\":700.0,\"bills\":\"wifi\",\"ubication\":\"Madrid\",\"state\":\"ACTIVE\"}"
+                                "{\"title\":\"Flat A\",\"description\":\"Desc\",\"price\":700.0,\"bills\":\"wifi\",\"ubication\":\"Madrid\",\"state\":\"ACTIVE\",\"maxTenants\":1}"
                                         .getBytes(StandardCharsets.UTF_8)
                         )))
                 .andExpect(status().isCreated())
@@ -282,7 +282,8 @@ public class ApartmentControllerTest {
               "bills": "incluido",
               "ubication": "Madrid",
               "state": "ACTIVE",
-              "idealTenantProfile": "Perfil"
+              "idealTenantProfile": "Perfil",
+              "maxTenants": 2
             }
             """;
 
@@ -304,7 +305,8 @@ public class ApartmentControllerTest {
               "bills": "incluido",
               "ubication": "Madrid",
               "state": "ACTIVE",
-              "idealTenantProfile": "Perfil"
+              "idealTenantProfile": "Perfil",
+              "maxTenants": 2
             }
             """;
 
@@ -334,7 +336,8 @@ public class ApartmentControllerTest {
               "bills": "incluido",
               "ubication": "Sevilla",
               "state": "ACTIVE",
-              "idealTenantProfile": "Perfil ideal"
+              "idealTenantProfile": "Perfil ideal",
+              "maxTenants": 2
             }
             """;
 
@@ -363,7 +366,8 @@ public class ApartmentControllerTest {
               "bills": "incluido",
               "ubication": "Madrid",
               "state": "ACTIVE",
-              "idealTenantProfile": "Perfil ideal"
+              "idealTenantProfile": "Perfil ideal",
+              "maxTenants": 2
             }
             """;
 
@@ -386,7 +390,8 @@ public class ApartmentControllerTest {
               "price": -10.0,
               "bills": "incluido",
               "ubication": "",
-              "state": "ACTIVE"
+              "state": "ACTIVE",
+              "maxTenants": 2
             }
             """;
 
@@ -413,7 +418,8 @@ public class ApartmentControllerTest {
               "bills": "incluido",
               "ubication": "Madrid",
               "state": "ACTIVE",
-              "idealTenantProfile": "Perfil ideal"
+              "idealTenantProfile": "Perfil ideal",
+              "maxTenants": 2
             }
             """;
 

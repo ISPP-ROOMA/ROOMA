@@ -380,6 +380,7 @@ public class ApartmentMemberRepositoryTest {
         apartment.setBills("bills");
         apartment.setUbication(ubication);
         apartment.setState(state);
+        apartment.setMaxTenants(2);
         apartment.setUser(owner);
         entityManager.persist(apartment);
         entityManager.flush();

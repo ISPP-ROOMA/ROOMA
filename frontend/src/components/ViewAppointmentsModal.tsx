@@ -36,7 +36,10 @@ export default function ViewAppointmentsModal({ apartmentId, apartmentTitle, onC
     try {
       await cancelAppointmentSlot(slotId)
       showToast('Cita cancelada', 'success')
-      loadBlocks()
+      // refresh list after successful cancel
+      const data = await getBlocksForApartment(apartmentId)
+      setBlocks(data)
+      if (data.length > 0) setExpandedBlock(data[0].id)
     } catch {
       showToast('Error al cancelar la cita', 'error')
     } finally {

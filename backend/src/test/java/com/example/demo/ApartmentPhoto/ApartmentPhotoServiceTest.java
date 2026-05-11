@@ -79,14 +79,14 @@ public class ApartmentPhotoServiceTest {
         verify(apartmentPhotoRepository, times(2)).save(captor.capture());
 
         List<ApartmentPhotoEntity> saved = captor.getAllValues();
-        assertEquals(4, saved.get(0).getOrden());
-        assertEquals(false, saved.get(0).getPortada());
+        assertEquals(4, saved.get(0).getPhoto_order());
+        assertEquals(false, saved.get(0).getCover());
         assertEquals("https://img/new-4.jpg", saved.get(0).getUrl());
         assertEquals("new-4", saved.get(0).getPublicId());
         assertEquals(apartment, saved.get(0).getApartment());
 
-        assertEquals(5, saved.get(1).getOrden());
-        assertEquals(false, saved.get(1).getPortada());
+        assertEquals(5, saved.get(1).getPhoto_order());
+        assertEquals(false, saved.get(1).getCover());
         assertEquals("https://img/new-5.jpg", saved.get(1).getUrl());
         assertEquals("new-5", saved.get(1).getPublicId());
         assertEquals(apartment, saved.get(1).getApartment());
@@ -113,8 +113,8 @@ public class ApartmentPhotoServiceTest {
         ArgumentCaptor<ApartmentPhotoEntity> captor = ArgumentCaptor.forClass(ApartmentPhotoEntity.class);
         verify(apartmentPhotoRepository).save(captor.capture());
         ApartmentPhotoEntity saved = captor.getValue();
-        assertEquals(1, saved.getOrden());
-        assertEquals(true, saved.getPortada());
+        assertEquals(1, saved.getPhoto_order());
+        assertEquals(true, saved.getCover());
         assertEquals("https://img/new-1.jpg", saved.getUrl());
         assertEquals("new-1", saved.getPublicId());
     }
@@ -260,8 +260,8 @@ public class ApartmentPhotoServiceTest {
     private ApartmentPhotoEntity photo(ApartmentEntity apartment, Integer orden, Boolean portada, String publicId, String url) {
         ApartmentPhotoEntity photo = new ApartmentPhotoEntity();
         photo.setApartment(apartment);
-        photo.setOrden(orden);
-        photo.setPortada(portada);
+        photo.setPhoto_order(orden);
+        photo.setCover(portada);
         photo.setPublicId(publicId);
         photo.setUrl(url);
         return photo;

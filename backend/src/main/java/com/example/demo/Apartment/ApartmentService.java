@@ -1,5 +1,7 @@
 package com.example.demo.Apartment;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -8,10 +10,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.Apartment.DTOs.CreateApartment;
+import com.example.demo.ApartmentMatch.ApartmentMatchEntity;
+import com.example.demo.ApartmentMatch.ApartmentMatchRepository;
+import com.example.demo.ApartmentMatch.MatchStatus;
 import com.example.demo.ApartmentPhoto.ApartmentPhotoService;
 import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ForbiddenException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
+import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
 import com.example.demo.User.UserService;
 
@@ -20,13 +26,16 @@ public class ApartmentService {
 
 
     private final ApartmentRepository apartmentsRepository;
+    private final ApartmentMatchRepository apartmentMatchRepository;
     private final UserService userService;
     private final ApartmentPhotoService apartmentPhotoService;
 
     public ApartmentService(ApartmentRepository apartmentsRepository,
+            ApartmentMatchRepository apartmentMatchRepository,
             UserService userService,
             ApartmentPhotoService apartmentPhotoService) {
         this.apartmentsRepository = apartmentsRepository;
+        this.apartmentMatchRepository = apartmentMatchRepository;
         this.userService = userService;
         this.apartmentPhotoService = apartmentPhotoService;
     }
@@ -41,6 +50,9 @@ public class ApartmentService {
         }
 
         newApartment.setUser(user.get());
+        if (newApartment.getState() == ApartmentState.ACTIVE && newApartment.getActivationDate() == null) {
+            newApartment.setActivationDate(LocalDateTime.now(ZoneId.of("Europe/Madrid")));
+        }
         return apartmentsRepository.save(newApartment);
     }
 
@@ -50,6 +62,9 @@ public class ApartmentService {
 
         ApartmentEntity apartment = CreateApartment.fromDTO(dto);
         apartment.setUser(currentUser);
+        if (apartment.getState() == ApartmentState.ACTIVE && apartment.getActivationDate() == null) {
+            apartment.setActivationDate(LocalDateTime.now(ZoneId.of("Europe/Madrid")));
+        }
 
         ApartmentEntity savedApartment = apartmentsRepository.save(apartment);
         apartmentPhotoService.saveImages(savedApartment, images, false);
@@ -68,6 +83,19 @@ public class ApartmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
     }
 
+    @Transactional(readOnly = true)
+    public ApartmentEntity findByIdForCurrentUser(Integer id) {
+        ApartmentEntity apartment = findById(id);
+        UserEntity currentUser = userService.findCurrentUserEntity();
+
+        if (currentUser.getRole() == Role.LANDLORD
+                && (apartment.getUser() == null || !apartment.getUser().getId().equals(currentUser.getId()))) {
+            throw new ForbiddenException("Landlords can only access their own apartments");
+        }
+
+        return apartment;
+    }
+
     public List<ApartmentEntity> findMyApartments() {
         String username = userService.findCurrentUser();
         Optional<UserEntity> user = userService.findByEmail(username);
@@ -82,6 +110,8 @@ public class ApartmentService {
     @Transactional
     public ApartmentEntity update(Integer id, ApartmentEntity apartments) {
         ApartmentEntity existingApartment = findById(id);
+        ApartmentState previousState = existingApartment.getState();
+        ApartmentState requestedState = apartments.getState();
 
         UserEntity currentUser = userService.findCurrentUserEntity();
         if (existingApartment.getUser() == null ||
@@ -94,8 +124,22 @@ public class ApartmentService {
         existingApartment.setPrice(apartments.getPrice());
         existingApartment.setBills(apartments.getBills());
         existingApartment.setUbication(apartments.getUbication());
-        existingApartment.setState(apartments.getState());
+        existingApartment.setState(requestedState);
         existingApartment.setIdealTenantProfile(apartments.getIdealTenantProfile());
+
+        if (previousState == ApartmentState.ACTIVE && requestedState != ApartmentState.ACTIVE) {
+            List<ApartmentMatchEntity> pendingMatches = apartmentMatchRepository.findByApartmentIdAndMatchStatusIn(
+                    id,
+                    List.of(MatchStatus.ACTIVE, MatchStatus.WAITING));
+
+            pendingMatches.forEach(match -> match.setMatchStatus(MatchStatus.CANCELED));
+            apartmentMatchRepository.saveAll(pendingMatches);
+        }
+
+        if (requestedState == ApartmentState.ACTIVE
+                && (previousState != ApartmentState.ACTIVE || existingApartment.getActivationDate() == null)) {
+            existingApartment.setActivationDate(LocalDateTime.now(ZoneId.of("Europe/Madrid")));
+        }
 
         return apartmentsRepository.save(existingApartment);
     }
@@ -134,6 +178,8 @@ public class ApartmentService {
 
     @Transactional(readOnly = true)
     public List<ApartmentEntity> getDeckForCandidate(Integer candidateId) {
-        return apartmentsRepository.findDeckForCandidate(candidateId);
+        return apartmentsRepository.findDeckForCandidate(
+                candidateId,
+                ApartmentState.ACTIVE);
     }
 }

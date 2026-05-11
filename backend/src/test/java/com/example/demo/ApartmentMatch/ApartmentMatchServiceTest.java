@@ -1,36 +1,44 @@
 package com.example.demo.ApartmentMatch;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentService;
 import com.example.demo.Apartment.ApartmentState;
+import com.example.demo.ApartmentMatch.DTOs.CandidateFilterDTO;
 import com.example.demo.Exceptions.BadRequestException;
 import com.example.demo.Exceptions.ConflictException;
 import com.example.demo.Exceptions.ResourceNotFoundException;
 import com.example.demo.MemberApartment.ApartmentMemberEntity;
 import com.example.demo.MemberApartment.ApartmentMemberService;
 import com.example.demo.MemberApartment.MemberRole;
+import com.example.demo.Notification.EventType;
 import com.example.demo.Notification.NotificationService;
 import com.example.demo.User.Role;
 import com.example.demo.User.UserEntity;
@@ -192,6 +200,57 @@ public class ApartmentMatchServiceTest {
         verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
     }
 
+        @Test
+        @DisplayName("processSwipe tenant allows swipe when previous match is before apartment activation")
+        public void processSwipe_PreviousMatchBeforeActivation_AllowsNewSwipe() {
+                Integer apartmentId = 16;
+                UserEntity tenant = createUser(900, Role.TENANT, "tenant-reactivated@test.com");
+                ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.ACTIVE,
+                                createUser(901, Role.LANDLORD, "landlord-reactivated@test.com"));
+                apartment.setActivationDate(LocalDateTime.now().minusDays(1));
+
+                ApartmentMatchEntity existingMatch = createMatch(101, MatchStatus.REJECTED, tenant, apartment, false, null);
+                existingMatch.setMatchDate(LocalDateTime.now().minusDays(5));
+
+                when(userService.findCurrentUserEntity()).thenReturn(tenant);
+                when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+                when(apartmentMatchRepository.findByCandidateIdAndApartmentId(tenant.getId(), apartmentId))
+                                .thenReturn(Optional.of(existingMatch));
+                when(apartmentMatchRepository.save(existingMatch)).thenReturn(existingMatch);
+
+                ApartmentMatchEntity result = apartmentMatchService.processSwipe(apartmentId, true);
+
+                assertEquals(MatchStatus.ACTIVE, result.getMatchStatus());
+                assertEquals(Boolean.TRUE, result.getCandidateInterest());
+                assertNotNull(result.getMatchDate());
+                verify(apartmentMatchRepository).save(existingMatch);
+        }
+
+        @Test
+        @DisplayName("processSwipe tenant blocks swipe for legacy apartment without activationDate when previous interaction exists")
+        public void processSwipe_LegacyRejectedWithoutActivationDate_ThrowsConflict() {
+                Integer apartmentId = 17;
+                UserEntity tenant = createUser(902, Role.TENANT, "tenant-legacy-rejected@test.com");
+                ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.ACTIVE,
+                                createUser(903, Role.LANDLORD, "landlord-legacy-rejected@test.com"));
+                apartment.setActivationDate(null);
+
+                ApartmentMatchEntity existingMatch = createMatch(102, MatchStatus.REJECTED, tenant, apartment, false, null);
+                existingMatch.setMatchDate(LocalDateTime.now().minusDays(2));
+
+                when(userService.findCurrentUserEntity()).thenReturn(tenant);
+                when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+                when(apartmentMatchRepository.findByCandidateIdAndApartmentId(tenant.getId(), apartmentId))
+                                .thenReturn(Optional.of(existingMatch));
+
+                ConflictException exception = assertThrows(
+                                ConflictException.class,
+                                () -> apartmentMatchService.processSwipe(apartmentId, true));
+
+                assertEquals("You have already swiped on this apartment", exception.getMessage());
+                verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
+        }
+
     @Test
     @DisplayName("processLandlordAction sets MATCH when landlord is interested")
     public void processLandlordAction_InterestTrue_SetsMatch() {
@@ -302,6 +361,132 @@ public class ApartmentMatchServiceTest {
     }
 
     @Test
+    @DisplayName("processLandlordDecision sets WAITING when landlord selects WAIT from ACTIVE")
+    public void processLandlordDecision_WaitFromActive_SetsWaiting() {
+        Integer matchId = 212;
+        UserEntity landlord = createUser(2121, Role.LANDLORD, "landlord-wait@test.com");
+        ApartmentEntity apartment = createApartment(1212, ApartmentState.ACTIVE, landlord);
+        ApartmentMatchEntity match = createMatch(matchId, MatchStatus.ACTIVE,
+                createUser(2122, Role.TENANT, "tenant-wait@test.com"), apartment, true, null);
+
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+        when(userService.findCurrentUserEntity()).thenReturn(landlord);
+        when(apartmentMatchRepository.save(match)).thenReturn(match);
+
+        ApartmentMatchEntity result = apartmentMatchService.processLandlordDecision(matchId, "WAIT");
+
+        assertEquals(MatchStatus.WAITING, result.getMatchStatus());
+        verify(apartmentMatchRepository).save(match);
+    }
+
+    @ParameterizedTest(name = "processLandlordDecision WAIT from {0} throws conflict")
+    @EnumSource(value = MatchStatus.class, mode = EnumSource.Mode.EXCLUDE, names = { "ACTIVE" })
+    public void processLandlordDecision_WaitInvalidPreviousStatus_ThrowsConflict(MatchStatus previousStatus) {
+        Integer matchId = 2120;
+        UserEntity landlord = createUser(21201, Role.LANDLORD, "landlord-waiting@test.com");
+        ApartmentEntity apartment = createApartment(12120, ApartmentState.ACTIVE, landlord);
+        ApartmentMatchEntity match = createMatch(matchId, previousStatus,
+                createUser(21202, Role.TENANT, "tenant-waiting@test.com"), apartment, true, null);
+
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+        when(userService.findCurrentUserEntity()).thenReturn(landlord);
+
+        ConflictException exception = assertThrows(
+                ConflictException.class,
+                () -> apartmentMatchService.processLandlordDecision(matchId, "WAIT"));
+
+        assertNotNull(exception);
+        verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
+    }
+
+    @ParameterizedTest(name = "processLandlordDecision ACCEPT from {0} sets MATCH")
+    @EnumSource(value = MatchStatus.class, names = { "ACTIVE", "WAITING" })
+    public void processLandlordDecision_AcceptFromActiveOrWaiting_SetsMatchAndInterest(MatchStatus previousStatus) {
+        Integer matchId = 213;
+        UserEntity landlord = createUser(2131, Role.LANDLORD, "landlord-accept@test.com");
+        ApartmentEntity apartment = createApartment(1213, ApartmentState.ACTIVE, landlord);
+        ApartmentMatchEntity match = createMatch(matchId, previousStatus,
+                createUser(2132, Role.TENANT, "tenant-accept@test.com"), apartment, true, null);
+
+        when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+        when(userService.findCurrentUserEntity()).thenReturn(landlord);
+        when(apartmentMatchRepository.save(match)).thenReturn(match);
+
+        ApartmentMatchEntity result = apartmentMatchService.processLandlordDecision(matchId, "ACCEPT");
+
+        assertEquals(MatchStatus.MATCH, result.getMatchStatus());
+        assertEquals(Boolean.TRUE, result.getLandlordInterest());
+        verify(apartmentMatchRepository).save(match);
+        verify(notificationService).createNotification(
+                eq(EventType.MATCH),
+                anyString(),
+                eq("/mis-solicitudes/enviadas"),
+                eq(match.getCandidate()));
+    }
+
+        @ParameterizedTest(name = "processLandlordDecision REJECT from {0} sets REJECTED")
+        @EnumSource(value = MatchStatus.class, names = { "ACTIVE", "WAITING" })
+        public void processLandlordDecision_RejectFromActiveOrWaiting_SetsRejectedAndInterestFalse(
+                        MatchStatus previousStatus) {
+                Integer matchId = 2135;
+                UserEntity landlord = createUser(21351, Role.LANDLORD, "landlord-reject@test.com");
+                ApartmentEntity apartment = createApartment(12135, ApartmentState.ACTIVE, landlord);
+                ApartmentMatchEntity match = createMatch(matchId, previousStatus,
+                                createUser(21352, Role.TENANT, "tenant-reject@test.com"), apartment, true, null);
+
+                when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+                when(userService.findCurrentUserEntity()).thenReturn(landlord);
+                when(apartmentMatchRepository.save(match)).thenReturn(match);
+
+                ApartmentMatchEntity result = apartmentMatchService.processLandlordDecision(matchId, "REJECT");
+
+                assertEquals(MatchStatus.REJECTED, result.getMatchStatus());
+                assertEquals(Boolean.FALSE, result.getLandlordInterest());
+                verify(apartmentMatchRepository).save(match);
+        }
+
+        @Test
+        @DisplayName("processLandlordDecision throws conflict for invalid decision")
+        public void processLandlordDecision_InvalidDecision_ThrowsConflict() {
+                Integer matchId = 2136;
+                UserEntity landlord = createUser(21361, Role.LANDLORD, "landlord-invalid-decision@test.com");
+                ApartmentEntity apartment = createApartment(12136, ApartmentState.ACTIVE, landlord);
+                ApartmentMatchEntity match = createMatch(matchId, MatchStatus.ACTIVE,
+                                createUser(21362, Role.TENANT, "tenant-invalid-decision@test.com"), apartment, true, null);
+
+                when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+                when(userService.findCurrentUserEntity()).thenReturn(landlord);
+
+                ConflictException exception = assertThrows(
+                                ConflictException.class,
+                                () -> apartmentMatchService.processLandlordDecision(matchId, "MAYBE"));
+
+                assertEquals("Invalid decision: MAYBE", exception.getMessage());
+                verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
+        }
+
+        @Test
+        @DisplayName("processLandlordDecision throws when current user is not apartment landlord")
+        public void processLandlordDecision_NotLandlord_ThrowsConflict() {
+                Integer matchId = 2130;
+                UserEntity landlord = createUser(21301, Role.LANDLORD, "landlord-decision@test.com");
+                UserEntity otherUser = createUser(21302, Role.LANDLORD, "other-decision@test.com");
+                ApartmentEntity apartment = createApartment(12130, ApartmentState.ACTIVE, landlord);
+                ApartmentMatchEntity match = createMatch(matchId, MatchStatus.ACTIVE,
+                                createUser(21303, Role.TENANT, "tenant-decision@test.com"), apartment, true, null);
+
+                when(apartmentMatchRepository.findById(matchId)).thenReturn(Optional.of(match));
+                when(userService.findCurrentUserEntity()).thenReturn(otherUser);
+
+                ConflictException exception = assertThrows(
+                                ConflictException.class,
+                                () -> apartmentMatchService.processLandlordDecision(matchId, "ACCEPT"));
+
+                assertEquals("Only the landlord of the apartment can process this decision", exception.getMessage());
+                verify(apartmentMatchRepository, never()).save(any(ApartmentMatchEntity.class));
+        }
+
+    @Test
     @DisplayName("sendInvitation sets INVITED for landlord on MATCH and active apartment")
     public void sendInvitation_ValidMatch_SetsInvited() {
         Integer matchId = 22;
@@ -318,6 +503,11 @@ public class ApartmentMatchServiceTest {
 
         assertEquals(MatchStatus.INVITED, result.getMatchStatus());
         verify(apartmentMatchRepository).save(match);
+        verify(notificationService).createNotification(
+                eq(EventType.INVITATION_SENT),
+                contains(landlord.getEmail()),
+                eq("/mis-solicitudes/enviadas"),
+                eq(match.getCandidate()));
     }
 
     @Test
@@ -795,6 +985,24 @@ public class ApartmentMatchServiceTest {
         assertEquals("Only the candidate can cancel an active request", exception.getMessage());
     }
 
+        @Test
+        @DisplayName("cancelMatch sets CANCELED when ACTIVE match is canceled by candidate")
+        public void cancelMatch_ActiveMatchCanceledByCandidate_SetsCanceled() {
+                UserEntity candidate = createUser(312, Role.TENANT, "tenant-active-ok@test.com");
+                UserEntity landlord = createUser(313, Role.LANDLORD, "landlord-active-ok@test.com");
+                ApartmentEntity apartment = createApartment(306, ApartmentState.ACTIVE, landlord);
+                ApartmentMatchEntity match = createMatch(306, MatchStatus.ACTIVE, candidate, apartment, true, true);
+
+                when(apartmentMatchRepository.findById(306)).thenReturn(Optional.of(match));
+                when(userService.findCurrentUserEntity()).thenReturn(candidate);
+                when(apartmentMatchRepository.save(match)).thenReturn(match);
+
+                ApartmentMatchEntity result = apartmentMatchService.cancelMatch(306);
+
+                assertEquals(MatchStatus.CANCELED, result.getMatchStatus());
+                verify(apartmentMatchRepository).save(match);
+        }
+
     @Test
     @DisplayName("findInterestedCandidatesByApartmentIdAndStatus returns matches for apartment landlord")
     public void findInterestedCandidatesByApartmentIdAndStatus_Landlord_ReturnsMatches() {
@@ -813,6 +1021,231 @@ public class ApartmentMatchServiceTest {
 
         assertSame(matches, result);
     }
+
+        @Test
+        @DisplayName("getFilteredCandidates throws when current user is not apartment landlord")
+        public void getFilteredCandidates_NotLandlord_ThrowsConflict() {
+                Integer apartmentId = 320;
+                UserEntity landlord = createUser(3201, Role.LANDLORD, "landlord-filter@test.com");
+                UserEntity otherUser = createUser(3202, Role.LANDLORD, "other-filter@test.com");
+                ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.ACTIVE, landlord);
+
+                when(userService.findCurrentUserEntity()).thenReturn(otherUser);
+                when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+
+                ConflictException exception = assertThrows(
+                                ConflictException.class,
+                                () -> apartmentMatchService.getFilteredCandidates(apartmentId, new CandidateFilterDTO()));
+
+                assertEquals("Only the landlord of the apartment can view the filtered candidates", exception.getMessage());
+                verify(apartmentMatchRepository, never()).findByApartmentIdAndMatchStatus(any(Integer.class), any(MatchStatus.class));
+        }
+
+        @Test
+        @DisplayName("getFilteredCandidates returns active candidates when filter is null")
+        public void getFilteredCandidates_FilterNull_ReturnsCandidates() {
+                Integer apartmentId = 321;
+                UserEntity landlord = createUser(3211, Role.LANDLORD, "landlord-filter-null@test.com");
+                ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.ACTIVE, landlord);
+                ApartmentMatchEntity match = createMatch(
+                                3212,
+                                MatchStatus.ACTIVE,
+                                createUser(3213, Role.TENANT, "tenant-filter-null@test.com"),
+                                apartment,
+                                true,
+                                null);
+                List<ApartmentMatchEntity> candidates = List.of(match);
+
+                when(userService.findCurrentUserEntity()).thenReturn(landlord);
+                when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+                when(apartmentMatchRepository.findByApartmentIdAndMatchStatus(apartmentId, MatchStatus.ACTIVE)).thenReturn(candidates);
+
+                List<ApartmentMatchEntity> result = apartmentMatchService.getFilteredCandidates(apartmentId, null);
+
+                assertSame(candidates, result);
+        }
+
+        @Test
+        @DisplayName("getFilteredCandidates returns candidates as-is when all scores are zero")
+        public void getFilteredCandidates_MaxScoreZero_ReturnsCandidatesAsIs() {
+                Integer apartmentId = 322;
+                UserEntity landlord = createUser(3221, Role.LANDLORD, "landlord-filter-zero@test.com");
+                ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.ACTIVE, landlord);
+
+                UserEntity candidate = createUser(3222, Role.TENANT, "tenant-filter-zero@test.com");
+                ApartmentMatchEntity match = createMatch(3223, MatchStatus.ACTIVE, candidate, apartment, true, null);
+                List<ApartmentMatchEntity> candidates = List.of(match);
+
+                CandidateFilterDTO filter = new CandidateFilterDTO();
+                filter.setRequiredProfession("Doctor");
+                filter.setAllowedSmoker(Boolean.TRUE);
+                filter.setRequiredSchedule("NIGHT");
+
+                when(userService.findCurrentUserEntity()).thenReturn(landlord);
+                when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+                when(apartmentMatchRepository.findByApartmentIdAndMatchStatus(apartmentId, MatchStatus.ACTIVE)).thenReturn(candidates);
+
+                List<ApartmentMatchEntity> result = apartmentMatchService.getFilteredCandidates(apartmentId, filter);
+
+                assertSame(candidates, result);
+        }
+
+        @Test
+        @DisplayName("getFilteredCandidates sorts by score when filter criteria matches candidates differently")
+        public void getFilteredCandidates_WithScores_SortsDescending() {
+                Integer apartmentId = 323;
+                UserEntity landlord = createUser(3231, Role.LANDLORD, "landlord-filter-score@test.com");
+                ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.ACTIVE, landlord);
+
+                UserEntity highScoreCandidate = createUser(3232, Role.TENANT, "tenant-high@test.com");
+                highScoreCandidate.setBirthDate(LocalDate.now().minusYears(30));
+                highScoreCandidate.setProfession("Engineer");
+                highScoreCandidate.setSmoker(Boolean.FALSE);
+                highScoreCandidate.setSchedule("MORNING");
+
+                UserEntity lowScoreCandidate = createUser(3233, Role.TENANT, "tenant-low@test.com");
+                lowScoreCandidate.setBirthDate(LocalDate.now().minusYears(19));
+                lowScoreCandidate.setProfession("Designer");
+                lowScoreCandidate.setSmoker(Boolean.TRUE);
+                lowScoreCandidate.setSchedule("NIGHT");
+
+                ApartmentMatchEntity lowScoreMatch = createMatch(3234, MatchStatus.ACTIVE, lowScoreCandidate, apartment, true, null);
+                ApartmentMatchEntity highScoreMatch = createMatch(3235, MatchStatus.ACTIVE, highScoreCandidate, apartment, true, null);
+                List<ApartmentMatchEntity> candidates = java.util.Arrays.asList(lowScoreMatch, highScoreMatch);
+
+                CandidateFilterDTO filter = new CandidateFilterDTO();
+                filter.setMinAge(25);
+                filter.setMaxAge(40);
+                filter.setRequiredProfession("Engineer");
+                filter.setAllowedSmoker(Boolean.FALSE);
+                filter.setRequiredSchedule("MORNING");
+
+                when(userService.findCurrentUserEntity()).thenReturn(landlord);
+                when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+                when(apartmentMatchRepository.findByApartmentIdAndMatchStatus(apartmentId, MatchStatus.ACTIVE)).thenReturn(candidates);
+
+                List<ApartmentMatchEntity> result = apartmentMatchService.getFilteredCandidates(apartmentId, filter);
+
+                assertEquals(2, result.size());
+                assertSame(highScoreMatch, result.get(0));
+                assertSame(lowScoreMatch, result.get(1));
+        }
+
+        @Test
+        @DisplayName("getFilteredCandidates applies all score criteria when candidate matches each filter condition")
+        public void getFilteredCandidates_AllCriteriaMatched_ExecutesAllScoreBranches() {
+                Integer apartmentId = 324;
+                UserEntity landlord = createUser(3241, Role.LANDLORD, "landlord-filter-all@test.com");
+                ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.ACTIVE, landlord);
+
+                UserEntity fullMatchCandidate = createUser(3242, Role.TENANT, "tenant-full-match@test.com");
+                fullMatchCandidate.setBirthDate(LocalDate.now().minusYears(28));
+                fullMatchCandidate.setProfession("ENGINEER");
+                fullMatchCandidate.setSmoker(Boolean.FALSE);
+                fullMatchCandidate.setSchedule("Morning");
+
+                UserEntity noMatchCandidate = createUser(3243, Role.TENANT, "tenant-no-match@test.com");
+                noMatchCandidate.setBirthDate(LocalDate.now().minusYears(18));
+                noMatchCandidate.setProfession("Artist");
+                noMatchCandidate.setSmoker(Boolean.TRUE);
+                noMatchCandidate.setSchedule("Night");
+
+                ApartmentMatchEntity noMatch = createMatch(3244, MatchStatus.ACTIVE, noMatchCandidate, apartment, true, null);
+                ApartmentMatchEntity fullMatch = createMatch(3245, MatchStatus.ACTIVE, fullMatchCandidate, apartment, true, null);
+                List<ApartmentMatchEntity> candidates = new java.util.ArrayList<>(List.of(noMatch, fullMatch));
+
+                CandidateFilterDTO filter = new CandidateFilterDTO();
+                filter.setMinAge(25);
+                filter.setMaxAge(35);
+                filter.setRequiredProfession("engineer");
+                filter.setAllowedSmoker(Boolean.FALSE);
+                filter.setRequiredSchedule("morning");
+
+                when(userService.findCurrentUserEntity()).thenReturn(landlord);
+                when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+                when(apartmentMatchRepository.findByApartmentIdAndMatchStatus(apartmentId, MatchStatus.ACTIVE)).thenReturn(candidates);
+
+                List<ApartmentMatchEntity> result = apartmentMatchService.getFilteredCandidates(apartmentId, filter);
+
+                assertEquals(2, result.size());
+                assertSame(fullMatch, result.get(0));
+                assertSame(noMatch, result.get(1));
+        }
+
+        @Test
+        @DisplayName("getFilteredCandidates skips age scoring when candidate birthDate is null")
+        public void getFilteredCandidates_NullBirthDate_SkipsAgeCriteria() {
+                Integer apartmentId = 325;
+                UserEntity landlord = createUser(3251, Role.LANDLORD, "landlord-filter-age-null@test.com");
+                ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.ACTIVE, landlord);
+
+                UserEntity nullBirthDateCandidate = createUser(3252, Role.TENANT, "tenant-null-birthdate@test.com");
+                nullBirthDateCandidate.setBirthDate(null);
+
+                UserEntity validBirthDateCandidate = createUser(3253, Role.TENANT, "tenant-valid-birthdate@test.com");
+                validBirthDateCandidate.setBirthDate(LocalDate.now().minusYears(30));
+
+                ApartmentMatchEntity nullBirthDateMatch = createMatch(
+                                3254,
+                                MatchStatus.ACTIVE,
+                                nullBirthDateCandidate,
+                                apartment,
+                                true,
+                                null);
+                ApartmentMatchEntity validBirthDateMatch = createMatch(
+                                3255,
+                                MatchStatus.ACTIVE,
+                                validBirthDateCandidate,
+                                apartment,
+                                true,
+                                null);
+                List<ApartmentMatchEntity> candidates = new java.util.ArrayList<>(List.of(nullBirthDateMatch, validBirthDateMatch));
+
+                CandidateFilterDTO filter = new CandidateFilterDTO();
+                filter.setMinAge(25);
+                filter.setMaxAge(40);
+
+                when(userService.findCurrentUserEntity()).thenReturn(landlord);
+                when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+                when(apartmentMatchRepository.findByApartmentIdAndMatchStatus(apartmentId, MatchStatus.ACTIVE)).thenReturn(candidates);
+
+                List<ApartmentMatchEntity> result = apartmentMatchService.getFilteredCandidates(apartmentId, filter);
+
+                assertEquals(2, result.size());
+                assertSame(validBirthDateMatch, result.get(0));
+                assertSame(nullBirthDateMatch, result.get(1));
+        }
+
+        @Test
+        @DisplayName("getFilteredCandidates applies maxAge criterion and prioritizes younger candidate")
+        public void getFilteredCandidates_MaxAgeCriterion_OrdersByAgeLimitScore() {
+                Integer apartmentId = 326;
+                UserEntity landlord = createUser(3261, Role.LANDLORD, "landlord-filter-max-age@test.com");
+                ApartmentEntity apartment = createApartment(apartmentId, ApartmentState.ACTIVE, landlord);
+
+                UserEntity youngerCandidate = createUser(3262, Role.TENANT, "tenant-younger@test.com");
+                youngerCandidate.setBirthDate(LocalDate.now().minusYears(30));
+
+                UserEntity olderCandidate = createUser(3263, Role.TENANT, "tenant-older@test.com");
+                olderCandidate.setBirthDate(LocalDate.now().minusYears(45));
+
+                ApartmentMatchEntity olderMatch = createMatch(3264, MatchStatus.ACTIVE, olderCandidate, apartment, true, null);
+                ApartmentMatchEntity youngerMatch = createMatch(3265, MatchStatus.ACTIVE, youngerCandidate, apartment, true, null);
+                List<ApartmentMatchEntity> candidates = new java.util.ArrayList<>(List.of(olderMatch, youngerMatch));
+
+                CandidateFilterDTO filter = new CandidateFilterDTO();
+                filter.setMaxAge(35);
+
+                when(userService.findCurrentUserEntity()).thenReturn(landlord);
+                when(apartmentService.findById(apartmentId)).thenReturn(apartment);
+                when(apartmentMatchRepository.findByApartmentIdAndMatchStatus(apartmentId, MatchStatus.ACTIVE)).thenReturn(candidates);
+
+                List<ApartmentMatchEntity> result = apartmentMatchService.getFilteredCandidates(apartmentId, filter);
+
+                assertEquals(2, result.size());
+                assertSame(youngerMatch, result.get(0));
+                assertSame(olderMatch, result.get(1));
+        }
 
     @Test
     @DisplayName("findInterestedCandidatesByApartmentIdAndStatus throws for non landlord owner mismatch")
@@ -1383,6 +1816,7 @@ public class ApartmentMatchServiceTest {
         apartment.setPrice(500.0);
         apartment.setBills("wifi");
         apartment.setUbication("Madrid");
+        apartment.setMaxTenants(4);
         return apartment;
     }
 

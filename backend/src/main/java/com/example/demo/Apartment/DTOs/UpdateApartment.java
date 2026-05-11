@@ -3,7 +3,9 @@ package com.example.demo.Apartment.DTOs;
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentState;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -15,6 +17,7 @@ public record UpdateApartment(
                 @Size(max = 255) String bills,
                 @NotBlank @Size(max = 255) String ubication,
                 @NotNull ApartmentState state,
+                @Nullable @Min(1) Integer maxTenants,
                 @Size(max = 1000) String idealTenantProfile) {
 
         public static ApartmentEntity fromDTO(UpdateApartment updatamentApartment) {
@@ -25,6 +28,7 @@ public record UpdateApartment(
                                 updatamentApartment.bills(),
                                 updatamentApartment.ubication(),
                                 updatamentApartment.state(),
+                                updatamentApartment.maxTenants(),
                                 null);
                 apartment.setIdealTenantProfile(updatamentApartment.idealTenantProfile());
                 return apartment;

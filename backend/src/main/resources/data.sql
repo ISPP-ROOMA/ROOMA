@@ -30,23 +30,23 @@ ON CONFLICT (id) DO NOTHING;
 -- ==========================================
 -- 3. APARTAMENTOS
 -- ==========================================
-INSERT INTO apartments (id, title, description, price, bills, ubication, state, user_id) VALUES 
-(1, 'Piso céntrico luminoso', '3 hab en el centro. Buscamos gente tranquila.', 350.0, 'Agua e Internet inc.', 'Madrid Centro', 'ACTIVE', 1),
-(2, 'Estudio Universitario', 'Cerca del campus. Ambiente de estudio.', 250.0, 'Gastos compartir', 'Valencia Benimaclet', 'ACTIVE', 1),
-(3, 'Ático con terraza', 'Ático moderno con gran terraza.', 450.0, 'Todo incluido', 'Barcelona Eixample', 'ACTIVE', 1),
-(4, 'Loft Estilo Industrial', 'Techos altos, paredes de ladrillo visto y grandes ventanales. Ideal para artistas.', 550.0, 'No incluido', 'Bilbao Abando', 'ACTIVE', 1),
-(5, 'Suite Rústica en las Afueras', 'Vigas de madera y ambiente acogedor. Perfecta para amantes de la naturaleza.', 300.0, 'Leña e Internet inc.', 'Granada Alpujarra', 'ACTIVE', 1),
-(6, 'Habitación Boho Chic', 'Decoración natural con mimbre y plantas. Muy luminosa y con balcón privado.', 320.0, 'Gastos fijos 50€', 'Sevilla Alameda', 'ACTIVE', 1),
-(7, 'Piso Clásico Señorial', 'Mobiliario elegante, molduras en el techo y lámparas de cristal. Muy espacioso.', 600.0, 'Calefacción central inc.', 'Madrid Salamanca', 'ACTIVE', 1),
-(8, 'Apartamento Minimalista', 'Espacios diáfanos, tonos blancos y máximo orden. Muy cerca del metro.', 400.0, 'Todo incluido', 'Valencia Ruzafa', 'ACTIVE', 1),
-(9, 'Vivienda Mediterránea', 'Arcos de medio punto, tonos tierra y vistas despejadas. Muy fresca en verano.', 380.0, 'Agua incluida', 'Málaga Pedregalejo', 'ACTIVE', 1),
-(10, 'Estudio Nórdico Moderno', 'Funcionalidad escandinava con madera clara. Recién reformado y equipado.', 370.0, 'Luz e Internet inc.', 'Barcelona Gràcia', 'ACTIVE', 1)
+INSERT INTO apartments (id, title, description, price, bills, ubication, state, max_tenants, user_id) VALUES 
+(1, 'Piso céntrico luminoso', '3 hab en el centro. Buscamos gente tranquila.', 350.0, 'Agua e Internet inc.', 'Madrid Centro', 'ACTIVE', 4, 1),
+(2, 'Estudio Universitario', 'Cerca del campus. Ambiente de estudio.', 250.0, 'Gastos compartir', 'Valencia Benimaclet', 'ACTIVE', 1, 1),
+(3, 'Ático con terraza', 'Ático moderno con gran terraza.', 450.0, 'Todo incluido', 'Barcelona Eixample', 'ACTIVE', 3, 1),
+(4, 'Loft Estilo Industrial', 'Techos altos, paredes de ladrillo visto y grandes ventanales. Ideal para artistas.', 550.0, 'No incluido', 'Bilbao Abando', 'ACTIVE', 2, 1),
+(5, 'Suite Rústica en las Afueras', 'Vigas de madera y ambiente acogedor. Perfecta para amantes de la naturaleza.', 300.0, 'Leña e Internet inc.', 'Granada Alpujarra', 'ACTIVE', 2, 1),
+(6, 'Habitación Boho Chic', 'Decoración natural con mimbre y plantas. Muy luminosa y con balcón privado.', 320.0, 'Gastos fijos 50€', 'Sevilla Alameda', 'ACTIVE', 1, 1),
+(7, 'Piso Clásico Señorial', 'Mobiliario elegante, molduras en el techo y lámparas de cristal. Muy espacioso.', 600.0, 'Calefacción central inc.', 'Madrid Salamanca', 'ACTIVE', 4, 1),
+(8, 'Apartamento Minimalista', 'Espacios diáfanos, tonos blancos y máximo orden. Muy cerca del metro.', 400.0, 'Todo incluido', 'Valencia Ruzafa', 'ACTIVE', 2, 1),
+(9, 'Vivienda Mediterránea', 'Arcos de medio punto, tonos tierra y vistas despejadas. Muy fresca en verano.', 380.0, 'Agua incluida', 'Málaga Pedregalejo', 'ACTIVE', 3, 1),
+(10, 'Estudio Nórdico Moderno', 'Funcionalidad escandinava con madera clara. Recién reformado y equipado.', 370.0, 'Luz e Internet inc.', 'Barcelona Gràcia', 'ACTIVE', 1, 1)
 ON CONFLICT (id) DO NOTHING;
 
 -- ==========================================
 -- 4. FOTOS
 -- ==========================================
-INSERT INTO apartment_photos (id, apartment_id, orden, portada, public_id, url) VALUES
+INSERT INTO apartment_photos (id, apartment_id, photo_order, cover, public_id, url) VALUES
 -- Apartamento 1
 (1, 1, 1, true,  'rooma/apartments/dgfh1070gkygrbgmrd0w', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773686395/rooma/apartments/dgfh1070gkygrbgmrd0w.jpg'),
 (2, 1, 2, false, 'rooma/apartments/l7zljsfbijp0c3vbgzmc', 'https://res.cloudinary.com/djuqshdey/image/upload/v1773740478/rooma/apartments/l7zljsfbijp0c3vbgzmc.png'),
@@ -127,8 +127,8 @@ INSERT INTO apartment_members (id, apartment_id, user_id, role, join_date,end_da
 (1, 1, 6, 'HOMEBODY', '2024-01-01', NULL),
 (2, 1, 7, 'RENTER', '2024-01-01', NULL),
 (3, 1, 8, 'RENTER', '2024-01-01', NULL),
-(6, 1, 11, 'RENTER', '2024-01-15', NULL),
-(7, 1, 12, 'RENTER', '2024-01-20', NULL)
+(6, 1, 11, 'RENTER', '2024-01-15', CURRENT_DATE - INTERVAL '7 days'),
+(7, 1, 12, 'RENTER', '2024-01-20', CURRENT_DATE - INTERVAL '3 days')
 ON CONFLICT (id) DO NOTHING;;
 
 -- For review flows: mark one tenant as recently departed so current/past overlap logic yields pending review candidates.
@@ -291,4 +291,4 @@ ON CONFLICT (id) DO NOTHING;
 -- 9. PATCH: Añadir APPOINTMENT al constraint de notifications
 -- ==========================================
 ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_event_type_check;
-ALTER TABLE notifications ADD CONSTRAINT notifications_event_type_check CHECK (event_type::text = ANY (ARRAY['MATCH','NEW_MATCH','INVITATION_ACCEPTED','INVITATION_SENT','INVITATION_REJECTED','REVIEW','NEW_BILL','BILL_PAID','APPOINTMENT']::text[]));
+ALTER TABLE notifications ADD CONSTRAINT notifications_event_type_check CHECK (event_type::text = ANY (ARRAY['MATCH','NEW_MATCH','INVITATION_ACCEPTED','INVITATION_SENT','INVITATION_REJECTED','REVIEW','NEW_BILL','BILL_PAID','APPOINTMENT','CHAT','INCIDENT']::text[]));

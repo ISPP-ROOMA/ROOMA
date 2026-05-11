@@ -1,5 +1,6 @@
 package com.example.demo.Apartment;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.example.demo.ApartmentPhoto.ApartmentPhotoEntity;
@@ -50,6 +51,11 @@ public class ApartmentEntity {
     @Enumerated(EnumType.STRING)
     private ApartmentState state;
 
+    @Column(nullable = false)
+    private Integer maxTenants;
+    @Column
+    private LocalDateTime activationDate;
+
     @Column(length = 1000)
     private String idealTenantProfile;
 
@@ -61,7 +67,7 @@ public class ApartmentEntity {
     }
 
     public ApartmentEntity(String title, String description, Double price, String bills, String ubication,
-            ApartmentState state,
+            ApartmentState state, Integer maxTenants,
             UserEntity user) {
         this.title = title;
         this.description = description;
@@ -69,6 +75,7 @@ public class ApartmentEntity {
         this.bills = bills;
         this.ubication = ubication;
         this.state = state;
+        this.maxTenants = maxTenants;
         this.user = user;
     }
 
@@ -128,6 +135,22 @@ public class ApartmentEntity {
         this.state = state;
     }
 
+    public Integer getMaxTenants() {
+        return maxTenants;
+    }
+
+    public void setMaxTenants(Integer maxTenants) {
+        this.maxTenants = maxTenants;
+    }
+    
+    public LocalDateTime getActivationDate() {
+        return activationDate;
+    }
+
+    public void setActivationDate(LocalDateTime activationDate) {
+        this.activationDate = activationDate;
+    }
+
     public UserEntity getUser() {
         return user;
     }
@@ -158,7 +181,7 @@ public class ApartmentEntity {
         }
 
         return photos.stream()
-                .filter(photo -> photo.getOrden() != null && photo.getOrden().equals(1))
+                .filter(photo -> photo.getPhoto_order() != null && photo.getPhoto_order().equals(1))
                 .map(ApartmentPhotoEntity::getUrl)
                 .findFirst()
                 .orElseGet(() -> photos.stream()

@@ -385,6 +385,7 @@ public class FavoriteServiceTest {
         apartment.setPrice(500.0);
         apartment.setBills("wifi");
         apartment.setState(state);
+        apartment.setMaxTenants(4);
         return apartment;
     }
 
@@ -396,10 +397,10 @@ public class FavoriteServiceTest {
 
     private ApartmentPhotoEntity createPhoto(Integer order, String url) {
         ApartmentPhotoEntity photo = new ApartmentPhotoEntity();
-        photo.setOrden(order);
+        photo.setPhoto_order(order);
         photo.setUrl(url);
         photo.setPublicId("public-" + order);
-        photo.setPortada(order == 1);
+        photo.setCover(order == 1);
         return photo;
     }
 }

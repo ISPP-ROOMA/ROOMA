@@ -1,16 +1,20 @@
 import { Bookmark} from 'lucide-react'
-import { type MouseEvent, useEffect, useState } from 'react'
+import { type MouseEvent, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../hooks/useToast'
 import { addFavorite, removeFavorite } from '../service/favorites.service'
 import { useAuthStore } from '../store/authStore'
+
+import type { CSSProperties } from 'react'
 
 interface FavoriteButtonProps {
   apartmentId: number
   initialIsFavorite?: boolean
   disabled?: boolean
   onChange?: (isFavorite: boolean) => void
+  onSuccess?: () => void
   className?: string
+  style?: CSSProperties
 }
 
 export default function FavoriteButton({
@@ -18,18 +22,16 @@ export default function FavoriteButton({
   initialIsFavorite = false,
   disabled = false,
   onChange,
+  onSuccess,
   className,
+  style,
 }: FavoriteButtonProps) {
   const { token } = useAuthStore()
   const navigate = useNavigate()
   const { showToast } = useToast()
 
-  const [isFavorite, setIsFavorite] = useState(initialIsFavorite)
+  const [isFavorite, setIsFavorite] = useState(() => initialIsFavorite)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  useEffect(() => {
-    setIsFavorite(initialIsFavorite)
-  }, [initialIsFavorite])
 
   const handleClick = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
@@ -53,6 +55,7 @@ export default function FavoriteButton({
         if (!response.isFavorite && response.message) {
           showToast(response.message, 'info')
         }
+        onSuccess?.()
       } else {
         const response = await addFavorite(apartmentId)
         setIsFavorite(response.isFavorite)
@@ -60,6 +63,7 @@ export default function FavoriteButton({
         if (response.isFavorite && response.message) {
           showToast(response.message, 'success')
         }
+        onSuccess?.()
       }
     } catch (error) {
       console.error('Error toggling favorite', error)
@@ -78,6 +82,7 @@ export default function FavoriteButton({
       disabled={disabled || isSubmitting}
       aria-label={ariaLabel}
       aria-pressed={isFavorite}
+      style={style}
       className={`inline-flex items-center justify-center rounded-full p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 ${isFavorite ? 'bg-primary text-primary-content' : 'bg-base-100/90 text-base-content/70 hover:bg-base-100'} ${disabled || isSubmitting ? 'opacity-60 cursor-not-allowed' : ''} ${className ?? ''}`}
     >
       <Bookmark size={18} className={isFavorite ? 'fill-current' : ''} aria-hidden="true" />

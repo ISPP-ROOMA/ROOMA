@@ -44,6 +44,7 @@ export interface PendingReviewApartment {
   apartmentTitle: string
   apartmentUbication: string
   pendingUsers: ReviewableUser[]
+  userIsActive: boolean
 }
 
 export const getApartmentInfo = async (apartmentId: number): Promise<ApartmentInfo | null> => {

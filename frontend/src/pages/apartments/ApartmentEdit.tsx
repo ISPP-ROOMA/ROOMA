@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   getApartment,
+  getMyApartments,
   type Apartment,
   updateApartment,
   updateApartmentSchema,
@@ -12,11 +13,13 @@ import {
 } from '../../service/apartments.service'
 import {
   getApartmentPhotos,
+  getApartmentRules,
   type ApartmentPhotoDTO,
   type ApartmentRulesDTO,
   updateApartmentRules,
   uploadApartmentImages,
 } from '../../service/apartment.service'
+import { normalizePriceInput } from './publish/publishForm'
 
 const PAGE_CLASS = 'h-[calc(100dvh-5rem)] md:h-dvh bg-base-200/40 flex flex-col'
 const SHELL_CLASS =
@@ -55,8 +58,9 @@ export default function ApartmentEdit() {
     permiteFumadores: false,
     fiestasPermitidas: false,
   })
-  const [isLoading, setIsLoading] = useState(true)
-  const [loadError, setLoadError] = useState<string | null>(null)
+  const invalidId = !id || Number.isNaN(apartmentId)
+  const [isLoading, setIsLoading] = useState(() => !invalidId)
+  const [loadError, setLoadError] = useState<string | null>(() => (invalidId ? 'Identificador de inmueble inválido' : null))
 
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -67,20 +71,29 @@ export default function ApartmentEdit() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<UpdateApartmentPayload>({
     resolver: zodResolver(updateApartmentSchema),
   })
 
+  const { ref: priceRef } = register('price')
+  const [priceInput, setPriceInput] = useState('')
+
   useEffect(() => {
-    if (!id || Number.isNaN(apartmentId)) {
-      setLoadError('Identificador de inmueble inválido')
-      setIsLoading(false)
+    if (invalidId) {
       return
     }
 
     const fetch = async () => {
       try {
+        const myApartments = await getMyApartments()
+        const isOwner = myApartments.some((myApartment) => myApartment.id === apartmentId)
+        if (!isOwner) {
+          setLoadError('No tienes permiso para editar este anuncio')
+          return
+        }
+
         const apt = await getApartment(apartmentId)
         if (!apt) {
           setLoadError('Inmueble no encontrado')
@@ -96,10 +109,16 @@ export default function ApartmentEdit() {
           state: apt.state as UpdateApartmentPayload['state'],
           idealTenantProfile: apt.idealTenantProfile ?? '',
         })
+        setPriceInput(String(apt.price))
 
-        const imgs = await getApartmentPhotos(apartmentId)
+        const [imgs, loadedRules] = await Promise.all([
+          getApartmentPhotos(apartmentId),
+          getApartmentRules(apartmentId),
+        ])
         setPhotos(imgs)
-        // Nota: no hay endpoint de lectura de reglas aún; se inicializan por defecto
+        if (loadedRules) {
+          setRules(loadedRules)
+        }
       } catch (error) {
         console.error('Error loading apartment for edit', error)
         setLoadError('Error cargando el anuncio')
@@ -109,7 +128,7 @@ export default function ApartmentEdit() {
     }
 
     void fetch()
-  }, [apartmentId, id, reset])
+  }, [invalidId, apartmentId, reset])
 
   const onSubmit = handleSubmit(async (values) => {
     if (!apartmentId || Number.isNaN(apartmentId)) return
@@ -264,12 +283,21 @@ export default function ApartmentEdit() {
                 </label>
                 <div className="flex items-end gap-3">
                   <input
-                    type="number"
-                    step="0.01"
+                    ref={priceRef}
+                    type="text"
+                    inputMode="decimal"
+                    value={priceInput}
+                    placeholder="450"
                     className={`input input-bordered text-2xl md:text-3xl font-extrabold text-base-content w-40 text-center rounded-xl bg-base-100 focus:outline-primary tracking-tight ${
                       errors.price ? 'input-error' : ''
                     }`}
-                    {...register('price', { valueAsNumber: true })}
+                    onChange={(e) => {
+                      const normalized = normalizePriceInput(e.target.value)
+                      if (normalized === null) return
+                      setPriceInput(normalized)
+                      const num = parseFloat(normalized)
+                      setValue('price', isNaN(num) ? NaN : num)
+                    }}
                   />
                   <span className="text-lg font-semibold text-base-content/60 mb-2">
                     € / mes

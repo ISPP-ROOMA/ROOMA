@@ -1,15 +1,22 @@
 package com.example.demo.ApartmentMatch;
 
-import java.util.List;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.List;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -24,12 +31,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.demo.Apartment.ApartmentEntity;
 import com.example.demo.Apartment.ApartmentState;
@@ -385,6 +386,33 @@ public class ApartmentMatchControllerTest {
                 .andExpect(status().isForbidden());
 
         verify(apartmentMatchService, never()).processLandlordAction(eq(4), anyBoolean());
+    }
+
+    @Test
+    @WithMockUser(roles = "LANDLORD")
+    @DisplayName("landlord decision endpoint returns 200 for WAIT decision")
+    void processLandlordDecision_ReturnsOk() throws Exception {
+        ApartmentMatchEntity match = createMatch(41, 111, 211, MatchStatus.WAITING, Role.LANDLORD);
+        when(apartmentMatchService.processLandlordDecision(41, "WAIT")).thenReturn(match);
+
+        mockMvc.perform(patch("/api/apartments-matches/apartmentMatch/{apartmentMatchId}/landlord-decision", 41)
+                        .param("decision", "WAIT"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.matchStatus").value("WAITING"));
+    }
+
+    @Test
+    @WithMockUser(roles = "LANDLORD")
+    @DisplayName("landlord decision endpoint returns 409 when decision is invalid")
+    void processLandlordDecision_InvalidDecision_Returns409() throws Exception {
+        when(apartmentMatchService.processLandlordDecision(42, "MAYBE"))
+                .thenThrow(new ConflictException("Invalid decision: MAYBE"));
+
+        mockMvc.perform(patch("/api/apartments-matches/apartmentMatch/{apartmentMatchId}/landlord-decision", 42)
+                        .param("decision", "MAYBE"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Invalid decision: MAYBE"))
+                .andExpect(jsonPath("$.statusCode").value(409));
     }
 
     @Test

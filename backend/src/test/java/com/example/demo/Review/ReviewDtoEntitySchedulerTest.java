@@ -72,8 +72,10 @@ public class ReviewDtoEntitySchedulerTest {
     void records_cover_accessors() {
         CreateReviewRequest create = new CreateReviewRequest(2, 100, 5, "Texto");
         RespondReviewRequest respond = new RespondReviewRequest("Gracias");
-        ReviewableUserDTO reviewable = new ReviewableUserDTO(9, "u@test.com", "TENANT", true, false);
-        PendingReviewApartmentDTO pending = new PendingReviewApartmentDTO(100, "Apt 100", "Sevilla", List.of(reviewable));
+            ReviewableUserDTO reviewable = new ReviewableUserDTO(9, "u@test.com", "TENANT",
+                true, false);
+            PendingReviewApartmentDTO pending = new PendingReviewApartmentDTO(100, "Apt 100",
+                "Sevilla", List.of(reviewable), false);
 
         assertEquals(2, create.reviewedUserId());
         assertEquals(100, create.apartmentId());
@@ -89,6 +91,7 @@ public class ReviewDtoEntitySchedulerTest {
         assertEquals(100, pending.apartmentId());
         assertEquals("Apt 100", pending.apartmentTitle());
         assertEquals(1, pending.pendingUsers().size());
+        assertFalse(pending.userIsActive());
     }
 
     @Test
@@ -107,12 +110,13 @@ public class ReviewDtoEntitySchedulerTest {
         ApartmentEntity apartment = apartment(10);
 
         ReviewService.PendingUserInfo info = new ReviewService.PendingUserInfo(user, true, false);
-        ReviewService.PendingReviewApartment pending = new ReviewService.PendingReviewApartment(apartment, List.of(info));
+        ReviewService.PendingReviewApartment pending = new ReviewService.PendingReviewApartment(apartment, List.of(info), true);
 
         assertNotNull(pending.apartment());
         assertEquals(10, pending.apartment().getId());
         assertEquals(1, pending.pendingUsers().size());
         assertTrue(pending.pendingUsers().get(0).hasReviewedYou());
+        assertTrue(pending.userIsActive());
     }
 
     private ReviewEntity entity(Integer id, Integer rating, String comment) {
