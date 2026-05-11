@@ -35,6 +35,13 @@ type LandlordRequestDTO = {
   createdAt?: string
 }
 
+type FilteredCandidateDTO = {
+  id: number
+  matchStatus: BackendMatchStatus
+  apartment?: BackendApartmentDTO
+  tenantHasOpenedMatchDetails?: boolean
+}
+
 export interface RequestItem {
   id: number
   apartmentId: number
@@ -180,9 +187,17 @@ export async function waitRequest(apartmentMatchId: number): Promise<void> {
 }
 
 export async function getFilteredCandidates(apartmentId: number, filter: CandidateFilter) {
-  const response = await api.post(
+  const response = await api.post<FilteredCandidateDTO[]>(
     `/apartments-matches/apartment/${apartmentId}/filtered-candidates`,
     filter
   )
-  return response.data
+  // The backend returns ApartmentMatchLandlordDTO objects (with nested `apartment`),
+  // but the UI expects a flat structure with `id` and `apartmentId` like other endpoints.
+  return (response.data || []).map((item) => ({
+    id: item.id,
+    apartmentId: item.apartment?.id ?? null,
+    matchStatus: item.matchStatus,
+    // preserve optional fields if present
+    tenantHasOpenedMatchDetails: item.tenantHasOpenedMatchDetails,
+  }))
 }

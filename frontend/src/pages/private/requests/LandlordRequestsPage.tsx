@@ -20,7 +20,7 @@ import {
   rejectApartmentMatch,
   waitApartmentMatch,
 } from '../../../service/apartment.service'
-import { getApartment } from '../../../service/apartments.service'
+import { getApartment, getMyApartments, type Apartment as MyApartment } from '../../../service/apartments.service'
 import {
   CHAT_TOPIC_SUBSCRIPTION,
   getMessageHistory,
@@ -33,14 +33,22 @@ type ActiveTab = 'pending' | 'waiting' | 'match'
 
 interface EnrichedMatch {
   matchId: number
-  apartmentId: number
+  apartmentId: number | null
   matchStatus: MatchStatus
   title: string
   location: string
   price: string
   imageUrl: string
   tenantEmail: string
+  tenantSmoker?: boolean | null
   score?: number
+}
+
+type MatchSource = Pick<
+  ApartmentMatchDTO,
+  'id' | 'matchStatus' | 'tenantHasOpenedMatchDetails'
+> & {
+  apartmentId: number | null
 }
 
 function statusLabel(status: MatchStatus): string {
@@ -80,7 +88,7 @@ function statusBadgeClass(status: MatchStatus): string {
   }
 }
 
-async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatch[]> {
+async function enrichMatches(matches: MatchSource[]): Promise<EnrichedMatch[]> {
   const enriched = await Promise.all(
     matches.map(async (match) => {
       const mId = match.id
@@ -107,6 +115,7 @@ async function enrichMatches(matches: ApartmentMatchDTO[]): Promise<EnrichedMatc
           apt?.coverImageUrl ??
           'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
         tenantEmail: details?.tenant?.email ?? '—',
+        tenantSmoker: details?.tenant?.smoker ?? null,
       } satisfies EnrichedMatch
     })
   )
@@ -131,6 +140,9 @@ export default function LandlordRequestsPage() {
   const [filters, setFilters] = useState<CandidateFilter>(location.state?.appliedFilters || {})
   const [selectedAptId, setSelectedAptId] = useState<number | null>(null)
   const [isRanking, setIsRanking] = useState(false)
+  const [myApartments, setMyApartments] = useState<Array<Pick<MyApartment, 'id' | 'title'>> | null>(
+    null
+  )
   const initialTab = useMemo<ActiveTab>(() => {
     const t = searchParams.get('tab')
     return t === 'match' ? 'match' : t === 'waiting' ? 'waiting' : 'pending'
@@ -140,7 +152,6 @@ export default function LandlordRequestsPage() {
   const [waitingItems, setWaitingItems] = useState<EnrichedMatch[]>([])
   const [matchItems, setMatchItems] = useState<EnrichedMatch[]>([])
   const [loading, setLoading] = useState(true)
-  const [_error, _setError] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
 
   const [filteredApartmentLabel, setFilteredApartmentLabel] = useState<string | null>(null)
@@ -157,8 +168,25 @@ export default function LandlordRequestsPage() {
   const { client, connected } = useStompClient()
 
   useEffect(() => {
-    setActiveTab(initialTab)
-  }, [initialTab])
+    let isMounted = true
+
+    const loadMyApartments = async () => {
+      try {
+        const apartments = await getMyApartments()
+        if (isMounted) {
+          setMyApartments(apartments)
+        }
+      } catch (error) {
+        console.error('Error loading my apartments', error)
+      }
+    }
+
+    void loadMyApartments()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const uniqueApartments = useMemo(() => {
     const all = [...pendingItems, ...waitingItems, ...matchItems]
@@ -192,7 +220,11 @@ export default function LandlordRequestsPage() {
         setIsRanking(true)
         const rankedData = await getFilteredCandidates(selectedAptId, filters)
         const enrichedRanked = await enrichMatches(rankedData)
-        setPendingItems(enrichedRanked)
+        const smokerFilteredRanked =
+          filters.allowedSmoker === undefined
+            ? enrichedRanked
+            : enrichedRanked.filter((match) => match.tenantSmoker === filters.allowedSmoker)
+        setPendingItems(smokerFilteredRanked)
 
         const fullMatches = await getMatchesForLandlord(id, 'MATCH')
         setMatchItems(await enrichMatches(matchesForApartment(fullMatches)))
@@ -224,7 +256,11 @@ export default function LandlordRequestsPage() {
   }, [userId, apartmentFilterId, selectedAptId, filters])
 
   useEffect(() => {
-    void fetchData()
+    const timer = window.setTimeout(() => {
+      void fetchData()
+    }, 0)
+
+    return () => window.clearTimeout(timer)
   }, [fetchData, location.search])
 
   useEffect(() => {
@@ -454,11 +490,13 @@ export default function LandlordRequestsPage() {
                     value={selectedAptId || ''}
                   >
                     <option value="">Selecciona vivienda...</option>
-                    {uniqueApartments.map(([id, title]) => (
-                      <option key={id} value={id}>
-                        {title}
-                      </option>
-                    ))}
+                    {(myApartments ?? uniqueApartments.map(([id, title]) => ({ id, title }))).map(
+                      (apt: { id: number; title: string }) => (
+                        <option key={apt.id} value={apt.id}>
+                          {apt.title}
+                        </option>
+                      )
+                    )}
                   </select>
                 </div>
 
