@@ -6,6 +6,7 @@ interface ReviewModalProps {
     contractId: number
     apartmentAddress: string
     endDate: string
+    userIsActive: boolean
   } | null
   onClose: () => void
 }
@@ -41,11 +42,28 @@ export default function ReviewModal({ contract, onClose }: ReviewModalProps) {
   return (
     <dialog ref={modalRef} className="modal" onClose={handleClose}>
       <div className="modal-box">
-        <h3 className="font-bold text-lg text-primary">¡Tu contrato ha terminado!</h3>
+        <h3 className="font-bold text-lg text-primary">
+          {contract?.userIsActive
+            ? 'Ha finalizado el contrato de algunos compañeros'
+            : '¡Tu contrato ha terminado!'}
+        </h3>
         <p className="py-4">
-          Parece que tu contrato en{' '}
-          <span className="font-semibold text-secondary">{contract?.apartmentAddress}</span> ha
-          llegado a su fin. Esperamos que todo haya ido genial.
+          {contract?.userIsActive ? (
+            <>
+              En{' '}
+              <span className="font-semibold text-secondary">{contract?.apartmentAddress}</span>
+              {' '}
+              algunos de tus compañeros han finalizado su contrato. Valóralos para ayudar a otros
+              usuarios a tomar mejores decisiones.
+            </>
+          ) : (
+            <>
+              Parece que tu contrato en{' '}
+              <span className="font-semibold text-secondary">{contract?.apartmentAddress}</span>
+              {' '}
+              ha llegado a su fin. Esperamos que todo haya ido genial.
+            </>
+          )}
         </p>
         <p className="py-2 text-sm text-gray-500">
           ¿Por qué no dedicas un par de minutos a dejar una valoración a tus compañeros de piso y a

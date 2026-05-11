@@ -119,7 +119,8 @@ public class ReviewController {
                                         pu.user().getRole().name(),
                                         pu.hasReviewedYou(),
                                         pu.youReviewedThem()))
-                                .toList()
+                                .toList(),
+                        p.userIsActive()
                 ))
                 .toList();
         return ResponseEntity.ok(dtos);

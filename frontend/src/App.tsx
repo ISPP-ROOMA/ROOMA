@@ -55,6 +55,7 @@ function App() {
     contractId: number
     apartmentAddress: string
     endDate: string
+    userIsActive: boolean
   } | null>(null)
 
   useEffect(() => {
@@ -81,6 +82,7 @@ function App() {
                 contractId: apt.apartmentId,
                 apartmentAddress: apt.apartmentUbication ?? apt.apartmentTitle,
                 endDate: '',
+                userIsActive: apt.userIsActive,
               })
             }
           }

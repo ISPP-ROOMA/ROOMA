@@ -256,6 +256,17 @@ public class ReviewService {
         List<UserEntity> candidates = getReviewCandidates(apartmentId);
         candidates.removeIf(u -> u.getId().equals(currentUserId));
 
+        // Tenants activos no pueden valorar al landlord
+        if (currentUser.getRole().equals(Role.TENANT)) {
+            ApartmentMemberEntity membership = apartmentMemberService.findByUserIdAndApartmentId(currentUserId, apartmentId);
+            boolean isActive = membership.getEndDate() == null || membership.getEndDate().isAfter(LocalDate.now());
+            
+            if (isActive) {
+                UserEntity landlord = apartmentService.findLandlordByApartmentId(apartmentId);
+                candidates.removeIf(u -> u.getId().equals(landlord.getId()));
+            }
+        }
+
         List<UserEntity> reviewable = new java.util.ArrayList<>();
         for (UserEntity candidate : candidates) {
             var existing = reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(
@@ -284,6 +295,17 @@ public class ReviewService {
             List<UserEntity> userMembers = getReviewCandidates(apartment.getId());
             userMembers.removeIf(u -> u.getId().equals(currentUserId));
 
+            // Tenants activos no pueden valorar al landlord
+            if (currentUser.getRole().equals(Role.TENANT)) {
+                ApartmentMemberEntity membership = apartmentMemberService.findByUserIdAndApartmentId(currentUserId, apartment.getId());
+                boolean isActive = membership.getEndDate() == null || membership.getEndDate().isAfter(LocalDate.now());
+                
+                if (isActive) {
+                    UserEntity landlord = apartmentService.findLandlordByApartmentId(apartment.getId());
+                    userMembers.removeIf(u -> u.getId().equals(landlord.getId()));
+                }
+            }
+
             List<PendingUserInfo> pendingUsers = new ArrayList<>();
             for (UserEntity candidate : userMembers) {
                 boolean youReviewedThem = reviewRepository.findReviewsByReviewerUserIdAndReviewedUserIdAndApartmentId(
@@ -297,7 +319,12 @@ public class ReviewService {
             }
 
             if(!pendingUsers.isEmpty()) {
-                result.add(new PendingReviewApartment(apartment, pendingUsers));
+                boolean userIsActive = false;
+                if(currentUser.getRole().equals(Role.TENANT)) {
+                    ApartmentMemberEntity membership = apartmentMemberService.findByUserIdAndApartmentId(currentUserId, apartment.getId());
+                    userIsActive = membership.getEndDate() == null || membership.getEndDate().isAfter(LocalDate.now());
+                }
+                result.add(new PendingReviewApartment(apartment, pendingUsers, userIsActive));
             }
         }
         return result;
@@ -323,6 +350,6 @@ public class ReviewService {
     }
 
     public record PendingUserInfo(UserEntity user, boolean hasReviewedYou, boolean youReviewedThem) {}
-    public record PendingReviewApartment(ApartmentEntity apartment, List<PendingUserInfo> pendingUsers) {}
+    public record PendingReviewApartment(ApartmentEntity apartment, List<PendingUserInfo> pendingUsers, boolean userIsActive) {}
 
 }
