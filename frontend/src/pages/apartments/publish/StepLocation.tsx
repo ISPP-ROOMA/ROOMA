@@ -5,6 +5,7 @@ import type { Map as LeafletMap, Marker as LeafletMarker } from 'leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { PublishFormData } from './publishForm'
+import { useToast } from '../../../hooks/useToast'
 
 // Fix missing marker icons in strict bundler environments
 delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl
@@ -47,6 +48,7 @@ function MapEvents({
 }
 
 export default function StepLocation({ data, updateFields }: Props) {
+  const { showToast } = useToast()
   const [position, setPosition] = useState<[number, number]>(DEFAULT_CENTER)
   const mapRef = useRef<LeafletMap>(null)
   const markerRef = useRef<LeafletMarker | null>(null)
@@ -60,7 +62,7 @@ export default function StepLocation({ data, updateFields }: Props) {
       const json = await res.json()
       if (json && json.address) {
         if (json.address.country_code !== 'es') {
-          alert('Actualmente solo soportamos apartamentos en España.')
+          showToast('Actualmente solo soportamos apartamentos en España.', 'warning')
           setPosition(DEFAULT_CENTER)
           if (mapRef.current) mapRef.current.flyTo(DEFAULT_CENTER, 13)
           return
@@ -90,8 +92,9 @@ export default function StepLocation({ data, updateFields }: Props) {
       }
     } catch (err) {
       console.error('Error in reverse geocoding:', err)
+      showToast('No se pudo obtener la dirección automáticamente.', 'error')
     }
-  }, [updateFields])
+  }, [showToast, updateFields])
 
   const fetchCoordsFromAddress = async (address: string) => {
     if (!address.trim()) return
@@ -111,6 +114,7 @@ export default function StepLocation({ data, updateFields }: Props) {
       }
     } catch (err) {
       console.error('Error in forward geocoding:', err)
+      showToast('No se pudo localizar esa dirección. Revisa los datos.', 'warning')
     }
   }
 
@@ -125,7 +129,7 @@ export default function StepLocation({ data, updateFields }: Props) {
   }
 
   const handlePostalCodeChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const val = event.target.value
+    const val = event.target.value.replace(/\D/g, '').slice(0, 5)
     updateFields({ postalCode: val })
     
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -159,11 +163,11 @@ export default function StepLocation({ data, updateFields }: Props) {
         },
         (err) => {
           console.error(err)
-          alert('No se pudo obtener la ubicación. Verifica los permisos de tu navegador.')
+          showToast('No se pudo obtener la ubicación. Verifica los permisos del navegador.', 'error')
         }
       )
     } else {
-      alert('La geolocalización no está soportada en tu navegador.')
+      showToast('La geolocalización no está soportada en tu navegador.', 'error')
     }
   }
 

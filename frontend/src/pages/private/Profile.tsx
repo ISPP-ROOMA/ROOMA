@@ -1,10 +1,10 @@
 ﻿import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getAllApartments, type ApartmentDTO } from '../../service/apartment.service'
-import { api } from '../../service/api'
 import type { User } from '../../service/users.service'
 import { deleteUser, getUser, getUserProfile } from '../../service/users.service'
 import { useAuthStore } from '../../store/authStore'
+import { useToast } from '../../hooks/useToast'
 
 const ROLE_LABELS: Record<string, string> = {
   LANDLORD: 'Propietario',
@@ -21,6 +21,7 @@ type RoommateWithMeta = {
 
 export default function Profile() {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [userData, setUserData] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentApartment, setCurrentApartment] = useState<ApartmentDTO | null>(null)
@@ -61,26 +62,7 @@ export default function Profile() {
 
               const missing = usersWithMeta.filter((x) => !x.user)
               if (missing.length > 0) {
-                try {
-                  const allResp = await api.get<User[]>('/users')
-                  const allUsers = allResp.data
-                  const mapped = usersWithMeta.map((x) => {
-                    if (!x.user) {
-                      const foundUser = allUsers.find((u) => Number(u.id) === Number(x.userId))
-                      return { ...x, user: foundUser }
-                    }
-                    return x
-                  })
-                  setRoommates(
-                    mapped.filter(
-                      (x): x is { user: User; role: string; joinDate?: string; userId: number } =>
-                        !!x.user && Number(x.user.id) !== Number(res.id)
-                    )
-                  )
-                  return
-                } catch (e) {
-                  console.warn('Fallback fetch all users failed', e)
-                }
+                console.warn('Some roommate profiles could not be loaded individually')
               }
 
               setRoommates(
@@ -131,7 +113,7 @@ export default function Profile() {
       useAuthStore.getState().logout()
       navigate('/')
     } else {
-      alert(result.message ?? 'Error eliminando la cuenta')
+      showToast(result.message ?? 'No se pudo eliminar la cuenta.', 'error')
     }
   }
 
