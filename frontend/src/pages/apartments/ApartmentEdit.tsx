@@ -57,8 +57,9 @@ export default function ApartmentEdit() {
     permiteFumadores: false,
     fiestasPermitidas: false,
   })
-  const [isLoading, setIsLoading] = useState(true)
-  const [loadError, setLoadError] = useState<string | null>(null)
+  const invalidId = !id || Number.isNaN(apartmentId)
+  const [isLoading, setIsLoading] = useState(() => !invalidId)
+  const [loadError, setLoadError] = useState<string | null>(() => (invalidId ? 'Identificador de inmueble inválido' : null))
 
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -75,9 +76,7 @@ export default function ApartmentEdit() {
   })
 
   useEffect(() => {
-    if (!id || Number.isNaN(apartmentId)) {
-      setLoadError('Identificador de inmueble inválido')
-      setIsLoading(false)
+    if (invalidId) {
       return
     }
 
@@ -123,7 +122,7 @@ export default function ApartmentEdit() {
     }
 
     void fetch()
-  }, [apartmentId, id, reset])
+  }, [invalidId, apartmentId, reset])
 
   const onSubmit = handleSubmit(async (values) => {
     if (!apartmentId || Number.isNaN(apartmentId)) return

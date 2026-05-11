@@ -25,14 +25,10 @@ const formatDate = (value?: string) => {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<PendingNotification[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default')
+  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>(() =>
+    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default'
+  )
   const navigate = useNavigate()
-
-  useEffect(() => {
-    if ('Notification' in window) {
-      setPermissionStatus(Notification.permission)
-    }
-  }, [])
 
   const enablePush = async () => {
     const success = await requestPushPermissionAndSubscribe();

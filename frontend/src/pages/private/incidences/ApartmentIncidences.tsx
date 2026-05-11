@@ -227,8 +227,39 @@ export default function ApartmentIncidences() {
     }, [apartmentId, navigate, role]);
 
     useEffect(() => {
-        void loadIncidents()
-    }, [loadIncidents])
+        let mounted = true
+        const run = async () => {
+            if (!Number.isFinite(apartmentId)) {
+                if (mounted) setIsLoading(false)
+                return
+            }
+
+            if (mounted) setIsLoading(true)
+            try {
+                if (role === 'LANDLORD') {
+                    const myApartments = await getMyApartments()
+                    const isOwner = myApartments.some((myApartment) => myApartment.id === apartmentId)
+                    if (!isOwner) {
+                        navigate('/apartments/my', { replace: true })
+                        return
+                    }
+                }
+
+                const data = await getApartmentIncidents(apartmentId)
+                if (mounted) setIncidents(data)
+            } catch (error) {
+                console.error('Error loading incidents', error)
+                if (role === 'LANDLORD') {
+                    navigate('/apartments/my', { replace: true })
+                }
+            } finally {
+                if (mounted) setIsLoading(false)
+            }
+        }
+
+        void run()
+        return () => { mounted = false }
+    }, [apartmentId, navigate, role])
 
     const activeIncidents = useMemo(
         () => incidents.filter((i) => i.status !== 'CLOSED' && i.status !== 'CLOSED_INACTIVITY'),

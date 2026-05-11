@@ -71,7 +71,7 @@ export const registerUser = async (loginData: LoginData): Promise<AuthResponse> 
     console.error(error)
     let errorMessage = 'Registration failed'
     if (typeof error === 'object' && error !== null && 'response' in error) {
-      const axiosError = error as any
+      const axiosError = error as { response?: { data?: { message?: string } } }
       errorMessage = axiosError.response?.data?.message ?? errorMessage
     }
     return { error: errorMessage, token: '', role: 'TENANT', userId: 0 }
@@ -97,7 +97,7 @@ export const loginUser = async (loginData: LoginData): Promise<AuthResponse> => 
     console.error(error)
     let errorMessage = 'Login failed'
     if (typeof error === 'object' && error !== null && 'response' in error) {
-      const axiosError = error as any
+      const axiosError = error as { response?: { data?: { message?: string } } }
       errorMessage = axiosError.response?.data?.message ?? errorMessage
     }
     return { error: errorMessage, token: '', role: 'TENANT', userId: 0 }

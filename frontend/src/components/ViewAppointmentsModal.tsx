@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CalendarCheck, ChevronDown, ChevronUp, Loader2, User, X } from 'lucide-react'
 import { getBlocksForApartment, cancelAppointmentSlot, type AvailabilityBlockDTO } from '../service/appointment.service'
 import { useToast } from '../hooks/useToast'
@@ -16,27 +16,38 @@ export default function ViewAppointmentsModal({ apartmentId, apartmentTitle, onC
   const [cancelingId, setCancelingId] = useState<number | null>(null)
   const { showToast } = useToast()
 
-  const loadBlocks = useCallback(() => {
-    setLoading(true)
-    getBlocksForApartment(apartmentId)
-      .then(data => {
+  useEffect(() => {
+    let mounted = true
+    const fetchBlocks = async () => {
+      setLoading(true)
+      try {
+        const data = await getBlocksForApartment(apartmentId)
+        if (!mounted) return
         setBlocks(data)
         if (data.length > 0) setExpandedBlock(data[0].id)
-      })
-      .catch(() => showToast('Error al cargar las visitas', 'error'))
-      .finally(() => setLoading(false))
-  }, [apartmentId, showToast])
+      } catch {
+        if (!mounted) return
+        showToast('Error al cargar las visitas', 'error')
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
 
-  useEffect(() => {
-    loadBlocks()
-  }, [loadBlocks])
+    void fetchBlocks()
+    return () => {
+      mounted = false
+    }
+  }, [apartmentId, showToast])
 
   const handleCancel = async (slotId: number) => {
     setCancelingId(slotId)
     try {
       await cancelAppointmentSlot(slotId)
       showToast('Cita cancelada', 'success')
-      loadBlocks()
+      // refresh list after successful cancel
+      const data = await getBlocksForApartment(apartmentId)
+      setBlocks(data)
+      if (data.length > 0) setExpandedBlock(data[0].id)
     } catch {
       showToast('Error al cancelar la cita', 'error')
     } finally {

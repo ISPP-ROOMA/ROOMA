@@ -18,7 +18,7 @@ export default function Apartments() {
   const [statsByApartmentId, setStatsByApartmentId] = useState<
     Record<number, { requests: number; matches: number }>
   >({})
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(() => Boolean(token))
 
   const hasApartments = apartments.length > 0
 
@@ -63,7 +63,6 @@ export default function Apartments() {
 
   useEffect(() => {
     if (!token) {
-      setIsLoading(false)
       navigate('/login')
       return
     }
