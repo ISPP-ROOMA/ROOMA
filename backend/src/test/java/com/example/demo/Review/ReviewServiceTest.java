@@ -394,7 +394,7 @@ public class ReviewServiceTest {
 
         List<UserEntity> result = reviewService.getReviewableUsers(100);
 
-        // Active tenant cannot review landlord, only flatmate, but already reviewed flatmate
+        // Active tenant cannot review landlord and already reviewed the active flatmate
         assertEquals(0, result.size());
     }
 
@@ -472,8 +472,9 @@ public class ReviewServiceTest {
         List<ReviewService.PendingReviewApartment> result = reviewService.getPendingReviewApartments();
 
         assertEquals(1, result.size());
-        // Active tenant can only review past flatmate, not landlord
+        // Active tenant can only review the past flatmate, not the landlord
         assertEquals(1, result.get(0).pendingUsers().size());
+        assertEquals(8, result.get(0).pendingUsers().get(0).user().getId());
         assertTrue(result.get(0).userIsActive());
     }
 

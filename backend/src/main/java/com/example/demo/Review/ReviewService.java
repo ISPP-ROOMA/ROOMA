@@ -3,6 +3,7 @@ package com.example.demo.Review;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -252,20 +253,13 @@ public class ReviewService {
         UserEntity currentUser = userService.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Current user not found"));
         Integer currentUserId = currentUser.getId();
+        boolean currentUserActive = isCurrentTenantActive(currentUser, apartmentId);
+        Map<Integer, ApartmentMemberEntity> memberByUserId = getApartmentMemberMap(apartmentId);
 
         List<UserEntity> candidates = getReviewCandidates(apartmentId);
         candidates.removeIf(u -> u.getId().equals(currentUserId));
 
-        // Tenants activos no pueden valorar al landlord
-        if (currentUser.getRole().equals(Role.TENANT)) {
-            ApartmentMemberEntity membership = apartmentMemberService.findByUserIdAndApartmentId(currentUserId, apartmentId);
-            boolean isActive = membership.getEndDate() == null || membership.getEndDate().isAfter(LocalDate.now());
-            
-            if (isActive) {
-                UserEntity landlord = apartmentService.findLandlordByApartmentId(apartmentId);
-                candidates.removeIf(u -> u.getId().equals(landlord.getId()));
-            }
-        }
+        candidates.removeIf(candidate -> !canReviewCandidate(currentUser, currentUserActive, candidate, memberByUserId));
 
         List<UserEntity> reviewable = new java.util.ArrayList<>();
         for (UserEntity candidate : candidates) {
@@ -292,19 +286,12 @@ public class ReviewService {
         }
         List<PendingReviewApartment> result = new ArrayList<>();
         for (ApartmentEntity apartment : apartments) {
+            boolean currentUserActive = isCurrentTenantActive(currentUser, apartment.getId());
+            Map<Integer, ApartmentMemberEntity> memberByUserId = getApartmentMemberMap(apartment.getId());
             List<UserEntity> userMembers = getReviewCandidates(apartment.getId());
             userMembers.removeIf(u -> u.getId().equals(currentUserId));
 
-            // Tenants activos no pueden valorar al landlord
-            if (currentUser.getRole().equals(Role.TENANT)) {
-                ApartmentMemberEntity membership = apartmentMemberService.findByUserIdAndApartmentId(currentUserId, apartment.getId());
-                boolean isActive = membership.getEndDate() == null || membership.getEndDate().isAfter(LocalDate.now());
-                
-                if (isActive) {
-                    UserEntity landlord = apartmentService.findLandlordByApartmentId(apartment.getId());
-                    userMembers.removeIf(u -> u.getId().equals(landlord.getId()));
-                }
-            }
+            userMembers.removeIf(candidate -> !canReviewCandidate(currentUser, currentUserActive, candidate, memberByUserId));
 
             List<PendingUserInfo> pendingUsers = new ArrayList<>();
             for (UserEntity candidate : userMembers) {
@@ -319,15 +306,57 @@ public class ReviewService {
             }
 
             if(!pendingUsers.isEmpty()) {
-                boolean userIsActive = false;
-                if(currentUser.getRole().equals(Role.TENANT)) {
-                    ApartmentMemberEntity membership = apartmentMemberService.findByUserIdAndApartmentId(currentUserId, apartment.getId());
-                    userIsActive = membership.getEndDate() == null || membership.getEndDate().isAfter(LocalDate.now());
-                }
-                result.add(new PendingReviewApartment(apartment, pendingUsers, userIsActive));
+                result.add(new PendingReviewApartment(apartment, pendingUsers, currentUserActive));
             }
         }
         return result;
+    }
+
+    private boolean canReviewCandidate(UserEntity currentUser, boolean currentUserActive, UserEntity candidate, Map<Integer, ApartmentMemberEntity> memberByUserId) {
+        if (candidate == null || candidate.getId() == null) {
+            return false;
+        }
+
+        ApartmentMemberEntity candidateMembership = memberByUserId.get(candidate.getId());
+        boolean candidateActive = false;
+        if (candidateMembership != null) {
+            LocalDate endDate = candidateMembership.getEndDate();
+            candidateActive = endDate == null || endDate.isAfter(LocalDate.now());
+        }
+
+        if (candidate.getRole().equals(Role.LANDLORD)) {
+            return currentUser.getRole().equals(Role.TENANT) && !currentUserActive;
+        }
+
+        if (currentUser.getRole().equals(Role.LANDLORD)) {
+            return !candidateActive;
+        }
+
+        return !currentUserActive || !candidateActive;
+    }
+
+    private boolean isCurrentTenantActive(UserEntity currentUser, Integer apartmentId) {
+        if (!currentUser.getRole().equals(Role.TENANT)) {
+            return false;
+        }
+
+        ApartmentMemberEntity membership = apartmentMemberService.findByUserIdAndApartmentId(currentUser.getId(), apartmentId);
+        if (membership == null) {
+            return false;
+        }
+
+        LocalDate endDate = membership.getEndDate();
+        return endDate == null || endDate.isAfter(LocalDate.now());
+    }
+
+    private Map<Integer, ApartmentMemberEntity> getApartmentMemberMap(Integer apartmentId) {
+        Map<Integer, ApartmentMemberEntity> memberByUserId = new HashMap<>();
+        for (ApartmentMemberEntity member : apartmentMemberService.listMembersInternal(apartmentId)) {
+            if (member != null && member.getUser() != null && member.getUser().getId() != null) {
+                memberByUserId.put(member.getUser().getId(), member);
+            }
+        }
+        return memberByUserId;
     }
 
     private List<UserEntity> getReviewCandidates(Integer apartmentId) {
