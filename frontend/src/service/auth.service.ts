@@ -22,6 +22,14 @@ export interface ValidateResponse {
   message?: string
 }
 
+type ApiErrorWithMessage = {
+  response?: {
+    data?: {
+      message?: string
+    }
+  }
+}
+
 const SESSION_HINT_KEY = 'hasSessionHint'
 let refreshInFlight: Promise<AuthResponse | undefined> | null = null
 
@@ -33,6 +41,15 @@ const markSessionHint = (): void => {
 
 const clearSessionHint = (): void => {
   localStorage.removeItem(SESSION_HINT_KEY)
+}
+
+const getApiErrorMessage = (error: unknown, fallback: string): string => {
+  if (typeof error === 'object' && error !== null && 'response' in error) {
+    const apiError = error as ApiErrorWithMessage
+    return apiError.response?.data?.message ?? fallback
+  }
+
+  return fallback
 }
 
 export const generateDeviceId = (): string => {
@@ -69,11 +86,7 @@ export const registerUser = async (loginData: LoginData): Promise<AuthResponse> 
     return response.data
   } catch (error: unknown) {
     console.error(error)
-    let errorMessage = 'Registration failed'
-    if (typeof error === 'object' && error !== null && 'response' in error) {
-      const axiosError = error as any
-      errorMessage = axiosError.response?.data?.message ?? errorMessage
-    }
+    const errorMessage = getApiErrorMessage(error, 'Registration failed')
     return { error: errorMessage, token: '', role: 'TENANT', userId: 0 }
   }
 }
@@ -95,11 +108,7 @@ export const loginUser = async (loginData: LoginData): Promise<AuthResponse> => 
     return response.data
   } catch (error: unknown) {
     console.error(error)
-    let errorMessage = 'Login failed'
-    if (typeof error === 'object' && error !== null && 'response' in error) {
-      const axiosError = error as any
-      errorMessage = axiosError.response?.data?.message ?? errorMessage
-    }
+    const errorMessage = getApiErrorMessage(error, 'Login failed')
     return { error: errorMessage, token: '', role: 'TENANT', userId: 0 }
   }
 }
