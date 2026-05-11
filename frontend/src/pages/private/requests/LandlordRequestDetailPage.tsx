@@ -31,8 +31,6 @@ export default function LandlordRequestDetailPage() {
   const [reviewsLoading, setReviewsLoading] = useState(false)
   const [reviewsError, setReviewsError] = useState<string | null>(null)
 
-  const parsedId = useMemo(() => Number(apartmentMatchId), [apartmentMatchId])
-
   useEffect(() => {
     if (invalidId) return
 
