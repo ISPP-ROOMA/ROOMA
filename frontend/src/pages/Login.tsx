@@ -22,8 +22,8 @@ declare global {
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
 const schema = z.object({
-  email: z.email('Invalid email'),
-  password: z.string().min(4, 'Password must be at least 4 characters'),
+  email: z.email('Introduce un email válido'),
+  password: z.string().min(4, 'La contraseña debe tener al menos 4 caracteres'),
 })
 
 type LoginFormData = z.infer<typeof schema>
@@ -51,7 +51,7 @@ export default function Login() {
         if (res.error?.toLowerCase().includes('role is required')) {
           setError('No tienes cuenta. Regístrate primero para continuar con Google.')
         } else {
-          setError(res.error ?? 'Error signing in with Google')
+          setError(res.error ?? 'No se pudo iniciar sesión con Google')
         }
         return
       }
@@ -108,7 +108,7 @@ export default function Login() {
     })
 
     if (res.error || !res.token) {
-      setError(res.error ?? 'Invalid credentials')
+      setError(res.error ?? 'No se pudo iniciar sesión. Revisa tus credenciales e inténtalo de nuevo.')
       return
     }
 

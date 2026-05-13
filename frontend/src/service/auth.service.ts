@@ -24,9 +24,12 @@ export interface ValidateResponse {
 
 type ApiErrorWithMessage = {
   response?: {
-    data?: {
-      message?: string
-    }
+    data?:
+      | {
+          message?: string
+          error?: string
+        }
+      | string
   }
 }
 
@@ -46,7 +49,15 @@ const clearSessionHint = (): void => {
 const getApiErrorMessage = (error: unknown, fallback: string): string => {
   if (typeof error === 'object' && error !== null && 'response' in error) {
     const apiError = error as ApiErrorWithMessage
-    return apiError.response?.data?.message ?? fallback
+    const responseData = apiError.response?.data
+
+    if (typeof responseData === 'string' && responseData.trim().length > 0) {
+      return responseData
+    }
+
+    if (responseData && typeof responseData === 'object') {
+      return responseData.message ?? responseData.error ?? fallback
+    }
   }
 
   return fallback

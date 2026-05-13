@@ -11,6 +11,7 @@ type BackendApartmentDTO = {
   ubication?: string
   state?: string
   price?: number
+  coverImageUrl?: string
 }
 
 type BackendUserDTO = {
@@ -40,6 +41,20 @@ type FilteredCandidateDTO = {
   matchStatus: BackendMatchStatus
   apartment?: BackendApartmentDTO
   tenantHasOpenedMatchDetails?: boolean
+}
+
+export interface FilteredCandidateItem {
+  id: number
+  apartmentId: number | null
+  matchStatus: BackendMatchStatus
+  tenantHasOpenedMatchDetails?: boolean
+  apartment?: {
+    id: number
+    title?: string
+    ubication?: string
+    price?: number
+    coverImageUrl?: string
+  }
 }
 
 export interface RequestItem {
@@ -186,18 +201,27 @@ export async function waitRequest(apartmentMatchId: number): Promise<void> {
   )
 }
 
-export async function getFilteredCandidates(apartmentId: number, filter: CandidateFilter) {
+export async function getFilteredCandidates(
+  apartmentId: number,
+  filter: CandidateFilter
+): Promise<FilteredCandidateItem[]> {
   const response = await api.post<FilteredCandidateDTO[]>(
     `/apartments-matches/apartment/${apartmentId}/filtered-candidates`,
     filter
   )
-  // The backend returns ApartmentMatchLandlordDTO objects (with nested `apartment`),
-  // but the UI expects a flat structure with `id` and `apartmentId` like other endpoints.
   return (response.data || []).map((item) => ({
     id: item.id,
     apartmentId: item.apartment?.id ?? null,
     matchStatus: item.matchStatus,
-    // preserve optional fields if present
     tenantHasOpenedMatchDetails: item.tenantHasOpenedMatchDetails,
+    apartment: item.apartment
+      ? {
+          id: item.apartment.id,
+          title: item.apartment.title,
+          ubication: item.apartment.ubication,
+          price: item.apartment.price,
+          coverImageUrl: item.apartment.coverImageUrl,
+        }
+      : undefined,
   }))
 }

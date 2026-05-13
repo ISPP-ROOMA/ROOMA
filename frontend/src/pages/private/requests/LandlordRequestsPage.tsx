@@ -26,7 +26,11 @@ import {
   getMessageHistory,
   type ChatMessageDTO,
 } from '../../../service/chat.service'
-import { getFilteredCandidates, type CandidateFilter } from '../../../service/requests.service'
+import {
+  getFilteredCandidates,
+  type CandidateFilter,
+  type FilteredCandidateItem,
+} from '../../../service/requests.service'
 import { useAuthStore } from '../../../store/authStore'
 
 type ActiveTab = 'pending' | 'waiting' | 'match'
@@ -49,6 +53,7 @@ type MatchSource = Pick<
   'id' | 'matchStatus' | 'tenantHasOpenedMatchDetails'
 > & {
   apartmentId: number | null
+  apartment?: FilteredCandidateItem['apartment']
 }
 
 function statusLabel(status: MatchStatus): string {
@@ -100,18 +105,23 @@ async function enrichMatches(matches: MatchSource[]): Promise<EnrichedMatch[]> {
       ])
 
       const detailsApt = details?.apartment
+      const sourceApt = match.apartment
       return {
         matchId: mId,
         apartmentId: aId,
         matchStatus: match.matchStatus || 'ACTIVE',
-        title: detailsApt?.title ?? apt?.title ?? `Vivienda #${aId}`,
-        location: detailsApt?.ubication ?? apt?.ubication ?? '—',
+        title: detailsApt?.title ?? sourceApt?.title ?? apt?.title ?? `Vivienda #${aId}`,
+        location: detailsApt?.ubication ?? sourceApt?.ubication ?? apt?.ubication ?? '—',
         price: detailsApt?.price
           ? `${detailsApt.price.toLocaleString('es-ES')} €`
+          : sourceApt?.price
+            ? `${sourceApt.price.toLocaleString('es-ES')} €`
           : apt?.price
             ? `${apt.price.toLocaleString('es-ES')} €`
             : '—',
         imageUrl:
+          detailsApt?.coverImageUrl ??
+          sourceApt?.coverImageUrl ??
           apt?.coverImageUrl ??
           'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
         tenantEmail: details?.tenant?.email ?? '—',
