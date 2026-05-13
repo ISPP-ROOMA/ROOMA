@@ -51,6 +51,7 @@ export interface ApartmentMemberDTO {
   userId: number
   role: string
   joinDate: string
+  endDate: string | null
 }
 
 export const getMyDebts = async (): Promise<TenantDebtDTO[]> => {

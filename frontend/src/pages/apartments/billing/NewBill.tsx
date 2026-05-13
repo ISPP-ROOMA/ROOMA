@@ -108,12 +108,18 @@ export default function NewBill() {
           return
         }
 
-        const [apt, members] = await Promise.all([
+        const [apt, allMembers] = await Promise.all([
           getApartment(apartmentId),
           getApartmentMembers(apartmentId),
         ])
 
         if (apt) setApartment(apt)
+
+        // Only include current members (no endDate or endDate in the future)
+        const today = new Date().toISOString().slice(0, 10)
+        const members = allMembers.filter(
+          (m) => !m.endDate || m.endDate > today
+        )
 
         const rows: TenantRow[] = await Promise.all(
           members.map(async (m) => {
